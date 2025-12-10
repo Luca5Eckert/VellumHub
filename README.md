@@ -13,42 +13,50 @@ The **Media Recommendation System** is a scalable, distributed application desig
 
 ### 🏗️ Architecture
 
-The system follows a **microservices architecture** with event-driven communication:
+The system follows a **microservices architecture** with event-driven communication. Each microservice follows the **Database per Service** pattern, ensuring complete isolation and independent scalability.
 
-```
-┌─────────────┐      ┌──────────────┐      ┌────────────────────┐
-│   User      │◄────►│   Catalog    │◄────►│   Engagement       │
-│  Service    │      │   Service    │      │    Service         │
-└──────┬──────┘      └──────┬───────┘      └─────────┬──────────┘
-       │                    │                         │
-       │                    │                         │
-       └────────────────────┴─────────────────────────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │  Apache Kafka │◄──── Event Backbone
-                    └───────┬───────┘
-                            │
-                            ▼
-                ┌────────────────────────┐
-                │  Recommendation Engine │
-                │      Service           │
-                └───────────┬────────────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │  PostgreSQL   │
-                    │  (Multi-DB)   │
-                    └───────────────┘
+```mermaid
+graph TB
+    subgraph "Microservices Layer"
+        US[User Service]
+        CS[Catalog Service]
+        ES[Engagement Service]
+        RS[Recommendation Service]
+    end
+    
+    subgraph "Event Streaming"
+        KAFKA[Apache Kafka<br/>Event Backbone]
+    end
+    
+    subgraph "Persistence Layer"
+        USER_DB[(user_db)]
+        CATALOG_DB[(catalog_db)]
+        ENGAGEMENT_DB[(engagement_db)]
+        RECOMMENDATION_DB[(recommendation_db)]
+    end
+    
+    US --> USER_DB
+    CS --> CATALOG_DB
+    ES --> ENGAGEMENT_DB
+    ES -->|Publishes Events| KAFKA
+    KAFKA -->|Consumes Events| RS
+    RS --> RECOMMENDATION_DB
+    
+    style KAFKA fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
+    style US fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
+    style CS fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
+    style ES fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
+    style RS fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
 ```
 
 **Key Components:**
-- 🔐 **User Service**: Manages user authentication, profiles, and preferences
-- 📚 **Catalog Service**: Maintains the catalog of movies, series, and metadata
-- 💡 **Engagement Service**: Tracks user interactions (views, likes, clicks, ratings)
-- 🎯 **Recommendation Engine**: Processes engagement data via Kafka to generate personalized recommendations
-- 📨 **Apache Kafka**: Acts as the central event bus for asynchronous communication
-- 🗄️ **PostgreSQL**: Unified database instance with logical separation for each domain
+- 🔐 **User Service** → `user_db`: Manages user authentication, profiles, and preferences
+- 📚 **Catalog Service** → `catalog_db`: Maintains the catalog of movies, series, and metadata
+- 💡 **Engagement Service** → `engagement_db`: Tracks user interactions (views, likes, clicks, ratings) and publishes events to Kafka
+- 🎯 **Recommendation Service** ← Kafka → `recommendation_db`: Consumes engagement events and generates personalized recommendations
+- 📨 **Apache Kafka**: Acts as the central event bus for asynchronous communication between services
+
+> **📝 Local Development Note**: For simplified local development with Docker Compose, all four databases (`user_db`, `catalog_db`, `engagement_db`, `recommendation_db`) are hosted within a single PostgreSQL 15 container. This approach maintains logical database separation while reducing infrastructure complexity in the development environment. In production, each database would be deployed as an independent instance to ensure complete service isolation.
 
 ## 📦 Technology Stack
 
@@ -63,16 +71,22 @@ The system follows a **microservices architecture** with event-driven communicat
 
 ## 🗄️ Database Architecture
 
-The system uses a **single PostgreSQL instance** with **multiple logical databases** for domain separation:
+The system follows the **Database per Service** pattern, a core principle of microservices architecture that ensures:
+- ✅ **Service Isolation**: Each microservice owns its data and schema
+- ✅ **Independent Scalability**: Databases can be scaled independently based on service needs
+- ✅ **Technology Flexibility**: Each service can choose the optimal database technology
+- ✅ **Fault Isolation**: Database issues in one service don't cascade to others
 
-| Database | Purpose | Data Source |
-|----------|---------|-------------|
-| `user_db` | User management and authentication | User Service |
-| `catalog_db` | Media catalog and metadata | Catalog Service |
-| `engagement_db` | User interaction tracking | Engagement Service (Kafka Consumer) |
-| `recommendation_db` | Recommendation results and cache | Recommendation Engine |
+| Database | Owner Service | Purpose |
+|----------|---------------|---------|
+| `user_db` | User Service | User management and authentication |
+| `catalog_db` | Catalog Service | Media catalog and metadata |
+| `engagement_db` | Engagement Service | User interaction tracking (views, likes, clicks) |
+| `recommendation_db` | Recommendation Service | Recommendation results and cache |
 
-> 💡 **Note**: All databases are automatically created during the first startup via the `./scripts/create-databases.sql` initialization script.
+> 💡 **Auto-Initialization**: All databases are automatically created during the first startup via the `./scripts/create-databases.sql` initialization script.
+
+> 🏗️ **Local Development Setup**: For the local Docker Compose environment, all four databases run within a single PostgreSQL 15 container instance. This simplified approach maintains logical separation while reducing resource overhead for development. In production deployments, each database would be provisioned as a separate instance to achieve full physical isolation.
 
 ## ⚙️ Prerequisites
 
