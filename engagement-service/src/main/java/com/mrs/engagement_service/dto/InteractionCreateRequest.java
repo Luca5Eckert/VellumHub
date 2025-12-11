@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public record InteractionCreateRequest(
         @NotBlank UUID userId,
-        @NotBlank UUID movieId,
+        @NotBlank UUID mediaId,
         @NotBlank InteractionType type
 ) {
 }

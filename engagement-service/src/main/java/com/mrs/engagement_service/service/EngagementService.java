@@ -19,7 +19,7 @@ public class EngagementService {
     public void create(InteractionCreateRequest interactionCreateRequest){
         Interaction interaction = new Interaction(
                 interactionCreateRequest.userId(),
-                interactionCreateRequest.movieId(),
+                interactionCreateRequest.mediaId(),
                 interactionCreateRequest.type(),
                 LocalDateTime.now()
         );
