@@ -16,6 +16,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UserPreference {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
     private UUID userId;
