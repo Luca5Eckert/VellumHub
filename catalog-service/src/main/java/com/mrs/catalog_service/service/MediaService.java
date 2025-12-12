@@ -5,6 +5,8 @@ import com.mrs.catalog_service.handler.CreateMediaHandler;
 import com.mrs.catalog_service.model.Media;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+
 @Service
 public class MediaService {
 
@@ -14,16 +16,19 @@ public class MediaService {
         this.createMediaHandler = createMediaHandler;
     }
 
-    public void create(CreateMediaRequest createMediaRequest){
-        Media media = new Media(
-                createMediaRequest.name(),
-                createMediaRequest.timeInMinutes(),
-                createMediaRequest.genres()
-        );
+    public void create(CreateMediaRequest createMediaRequest) {
+        Media media = new Media.Builder()
+                .title(createMediaRequest.title())
+                .description(createMediaRequest.description())
+                .mediaType(createMediaRequest.mediaType())
+                .releaseYear(createMediaRequest.releaseYear())
+                .createAt(Instant.now())
+                .updateAt(Instant.now())
+                .genres(createMediaRequest.genres())
+                .build();
 
         createMediaHandler.handler(media);
     }
-
 
 
 }
