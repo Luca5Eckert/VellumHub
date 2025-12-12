@@ -21,6 +21,7 @@ public class EngagementService {
                 interactionCreateRequest.userId(),
                 interactionCreateRequest.mediaId(),
                 interactionCreateRequest.type(),
+                interactionCreateRequest.interactionValue(),
                 LocalDateTime.now()
         );
 

@@ -18,13 +18,13 @@ public class MediaService {
 
     public void create(CreateMediaRequest createMediaRequest) {
         Media media = new Media.Builder()
-                .title(createMediaRequest.title())
-                .description(createMediaRequest.description())
-                .mediaType(createMediaRequest.mediaType())
-                .releaseYear(createMediaRequest.releaseYear())
-                .createAt(Instant.now())
-                .updateAt(Instant.now())
-                .genres(createMediaRequest.genres())
+                .title( createMediaRequest.title() )
+                .description( createMediaRequest.description() )
+                .mediaType( createMediaRequest.mediaType() )
+                .releaseYear( createMediaRequest.releaseYear() )
+                .createAt( Instant.now() )
+                .updateAt( Instant.now() )
+                .genres( createMediaRequest.genres() )
                 .build();
 
         createMediaHandler.handler(media);

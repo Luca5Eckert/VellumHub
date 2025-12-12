@@ -27,15 +27,18 @@ public class Interaction {
     @Enumerated(EnumType.STRING)
     private InteractionType type;
 
+    private double interactionValue;
+
     private LocalDateTime timestamp;
 
     public Interaction() {
     }
 
-    public Interaction(UUID userId, UUID mediaId, InteractionType type, LocalDateTime timestamp) {
+    public Interaction(UUID userId, UUID mediaId, InteractionType type, double interactionValue, LocalDateTime timestamp) {
         this.userId = userId;
         this.mediaId = mediaId;
         this.type = type;
+        this.interactionValue = interactionValue;
         this.timestamp = timestamp;
     }
 }

@@ -9,6 +9,7 @@ import java.util.UUID;
 public record InteractionCreateRequest(
         @NotNull UUID userId,
         @NotNull UUID mediaId,
-        @NotNull InteractionType type
+        @NotNull InteractionType type,
+        double interactionValue
 ) {
 }

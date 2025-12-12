@@ -10,6 +10,7 @@ public record InteractionEvent(
         UUID userId,
         UUID mediaId,
         InteractionType interactionType,
+        double interactionValue,
         LocalDateTime timestamp
 ) {
 }
