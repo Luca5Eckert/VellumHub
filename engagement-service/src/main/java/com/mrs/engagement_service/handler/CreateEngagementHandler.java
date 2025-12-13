@@ -30,6 +30,7 @@ public class CreateEngagementHandler {
                 interaction.getUserId(),
                 interaction.getMediaId(),
                 interaction.getType(),
+                interaction.getInteractionValue(),
                 interaction.getTimestamp()
         );
 
