@@ -58,7 +58,7 @@ public class UserService {
     }
 
     public List<UserGetResponse> getAll(int pageNumber, int pageSize){
-        PageUser pageUser = new PageUser(pageNumber, pageNumber);
+        PageUser pageUser = new PageUser(pageNumber, pageSize);
 
         Page<UserEntity> users = getAllUserHandler.execute(pageUser);
 
