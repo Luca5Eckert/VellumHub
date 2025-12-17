@@ -102,6 +102,8 @@ services:
       SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres:5432/user_db'
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_KEY: ${JWT_KEY}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
       SERVER_PORT: 8080
     depends_on:
       postgres:
