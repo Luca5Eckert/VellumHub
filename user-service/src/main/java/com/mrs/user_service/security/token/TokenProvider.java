@@ -8,11 +8,4 @@ public interface TokenProvider {
 
     String createToken(String email, RoleUser roleUser);
 
-    boolean validateToken(String token);
-
-    String getUsername(String token);
-
-    Authentication getAuthentication(String token);
-
-    String resolveToken(HttpServletRequest request);
 }
