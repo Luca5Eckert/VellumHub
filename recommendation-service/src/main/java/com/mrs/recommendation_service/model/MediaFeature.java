@@ -29,4 +29,9 @@ public class MediaFeature {
     public MediaFeature(){
     }
 
+    public MediaFeature(UUID mediaId, List<String> genres){
+        this.mediaId = mediaId;
+        this.genres = genres;
+    }
+
 }
