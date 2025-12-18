@@ -64,6 +64,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SERVER_PORT: 8080
+      JWT_KEY: ${JWT_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -83,6 +84,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: 'kafka:9092'
       SERVER_PORT: 8080
+      JWT_KEY: ${JWT_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -121,6 +123,7 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: 'kafka:9092'
       SERVER_PORT: 8080
+      JWT_KEY: ${JWT_KEY}
     depends_on:
       kafka:
         condition: service_started
