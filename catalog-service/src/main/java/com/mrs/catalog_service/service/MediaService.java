@@ -1,8 +1,11 @@
 package com.mrs.catalog_service.service;
 
 import com.mrs.catalog_service.dto.CreateMediaRequest;
+import com.mrs.catalog_service.dto.GetMediaResponse;
 import com.mrs.catalog_service.handler.CreateMediaHandler;
 import com.mrs.catalog_service.handler.DeleteMediaHandler;
+import com.mrs.catalog_service.handler.GetMediaHandler;
+import com.mrs.catalog_service.mapper.MediaMapper;
 import com.mrs.catalog_service.model.Media;
 import org.springframework.stereotype.Service;
 
@@ -14,10 +17,15 @@ public class MediaService {
 
     private final CreateMediaHandler createMediaHandler;
     private final DeleteMediaHandler deleteMediaHandler;
+    private final GetMediaHandler getMediaHandler;
 
-    public MediaService(CreateMediaHandler createMediaHandler, DeleteMediaHandler deleteMediaHandler) {
+    private final MediaMapper mediaMapper;
+
+    public MediaService(CreateMediaHandler createMediaHandler, DeleteMediaHandler deleteMediaHandler, GetMediaHandler getMediaHandler, MediaMapper mediaMapper) {
         this.createMediaHandler = createMediaHandler;
         this.deleteMediaHandler = deleteMediaHandler;
+        this.getMediaHandler = getMediaHandler;
+        this.mediaMapper = mediaMapper;
     }
 
     public void create(CreateMediaRequest createMediaRequest) {
@@ -36,6 +44,12 @@ public class MediaService {
 
     public void delete(UUID mediaId){
         deleteMediaHandler.execute(mediaId);
+    }
+
+    public GetMediaResponse get(UUID mediaId){
+        Media media = getMediaHandler.execute(mediaId);
+
+        return mediaMapper.toGetResponse(media);
     }
 
 

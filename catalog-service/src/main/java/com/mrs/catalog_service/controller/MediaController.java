@@ -1,6 +1,7 @@
 package com.mrs.catalog_service.controller;
 
 import com.mrs.catalog_service.dto.CreateMediaRequest;
+import com.mrs.catalog_service.dto.GetMediaResponse;
 import com.mrs.catalog_service.service.MediaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,7 @@ public class MediaController {
     public ResponseEntity<String> create(@RequestBody @Valid CreateMediaRequest createMediaRequest){
         mediaService.create(createMediaRequest);
 
-        return ResponseEntity.status(HttpStatus.CREATED).build()
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping
@@ -35,6 +36,12 @@ public class MediaController {
         mediaService.delete(mediaId);
 
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<GetMediaResponse> getById(@PathVariable UUID id) {
+        GetMediaResponse mediaResponse = mediaService.get(id);
+        return ResponseEntity.ok(mediaResponse);
     }
 
 }
