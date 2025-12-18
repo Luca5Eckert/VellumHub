@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -42,6 +43,16 @@ public class MediaController {
     public ResponseEntity<GetMediaResponse> getById(@PathVariable UUID id) {
         GetMediaResponse mediaResponse = mediaService.get(id);
         return ResponseEntity.ok(mediaResponse);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<GetMediaResponse>> getAll(
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize
+    ) {
+        List<GetMediaResponse> mediaResponseList = mediaService.getAll(pageNumber, pageSize);
+
+        return ResponseEntity.ok(mediaResponseList);
     }
 
 }
