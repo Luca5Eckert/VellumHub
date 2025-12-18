@@ -2,12 +2,14 @@ package com.mrs.catalog_service.controller;
 
 import com.mrs.catalog_service.dto.CreateMediaRequest;
 import com.mrs.catalog_service.service.MediaService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/media")
@@ -19,11 +21,20 @@ public class MediaController {
         this.mediaService = mediaService;
     }
 
-    public ResponseEntity<String> create(@RequestBody @Validated CreateMediaRequest createMediaRequest){
+    @PostMapping
+    @PreAuthorize("ADMIN")
+    public ResponseEntity<String> create(@RequestBody @Valid CreateMediaRequest createMediaRequest){
         mediaService.create(createMediaRequest);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body("Media created with success");
+        return ResponseEntity.status(HttpStatus.CREATED).build()
+    }
+
+    @DeleteMapping
+    @PreAuthorize("ADMIN")
+    public ResponseEntity<Void> delete(@RequestBody UUID mediaId){
+        mediaService.delete(mediaId);
+
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
 }
