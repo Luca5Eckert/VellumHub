@@ -1,15 +1,17 @@
 package com.mrs.recommendation_service.model;
 
-import com.mrs.recommendation_service.event.InteractionEvent;
-import jakarta.persistence.*; // Ou javax.persistence dependendo da versão do Spring Boot
-import lombok.Getter;
+import jakarta.persistence.*;
+import lombok. Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok. Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-import java.time.Instant;
+import java. time.Instant;
 import java.util.*;
 
 @Entity
+@Table(name = "user_profiles")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,20 +23,43 @@ public class UserProfile {
     @Version
     private Long version;
 
-    @ElementCollection
+    /**
+     * Scores por gênero usando JSONB do PostgreSQL
+     * Exemplo: {"Terror": 5.0, "Suspense": 3.0}
+     */
+    @JdbcTypeCode(SqlTypes. JSON)
+    @Column(name = "genre_scores", columnDefinition = "jsonb")
     private Map<String, Double> genreScores = new HashMap<>();
 
-    @ElementCollection
+    /**
+     * IDs das mídias interagidas usando ARRAY do PostgreSQL
+     * Set evita duplicatas automaticamente
+     */
+    @JdbcTypeCode(SqlTypes. ARRAY)
+    @Column(name = "interacted_media_ids", columnDefinition = "uuid[]")
     private Set<UUID> interactedMediaIds = new HashSet<>();
 
+    @Column(name = "total_likes")
     private long totalLikes;
+
+    @Column(name = "total_dislikes")
     private long totalDislikes;
+
+    @Column(name = "total_watches")
     private long totalWatches;
+
+    @Column(name = "total_engagement_score")
     private double totalEngagementScore;
+
+    @Column(name = "last_updated", nullable = false)
     private Instant lastUpdated;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
 
     public UserProfile(UUID userId) {
         this.userId = userId;
+        this.createdAt = Instant.now();
         this.lastUpdated = Instant.now();
     }
 
@@ -48,10 +73,9 @@ public class UserProfile {
         this.interactedMediaIds.add(media.getMediaId());
 
         updateCounters(type);
-
         updateEngagementScore(type, interactionValue);
 
-        this.lastUpdated = Instant.now();
+        this.lastUpdated = Instant. now();
     }
 
     private void updateCounters(InteractionType type) {
@@ -64,7 +88,6 @@ public class UserProfile {
 
     private void updateEngagementScore(InteractionType type, double interactionValue) {
         double weight = type.getWeightInteraction();
-
         double scoreIncrement = weight * (1 + interactionValue);
         this.totalEngagementScore += scoreIncrement;
     }
