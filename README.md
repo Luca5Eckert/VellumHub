@@ -53,10 +53,50 @@ graph TB
 - 🔐 **User Service** → `user_db`: Manages user authentication, profiles, and preferences
 - 📚 **Catalog Service** → `catalog_db`: Maintains the catalog of movies, series, and metadata
 - 💡 **Engagement Service** → `engagement_db`: Tracks user interactions (views, likes, clicks, ratings) and publishes events to Kafka
-- 🎯 **Recommendation Service** ← Kafka → `recommendation_db`: Consumes engagement events and generates personalized recommendations
+- 🎯 **Recommendation Service** ← Kafka → `recommendation_db`: Consumes engagement events, stores user profiles and media features, and orchestrates recommendations
+- 🤖 **ML Service** (Python): **Stateless computation service** that calculates personalized recommendations from user profile and media data
 - 📨 **Apache Kafka**: Acts as the central event bus for asynchronous communication between services
 
 > **📝 Local Development Note**: For simplified local development with Docker Compose, all four databases (`user_db`, `catalog_db`, `engagement_db`, `recommendation_db`) are hosted within a single PostgreSQL 15 container. This approach maintains logical database separation while reducing infrastructure complexity in the development environment. In production, each database would be deployed as an independent instance to ensure complete service isolation.
+
+## 🤖 ML Service - Stateless Recommendation Engine
+
+The **ML Service** is a **stateless Python microservice** that calculates personalized media recommendations. It follows the **database-per-service** pattern and receives all data via API requests.
+
+### Architecture
+- **Stateless Design**: No database connections, pure computation
+- **Content-Based Filtering (70%)**: Matches media genres to user preferences  
+- **Popularity Boost (30%)**: Considers media popularity scores
+- **Performance**: <50ms processing time per request
+- **Scalable**: Horizontally scalable, no shared state
+
+### Integration Flow
+```
+recommendation-service → Fetches UserProfile & MediaFeatures from DB
+                      → Calls ML Service with data
+                      ↓
+ml-service            → Calculates recommendations (stateless)
+                      → Returns scored media list
+                      ↓
+recommendation-service → Stores/returns recommendations
+```
+
+### Quick Start
+```bash
+# Check service health
+curl http://localhost:5000/health
+
+# Calculate recommendations (called by recommendation-service)
+curl -X POST http://localhost:5000/api/recommendations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_profile": {"genre_scores": {"ACTION": 5.0}},
+    "available_media": [{"media_id": "...", "genres": ["ACTION"]}],
+    "limit": 10
+  }'
+```
+
+📖 **Full Documentation**: See [ML Service README](ml-service/README.md)
 
 ## 📦 Technology Stack
 
@@ -67,6 +107,7 @@ graph TB
 | **Message Broker** | Apache Kafka | 7.3.0 (Confluent) |
 | **Coordination** | Apache Zookeeper | 7.3.0 (Confluent) |
 | **Backend Services** | Spring Boot (Java) | 4.0.0 |
+| **ML Service** | Python + Flask | 3.11+ / 3.0.0 |
 | **JDK** | Java | 21 |
 
 ## 🗄️ Database Architecture
@@ -200,6 +241,11 @@ docker exec -it kafka kafka-topics --create --topic engagement-events --bootstra
 | PostgreSQL | `5432` | `localhost:5432` |
 | Apache Kafka | `9092` | `localhost:9092` |
 | Zookeeper | `2181` | `localhost:2181` |
+| User Service | `8084` | `http://localhost:8084` |
+| Catalog Service | `8081` | `http://localhost:8081` |
+| Engagement Service | `8083` | `http://localhost:8083` |
+| Recommendation Service | `8085` | `http://localhost:8085` |
+| **ML Service** | `5000` | `http://localhost:5000` |
 
 ### Database Connection Details
 
@@ -220,7 +266,8 @@ Databases: user_db, catalog_db, engagement_db, recommendation_db
 - [x] PostgreSQL setup with multi-database architecture
 - [x] Apache Kafka and Zookeeper integration
 - [x] Database auto-initialization scripts
-- [x] Microservices project structure (catalog-service, engagement-service)
+- [x] Microservices project structure (catalog-service, engagement-service, user-service)
+- [x] **ML Service with hybrid recommendation algorithm (Python/Flask)**
 
 ### 🛣️ Roadmap / Next Steps
 
@@ -231,7 +278,7 @@ Databases: user_db, catalog_db, engagement_db, recommendation_db
    - [ ] Implement Recommendation Engine (Kafka consumer + ML algorithms)
 
 2. **API Layer**
-   - [ ] RESTful APIs for each service
+   - [x] RESTful API for ML recommendations
    - [ ] API Gateway for unified access
    - [ ] OpenAPI/Swagger documentation
 
@@ -241,10 +288,11 @@ Databases: user_db, catalog_db, engagement_db, recommendation_db
    - [ ] Event sourcing patterns
 
 4. **Machine Learning**
-   - [ ] Collaborative filtering algorithms
-   - [ ] Content-based filtering
-   - [ ] Hybrid recommendation strategies
+   - [x] Collaborative filtering algorithms
+   - [x] Content-based filtering
+   - [x] Hybrid recommendation strategies
    - [ ] Model training pipeline
+   - [ ] Real-time learning from user feedback
 
 5. **Frontend**
    - [ ] Web application (React/Vue/Angular)
