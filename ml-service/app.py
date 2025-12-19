@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Configuration constants
 MAX_RECOMMENDATIONS_LIMIT = int(os.getenv('MAX_RECOMMENDATIONS_LIMIT', '100'))
+MAX_MEDIA_FETCH_LIMIT = int(os.getenv('MAX_MEDIA_FETCH_LIMIT', '1000'))
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -106,7 +107,7 @@ def calculate_recommendations():
         logger.info(f"Fetching media features for user {user_profile.get('user_id')}, excluding {len(interacted_ids)} interacted media")
         available_media = media_feature_repo.get_all_media_features(
             exclude_media_ids=interacted_ids,
-            limit=1000  # Fetch top 1000 by popularity, then ML will rank
+            limit=MAX_MEDIA_FETCH_LIMIT  # Configurable: fetch top N by popularity, then ML ranks
         )
         
         if not available_media:

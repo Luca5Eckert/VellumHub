@@ -35,27 +35,29 @@ class MediaFeatureRepository:
             List of media feature dictionaries
         """
         try:
-            exclude_clause = ""
             params = []
             
-            if exclude_media_ids and len(exclude_media_ids) > 0:
-                # Use NOT IN with parameterized query
-                placeholders = ','.join(['%s'] * len(exclude_media_ids))
-                exclude_clause = f"WHERE media_id NOT IN ({placeholders})"
-                params.extend(list(exclude_media_ids))
-            
-            params.append(limit)
-            
-            query = f"""
+            # Build query parts safely
+            base_query = """
                 SELECT 
                     media_id,
                     genres,
                     popularity_score
                 FROM medias_features
-                {exclude_clause}
-                ORDER BY popularity_score DESC
-                LIMIT %s
             """
+            
+            where_clause = ""
+            if exclude_media_ids and len(exclude_media_ids) > 0:
+                # Safe: placeholders count is derived from data length, not user input
+                placeholders = ','.join(['%s'] * len(exclude_media_ids))
+                where_clause = " WHERE media_id NOT IN (" + placeholders + ")"
+                params.extend(list(exclude_media_ids))
+            
+            order_limit = " ORDER BY popularity_score DESC LIMIT %s"
+            params.append(limit)
+            
+            # Concatenate query parts
+            query = base_query + where_clause + order_limit
             
             with self.db.get_cursor() as cursor:
                 cursor.execute(query, params)
@@ -90,14 +92,15 @@ class MediaFeatureRepository:
             if not media_ids:
                 return []
             
+            # Safe: placeholders count is derived from data length, not user input
             placeholders = ','.join(['%s'] * len(media_ids))
-            query = f"""
+            query = """
                 SELECT 
                     media_id,
                     genres,
                     popularity_score
                 FROM medias_features
-                WHERE media_id IN ({placeholders})
+                WHERE media_id IN (""" + placeholders + """)
             """
             
             with self.db.get_cursor() as cursor:
