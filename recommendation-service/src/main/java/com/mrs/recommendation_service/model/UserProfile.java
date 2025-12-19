@@ -33,7 +33,7 @@ public class UserProfile {
      */
     @JdbcTypeCode(SqlTypes. ARRAY)
     @Column(name = "interacted_media_ids", columnDefinition = "uuid[]")
-    private UUID[] interactedMediaIds = new UUID[0];
+    private List<UUID> interactedMediaIds = new ArrayList<>();
 
     /**
      * Score total de engajamento do usuário
