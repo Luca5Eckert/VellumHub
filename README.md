@@ -53,32 +53,50 @@ graph TB
 - 🔐 **User Service** → `user_db`: Manages user authentication, profiles, and preferences
 - 📚 **Catalog Service** → `catalog_db`: Maintains the catalog of movies, series, and metadata
 - 💡 **Engagement Service** → `engagement_db`: Tracks user interactions (views, likes, clicks, ratings) and publishes events to Kafka
-- 🎯 **Recommendation Service** ← Kafka → `recommendation_db`: Consumes engagement events and generates personalized recommendations
-- 🤖 **ML Service** (Python): Provides intelligent recommendations using hybrid algorithm (collaborative + content-based filtering)
+- 🎯 **Recommendation Service** ← Kafka → `recommendation_db`: Consumes engagement events, stores user profiles and media features, and orchestrates recommendations
+- 🤖 **ML Service** (Python): **Stateless computation service** that calculates personalized recommendations from user profile and media data
 - 📨 **Apache Kafka**: Acts as the central event bus for asynchronous communication between services
 
 > **📝 Local Development Note**: For simplified local development with Docker Compose, all four databases (`user_db`, `catalog_db`, `engagement_db`, `recommendation_db`) are hosted within a single PostgreSQL 15 container. This approach maintains logical database separation while reducing infrastructure complexity in the development environment. In production, each database would be deployed as an independent instance to ensure complete service isolation.
 
-## 🤖 ML Service - Personalized Recommendations
+## 🤖 ML Service - Stateless Recommendation Engine
 
-The **ML Service** is a Python-based microservice that delivers personalized media recommendations using a sophisticated hybrid algorithm:
+The **ML Service** is a **stateless Python microservice** that calculates personalized media recommendations. It follows the **database-per-service** pattern and receives all data via API requests.
 
-### Algorithm Features
-- **Content-Based Filtering (40%)**: Matches media to user's genre preferences
-- **Collaborative Filtering (60%)**: Recommends based on similar users' behavior
-- **Performance Optimized**: Connection pooling, batch queries, avoiding N+1 problems
-- **Scalable**: Horizontally scalable with Gunicorn multi-worker support
+### Architecture
+- **Stateless Design**: No database connections, pure computation
+- **Content-Based Filtering (70%)**: Matches media genres to user preferences  
+- **Popularity Boost (30%)**: Considers media popularity scores
+- **Performance**: <50ms processing time per request
+- **Scalable**: Horizontally scalable, no shared state
+
+### Integration Flow
+```
+recommendation-service → Fetches UserProfile & MediaFeatures from DB
+                      → Calls ML Service with data
+                      ↓
+ml-service            → Calculates recommendations (stateless)
+                      → Returns scored media list
+                      ↓
+recommendation-service → Stores/returns recommendations
+```
 
 ### Quick Start
 ```bash
-# Get recommendations for a user
-curl "http://localhost:5000/api/recommendations/USER_UUID?limit=10"
-
 # Check service health
 curl http://localhost:5000/health
+
+# Calculate recommendations (called by recommendation-service)
+curl -X POST http://localhost:5000/api/recommendations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_profile": {"genre_scores": {"ACTION": 5.0}},
+    "available_media": [{"media_id": "...", "genres": ["ACTION"]}],
+    "limit": 10
+  }'
 ```
 
-📖 **Full Documentation**: See [ML Service Integration Guide](ml-service/INTEGRATION_GUIDE.md)
+📖 **Full Documentation**: See [ML Service README](ml-service/README.md)
 
 ## 📦 Technology Stack
 

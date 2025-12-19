@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-Simple test script to validate ML Service API structure and endpoints
+Simple test script to validate ML Service structure
 """
 
 import sys
-import json
 
 def test_imports():
     """Test that all required modules can be imported"""
@@ -12,9 +11,6 @@ def test_imports():
     try:
         import flask
         import flask_cors
-        import psycopg2
-        import numpy
-        import sklearn
         print("✓ All required packages can be imported")
         return True
     except ImportError as e:
@@ -26,35 +22,60 @@ def test_app_structure():
     """Test that the Flask app can be created"""
     print("\nTesting app structure...")
     try:
-        # We can't fully test without database, but we can check structure
         import os
-        os.environ['DB_HOST'] = 'test'
-        os.environ['DB_PORT'] = '5432'
-        os.environ['DB_USER'] = 'test'
-        os.environ['DB_PASSWORD'] = 'test'
+        os.environ['PORT'] = '5000'
         
         # Import modules
-        from database.db_connection import DatabaseConnection
-        from database.user_repository import UserRepository
-        from database.catalog_repository import CatalogRepository
-        from database.engagement_repository import EngagementRepository
+        from services.recommendation_engine import RecommendationEngine
         
-        print("✓ All database modules imported successfully")
+        print("✓ All modules imported successfully")
         return True
     except Exception as e:
         print(f"✗ Structure test error: {e}")
         return False
 
 
-def test_service_structure():
-    """Test that the recommendation service structure is valid"""
-    print("\nTesting service structure...")
+def test_recommendation_engine():
+    """Test that the recommendation engine works"""
+    print("\nTesting recommendation engine...")
     try:
-        from services.recommendation_service import RecommendationService
-        print("✓ RecommendationService imported successfully")
-        return True
+        from services.recommendation_engine import RecommendationEngine
+        
+        engine = RecommendationEngine()
+        
+        # Test with sample data
+        user_profile = {
+            'user_id': 'test-uuid',
+            'genre_scores': {'ACTION': 5.0, 'THRILLER': 3.0},
+            'interacted_media_ids': []
+        }
+        
+        available_media = [
+            {
+                'media_id': 'media-1',
+                'genres': ['ACTION', 'THRILLER'],
+                'popularity_score': 0.8,
+                'title': 'Test Movie'
+            }
+        ]
+        
+        recommendations = engine.calculate_recommendations(
+            user_profile=user_profile,
+            available_media=available_media,
+            limit=10
+        )
+        
+        if len(recommendations) > 0:
+            print(f"✓ Generated {len(recommendations)} recommendations")
+            return True
+        else:
+            print("✗ No recommendations generated")
+            return False
+            
     except Exception as e:
-        print(f"✗ Service structure error: {e}")
+        print(f"✗ Recommendation engine test error: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
@@ -62,24 +83,16 @@ def test_api_endpoints():
     """Test that Flask routes are properly defined"""
     print("\nTesting API endpoints...")
     try:
-        # Set mock environment variables
         import os
-        os.environ['DB_HOST'] = 'localhost'
-        os.environ['DB_PORT'] = '5432'
-        os.environ['DB_USER'] = 'test'
-        os.environ['DB_PASSWORD'] = 'test'
-        os.environ['DB_NAME'] = 'test_db'
+        os.environ['PORT'] = '5000'
         
-        # This will fail on DB connection but that's ok for structure test
-        # We just want to verify routes are registered
         from app import app
         
         # Check that routes exist
         routes = [rule.rule for rule in app.url_map.iter_rules()]
         expected_routes = [
             '/health',
-            '/api/recommendations/<user_id>',
-            '/api/recommendations/batch'
+            '/api/recommendations'
         ]
         
         for route in expected_routes:
@@ -91,9 +104,8 @@ def test_api_endpoints():
         
         return True
     except Exception as e:
-        print(f"! API endpoint test error (may be expected if DB unavailable): {e}")
-        # This is expected without DB, so we'll pass
-        return True
+        print(f"✗ API endpoint test error: {e}")
+        return False
 
 
 def main():
@@ -105,7 +117,7 @@ def main():
     tests = [
         test_imports,
         test_app_structure,
-        test_service_structure,
+        test_recommendation_engine,
         test_api_endpoints
     ]
     

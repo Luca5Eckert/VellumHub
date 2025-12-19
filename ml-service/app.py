@@ -1,6 +1,6 @@
 """
 ML Service for Media Recommendation System
-Provides REST API for personalized media recommendations
+Stateless service that calculates recommendations based on user profiles and media features
 """
 
 from flask import Flask, jsonify, request
@@ -9,8 +9,7 @@ import logging
 import os
 from dotenv import load_dotenv
 
-from services.recommendation_service import RecommendationService
-from database.db_connection import DatabaseConnection
+from services.recommendation_engine import RecommendationEngine
 
 # Load environment variables
 load_dotenv()
@@ -26,17 +25,8 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
-# Initialize database connection
-db_connection = DatabaseConnection(
-    host=os.getenv('DB_HOST', 'localhost'),
-    port=int(os.getenv('DB_PORT', '5432')),
-    database=os.getenv('DB_NAME', 'catalog_db'),
-    user=os.getenv('DB_USER', 'user'),
-    password=os.getenv('DB_PASSWORD', 'password')
-)
-
-# Initialize recommendation service
-recommendation_service = RecommendationService(db_connection)
+# Initialize recommendation engine (stateless)
+recommendation_engine = RecommendationEngine()
 
 
 @app.route('/health', methods=['GET'])
@@ -45,133 +35,92 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'service': 'ml-service',
-        'version': '1.0.0'
+        'version': '2.0.0'
     }), 200
 
 
-@app.route('/api/recommendations/<user_id>', methods=['GET'])
-def get_recommendations(user_id):
+@app.route('/api/recommendations', methods=['POST'])
+def calculate_recommendations():
     """
-    Get personalized media recommendations for a user
-    
-    Args:
-        user_id: UUID of the user
-    
-    Query Parameters:
-        limit: Number of recommendations to return (default: 10)
-        offset: Offset for pagination (default: 0)
-    
-    Returns:
-        JSON response with recommended media list
-    """
-    try:
-        # Get query parameters
-        limit = request.args.get('limit', default=10, type=int)
-        offset = request.args.get('offset', default=0, type=int)
-        
-        # Validate input
-        if limit < 1 or limit > 100:
-            return jsonify({
-                'error': 'Invalid limit parameter. Must be between 1 and 100'
-            }), 400
-        
-        if offset < 0:
-            return jsonify({
-                'error': 'Invalid offset parameter. Must be non-negative'
-            }), 400
-        
-        # Get recommendations
-        logger.info(f"Getting recommendations for user {user_id} (limit={limit}, offset={offset})")
-        recommendations = recommendation_service.get_recommendations(
-            user_id=user_id,
-            limit=limit,
-            offset=offset
-        )
-        
-        return jsonify({
-            'user_id': user_id,
-            'recommendations': recommendations,
-            'count': len(recommendations),
-            'limit': limit,
-            'offset': offset
-        }), 200
-        
-    except ValueError as e:
-        logger.error(f"Invalid user_id format: {user_id}")
-        return jsonify({
-            'error': f'Invalid user_id format: {str(e)}'
-        }), 400
-    except Exception as e:
-        logger.error(f"Error getting recommendations for user {user_id}: {str(e)}", exc_info=True)
-        return jsonify({
-            'error': 'Internal server error',
-            'message': str(e)
-        }), 500
-
-
-@app.route('/api/recommendations/batch', methods=['POST'])
-def get_batch_recommendations():
-    """
-    Get recommendations for multiple users in a single request
+    Calculate recommendations based on user profile and available media
     
     Request Body:
         {
-            "user_ids": ["uuid1", "uuid2", ...],
+            "user_profile": {
+                "user_id": "uuid",
+                "genre_scores": {"ACTION": 5.0, "THRILLER": 3.0},
+                "interacted_media_ids": ["uuid1", "uuid2"],
+                "total_engagement_score": 100.0
+            },
+            "available_media": [
+                {
+                    "media_id": "uuid",
+                    "genres": ["ACTION", "THRILLER"],
+                    "popularity_score": 0.8,
+                    "title": "Movie Title",
+                    "description": "...",
+                    "release_year": 2023,
+                    "media_type": "MOVIE",
+                    "cover_url": "https://..."
+                }
+            ],
             "limit": 10
         }
     
     Returns:
-        JSON response with recommendations for each user
+        JSON response with scored recommendations
     """
     try:
         data = request.get_json()
         
-        if not data or 'user_ids' not in data:
+        if not data:
             return jsonify({
-                'error': 'Missing user_ids in request body'
+                'error': 'Request body is required'
             }), 400
         
-        user_ids = data['user_ids']
+        # Validate required fields
+        if 'user_profile' not in data:
+            return jsonify({
+                'error': 'user_profile is required'
+            }), 400
+        
+        if 'available_media' not in data:
+            return jsonify({
+                'error': 'available_media is required'
+            }), 400
+        
+        user_profile = data['user_profile']
+        available_media = data['available_media']
         limit = data.get('limit', 10)
         
-        if not isinstance(user_ids, list) or len(user_ids) == 0:
+        # Validate limit
+        if not isinstance(limit, int) or limit < 1 or limit > 100:
             return jsonify({
-                'error': 'user_ids must be a non-empty list'
+                'error': 'limit must be an integer between 1 and 100'
             }), 400
         
-        if len(user_ids) > 50:
-            return jsonify({
-                'error': 'Maximum 50 users per batch request'
-            }), 400
+        # Calculate recommendations
+        logger.info(f"Calculating recommendations for user {user_profile.get('user_id')} with {len(available_media)} media items")
         
-        logger.info(f"Getting batch recommendations for {len(user_ids)} users")
-        
-        results = {}
-        for user_id in user_ids:
-            try:
-                recommendations = recommendation_service.get_recommendations(
-                    user_id=user_id,
-                    limit=limit
-                )
-                results[user_id] = {
-                    'recommendations': recommendations,
-                    'count': len(recommendations)
-                }
-            except Exception as e:
-                logger.error(f"Error getting recommendations for user {user_id}: {str(e)}")
-                results[user_id] = {
-                    'error': str(e),
-                    'recommendations': [],
-                    'count': 0
-                }
+        recommendations = recommendation_engine.calculate_recommendations(
+            user_profile=user_profile,
+            available_media=available_media,
+            limit=limit
+        )
         
         return jsonify({
-            'results': results,
-            'total_users': len(user_ids)
+            'user_id': user_profile.get('user_id'),
+            'recommendations': recommendations,
+            'count': len(recommendations)
         }), 200
         
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        return jsonify({
+            'error': f'Validation error: {str(e)}'
+        }), 400
     except Exception as e:
-        logger.error(f"Error in batch recommendations: {str(e)}", exc_info=True)
+        logger.error(f"Error calculating recommendations: {str(e)}", exc_info=True)
         return jsonify({
             'error': 'Internal server error',
             'message': str(e)

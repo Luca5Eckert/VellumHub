@@ -2,109 +2,74 @@
 
 ## Overview
 
-The ML Service is a Python-based microservice that provides personalized media recommendations using a hybrid recommendation algorithm. It combines collaborative filtering and content-based filtering to deliver accurate and diverse recommendations.
-
-## Features
-
-- **Hybrid Recommendation Algorithm**: Combines collaborative and content-based filtering
-- **Performance Optimized**: Batch queries, connection pooling, and efficient SQL to avoid N+1 problems
-- **Multiple Database Support**: Connects to user_db, catalog_db, and engagement_db
-- **RESTful API**: Simple REST endpoints for recommendations
-- **Scalable**: Uses Gunicorn with multiple workers for production
-- **Health Checks**: Built-in health check endpoint for monitoring
+The ML Service is a **stateless Python microservice** that calculates personalized media recommendations. It receives user profile data and available media via REST API, applies a hybrid recommendation algorithm, and returns scored recommendations.
 
 ## Architecture
 
-### Recommendation Algorithm
+### Stateless Design
+- **No database connections** - follows database-per-service pattern
+- Receives all data via API requests
+- Pure computation service focused on recommendation algorithms
+- Can be horizontally scaled without coordination
 
-The service uses a hybrid approach combining:
+### Integration Flow
 
-1. **Content-Based Filtering (40% weight)**
-   - Matches media to user's genre preferences
-   - Considers user's explicit preferences from their profile
-   - Ensures recommendations align with stated interests
-
-2. **Collaborative Filtering (60% weight)**
-   - Finds users with similar viewing patterns
-   - Recommends media that similar users enjoyed
-   - Leverages collective intelligence from user interactions
-
-3. **Hybrid Scoring**
-   - Combines both approaches with weighted scores
-   - Normalizes scores for fair comparison
-   - Ranks by final hybrid score
-
-### Performance Optimizations
-
-- **Connection Pooling**: Reuses database connections for efficiency
-- **Batch Queries**: Fetches multiple records in single queries using `ANY()` and array operations
-- **Aggregate Queries**: Uses PostgreSQL aggregation to avoid N+1 problems
-- **Efficient Joins**: LEFT JOINs with GROUP BY to fetch related data in one query
-
-## API Endpoints
-
-### Health Check
 ```
-GET /health
-```
-Returns service health status.
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "service": "ml-service",
-  "version": "1.0.0"
-}
+recommendation-service (Java)
+    ↓
+    1. Fetches UserProfile from recommendation_db
+    2. Fetches MediaFeatures from recommendation_db  
+    3. Calls ML Service API with data
+    ↓
+ml-service (Python)
+    ↓
+    Calculates recommendations (stateless)
+    ↓
+    Returns scored media list
+    ↓
+recommendation-service
+    Stores/returns recommendations
 ```
 
-### Get Recommendations
-```
-GET /api/recommendations/<user_id>?limit=10&offset=0
-```
+## Features
 
-Get personalized recommendations for a specific user.
+- **Stateless Architecture**: No database dependencies, pure computation
+- **Hybrid Algorithm**: Content-based filtering with popularity boost
+- **Performance**: <50ms processing time per request
+- **Scalable**: Horizontally scalable, stateless design
+- **Production Ready**: Docker, Gunicorn, health checks
 
-**Parameters:**
-- `user_id` (path): UUID of the user
-- `limit` (query): Number of recommendations (1-100, default: 10)
-- `offset` (query): Pagination offset (default: 0)
+## API Endpoint
 
-**Response:**
-```json
-{
-  "user_id": "123e4567-e89b-12d3-a456-426614174000",
-  "recommendations": [
-    {
-      "id": "media-uuid",
-      "title": "Example Movie",
-      "description": "Description...",
-      "release_year": 2023,
-      "media_type": "MOVIE",
-      "cover_url": "https://...",
-      "genres": ["ACTION", "THRILLER"],
-      "recommendation_score": 0.8745,
-      "content_score": 0.6667,
-      "collaborative_score": 0.9500
-    }
-  ],
-  "count": 10,
-  "limit": 10,
-  "offset": 0
-}
-```
+### POST /api/recommendations
 
-### Batch Recommendations
-```
-POST /api/recommendations/batch
-```
-
-Get recommendations for multiple users in a single request.
+Calculate personalized recommendations based on user profile and available media.
 
 **Request Body:**
 ```json
 {
-  "user_ids": ["uuid1", "uuid2", "uuid3"],
+  "user_profile": {
+    "user_id": "uuid",
+    "genre_scores": {
+      "ACTION": 5.0,
+      "THRILLER": 3.0,
+      "HORROR": 2.0
+    },
+    "interacted_media_ids": ["uuid1", "uuid2"],
+    "total_engagement_score": 100.0
+  },
+  "available_media": [
+    {
+      "media_id": "uuid",
+      "genres": ["ACTION", "THRILLER"],
+      "popularity_score": 0.8,
+      "title": "Inception",
+      "description": "A mind-bending thriller...",
+      "release_year": 2010,
+      "media_type": "MOVIE",
+      "cover_url": "https://..."
+    }
+  ],
   "limit": 10
 }
 ```
@@ -112,50 +77,68 @@ Get recommendations for multiple users in a single request.
 **Response:**
 ```json
 {
-  "results": {
-    "uuid1": {
-      "recommendations": [...],
-      "count": 10
-    },
-    "uuid2": {
-      "recommendations": [...],
-      "count": 10
+  "user_id": "uuid",
+  "recommendations": [
+    {
+      "media_id": "uuid",
+      "title": "Inception",
+      "genres": ["ACTION", "THRILLER"],
+      "popularity_score": 0.8,
+      "release_year": 2010,
+      "media_type": "MOVIE",
+      "cover_url": "https://...",
+      "recommendation_score": 0.8745,
+      "content_score": 0.8500,
+      "popularity_score": 0.8000
     }
-  },
-  "total_users": 2
+  ],
+  "count": 10
 }
 ```
 
-## Database Schema Requirements
+### GET /health
 
-The service expects the following database structure:
+Health check endpoint.
 
-### user_db
-- `user_preferences`: User preference records
-- `tb_user_genre`: User genre preferences (junction table)
+**Response:**
+```json
+{
+  "status": "healthy",
+  "service": "ml-service",
+  "version": "2.0.0"
+}
+```
 
-### catalog_db
-- `medias`: Media catalog
-- `tb_media_genre`: Media genres (junction table)
+## Algorithm Details
 
-### engagement_db
-- `interaction`: User-media interactions (likes, dislikes, watches)
+### Hybrid Recommendation Algorithm
 
-## Environment Variables
+**Weights:**
+- Content-Based Filtering: 70%
+- Popularity Boost: 30%
 
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=user
-DB_PASSWORD=password
-PORT=5000
-DEBUG=False
-LOG_LEVEL=INFO
+**Content-Based Scoring:**
+```python
+# Match media genres to user preferences
+for each media:
+    matching_scores = [genre_scores[g] for g in media.genres if g in genre_scores]
+    avg_score = sum(matching_scores) / len(matching_scores)
+    normalized = avg_score / 10.0  # Normalize to 0-1
+    
+    # Boost for multiple matches
+    match_ratio = len(matching_scores) / len(media.genres)
+    content_score = normalized * (0.8 + 0.2 * match_ratio)
+```
+
+**Final Score:**
+```python
+recommendation_score = (content_score × 0.7) + (popularity_score × 0.3)
 ```
 
 ## Running the Service
 
 ### Development
+
 ```bash
 cd ml-service
 pip install -r requirements.txt
@@ -163,73 +146,107 @@ python app.py
 ```
 
 ### Production with Docker
+
 ```bash
 docker-compose up ml-service
 ```
 
-### Production with Gunicorn
+### Testing
+
 ```bash
-gunicorn --bind 0.0.0.0:5000 --workers 4 --threads 2 app:app
+# Health check
+curl http://localhost:5000/health
+
+# Calculate recommendations
+curl -X POST http://localhost:5000/api/recommendations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_profile": {
+      "user_id": "123e4567-e89b-12d3-a456-426614174000",
+      "genre_scores": {"ACTION": 5.0, "THRILLER": 3.0}
+    },
+    "available_media": [
+      {
+        "media_id": "uuid",
+        "genres": ["ACTION"],
+        "popularity_score": 0.8,
+        "title": "Action Movie"
+      }
+    ],
+    "limit": 10
+  }'
 ```
 
 ## Dependencies
 
 - Flask 3.0.0 - Web framework
 - Flask-CORS 4.0.0 - CORS support
-- psycopg2-binary 2.9.9 - PostgreSQL adapter
-- python-dotenv 1.0.0 - Environment variable management
-- gunicorn 21.2.0 - WSGI HTTP server
-- numpy 1.26.4 - Numerical computing
-- scikit-learn 1.4.2 - Machine learning library
-- requests 2.31.0 - HTTP library
+- python-dotenv 1.0.0 - Environment variables
+- gunicorn 21.2.0 - WSGI server
+- requests 2.31.0 - HTTP library (for health checks)
 
-## Algorithm Details
+## Environment Variables
 
-### Content-Based Scoring
-```python
-content_score = matching_genres / total_user_genres
-```
-
-### Collaborative Scoring
-```python
-collaborative_score = (similar_user_count * total_interaction_value) / max_score
-```
-
-### Hybrid Score
-```python
-hybrid_score = (content_score * 0.4) + (collaborative_score * 0.6)
+```env
+PORT=5000
+DEBUG=False
+LOG_LEVEL=INFO
 ```
 
 ## Performance Characteristics
 
-- **Query Efficiency**: O(1) for single user, O(n) for batch requests
-- **Connection Pooling**: Supports 10 concurrent connections per database
-- **Response Time**: Typically < 200ms for single user recommendations
-- **Scalability**: Horizontal scaling via multiple Gunicorn workers
+- **Processing Time**: <50ms per request
+- **Concurrent Workers**: 4 workers × 2 threads = 8
+- **Stateless**: No shared state, perfect for horizontal scaling
+- **Memory**: Low memory footprint (~100MB per worker)
 
-## Error Handling
+## Integration Example (Java)
 
-The service implements comprehensive error handling:
-- Invalid user IDs return 400 Bad Request
-- Database errors trigger fallback to popular media
-- All errors are logged with full stack traces
-- 500 errors return generic message to avoid information leakage
+```java
+// From recommendation-service
+RestTemplate restTemplate = new RestTemplate();
 
-## Monitoring
+// Prepare request
+RecommendationRequest request = new RecommendationRequest();
+request.setUserProfile(userProfile);
+request.setAvailableMedia(mediaFeatures);
+request.setLimit(10);
 
-- Health check endpoint at `/health`
-- Structured logging with timestamps
-- Request/response logging in production mode
-- Database connection pool monitoring
+// Call ML service
+ResponseEntity<RecommendationResponse> response = restTemplate.postForEntity(
+    "http://ml-service:5000/api/recommendations",
+    request,
+    RecommendationResponse.class
+);
 
-## Future Improvements
+List<ScoredMedia> recommendations = response.getBody().getRecommendations();
+```
 
-1. Implement caching layer (Redis) for frequent queries
-2. Add real-time learning from user feedback
-3. Implement A/B testing framework for algorithm variations
-4. Add more sophisticated ML models (neural networks, deep learning)
-5. Implement session-based recommendations
-6. Add recommendation explanations ("Recommended because...")
+## Design Decisions
+
+### Why Stateless?
+
+1. **Database per Service**: Follows microservices best practices
+2. **Scalability**: Can scale horizontally without coordination
+3. **Simplicity**: No database connection management
+4. **Performance**: Pure computation without I/O overhead
+5. **Testing**: Easy to test with different inputs
+
+### Why Simple Algorithm?
+
+For MVP, we prioritize:
+- **Fast implementation** and deployment
+- **Explainable** recommendations
+- **Good enough** accuracy for initial users
+- Foundation for **future ML models**
+
+### Future Enhancements
+
+1. **Advanced ML Models**: Train models on historical data
+2. **Collaborative Filtering**: Use user similarity
+3. **Real-time Learning**: Update based on feedback
+4. **A/B Testing**: Compare algorithm variations
+5. **Caching**: Add Redis for frequently requested users
 
 ## License
 
