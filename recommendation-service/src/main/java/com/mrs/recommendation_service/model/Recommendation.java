@@ -1,29 +1,15 @@
 package com.mrs.recommendation_service.model;
 
-import jakarta.persistence.*;
-import lombok.Data;
-
-import java.time.Instant;
 import java.util.UUID;
 
-@Entity
-@Table(name = "recommendations")
-@Data
-public class Recommendation {
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+import java.util.List;
 
-    private UUID userId;
-
-    private UUID mediaId;
-
-    private double score;
-
-    private Instant createdAt;
-
-    public Recommendation(){
-    }
-
-}
+public record Recommendation(
+        @JsonProperty("media_id") UUID mediaId,
+        List<String> genres,
+        @JsonProperty("popularity_score") Double popularityScore,
+        @JsonProperty("recommendation_score") Double recommendationScore,
+        @JsonProperty("content_score") Double contentScore
+) {}
