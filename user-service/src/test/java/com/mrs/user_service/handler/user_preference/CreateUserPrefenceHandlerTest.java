@@ -3,6 +3,7 @@ package com.mrs.user_service.handler.user_preference;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.mrs.user_service.event.CreateUserPrefenceEvent;
 import com.mrs.user_service.model.UserPreference;
 import com.mrs.user_service.repository.UserPreferenceRepository;
 import com.mrs.user_service.repository.UserRepository;
@@ -13,7 +14,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
 
+import javax.management.monitor.StringMonitor;
 import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,6 +27,9 @@ class CreateUserPrefenceHandlerTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private KafkaTemplate<String, CreateUserPrefenceEvent> kafkaTemplate;
 
     @InjectMocks
     private CreateUserPrefenceHandler handler;
