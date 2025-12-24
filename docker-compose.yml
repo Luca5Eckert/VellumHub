@@ -112,19 +112,14 @@ services:
         condition: service_healthy
 
   recommedation-service:
-    build:
-      context: ./recommendation-service
-      dockerfile: Dockerfile
-    container_name: recommendation-service
-    ports:
-      - "8085:8080"
-    env_file:
-      - .env
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: 'kafka:9092'
-      SERVER_PORT: 8080
-      JWT_KEY: ${JWT_KEY}
+      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres:5432/recommendation_db'
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      ML_SERVICE_URL: 'http://ml-service:5000'
     depends_on:
+      postgres:
+        condition: service_healthy
       kafka:
         condition: service_started
 
