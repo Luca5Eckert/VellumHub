@@ -22,6 +22,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .orElseThrow( () -> new UsernameNotFoundException("Invalid credentials"));
 
         return new UserDetailImpl(
+                user.getId(),
                 user.getEmail(),
                 user.getPassword(),
                 user.getRole()
