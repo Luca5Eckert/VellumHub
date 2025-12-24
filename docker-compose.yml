@@ -4,14 +4,14 @@ services:
 
   postgres:
     image: postgres:15
-    container_name: media-db
+    container_name:  media-db
     restart: always
     env_file:
       - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: default_db
+      POSTGRES_DB:  default_db
     ports:
       - "5432:5432"
     volumes:
@@ -49,31 +49,33 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-
   catalog-service:
     build:
       context: ./catalog-service
       dockerfile: Dockerfile
     container_name: catalog-service
     ports:
-      - "8081:8082"
+      - "8081:8080"
     env_file:
       - .env
     environment:
       SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres:5432/catalog_db'
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS:  'kafka:9092'
       SERVER_PORT: 8080
       JWT_KEY: ${JWT_KEY}
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_started
 
   engagement-service:
     build:
-      context: ./engagement-service
+      context:  ./engagement-service
       dockerfile: Dockerfile
-    container_name: engagement-service
+    container_name:  engagement-service
     ports:
       - "8083:8080"
     env_file:
@@ -87,7 +89,7 @@ services:
       JWT_KEY: ${JWT_KEY}
     depends_on:
       postgres:
-        condition: service_healthy
+        condition:  service_healthy
       kafka:
         condition: service_started
 
@@ -104,18 +106,32 @@ services:
       SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres:5432/user_db'
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS:  'kafka:9092'
       JWT_KEY: ${JWT_KEY}
-      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      JWT_EXPIRATION:  ${JWT_EXPIRATION}
       SERVER_PORT: 8080
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_started
 
-  recommedation-service:
+  recommendation-service:
+    build:
+      context: ./recommendation-service
+      dockerfile: Dockerfile
+    container_name: recommendation-service
+    ports:
+      - "8085:8080"
+    env_file:
+      - .env
     environment:
-      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres:5432/recommendation_db'
+      SPRING_DATASOURCE_URL:  'jdbc:postgresql://postgres:5432/recommendation_db'
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS:  'kafka:9092'
+      SERVER_PORT: 8080
+      JWT_KEY: ${JWT_KEY}
       ML_SERVICE_URL: 'http://ml-service:5000'
     depends_on:
       postgres:
@@ -134,11 +150,11 @@ services:
       - .env
     environment:
       DB_HOST: postgres
-      DB_PORT: 5432
+      DB_PORT:  5432
       DB_NAME: recommendation_db
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-      PORT: 5000
+      PORT:  5000
       DEBUG: 'False'
       LOG_LEVEL: INFO
     depends_on:
