@@ -1,0 +1,68 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  java-unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [user-service, catalog-service, engagement-service, recommendation-service]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Run unit tests for ${{ matrix.service }}
+        working-directory: ${{ matrix.service }}
+        run: |
+          ./mvnw test -B -Dtest=*Test -DfailIfNoTests=false
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.service }}
+          path: ${{ matrix.service }}/target/surefire-reports/
+
+  python-unit-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        working-directory: ml-service
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      
+      - name: Run Python tests
+        working-directory: ml-service
+        run: |
+          pytest tests/ -v --cov=services --cov=database --cov-report=xml --cov-report=term
+      
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-coverage
+          path: ml-service/coverage.xml
