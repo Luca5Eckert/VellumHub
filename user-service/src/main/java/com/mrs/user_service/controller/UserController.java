@@ -24,7 +24,7 @@ public class UserController {
     }
 
     @PostMapping
-    @PreAuthorize("ADMIN")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> create(@RequestBody @Valid CreateUserRequest createUserRequest) {
         userService.create(createUserRequest);
         return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -45,7 +45,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("ADMIN")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> update(
             @PathVariable UUID id,
             @RequestBody @Valid UpdateUserRequest updateUserRequest) {
@@ -54,7 +54,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("ADMIN")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         userService.delete(id);
         return ResponseEntity.noContent().build();

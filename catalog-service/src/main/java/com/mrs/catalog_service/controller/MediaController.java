@@ -24,7 +24,7 @@ public class MediaController {
     }
 
     @PostMapping
-    @PreAuthorize("ADMIN")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> create(@RequestBody @Valid CreateMediaRequest createMediaRequest){
         mediaService.create(createMediaRequest);
 
@@ -32,7 +32,7 @@ public class MediaController {
     }
 
     @DeleteMapping
-    @PreAuthorize("ADMIN")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@RequestBody UUID mediaId){
         mediaService.delete(mediaId);
 
