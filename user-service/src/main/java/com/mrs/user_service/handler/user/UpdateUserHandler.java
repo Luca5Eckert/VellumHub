@@ -1,6 +1,9 @@
 package com.mrs.user_service.handler.user;
 
 import com.mrs.user_service.dto.UpdateUserRequest;
+import com.mrs.user_service.exception.application.UserNotFoundException;
+import com.mrs.user_service.exception.domain.EmailAlreadyInUseException;
+import com.mrs.user_service.exception.domain.UserNotUniqueException;
 import com.mrs.user_service.model.UserEntity;
 import com.mrs.user_service.repository.UserRepository;
 import org.springframework.stereotype.Component;
@@ -21,7 +24,7 @@ public class UpdateUserHandler {
     @Transactional
     public void execute(UUID userId, UpdateUserRequest request) {
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found by id: " + userId));
+                .orElseThrow(UserNotFoundException::new);
 
         updateName(user, request.name());
         updateEmail(user, request.email());
@@ -44,7 +47,7 @@ public class UpdateUserHandler {
         }
 
         if (userRepository.existsByEmail(newEmail)) {
-            throw new IllegalArgumentException("Email already in use");
+            throw new EmailAlreadyInUseException(newEmail);
         }
 
         user.setEmail(newEmail);
