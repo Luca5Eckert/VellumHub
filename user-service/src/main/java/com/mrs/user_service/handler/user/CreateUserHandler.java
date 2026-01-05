@@ -1,5 +1,6 @@
 package com.mrs.user_service.handler.user;
 
+import com.mrs.user_service.exception.domain.UserNotUniqueException;
 import com.mrs.user_service.model.UserEntity;
 import com.mrs. user_service.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,7 +21,7 @@ public class CreateUserHandler {
     @Transactional
     public void execute(UserEntity user) {
         if (userRepository.existsByEmail(user.getEmail())) {
-            throw new IllegalArgumentException("Email already in use");
+            throw new UserNotUniqueException();
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
