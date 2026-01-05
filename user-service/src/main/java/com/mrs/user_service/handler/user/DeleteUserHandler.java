@@ -1,5 +1,6 @@
 package com.mrs.user_service.handler.user;
 
+import com.mrs.user_service.exception.application.UserNotFoundException;
 import com.mrs.user_service.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,7 @@ public class DeleteUserHandler {
     @Transactional
     public void execute(UUID userId){
         if(!userRepository.existsById(userId)) {
-            throw new IllegalArgumentException("User not exist");
+            throw new UserNotFoundException();
         }
 
         userRepository.deleteById(userId);
