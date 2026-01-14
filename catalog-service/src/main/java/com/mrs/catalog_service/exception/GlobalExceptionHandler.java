@@ -2,6 +2,8 @@ package com.mrs.catalog_service.exception;
 
 import com.mrs.catalog_service.exception.application.MediaApplicationException;
 import com.mrs.catalog_service.exception.domain.media.MediaDomainException;
+import com.mrs.catalog_service.exception.domain.media.MediaNotExistException;
+import com.mrs.catalog_service.exception.domain.media.MediaNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +43,36 @@ public class GlobalExceptionHandler {
                 .error("Validation Error")
                 .message("Input validation failed")
                 .details(errors)
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build());
+    }
+
+    @ExceptionHandler(MediaNotFoundException.class)
+    public ResponseEntity<ApiResponseError> handleMediaNotFoundException(
+            MediaNotFoundException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value())
+                .error("Media Not Found")
+                .message(ex.getMessage())
+                .details(List.of("The requested media resource was not found"))
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build());
+    }
+
+    @ExceptionHandler(MediaNotExistException.class)
+    public ResponseEntity<ApiResponseError> handleMediaNotExistException(
+            MediaNotExistException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value())
+                .error("Media Not Found")
+                .message(ex.getMessage())
+                .details(List.of("The requested media resource does not exist"))
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());

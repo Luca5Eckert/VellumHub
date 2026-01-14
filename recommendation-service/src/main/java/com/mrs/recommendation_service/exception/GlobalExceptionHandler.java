@@ -2,8 +2,10 @@ package com.mrs.recommendation_service.exception;
 
 import com.mrs.recommendation_service.exception.application.RecommendationApplicationException;
 import com.mrs.recommendation_service.exception.domain.media_feature.MediaFeatureDomainException;
+import com.mrs.recommendation_service.exception.domain.media_feature.MediaFeatureNotFoundException;
 import com.mrs.recommendation_service.exception.domain.recommendation.RecommendationDomainException;
 import com.mrs.recommendation_service.exception.domain.user_profile.UserProfileDomainException;
+import com.mrs.recommendation_service.exception.domain.user_profile.UserProfileNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +60,36 @@ public class GlobalExceptionHandler {
                 .error("Recommendation Domain Error")
                 .message(ex.getMessage())
                 .details(List.of("Business rule violation in recommendation domain"))
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build());
+    }
+
+    @ExceptionHandler(UserProfileNotFoundException.class)
+    public ResponseEntity<ApiResponseError> handleUserProfileNotFoundException(
+            UserProfileNotFoundException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value())
+                .error("User Profile Not Found")
+                .message(ex.getMessage())
+                .details(List.of("The requested user profile was not found"))
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build());
+    }
+
+    @ExceptionHandler(MediaFeatureNotFoundException.class)
+    public ResponseEntity<ApiResponseError> handleMediaFeatureNotFoundException(
+            MediaFeatureNotFoundException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value())
+                .error("Media Feature Not Found")
+                .message(ex.getMessage())
+                .details(List.of("The requested media feature was not found"))
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
