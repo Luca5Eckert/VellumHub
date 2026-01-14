@@ -1,6 +1,7 @@
 package com.mrs.catalog_service.handler;
 
 import com.mrs.catalog_service.event.DeleteMediaEvent;
+import com.mrs.catalog_service.exception.domain.media.MediaNotExistException;
 import com.mrs.catalog_service.repository.MediaRepository;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -21,7 +22,7 @@ public class DeleteMediaHandler {
 
     @Transactional
     public void execute(UUID mediaId){
-        if(!mediaRepository.existsById(mediaId)) throw new IllegalArgumentException("Media not exist");
+        if(!mediaRepository.existsById(mediaId)) throw new MediaNotExistException(mediaId.toString());
 
         mediaRepository.deleteById(mediaId);
 

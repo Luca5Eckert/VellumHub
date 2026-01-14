@@ -1,5 +1,6 @@
 package com.mrs.catalog_service.handler;
 
+import com.mrs.catalog_service.exception.domain.media.MediaNotFoundException;
 import com.mrs.catalog_service.model.Media;
 import com.mrs.catalog_service.repository.MediaRepository;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,7 @@ public class GetMediaHandler {
 
     public Media execute(UUID mediaId){
         return mediaRepository.findById(mediaId)
-                .orElseThrow(() -> new RuntimeException("Media not found"));
+                .orElseThrow(() -> new MediaNotFoundException(mediaId.toString()));
     }
 
 }

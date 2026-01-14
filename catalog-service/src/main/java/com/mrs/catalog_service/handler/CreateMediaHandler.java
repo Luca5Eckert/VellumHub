@@ -1,5 +1,6 @@
 package com.mrs.catalog_service.handler;
 
+import com.mrs.catalog_service.exception.domain.media.InvalidMediaException;
 import com.mrs.catalog_service.model.Media;
 import com.mrs.catalog_service.repository.MediaRepository;
 import com.mrs.catalog_service.event.CreateMediaEvent;
@@ -20,7 +21,7 @@ public class CreateMediaHandler {
     }
 
     public void handler(Media media){
-        if(media == null) throw new IllegalArgumentException("Media can't be null");
+        if(media == null) throw new InvalidMediaException();
 
         mediaRepository.save(media);
 

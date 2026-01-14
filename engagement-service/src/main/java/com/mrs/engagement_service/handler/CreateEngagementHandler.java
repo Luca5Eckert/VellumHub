@@ -1,6 +1,7 @@
 package com.mrs.engagement_service.handler;
 
 import com.mrs.engagement_service.event.InteractionEvent;
+import com.mrs.engagement_service.exception.domain.interaction.InvalidInteractionException;
 import com.mrs.engagement_service.model.Interaction;
 import com.mrs.engagement_service.repository.EngagementRepository;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -21,7 +22,7 @@ public class CreateEngagementHandler {
     }
 
     public void handler(Interaction interaction){
-        if(interaction == null) throw new IllegalArgumentException("Interaction can't be null");
+        if(interaction == null) throw new InvalidInteractionException();
 
         engagementRepository.save(interaction);
 
