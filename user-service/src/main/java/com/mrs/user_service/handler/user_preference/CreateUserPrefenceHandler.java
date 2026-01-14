@@ -1,6 +1,7 @@
 package com.mrs.user_service.handler.user_preference;
 
 import com.mrs.user_service.event.CreateUserPrefenceEvent;
+import com.mrs.user_service.exception.domain.user_preference.UserPreferenceAlreadyExistException;
 import com.mrs.user_service.model.UserPreference;
 import com.mrs.user_service.repository.UserPreferenceRepository;
 import com.mrs.user_service.repository.UserRepository;
@@ -27,7 +28,7 @@ public class CreateUserPrefenceHandler {
         if(!userRepository.existsById(userPreference.getUserId())) throw new IllegalArgumentException("User not found");
 
         // Race condition //
-        if(userPreferenceRepository.existsByUserId(userPreference.getUserId())) throw new IllegalArgumentException("User already have a preference");
+        if(userPreferenceRepository.existsByUserId(userPreference.getUserId())) throw new UserPreferenceAlreadyExistException("User already have a preference");
 
         userPreferenceRepository.save(userPreference);
 

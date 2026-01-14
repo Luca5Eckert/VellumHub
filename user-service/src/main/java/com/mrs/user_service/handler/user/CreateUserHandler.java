@@ -1,6 +1,6 @@
 package com.mrs.user_service.handler.user;
 
-import com.mrs.user_service.exception.domain.UserNotUniqueException;
+import com.mrs.user_service.exception.domain.user.UserNotUniqueException;
 import com.mrs.user_service.model.UserEntity;
 import com.mrs. user_service.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;

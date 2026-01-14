@@ -2,8 +2,7 @@ package com.mrs.user_service.handler.user;
 
 import com.mrs.user_service.dto.UpdateUserRequest;
 import com.mrs.user_service.exception.application.UserNotFoundException;
-import com.mrs.user_service.exception.domain.EmailAlreadyInUseException;
-import com.mrs.user_service.exception.domain.UserNotUniqueException;
+import com.mrs.user_service.exception.domain.user.EmailAlreadyInUseException;
 import com.mrs.user_service.model.UserEntity;
 import com.mrs.user_service.repository.UserRepository;
 import org.springframework.stereotype.Component;
