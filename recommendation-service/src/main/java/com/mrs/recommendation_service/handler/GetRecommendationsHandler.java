@@ -2,6 +2,7 @@ package com.mrs.recommendation_service.handler;
 
 import com.mrs.recommendation_service.dto.GetRecommendationRequest;
 import com.mrs.recommendation_service.dto.RecommendationMlResponse;
+import com.mrs.recommendation_service.exception.domain.user_profile.UserProfileNotFoundException;
 import com.mrs.recommendation_service.model.Recommendation;
 import com.mrs.recommendation_service.model.UserProfile;
 import com.mrs.recommendation_service.repository.UserProfileRepository;
@@ -28,7 +29,7 @@ public class GetRecommendationsHandler {
 
     public List<Recommendation> execute(UUID userId) {
         UserProfile userProfile = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User profile not found"));
+                .orElseThrow(() -> new UserProfileNotFoundException(userId.toString()));
 
         GetRecommendationRequest request = GetRecommendationRequest.builder()
                 .userProfile(GetRecommendationRequest.UserProfileDTO.fromEntity(userProfile))

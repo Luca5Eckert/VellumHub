@@ -1,6 +1,7 @@
 package com.mrs.recommendation_service.service;
 
 import com.mrs.recommendation_service.event.InteractionEvent;
+import com.mrs.recommendation_service.exception.domain.media_feature.MediaFeatureNotFoundException;
 import com.mrs.recommendation_service.model.MediaFeature;
 import com.mrs.recommendation_service.model.UserProfile;
 import com.mrs.recommendation_service.repository.MediaFeatureRepository;
@@ -27,7 +28,7 @@ public class UserProfileService {
                 interactionEvent.userId(), interactionEvent.mediaId(), interactionEvent.interactionType());
 
         MediaFeature mediaInteraction = mediaFeatureRepository.findById(interactionEvent.mediaId())
-                .orElseThrow(() -> new RuntimeException("Media not found with ID: " + interactionEvent.mediaId()));
+                .orElseThrow(() -> new MediaFeatureNotFoundException(interactionEvent.mediaId().toString()));
 
         UserProfile userProfile = userProfileRepository.findById(interactionEvent.userId())
                 .orElse(new UserProfile(interactionEvent.userId()));
