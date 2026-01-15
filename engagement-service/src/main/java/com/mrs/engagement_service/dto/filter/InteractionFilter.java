@@ -1,6 +1,8 @@
 package com.mrs.engagement_service.dto.filter;
 
 import com.mrs.engagement_service.model.InteractionType;
+import lombok.Builder;
+
 import java.time.OffsetDateTime;
 
 /**
