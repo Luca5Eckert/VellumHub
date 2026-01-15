@@ -6,6 +6,7 @@ import com.mrs.engagement_service.model.Interaction;
 import com.mrs.engagement_service.repository.EngagementRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -28,7 +29,12 @@ public class EngagementRepositoryAdapter implements EngagementRepository {
 
     @Override
     public Page<Interaction> findAll(UUID userId, InteractionFilter interactionFilter, PageRequest pageRequest) {
-        return null;
+        Specification<Interaction> interactionSpecification = interactionFilterProvider.of(
+                interactionFilter,
+                userId
+        );
+
+        return engagementRepositoryJpa.findAll(interactionSpecification, pageRequest);
     }
 
 }
