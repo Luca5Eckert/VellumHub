@@ -1,6 +1,7 @@
 package com.mrs.engagement_service.infrastructure.repository;
 
 import com.mrs.engagement_service.dto.filter.InteractionFilter;
+import com.mrs.engagement_service.infrastructure.provider.InteractionFilterProvider;
 import com.mrs.engagement_service.model.Interaction;
 import com.mrs.engagement_service.repository.EngagementRepository;
 import org.springframework.data.domain.Page;
@@ -13,9 +14,11 @@ import java.util.UUID;
 public class EngagementRepositoryAdapter implements EngagementRepository {
 
     public final EngagementRepositoryJpa engagementRepositoryJpa;
+    public final InteractionFilterProvider interactionFilterProvider;
 
-    public EngagementRepositoryAdapter(EngagementRepositoryJpa engagementRepositoryJpa) {
+    public EngagementRepositoryAdapter(EngagementRepositoryJpa engagementRepositoryJpa, InteractionFilterProvider interactionFilterProvider) {
         this.engagementRepositoryJpa = engagementRepositoryJpa;
+        this.interactionFilterProvider = interactionFilterProvider;
     }
 
     @Override
