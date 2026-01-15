@@ -1,28 +1,45 @@
 package com.mrs.catalog_service.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(name = "medias")
-@Data
+@Getter
+@Setter
+// Improvement: Avoids circular references and performance issues by using only ID for equality
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+// Improvement: Automatically handles createdAt and updatedAt
+@EntityListeners(AuditingEntityListener.class)
 public class Media {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID) // Fixed: IDENTITY does not work well with UUIDs
+    @EqualsAndHashCode.Include
     private UUID id;
 
+    @Column(nullable = false)
     private String title;
 
+    @Column(length = 1000) // Improvement: Define explicit length for descriptions
     private String description;
 
+    @Column(nullable = false)
     private int releaseYear;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private MediaType mediaType;
 
     private String coverUrl;
@@ -30,9 +47,12 @@ public class Media {
     @Version
     private long version;
 
-    private Instant createAt;
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt; // Renamed to standard 'createdAt'
 
-    private Instant updateAt;
+    @LastModifiedDate
+    private Instant updatedAt; // Renamed to standard 'updatedAt'
 
     private Instant deletedAt;
 
@@ -43,83 +63,44 @@ public class Media {
     )
     @Enumerated(EnumType.STRING)
     @Column(name = "genre_name")
-    private List<Genre> genres;
+    @Builder.Default // Ensures the builder initializes this as an empty list if null
+    private List<Genre> genres = new ArrayList<>();
 
-    public Media() {
-    }
-
-    public Media(Builder builder) {
-        this.title = builder.title;
-        this.description = builder.description;
-        this.releaseYear = builder.releaseYear;
-        this.mediaType = builder.mediaType;
-        this.coverUrl = builder.coverUrl;
-        this.createAt = builder.createAt;
-        this.updateAt = builder.updateAt;
-        this.deletedAt = null;
-        this.genres = builder.genres;
-    }
-
-    public static class Builder {
-
-        private String title;
-        private String description;
-        private MediaType mediaType;
-        private int releaseYear;
-        private String coverUrl;
-        private Instant createAt;
-        private Instant updateAt;
-        private List<Genre> genres;
-
-        public Builder() {
-        }
-
-        public Builder title(String title) {
+    /**
+     * Domain method to update the entity.
+     * This keeps the business logic inside the domain (Rich Domain Model).
+     */
+    public void update(
+            String title,
+            String description,
+            String coverUrl,
+            Integer releaseYear,
+            List<Genre> genres
+    ) {
+        if (title != null && !title.isBlank()) {
             this.title = title;
-            return this;
         }
 
-        public Builder description(String description) {
+        if (description != null && !description.isBlank()) {
             this.description = description;
-            return this;
         }
 
-        public Builder mediaType(MediaType mediaType) {
-            this.mediaType = mediaType;
-            return this;
-        }
-
-
-        public Builder releaseYear(int releaseYear) {
-            this.releaseYear = releaseYear;
-            return this;
-        }
-
-        public Builder coverUrl(String coverUrl) {
+        if (coverUrl != null && !coverUrl.isBlank()) {
             this.coverUrl = coverUrl;
-            return this;
         }
 
-        public Builder createAt(Instant createAt) {
-            this.createAt = createAt;
-            return this;
+        if (releaseYear != null) {
+            if (releaseYear <= 0) {
+                throw new IllegalArgumentException("Release year must be positive");
+            }
+            this.releaseYear = releaseYear;
         }
 
-        public Builder updateAt(Instant updateAt) {
-            this.updateAt = updateAt;
-            return this;
+        if (genres != null) {
+            if (genres.isEmpty()) {
+                throw new IllegalArgumentException("Media must have at least one genre");
+            }
+            this.genres = new ArrayList<>(genres);
         }
-
-        public Builder genres(List<Genre> genres) {
-            this.genres = genres;
-            return this;
-        }
-
-        public Media build() {
-            return new Media(this);
-        }
-
-
     }
-
 }

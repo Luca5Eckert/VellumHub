@@ -5,11 +5,12 @@ import com.mrs.engagement_service.model.Interaction;
 import com.mrs.engagement_service.repository.EngagementRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-@Service
+@Component
 public class GetUserInteractionHandler {
 
     private final EngagementRepository engagementRepository;
