@@ -2,6 +2,7 @@ package com.mrs.catalog_service.domain.handler;
 
 import com.mrs.catalog_service.domain.exception.InvalidMediaException;
 import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.port.EventProducer;
 import com.mrs.catalog_service.domain.repository.MediaRepository;
 import com.mrs.catalog_service.domain.event.CreateMediaEvent;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -11,13 +12,12 @@ import org.springframework.stereotype.Component;
 public class CreateMediaHandler {
 
     private final MediaRepository mediaRepository;
+    private final EventProducer<String, CreateMediaEvent> eventProducer;
 
-    private final  KafkaTemplate<String, CreateMediaEvent> kafka;
 
-
-    public CreateMediaHandler(MediaRepository mediaRepository, KafkaTemplate<String, CreateMediaEvent> kafka) {
+    public CreateMediaHandler(MediaRepository mediaRepository, EventProducer<String, CreateMediaEvent> eventProducer) {
         this.mediaRepository = mediaRepository;
-        this.kafka = kafka;
+        this.eventProducer = eventProducer;
     }
 
     public void handler(Media media){
@@ -30,7 +30,7 @@ public class CreateMediaHandler {
                 media.getGenres().stream().map(Enum::toString).toList()
         );
 
-        kafka.send("create-media", createMediaEvent.mediaId().toString(), createMediaEvent);
+        eventProducer.send("create-media", createMediaEvent.mediaId().toString(), createMediaEvent);
     }
 
 }
