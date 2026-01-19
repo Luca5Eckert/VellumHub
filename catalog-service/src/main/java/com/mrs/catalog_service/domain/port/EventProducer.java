@@ -1,7 +1,7 @@
 package com.mrs.catalog_service.domain.port;
 
-public interface EventProducer<T,K> {
+public interface EventProducer<K, V> {
 
-    void send(String topic, T key, K value);
+    void send(String topic, K key, V value);
 
 }

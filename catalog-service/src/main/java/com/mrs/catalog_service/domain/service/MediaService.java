@@ -5,7 +5,6 @@ import com.mrs.catalog_service.application.dto.GetMediaResponse;
 import com.mrs.catalog_service.application.dto.PageMedia;
 import com.mrs.catalog_service.application.dto.UpdateMediaRequest;
 import com.mrs.catalog_service.domain.handler.*;
-import com.mrs.catalog_service.handler.*;
 import com.mrs.catalog_service.application.mapper.MediaMapper;
 import com.mrs.catalog_service.domain.model.Media;
 import org.springframework.data.domain.Page;
