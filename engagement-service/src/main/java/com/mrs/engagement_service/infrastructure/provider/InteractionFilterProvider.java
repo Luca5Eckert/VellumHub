@@ -1,7 +1,7 @@
 package com.mrs.engagement_service.infrastructure.provider;
 
-import com.mrs.engagement_service.dto.filter.InteractionFilter;
-import com.mrs.engagement_service.model.Interaction;
+import com.mrs.engagement_service.application.dto.filter.InteractionFilter;
+import com.mrs.engagement_service.domain.model.Interaction;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;

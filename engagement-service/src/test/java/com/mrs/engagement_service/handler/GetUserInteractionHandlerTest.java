@@ -1,9 +1,10 @@
 package com.mrs.engagement_service.handler;
 
-import com.mrs.engagement_service.dto.filter.InteractionFilter;
-import com.mrs.engagement_service.model.Interaction;
-import com.mrs.engagement_service.model.InteractionType;
-import com.mrs.engagement_service.repository.EngagementRepository;
+import com.mrs.engagement_service.application.dto.filter.InteractionFilter;
+import com.mrs.engagement_service.domain.handler.GetUserInteractionHandler;
+import com.mrs.engagement_service.domain.model.Interaction;
+import com.mrs.engagement_service.domain.model.InteractionType;
+import com.mrs.engagement_service.domain.port.EngagementRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

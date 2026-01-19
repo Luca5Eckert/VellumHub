@@ -1,9 +1,9 @@
 package com.mrs.engagement_service.infrastructure.repository;
 
-import com.mrs.engagement_service.dto.filter.InteractionFilter;
+import com.mrs.engagement_service.application.dto.filter.InteractionFilter;
 import com.mrs.engagement_service.infrastructure.provider.InteractionFilterProvider;
-import com.mrs.engagement_service.model.Interaction;
-import com.mrs.engagement_service.repository.EngagementRepository;
+import com.mrs.engagement_service.domain.model.Interaction;
+import com.mrs.engagement_service.domain.port.EngagementRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
