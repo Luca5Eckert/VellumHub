@@ -5,7 +5,7 @@ import com.mrs.recommendation_service.application.dto.RecommendationMlResponse;
 import com.mrs.recommendation_service.domain.exception.user_profile.UserProfileNotFoundException;
 import com.mrs.recommendation_service.domain.model.Recommendation;
 import com.mrs.recommendation_service.domain.model.UserProfile;
-import com.mrs.recommendation_service.infrastructure.repository.UserProfileRepository;
+import com.mrs.recommendation_service.domain.port.UserProfileRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
