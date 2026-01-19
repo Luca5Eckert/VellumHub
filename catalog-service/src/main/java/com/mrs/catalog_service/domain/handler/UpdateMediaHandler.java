@@ -1,26 +1,24 @@
 package com.mrs.catalog_service.domain.handler;
 
 import com.mrs.catalog_service.application.dto.UpdateMediaRequest;
+import com.mrs.catalog_service.domain.event.UpdateMediaEvent;
 import com.mrs.catalog_service.domain.exception.MediaNotFoundException;
 import com.mrs.catalog_service.domain.model.Media;
 import com.mrs.catalog_service.domain.port.EventProducer;
 import com.mrs.catalog_service.domain.repository.MediaRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
 import java.util.UUID;
 
-@Slf4j
 @Component
 public class UpdateMediaHandler {
 
     private final MediaRepository mediaRepository;
-    private final EventProducer eventProducer;
+    private final EventProducer<String, UpdateMediaEvent> eventProducer;
 
-    public UpdateMediaHandler(MediaRepository mediaRepository, EventProducer eventProducer) {
+    public UpdateMediaHandler(MediaRepository mediaRepository, EventProducer<String, UpdateMediaEvent> eventProducer) {
         this.mediaRepository = mediaRepository;
         this.eventProducer = eventProducer;
     }
@@ -41,6 +39,17 @@ public class UpdateMediaHandler {
         );
 
         mediaRepository.save(media);
+
+        if(request.genres() == null) return;
+
+        UpdateMediaEvent updateMediaEvent = new UpdateMediaEvent(
+                media.getId().toString(),
+                request.genres().stream().map(Objects::toString).toList()
+        );
+
+        eventProducer.send("update-media", media.getId().toString(), updateMediaEvent);
+
     }
+
 
 }
