@@ -36,4 +36,9 @@ public class MediaRepositoryAdapter implements MediaRepository {
         return mediaRepositoryJpa.findById(mediaId);
     }
 
+    @Override
+    public void deleteById(UUID mediaId) {
+        mediaRepositoryJpa.deleteById(mediaId);
+    }
+
 }

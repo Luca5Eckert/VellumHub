@@ -17,4 +17,5 @@ public interface MediaRepository {
 
     Optional<Media> findById(UUID mediaId);
 
+    void deleteById(UUID mediaId);
 }
