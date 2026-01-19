@@ -1,6 +1,7 @@
 package com.mrs.engagement_service.infrastructure.repository;
 
 import com.mrs.engagement_service.application.dto.filter.InteractionFilter;
+import com.mrs.engagement_service.domain.model.EngagementStatus;
 import com.mrs.engagement_service.infrastructure.provider.InteractionFilterProvider;
 import com.mrs.engagement_service.domain.model.Interaction;
 import com.mrs.engagement_service.domain.port.EngagementRepository;
@@ -35,6 +36,11 @@ public class EngagementRepositoryAdapter implements EngagementRepository {
         );
 
         return engagementRepositoryJpa.findAll(interactionSpecification, pageRequest);
+    }
+
+    @Override
+    public EngagementStatus findStatusByMediaId(UUID mediaId) {
+        return engagementRepositoryJpa.findStatusByMediaId(mediaId);
     }
 
 }

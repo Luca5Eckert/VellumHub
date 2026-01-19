@@ -1,7 +1,7 @@
 package com.mrs.engagement_service.application.mapper;
 
 import com.mrs.engagement_service.application.dto.InteractionGetResponse;
-import com.mrs.engagement_service.model.Interaction;
+import com.mrs.engagement_service.domain.model.Interaction;
 import org.springframework.stereotype.Component;
 
 @Component
