@@ -1,6 +1,7 @@
 package com.mrs.recommendation_service.application.consumer;
 
 import com.mrs.recommendation_service.application.event.CreateMediaEvent;
+import com.mrs.recommendation_service.domain.handler.CreateMediaFeatureHandler;
 import com.mrs.recommendation_service.domain.model.MediaFeature;
 import com.mrs.recommendation_service.domain.port.MediaFeatureRepository;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -9,11 +10,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class CreateMediaConsumerEvent {
 
-    private final MediaFeatureRepository mediaFeatureRepository;
+    private final CreateMediaFeatureHandler createMediaFeatureHandler;
 
-    public CreateMediaConsumerEvent(MediaFeatureRepository mediaFeatureRepository) {
-        this.mediaFeatureRepository = mediaFeatureRepository;
+    public CreateMediaConsumerEvent(CreateMediaFeatureHandler createMediaFeatureHandler) {
+        this.createMediaFeatureHandler = createMediaFeatureHandler;
     }
+
 
     @KafkaListener(topics = "create-media", groupId = "recommendation-service")
     public void listen(CreateMediaEvent createMediaEvent){
@@ -22,7 +24,7 @@ public class CreateMediaConsumerEvent {
                 createMediaEvent.genres()
         );
 
-        mediaFeatureRepository.save(mediaFeature);
+        createMediaFeatureHandler.execute(mediaFeature);
     }
 
 }
