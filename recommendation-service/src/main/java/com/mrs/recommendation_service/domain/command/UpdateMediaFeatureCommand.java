@@ -1,9 +1,9 @@
-package com.mrs.catalog_service.domain.event;
+package com.mrs.recommendation_service.domain.command;
 
 import java.util.List;
 import java.util.UUID;
 
-public record UpdateMediaEvent(
+public record UpdateMediaFeatureCommand(
         UUID mediaId,
         List<String> genres
 ) {

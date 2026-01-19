@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.domain.event;
+package com.mrs.recommendation_service.application.event;
 
 import java.util.List;
 import java.util.UUID;
@@ -8,3 +8,4 @@ public record UpdateMediaEvent(
         List<String> genres
 ) {
 }
+

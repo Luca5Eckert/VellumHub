@@ -34,4 +34,7 @@ public class MediaFeature {
         this.genres = genres;
     }
 
+    public void update(List<String> genres) {
+        this.genres = genres;
+    }
 }

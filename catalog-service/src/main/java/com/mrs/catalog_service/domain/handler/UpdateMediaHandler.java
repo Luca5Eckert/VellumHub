@@ -43,7 +43,7 @@ public class UpdateMediaHandler {
         if(request.genres() == null) return;
 
         UpdateMediaEvent updateMediaEvent = new UpdateMediaEvent(
-                media.getId().toString(),
+                media.getId(),
                 request.genres().stream().map(Objects::toString).toList()
         );
 
