@@ -1,6 +1,6 @@
 package com.mrs.engagement_service.domain.model;
 
-public interface EngagementStatus {
+public interface EngagementStats {
 
     long getTotalViews();
     long getTotalLikes();

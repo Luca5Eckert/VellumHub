@@ -1,6 +1,6 @@
 package com.mrs.engagement_service.domain.handler;
 
-import com.mrs.engagement_service.domain.model.EngagementStatus;
+import com.mrs.engagement_service.domain.model.EngagementStats;
 import com.mrs.engagement_service.domain.port.EngagementRepository;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +15,7 @@ public class GetMediaStatsHandler {
         this.engagementRepository = engagementRepository;
     }
 
-    public EngagementStatus execute(UUID mediaId){
+    public EngagementStats execute(UUID mediaId){
         return engagementRepository.findStatusByMediaId(mediaId);
     }
 

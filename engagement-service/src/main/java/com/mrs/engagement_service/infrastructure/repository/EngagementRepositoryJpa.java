@@ -1,6 +1,6 @@
 package com.mrs.engagement_service.infrastructure.repository;
 
-import com.mrs.engagement_service.domain.model.EngagementStatus;
+import com.mrs.engagement_service.domain.model.EngagementStats;
 import com.mrs.engagement_service.domain.model.Interaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -24,6 +24,6 @@ public interface EngagementRepositoryJpa extends JpaRepository<Interaction, Long
         FROM Interaction i
         WHERE i.mediaId = :mediaId
     """)
-    EngagementStatus findStatusByMediaId(UUID mediaId);
+    EngagementStats findStatusByMediaId(UUID mediaId);
 
 }
