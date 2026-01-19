@@ -5,7 +5,7 @@ import com.mrs.catalog_service.domain.event.UpdateMediaEvent;
 import com.mrs.catalog_service.domain.exception.MediaNotFoundException;
 import com.mrs.catalog_service.domain.model.Media;
 import com.mrs.catalog_service.domain.port.EventProducer;
-import com.mrs.catalog_service.domain.repository.MediaRepository;
+import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

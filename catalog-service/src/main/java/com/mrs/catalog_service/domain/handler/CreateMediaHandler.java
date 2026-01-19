@@ -3,9 +3,8 @@ package com.mrs.catalog_service.domain.handler;
 import com.mrs.catalog_service.domain.exception.InvalidMediaException;
 import com.mrs.catalog_service.domain.model.Media;
 import com.mrs.catalog_service.domain.port.EventProducer;
-import com.mrs.catalog_service.domain.repository.MediaRepository;
+import com.mrs.catalog_service.domain.port.MediaRepository;
 import com.mrs.catalog_service.domain.event.CreateMediaEvent;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component

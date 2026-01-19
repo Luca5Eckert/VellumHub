@@ -2,7 +2,7 @@ package com.mrs.catalog_service.domain.handler;
 
 import com.mrs.catalog_service.application.dto.PageMedia;
 import com.mrs.catalog_service.domain.model.Media;
-import com.mrs.catalog_service.domain.repository.MediaRepository;
+import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;

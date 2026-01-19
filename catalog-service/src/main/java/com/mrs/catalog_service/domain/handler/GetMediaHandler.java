@@ -2,7 +2,7 @@ package com.mrs.catalog_service.domain.handler;
 
 import com.mrs.catalog_service.domain.exception.MediaNotFoundException;
 import com.mrs.catalog_service.domain.model.Media;
-import com.mrs.catalog_service.domain.repository.MediaRepository;
+import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;

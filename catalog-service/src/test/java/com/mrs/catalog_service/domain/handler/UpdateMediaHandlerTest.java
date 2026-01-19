@@ -6,7 +6,7 @@ import com.mrs.catalog_service.domain.exception.MediaNotFoundException;
 import com.mrs.catalog_service.domain.model.Genre;
 import com.mrs.catalog_service.domain.model.Media;
 import com.mrs.catalog_service.domain.port.EventProducer;
-import com.mrs.catalog_service.domain.repository.MediaRepository;
+import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
