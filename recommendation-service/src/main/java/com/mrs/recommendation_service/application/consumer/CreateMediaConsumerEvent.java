@@ -1,9 +1,8 @@
 package com.mrs.recommendation_service.application.consumer;
 
 import com.mrs.recommendation_service.application.event.CreateMediaEvent;
-import com.mrs.recommendation_service.domain.handler.CreateMediaFeatureHandler;
+import com.mrs.recommendation_service.domain.handler.media_feature.CreateMediaFeatureHandler;
 import com.mrs.recommendation_service.domain.model.MediaFeature;
-import com.mrs.recommendation_service.domain.port.MediaFeatureRepository;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 

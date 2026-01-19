@@ -1,6 +1,6 @@
 package com.mrs.recommendation_service.domain.service;
 
-import com.mrs.recommendation_service.domain.handler.GetRecommendationsHandler;
+import com.mrs.recommendation_service.domain.handler.media_feature.GetRecommendationsHandler;
 import com.mrs.recommendation_service.domain.model.Recommendation;
 import org.springframework.stereotype.Service;
 

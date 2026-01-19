@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.domain.handler;
+package com.mrs.recommendation_service.domain.handler.media_feature;
 
 import com.mrs.recommendation_service.domain.model.MediaFeature;
 import com.mrs.recommendation_service.domain.port.MediaFeatureRepository;

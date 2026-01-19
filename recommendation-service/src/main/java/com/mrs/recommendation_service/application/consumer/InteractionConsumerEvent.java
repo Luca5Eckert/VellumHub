@@ -1,7 +1,8 @@
 package com.mrs.recommendation_service.application.consumer;
 
 import com.mrs.recommendation_service.application.event.InteractionEvent;
-import com.mrs.recommendation_service.domain.service.UserProfileService;
+import com.mrs.recommendation_service.domain.command.UpdateUserProfileCommand;
+import com.mrs.recommendation_service.domain.handler.user_profile.UpdateUserProfileHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -11,10 +12,10 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class InteractionConsumerEvent {
 
-    private final UserProfileService userProfileService;
+    private final UpdateUserProfileHandler updateUserProfileHandler;
 
-    public InteractionConsumerEvent(UserProfileService userProfileService) {
-        this.userProfileService = userProfileService;
+    public InteractionConsumerEvent(UpdateUserProfileHandler updateUserProfileHandler) {
+        this.updateUserProfileHandler = updateUserProfileHandler;
     }
 
     @KafkaListener(
@@ -29,8 +30,15 @@ public class InteractionConsumerEvent {
                 interactionEvent.mediaId(),
                 interactionEvent.interactionType());
 
+        UpdateUserProfileCommand updateUserProfileCommand = new UpdateUserProfileCommand(
+                interactionEvent.userId(),
+                interactionEvent.mediaId(),
+                interactionEvent.interactionType(),
+                interactionEvent.interactionValue()
+        );
+
         try {
-            userProfileService.update(interactionEvent);
+            updateUserProfileHandler.execute(updateUserProfileCommand);
             log.info("Evento processado com sucesso");
 
         } catch (RuntimeException e) {
@@ -44,4 +52,5 @@ public class InteractionConsumerEvent {
         }
 
     }
+
 }

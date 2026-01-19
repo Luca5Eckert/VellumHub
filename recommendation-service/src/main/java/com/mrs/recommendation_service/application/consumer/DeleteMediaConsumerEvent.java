@@ -1,6 +1,7 @@
 package com.mrs.recommendation_service.application.consumer;
 
 import com.mrs.recommendation_service.application.event.DeleteMediaEvent;
+import com.mrs.recommendation_service.domain.handler.media_feature.DeleteMediaFeatureHandler;
 import com.mrs.recommendation_service.domain.port.MediaFeatureRepository;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -8,14 +9,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class DeleteMediaConsumerEvent {
 
-    private final MediaFeatureRepository mediaFeatureRepository;
+    private final DeleteMediaFeatureHandler deleteMediaFeatureHandler;
 
-    public DeleteMediaConsumerEvent(MediaFeatureRepository mediaFeatureRepository) {
-        this.mediaFeatureRepository = mediaFeatureRepository;
+    public DeleteMediaConsumerEvent(DeleteMediaFeatureHandler deleteMediaFeatureHandler) {
+        this.deleteMediaFeatureHandler = deleteMediaFeatureHandler;
     }
+
 
     @KafkaListener(topics = "delete-media", groupId = "recommendation-service")
     public void listen(DeleteMediaEvent deleteMediaEvent){
-        mediaFeatureRepository.deleteById(deleteMediaEvent.mediaId());
+        deleteMediaFeatureHandler.execute(deleteMediaEvent.mediaId());
     }
+
 }
