@@ -2,12 +2,12 @@ package com.mrs.catalog_service.controller;
 
 import com.mrs.catalog_service.dto.CreateMediaRequest;
 import com.mrs.catalog_service.dto.GetMediaResponse;
+import com.mrs.catalog_service.dto.UpdateMediaRequest; // Import adicionado
 import com.mrs.catalog_service.service.MediaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,23 +25,24 @@ public class MediaController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> create(@RequestBody @Valid CreateMediaRequest createMediaRequest){
+    public ResponseEntity<Void> create(@RequestBody @Valid CreateMediaRequest createMediaRequest){
         mediaService.create(createMediaRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> delete(@RequestBody UUID mediaId){
-        mediaService.delete(mediaId);
+    public ResponseEntity<Void> delete(@PathVariable UUID id){
+        mediaService.delete(id);
 
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<GetMediaResponse> getById(@PathVariable UUID id) {
         GetMediaResponse mediaResponse = mediaService.get(id);
+
         return ResponseEntity.ok(mediaResponse);
     }
 
@@ -55,4 +56,14 @@ public class MediaController {
         return ResponseEntity.ok(mediaResponseList);
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> update(
+            @PathVariable UUID id,
+            @RequestBody @Valid UpdateMediaRequest updateMediaRequest
+    ) {
+        mediaService.update(id, updateMediaRequest);
+
+        return ResponseEntity.ok().build();
+    }
 }

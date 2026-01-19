@@ -3,10 +3,8 @@ package com.mrs.catalog_service.service;
 import com.mrs.catalog_service.dto.CreateMediaRequest;
 import com.mrs.catalog_service.dto.GetMediaResponse;
 import com.mrs.catalog_service.dto.PageMedia;
-import com.mrs.catalog_service.handler.CreateMediaHandler;
-import com.mrs.catalog_service.handler.DeleteMediaHandler;
-import com.mrs.catalog_service.handler.GetAllMediaHandler;
-import com.mrs.catalog_service.handler.GetMediaHandler;
+import com.mrs.catalog_service.dto.UpdateMediaRequest;
+import com.mrs.catalog_service.handler.*;
 import com.mrs.catalog_service.mapper.MediaMapper;
 import com.mrs.catalog_service.model.Media;
 import org.springframework.data.domain.Page;
@@ -23,14 +21,16 @@ public class MediaService {
     private final DeleteMediaHandler deleteMediaHandler;
     private final GetMediaHandler getMediaHandler;
     private final GetAllMediaHandler getAllMediaHandler;
+    private final UpdateMediaHandler updateMediaHandler;
 
     private final MediaMapper mediaMapper;
 
-    public MediaService(CreateMediaHandler createMediaHandler, DeleteMediaHandler deleteMediaHandler, GetMediaHandler getMediaHandler, GetAllMediaHandler getAllMediaHandler, MediaMapper mediaMapper) {
+    public MediaService(CreateMediaHandler createMediaHandler, DeleteMediaHandler deleteMediaHandler, GetMediaHandler getMediaHandler, GetAllMediaHandler getAllMediaHandler, UpdateMediaHandler updateMediaHandler, MediaMapper mediaMapper) {
         this.createMediaHandler = createMediaHandler;
         this.deleteMediaHandler = deleteMediaHandler;
         this.getMediaHandler = getMediaHandler;
         this.getAllMediaHandler = getAllMediaHandler;
+        this.updateMediaHandler = updateMediaHandler;
         this.mediaMapper = mediaMapper;
     }
 
@@ -62,6 +62,10 @@ public class MediaService {
         Page<Media> mediaPage = getAllMediaHandler.execute(pageMedia);
 
         return mediaPage.stream().map(mediaMapper::toGetResponse).toList();
+    }
+
+    public void update(UUID mediaId, UpdateMediaRequest updateMediaRequest) {
+        updateMediaHandler.execute(mediaId, updateMediaRequest);
     }
 
 
