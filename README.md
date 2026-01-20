@@ -566,62 +566,118 @@ For detailed documentation, see:
 media-recommendation-system/
 │
 ├── docker-compose.yml                 # Service orchestration
-├── .env                               # Environment configuration
+├── PROJECT_ANALYSIS.md                # Project analysis documentation
 ├── scripts/
 │   └── create-databases.sql           # Database initialization
 │
-├── catalog-service/                   # Media Catalog Microservice
+├── catalog-service/                   # Media Catalog Microservice (Hexagonal Architecture)
 │   ├── Dockerfile
 │   ├── pom.xml
+│   ├── mvnw, mvnw.cmd                 # Maven wrapper
 │   └── src/main/java/com/mrs/catalog_service/
+│       ├── CatalogServiceApplication.java
+│       ├── application/               # Application Layer
+│       │   ├── controller/            # REST Controllers
+│       │   ├── dto/                   # Data Transfer Objects
+│       │   ├── exception/             # Application Exceptions
+│       │   └── mapper/                # Object Mappers
+│       ├── domain/                    # Domain Layer
+│       │   ├── model/                 # Domain Entities
+│       │   ├── service/               # Business Logic
+│       │   ├── handler/               # Command Handlers
+│       │   ├── port/                  # Interfaces/Ports
+│       │   ├── event/                 # Domain Events
+│       │   └── exception/             # Domain Exceptions
+│       └── infrastructure/            # Infrastructure Layer
+│           ├── persistence/           # Database Adapters
+│           ├── producer/              # Kafka Producers
+│           ├── security/              # Security Configuration
+│           └── exception/             # Infrastructure Exceptions
+│
+├── user-service/                      # User Management Microservice (Layered Architecture)
+│   ├── Dockerfile
+│   ├── pom.xml
+│   ├── mvnw, mvnw.cmd                 # Maven wrapper
+│   └── src/main/java/com/mrs/user_service/
+│       ├── UserServiceApplication.java
 │       ├── controller/                # REST Controllers
-│       ├── model/                     # Entity Models
 │       ├── dto/                       # Data Transfer Objects
+│       ├── model/                     # Entity Models
 │       ├── service/                   # Business Logic
 │       ├── handler/                   # Command Handlers
 │       ├── repository/                # Data Access Layer
-│       └── security/                  # Security Configuration
-│
-├── user-service/                      # User Management Microservice
-│   ├── Dockerfile
-│   ├── pom.xml
-│   └── src/main/java/com/mrs/user_service/
-│       ├── controller/                # REST Controllers
-│       ├── model/                     # Entity Models
-│       ├── dto/                       # Data Transfer Objects
-│       ├── service/                   # Business Logic
 │       ├── security/                  # JWT & Security
-│       └── validator/                 # Input Validation
-│
-├── engagement-service/                # User Engagement Microservice
-│   ├── Dockerfile
-│   ├── pom.xml
-│   └── src/main/java/com/mrs/engagement_service/
-│       ├── controller/                # REST Controllers
-│       ├── model/                     # Entity Models
+│       ├── validator/                 # Input Validation
+│       ├── mapper/                    # Object Mappers
 │       ├── event/                     # Kafka Events
-│       └── handler/                   # Event Handlers
+│       └── exception/                 # Exception Handling
 │
-├── recommendation-service/            # Recommendation Orchestration
+├── engagement-service/                # User Engagement Microservice (Hexagonal Architecture)
 │   ├── Dockerfile
 │   ├── pom.xml
-│   └── src/main/java/com/mrs/recommendation_service/
-│       ├── controller/                # REST Controllers
-│       ├── model/                     # Entity Models
-│       ├── consumer/                  # Kafka Consumers
-│       └── service/                   # ML Integration
+│   ├── mvnw, mvnw.cmd                 # Maven wrapper
+│   └── src/main/java/com/mrs/engagement_service/
+│       ├── EngagementServiceApplication.java
+│       ├── application/               # Application Layer
+│       │   ├── controller/            # REST Controllers
+│       │   ├── dto/                   # Data Transfer Objects
+│       │   ├── exception/             # Application Exceptions
+│       │   └── mapper/                # Object Mappers
+│       ├── domain/                    # Domain Layer
+│       │   ├── model/                 # Domain Entities
+│       │   ├── service/               # Business Logic
+│       │   ├── handler/               # Event Handlers
+│       │   ├── port/                  # Interfaces/Ports
+│       │   ├── event/                 # Domain Events
+│       │   └── exception/             # Domain Exceptions
+│       └── infrastructure/            # Infrastructure Layer
+│           ├── repository/            # Database Adapters
+│           ├── provider/              # External Service Providers
+│           ├── security/              # Security Configuration
+│           └── exception/             # Infrastructure Exceptions
 │
-└── ml-service/                        # Machine Learning Service
+├── recommendation-service/            # Recommendation Orchestration (Hexagonal Architecture)
+│   ├── Dockerfile
+│   ├── pom.xml
+│   ├── mvnw, mvnw.cmd                 # Maven wrapper
+│   └── src/main/java/com/mrs/recommendation_service/
+│       ├── RecommendationServiceApplication.java
+│       ├── application/               # Application Layer
+│       │   ├── controller/            # REST Controllers
+│       │   ├── consumer/              # Kafka Consumers
+│       │   ├── dto/                   # Data Transfer Objects
+│       │   ├── event/                 # Application Events
+│       │   └── exception/             # Application Exceptions
+│       ├── domain/                    # Domain Layer
+│       │   ├── model/                 # Domain Entities
+│       │   ├── service/               # Business Logic
+│       │   ├── handler/               # Command Handlers
+│       │   ├── command/               # Command Objects
+│       │   ├── port/                  # Interfaces/Ports
+│       │   └── exception/             # Domain Exceptions
+│       └── infrastructure/            # Infrastructure Layer
+│           ├── repository/            # Database Adapters
+│           ├── provider/              # External Service Providers (ML Service)
+│           ├── security/              # Security Configuration
+│           └── exception/             # Infrastructure Exceptions
+│
+└── ml-service/                        # Machine Learning Service (Python/Flask)
     ├── Dockerfile
     ├── requirements.txt
-    ├── app.py                         # Flask Application
-    ├── services/
-    │   └── recommendation_engine.py   # ML Algorithm
-    ├── database/
-    │   ├── db_connection.py           # Connection Pool
-    │   └── media_feature_repository.py
-    ├── README.md
-    └── ARCHITECTURE.md
+    ├── app.py                         # Flask Application Entry Point
+    ├── models/                        # ML Models (future use)
+    │   └── __init__.py
+    ├── services/                      # Business Logic
+    │   ├── __init__.py
+    │   └── recommendation_engine.py   # Hybrid Recommendation Algorithm
+    ├── database/                      # Database Access
+    │   ├── __init__.py
+    │   ├── db_connection.py           # Connection Pool Management
+    │   └── media_feature_repository.py # Media Feature Data Access
+    ├── test_api.py                    # API Tests
+    ├── test_structure.py              # Structure Tests
+    ├── README.md                      # Service Documentation
+    └── ARCHITECTURE.md                # Architecture Decisions
 ```
 
 ---
