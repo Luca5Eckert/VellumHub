@@ -1,41 +1,70 @@
-# 🎬 Media Recommendation System
+# Media Recommendation System
 
-> A next-generation, event-driven media recommendation platform inspired by Netflix and Spotify, built with microservices architecture and powered by machine learning.
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/Luca5Eckert/media-recommendation-system)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue)](https://www.python.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.0-green)](https://spring.io/projects/spring-boot)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 
-[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white)](https://kafka.apache.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Java](https://img.shields.io/badge/Java_21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
+A production-ready, event-driven media recommendation platform built with microservices architecture. Inspired by industry leaders like Netflix and Spotify, this system delivers personalized content recommendations using machine learning algorithms in real-time.
 
-## 🚀 Overview
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Technology Stack](#technology-stack)
+- [Getting Started](#getting-started)
+- [API Reference](#api-reference)
+- [Database Architecture](#database-architecture)
+- [ML Service](#ml-service)
+- [Project Status](#project-status)
+- [Project Structure](#project-structure)
+- [Commands Reference](#commands-reference)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Overview
 
 The **Media Recommendation System** is a scalable, distributed application designed to deliver personalized content recommendations to users in real-time. Built with a **microservices architecture** and **event-driven communication**, the system leverages **Apache Kafka** for asynchronous messaging between services, enabling real-time analytics and seamless data flow.
 
-### ✨ Key Highlights
+## Key Features
 
-- **5 Microservices** working together in a distributed architecture
-- **JWT-based authentication** with role-based access control (USER/ADMIN)
-- **Hybrid ML recommendation algorithm** combining content-based filtering (70%) and popularity scoring (30%)
-- **Event-driven architecture** with Apache Kafka for real-time data streaming
-- **Database-per-service pattern** ensuring complete service isolation
-- **Production-ready** Docker Compose setup for local development
+| Feature | Description |
+|---------|-------------|
+| **Microservices Architecture** | 5 independent services with clear separation of concerns |
+| **Event-Driven Communication** | Apache Kafka for asynchronous messaging and real-time data streaming |
+| **Hybrid ML Algorithm** | Content-based filtering (70%) combined with popularity scoring (30%) |
+| **JWT Authentication** | Secure role-based access control (USER/ADMIN roles) |
+| **Database Isolation** | Database-per-service pattern ensuring complete service autonomy |
+| **Production Ready** | Docker Compose orchestration with health checks and auto-initialization |
 
-### 🏗️ Architecture
+---
 
-The system follows a **microservices architecture** with event-driven communication. Each microservice follows the **Database per Service** pattern, ensuring complete isolation and independent scalability.
+## Architecture
+
+The system follows a **microservices architecture** with event-driven communication. Each microservice adheres to the **Database per Service** pattern, ensuring complete isolation and independent scalability.
 
 ```mermaid
 graph TB
-    subgraph "Microservices Layer"
-        US[User Service]
-        CS[Catalog Service]
-        ES[Engagement Service]
-        RS[Recommendation Service]
+    subgraph "API Gateway Layer"
+        CLIENT[Client Applications]
     end
     
-    subgraph "Event Streaming"
+    subgraph "Microservices Layer"
+        US[User Service<br/>Port 8084]
+        CS[Catalog Service<br/>Port 8081]
+        ES[Engagement Service<br/>Port 8083]
+        RS[Recommendation Service<br/>Port 8085]
+        ML[ML Service<br/>Port 5000]
+    end
+    
+    subgraph "Event Streaming Layer"
         KAFKA[Apache Kafka<br/>Event Backbone]
     end
     
@@ -46,429 +75,648 @@ graph TB
         RECOMMENDATION_DB[(recommendation_db)]
     end
     
+    CLIENT --> US
+    CLIENT --> CS
+    CLIENT --> ES
+    CLIENT --> RS
+    
     US --> USER_DB
     CS --> CATALOG_DB
     ES --> ENGAGEMENT_DB
     ES -->|Publishes Events| KAFKA
+    CS -->|Publishes Events| KAFKA
     KAFKA -->|Consumes Events| RS
     RS --> RECOMMENDATION_DB
+    RS --> ML
+    ML --> RECOMMENDATION_DB
     
     style KAFKA fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
     style US fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
     style CS fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
     style ES fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
     style RS fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
+    style ML fill:#3776AB,stroke:#fff,stroke-width:2px,color:#fff
 ```
 
-**Key Components:**
-- 🔐 **User Service (90%)** → `user_db`: Full authentication (register/login), JWT tokens, user CRUD, and user preferences management
-- 📚 **Catalog Service (85%)** → `catalog_db`: Media catalog with CRUD operations, genre support, and admin security
-- 💡 **Engagement Service (80%)** → `engagement_db`: Tracks user interactions (views, likes, ratings, watch time, etc.) and publishes events to Kafka
-- 🎯 **Recommendation Service (75%)** → `recommendation_db`: Consumes engagement events from Kafka, maintains user profiles and media features, orchestrates ML-powered recommendations
-- 🤖 **ML Service (95%)**: Stateless Python microservice that calculates personalized recommendations using a hybrid algorithm
-- 📨 **Apache Kafka**: Central event bus for asynchronous communication between services
+### Service Descriptions
 
-> **📝 Local Development Note**: For simplified local development with Docker Compose, all four databases (`user_db`, `catalog_db`, `engagement_db`, `recommendation_db`) are hosted within a single PostgreSQL 15 container. This approach maintains logical database separation while reducing infrastructure complexity in the development environment. In production, each database would be deployed as an independent instance to ensure complete service isolation.
+| Service | Technology | Database | Responsibilities |
+|---------|------------|----------|------------------|
+| **User Service** | Spring Boot 4.0 | `user_db` | Authentication, user management, preferences |
+| **Catalog Service** | Spring Boot 4.0 | `catalog_db` | Media catalog management, CRUD operations |
+| **Engagement Service** | Spring Boot 4.0 | `engagement_db` | Interaction tracking, event publishing |
+| **Recommendation Service** | Spring Boot 4.0 | `recommendation_db` | Event consumption, ML orchestration |
+| **ML Service** | Flask 3.0 | `recommendation_db` | Recommendation algorithm execution |
 
-## 🤖 ML Service - Hybrid Recommendation Engine
+> **Note:** In local development, all databases run within a single PostgreSQL 15 container for simplicity. In production, each database should be deployed as an independent instance for complete isolation.
 
-The **ML Service** is a **production-ready Python microservice** (95% complete) that calculates personalized media recommendations using a hybrid algorithm.
+---
 
-### Architecture & Design
-- **Hybrid Design**: Receives UserProfile via API, fetches MediaFeatures from recommendation_db
-- **Content-Based Filtering (70%)**: Matches media genres to user preference scores
-- **Popularity Boost (30%)**: Considers media popularity for balanced recommendations
-- **Database-per-Service**: Only accesses recommendation_db, maintaining service isolation
-- **Efficient Payload**: Small request (~1KB UserProfile only, no media list)
-- **Production Ready**: Gunicorn server, connection pooling, health checks
+## Technology Stack
 
-### Integration Flow
-```
-recommendation-service (Java)
-    ↓
-    1. Fetches UserProfile from recommendation_db
-    2. Calls ML Service API with UserProfile
-    ↓
-ml-service (Python)
-    ↓
-    3. Fetches MediaFeatures from recommendation_db
-    4. Calculates hybrid recommendations
-    5. Returns scored media list
-    ↓
-recommendation-service
-    6. Stores/returns personalized recommendations
-```
+### Core Technologies
 
-### Quick Start
-```bash
-# Check service health
-curl http://localhost:5000/health
+| Category | Technology | Version | Purpose |
+|----------|------------|---------|---------|
+| **Runtime (Java)** | Java | 21 (LTS) | Backend services runtime |
+| **Runtime (Python)** | Python | 3.11+ | ML service runtime |
+| **Framework (Java)** | Spring Boot | 4.0.0 | Microservices framework |
+| **Framework (Python)** | Flask | 3.0.0 | REST API framework |
+| **Database** | PostgreSQL | 15 | Primary data storage |
+| **Message Broker** | Apache Kafka | 7.3.0 | Event streaming platform |
+| **Coordination** | Apache Zookeeper | 7.3.0 | Kafka cluster coordination |
 
-# Calculate recommendations (called by recommendation-service)
-curl -X POST http://localhost:5000/api/recommendations \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_profile": {
-      "user_id": "<your-user-uuid>",
-      "genre_scores": {"ACTION": 5.0, "THRILLER": 3.0},
-      "interacted_media_ids": []
-    },
-    "limit": 10
-  }'
-```
+### Infrastructure & DevOps
 
-### Performance
-- **Processing Time**: <100ms per request (including DB query)
-- **Concurrent Capacity**: 4 workers × 2 threads = 8 concurrent requests
-- **Connection Pool**: 2-10 PostgreSQL connections
-- **Scalability**: Horizontally scalable with shared database
+| Category | Technology | Purpose |
+|----------|------------|---------|
+| **Containerization** | Docker | Application containerization |
+| **Orchestration** | Docker Compose | Multi-container orchestration |
+| **WSGI Server** | Gunicorn | Python production server |
+| **Build Tool** | Maven | Java project build |
 
-📖 **Full Documentation**: See [ML Service README](ml-service/README.md) and [Architecture Decisions](ml-service/ARCHITECTURE.md)
+### Security & Data Access
 
-## 📦 Technology Stack
+| Category | Technology | Purpose |
+|----------|------------|---------|
+| **Authentication** | Spring Security + JWT | Token-based authentication |
+| **ORM** | Spring Data JPA / Hibernate | Database abstraction |
+| **Connection Pooling** | psycopg2 | PostgreSQL connection management |
 
-| Category | Technology | Version | Status |
-|----------|------------|---------|--------|
-| **Containerization** | Docker & Docker Compose | Latest | ✅ Production Ready |
-| **Database** | PostgreSQL | 15 | ✅ Production Ready |
-| **Message Broker** | Apache Kafka (Confluent) | 7.3.0 | ✅ Production Ready |
-| **Coordination** | Apache Zookeeper | 7.3.0 | ✅ Production Ready |
-| **Backend (Java)** | Spring Boot | 4.0.0 | ✅ Production Ready |
-| **JDK** | Java | 21 | ✅ LTS |
-| **Backend (Python)** | Flask | 3.0.0 | ✅ Production Ready |
-| **Python Runtime** | Python | 3.11+ | ✅ |
-| **WSGI Server** | Gunicorn | 21.2.0 | ✅ Production Ready |
-| **Security** | Spring Security + JWT | - | ✅ Implemented |
-| **ORM** | Spring Data JPA / Hibernate | - | ✅ Implemented |
-| **Build** | Maven | 3.9 | ✅ |
+---
 
-## 🗄️ Database Architecture
+## Getting Started
 
-The system follows the **Database per Service** pattern, a core principle of microservices architecture that ensures:
-- ✅ **Service Isolation**: Each microservice owns its data and schema
-- ✅ **Independent Scalability**: Databases can be scaled independently based on service needs
-- ✅ **Technology Flexibility**: Each service can choose the optimal database technology
-- ✅ **Fault Isolation**: Database issues in one service don't cascade to others
+### Prerequisites
 
-| Database | Owner Service | Purpose |
-|----------|---------------|---------|
-| `user_db` | User Service | User accounts, authentication, preferences |
-| `catalog_db` | Catalog Service | Media catalog and metadata |
-| `engagement_db` | Engagement Service | User interactions (views, likes, ratings, watch time) |
-| `recommendation_db` | Recommendation Service + ML Service | User profiles, media features, recommendations |
+Ensure the following are installed on your system:
 
-> 💡 **Auto-Initialization**: All databases are automatically created during the first startup via the `./scripts/create-databases.sql` initialization script.
+- **Docker** (v20.10+): [Installation Guide](https://docs.docker.com/get-docker/)
+- **Docker Compose** (v2.0+): [Installation Guide](https://docs.docker.com/compose/install/)
 
-> 🏗️ **Local Development Setup**: For the local Docker Compose environment, all four databases run within a single PostgreSQL 15 container instance. This simplified approach maintains logical separation while reducing resource overhead for development. In production deployments, each database would be provisioned as a separate instance to achieve full physical isolation.
+Verify installations:
 
-## ⚙️ Prerequisites
-
-Before running the project, ensure you have the following installed:
-
-- 🐳 **Docker**: [Install Docker](https://docs.docker.com/get-docker/)
-- 🐙 **Docker Compose**: [Install Docker Compose](https://docs.docker.com/compose/install/)
-
-Verify your installations:
 ```bash
 docker --version
 docker-compose --version
 ```
 
-## 🚀 Getting Started
+### Installation
 
-### Quick Start
+1. **Clone the repository:**
 
-1. **Clone the repository**:
    ```bash
    git clone https://github.com/Luca5Eckert/media-recommendation-system.git
    cd media-recommendation-system
    ```
 
-2. **Create environment file** (copy from example or create `.env`):
-   ```bash
-   # Required environment variables (use strong values in production!)
-   POSTGRES_USER=user
+2. **Configure environment variables:**
+
+   Create a `.env` file in the project root:
+
+   ```env
+   # Database Configuration
+   POSTGRES_USER=admin
    POSTGRES_PASSWORD=your-secure-password-here
-   JWT_KEY=your-256-bit-secret-key-here
+   
+   # JWT Configuration
+   JWT_KEY=your-256-bit-jwt-secret-here
    JWT_EXPIRATION=86400000
    ```
 
-3. **Start all services**:
+   > **Security Note:** Use cryptographically strong values for `POSTGRES_PASSWORD` and `JWT_KEY` in production environments.
+
+3. **Start all services:**
+
    ```bash
    docker-compose up -d
    ```
 
-4. **Verify services are running**:
+4. **Verify deployment:**
+
    ```bash
    docker-compose ps
    ```
 
-5. **Check health endpoints**:
+   All services should show status `Up` or `healthy`.
+
+5. **Validate service health:**
+
    ```bash
-   # ML Service health
-   curl http://localhost:5000/health
+   # Check ML Service
+   curl -s http://localhost:5000/health | jq
    
-   # User Service (register a test user)
+   # Check User Service (register test user)
    curl -X POST http://localhost:8084/auth/register \
      -H "Content-Type: application/json" \
      -d '{"name": "Test User", "email": "test@example.com", "password": "SecurePass123!"}'
    ```
 
-That's it! 🎉 The system is now running with:
-- ✅ PostgreSQL with 4 databases automatically initialized
-- ✅ Apache Kafka ready for event streaming
-- ✅ Zookeeper managing Kafka coordination
-- ✅ User Service with authentication (port 8084)
-- ✅ Catalog Service with media management (port 8081)
-- ✅ Engagement Service for interaction tracking (port 8083)
-- ✅ Recommendation Service with Kafka consumers (port 8085)
-- ✅ ML Service for personalized recommendations (port 5000)
+### Service Endpoints
 
-### 📂 Auto-Initialization
-
-The `./scripts/create-databases.sql` file contains SQL commands to create all required databases. This script is automatically executed when PostgreSQL starts for the first time, thanks to Docker's `docker-entrypoint-initdb.d` mechanism.
-
-## 🔧 Useful Commands
-
-### Docker Management
-
-**View all running containers:**
-```bash
-docker-compose ps
-```
-
-**Stop all services:**
-```bash
-docker-compose down
-```
-
-**Restart services:**
-```bash
-docker-compose restart
-```
-
-**Remove volumes (⚠️ deletes all data):**
-```bash
-docker-compose down -v
-```
-
-### Database Access
-
-**View PostgreSQL logs:**
-```bash
-docker logs media-db
-```
-
-**Access PostgreSQL CLI:**
-```bash
-docker exec -it media-db psql -U user -d user_db
-```
-
-**List all databases:**
-```bash
-docker exec -it media-db psql -U user -d user_db -c "\l"
-```
-
-**Connect to a specific database:**
-```bash
-docker exec -it media-db psql -U user -d catalog_db
-```
-
-### Kafka Management
-
-**View Kafka logs:**
-```bash
-docker logs kafka
-```
-
-**List Kafka topics:**
-```bash
-docker exec -it kafka kafka-topics --list --bootstrap-server localhost:9092
-```
-
-**Create a new topic:**
-```bash
-docker exec -it kafka kafka-topics --create --topic engagement-events --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
-```
-
-## 🌐 Service Ports & API Endpoints
-
-| Service | Port | Access | Main Endpoints |
-|---------|------|--------|----------------|
-| PostgreSQL | `5432` | `localhost:5432` | Database connection |
-| Apache Kafka | `9092` | `localhost:9092` | Event streaming |
-| Zookeeper | `2181` | `localhost:2181` | Kafka coordination |
-| **User Service** | `8084` | `http://localhost:8084` | `/auth/register`, `/auth/login`, `/users` |
-| **Catalog Service** | `8081` | `http://localhost:8081` | `/media` (CRUD) |
-| **Engagement Service** | `8083` | `http://localhost:8083` | `/engagement` (POST) |
-| **Recommendation Service** | `8085` | `http://localhost:8085` | `/api/recommendations` |
-| **ML Service** | `5000` | `http://localhost:5000` | `/api/recommendations`, `/health` |
-
-### Database Connection Details
-
-```
-Host: localhost
-Port: 5432
-User: user
-Password: password
-Databases: user_db, catalog_db, engagement_db, recommendation_db
-```
-
-## 📈 Project Status
-
-🚀 **This project is in advanced MVP stage** - Core functionality is implemented and services are operational.
-
-### 📊 Service Completion Status
-
-| Service | Backend | API | Security | Overall |
-|---------|---------|-----|----------|---------|
-| **User Service** | ✅ 95% | ✅ 90% | ✅ JWT | **90%** |
-| **Catalog Service** | ✅ 90% | ✅ 80% | ✅ JWT | **85%** |
-| **Engagement Service** | ✅ 80% | ⚠️ 60% | ✅ JWT | **80%** |
-| **Recommendation Service** | ✅ 75% | ⚠️ 70% | ✅ JWT | **75%** |
-| **ML Service** | ✅ 95% | ✅ 95% | N/A | **95%** |
-| **Infrastructure** | ✅ 100% | N/A | N/A | **100%** |
-
-### ✅ Completed Features
-
-**Infrastructure:**
-- [x] Docker Compose configuration with all 6 services
-- [x] PostgreSQL 15 with multi-database architecture (4 isolated DBs)
-- [x] Apache Kafka and Zookeeper integration
-- [x] Database auto-initialization scripts
-- [x] Dockerfiles with multi-stage builds for all services
-
-**User Service:**
-- [x] User authentication (`/auth/register`, `/auth/login`)
-- [x] JWT token generation and validation
-- [x] User CRUD operations (Create, Read, Update, Delete)
-- [x] User roles (USER, ADMIN)
-- [x] User preferences management with genres
-- [x] OAuth2 Resource Server security
-
-**Catalog Service:**
-- [x] Media entity with full metadata (title, description, releaseYear, genres, coverUrl)
-- [x] CRUD operations (Create, Read by ID, Read All paginated, Delete)
-- [x] Builder Pattern for object creation
-- [x] Kafka integration for media events
-- [x] `@PreAuthorize` security for admin operations
-
-**Engagement Service:**
-- [x] Interaction tracking (VIEW, LIKE, DISLIKE, RATING, WATCH_TIME, CLICK, SHARE, SAVE)
-- [x] POST endpoint for recording interactions
-- [x] Kafka event publishing (`engagement-created` topic)
-- [x] Validation and persistence handlers
-
-**Recommendation Service:**
-- [x] UserProfile, MediaFeature, and Recommendation entities
-- [x] Kafka consumers for engagement, media creation, and deletion events
-- [x] User profile updates based on interactions
-- [x] Integration with ML Service via REST
-- [x] GET endpoint for personalized recommendations
-
-**ML Service:**
-- [x] Hybrid recommendation algorithm (Content-based 70% + Popularity 30%)
-- [x] Efficient API design (receives UserProfile, fetches media from DB)
-- [x] PostgreSQL connection pooling
-- [x] Gunicorn production server
-- [x] Health check endpoint
-- [x] Complete documentation (README.md, ARCHITECTURE.md)
-
-### 🛣️ Remaining for MVP Completion
-
-**High Priority:**
-- [ ] Complete inter-service communication (Catalog → Kafka → Recommendation sync)
-- [ ] Media update endpoint (PUT /media/{id})
-- [ ] Media search/filter by genre and type
-- [ ] User interaction history endpoint
-- [ ] Automated tests (unit and integration)
-
-**Medium Priority:**
-- [ ] Exception handlers standardization
-- [ ] OpenAPI/Swagger documentation
-- [ ] Dead Letter Queue for failed Kafka events
-- [ ] Circuit breaker for ML Service calls
-
-**Future Enhancements (Post-MVP):**
-- [ ] API Gateway
-- [ ] Refresh token support
-- [ ] Redis caching for recommendations
-- [ ] CI/CD pipelines
-- [ ] Kubernetes orchestration
-- [ ] Monitoring (Prometheus, Grafana)
-- [ ] Distributed tracing (Jaeger/Zipkin)
-- [ ] Frontend application (Web/Mobile)
-
-## 📁 Project Structure
-
-```
-media-recommendation-system/
-├── docker-compose.yml           # Orchestration for all 6 services
-├── scripts/
-│   └── create-databases.sql     # Database initialization
-│
-├── catalog-service/             # Spring Boot (Java 21)
-│   └── src/main/java/.../
-│       ├── controller/          # MediaController (CRUD)
-│       ├── model/               # Media, Genre, MediaType
-│       ├── dto/                 # Request/Response DTOs
-│       ├── service/             # Business logic
-│       ├── handler/             # Command handlers
-│       ├── repository/          # JPA repositories
-│       └── security/            # JWT configuration
-│
-├── user-service/                # Spring Boot (Java 21)
-│   └── src/main/java/.../
-│       ├── controller/          # AuthController, UserController
-│       ├── model/               # UserEntity, RoleUser, UserPreference
-│       ├── dto/                 # Auth & User DTOs
-│       ├── service/             # Auth & User services
-│       ├── security/            # JWT Token Service
-│       └── validator/           # Custom validators
-│
-├── engagement-service/          # Spring Boot (Java 21)
-│   └── src/main/java/.../
-│       ├── controller/          # EngagementController
-│       ├── model/               # Interaction, InteractionType
-│       ├── event/               # Kafka events
-│       └── handler/             # Event handlers
-│
-├── recommendation-service/      # Spring Boot (Java 21)
-│   └── src/main/java/.../
-│       ├── controller/          # RecommendationController
-│       ├── model/               # UserProfile, MediaFeature
-│       ├── consumer/            # Kafka consumers
-│       └── service/             # ML integration
-│
-└── ml-service/                  # Python/Flask
-    ├── app.py                   # Flask API endpoints
-    ├── services/
-    │   └── recommendation_engine.py  # Hybrid algorithm
-    ├── database/
-    │   ├── db_connection.py     # Connection pooling
-    │   └── media_feature_repository.py
-    ├── README.md                # Detailed documentation
-    └── ARCHITECTURE.md          # Design decisions
-```
-
-## 📖 Additional Documentation
-
-- [ML Service README](ml-service/README.md) - Detailed ML Service documentation
-- [ML Service Architecture](ml-service/ARCHITECTURE.md) - Design decisions and rationale
-- [Project Analysis](PROJECT_ANALYSIS.md) - Complete project analysis and execution plan
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 📧 Contact
-
-For questions or suggestions, please open an issue in the repository.
+| Service | Port | Base URL | Health Check |
+|---------|------|----------|--------------|
+| User Service | 8084 | `http://localhost:8084` | `/actuator/health` |
+| Catalog Service | 8081 | `http://localhost:8081` | `/actuator/health` |
+| Engagement Service | 8083 | `http://localhost:8083` | `/actuator/health` |
+| Recommendation Service | 8085 | `http://localhost:8085` | `/actuator/health` |
+| ML Service | 5000 | `http://localhost:5000` | `/health` |
+| PostgreSQL | 5432 | `localhost:5432` | - |
+| Apache Kafka | 9092 | `localhost:9092` | - |
+| Zookeeper | 2181 | `localhost:2181` | - |
 
 ---
 
-⭐ **If you find this project useful, please consider giving it a star!** ⭐
+## API Reference
+
+### User Service (Port 8084)
+
+#### Authentication
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/auth/register` | Register new user | No |
+| POST | `/auth/login` | Authenticate user | No |
+
+#### User Management
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/users` | List all users (paginated) | Yes (ADMIN) |
+| GET | `/users/{id}` | Get user by ID | Yes |
+| PUT | `/users/{id}` | Update user | Yes |
+| DELETE | `/users/{id}` | Delete user | Yes (ADMIN) |
+
+**Request Example - Register:**
+
+```json
+POST /auth/register
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "SecurePassword123!"
+}
+```
+
+**Response Example - Login:**
+
+```json
+POST /auth/login
+Response:
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "type": "Bearer",
+  "expiresIn": 86400000
+}
+```
+
+### Catalog Service (Port 8081)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/media` | List all media (paginated) | Yes |
+| GET | `/media/{id}` | Get media by ID | Yes |
+| POST | `/media` | Create new media | Yes (ADMIN) |
+| DELETE | `/media/{id}` | Delete media | Yes (ADMIN) |
+
+**Request Example - Create Media:**
+
+```json
+POST /media
+Authorization: Bearer <token>
+{
+  "title": "The Matrix",
+  "description": "A computer hacker learns about the true nature of reality",
+  "releaseYear": 1999,
+  "mediaType": "MOVIE",
+  "genres": ["ACTION", "SCI_FI"],
+  "coverUrl": "https://example.com/matrix.jpg"
+}
+```
+
+### Engagement Service (Port 8083)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/engagement` | Record user interaction | Yes |
+
+**Interaction Types:** `VIEW`, `LIKE`, `DISLIKE`, `RATING`, `WATCH_TIME`, `CLICK`, `SHARE`, `SAVE`
+
+**Request Example:**
+
+```json
+POST /engagement
+Authorization: Bearer <token>
+{
+  "userId": "uuid",
+  "mediaId": "uuid",
+  "type": "RATING",
+  "interactionValue": 4.5
+}
+```
+
+### Recommendation Service (Port 8085)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/recommendations` | Get personalized recommendations | Yes |
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `userId` | UUID | Yes | User identifier |
+| `limit` | Integer | No | Max results (default: 10) |
+
+### ML Service (Port 5000)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Service health check |
+| POST | `/api/recommendations` | Calculate recommendations |
+
+**Request Example:**
+
+```json
+POST /api/recommendations
+{
+  "user_profile": {
+    "user_id": "uuid",
+    "genre_scores": {"ACTION": 5.0, "THRILLER": 3.0},
+    "interacted_media_ids": []
+  },
+  "limit": 10
+}
+```
+
+**Response Example:**
+
+```json
+{
+  "user_id": "uuid",
+  "recommendations": [
+    {
+      "media_id": "uuid",
+      "genres": ["ACTION", "THRILLER"],
+      "popularity_score": 0.8,
+      "recommendation_score": 0.8745,
+      "content_score": 0.8500
+    }
+  ],
+  "count": 10
+}
+```
+
+---
+
+## Database Architecture
+
+### Database per Service Pattern
+
+The system implements the **Database per Service** pattern, a fundamental microservices principle:
+
+| Principle | Implementation |
+|-----------|----------------|
+| **Service Isolation** | Each microservice owns its data and schema exclusively |
+| **Independent Scalability** | Databases scale independently based on service requirements |
+| **Technology Flexibility** | Services can adopt optimal database technologies |
+| **Fault Isolation** | Database failures remain contained within service boundaries |
+
+### Database Schema
+
+| Database | Owner | Tables | Description |
+|----------|-------|--------|-------------|
+| `user_db` | User Service | `users`, `user_preferences` | User accounts, authentication, genre preferences |
+| `catalog_db` | Catalog Service | `media` | Media catalog with metadata |
+| `engagement_db` | Engagement Service | `interactions` | User interaction events |
+| `recommendation_db` | Recommendation + ML Service | `user_profiles`, `media_features`, `recommendations` | Recommendation computation data |
+
+### Auto-Initialization
+
+Databases are automatically initialized on first startup via Docker's `docker-entrypoint-initdb.d` mechanism using the `./scripts/create-databases.sql` script.
+
+---
+
+## ML Service
+
+The ML Service is a production-ready Python microservice responsible for computing personalized recommendations.
+
+### Algorithm
+
+The service implements a **Hybrid Recommendation Algorithm**:
+
+| Component | Weight | Description |
+|-----------|--------|-------------|
+| **Content-Based Filtering** | 70% | Matches media genres to user preference scores |
+| **Popularity Boost** | 30% | Incorporates media popularity metrics |
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Recommendation Service (Java)                 │
+│  1. Fetches UserProfile from recommendation_db                  │
+│  2. Calls ML Service API with UserProfile                       │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       ML Service (Python)                        │
+│  3. Fetches MediaFeatures from recommendation_db                │
+│  4. Executes hybrid recommendation algorithm                    │
+│  5. Returns scored media list                                   │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Recommendation Service (Java)                 │
+│  6. Stores and returns personalized recommendations             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Performance Specifications
+
+| Metric | Value |
+|--------|-------|
+| Processing Time | < 100ms per request |
+| Concurrent Capacity | 8 requests (4 workers × 2 threads) |
+| Connection Pool | 2-10 PostgreSQL connections |
+| Scalability | Horizontal with shared database |
+
+For detailed documentation, see:
+- [ML Service README](ml-service/README.md)
+- [Architecture Decisions](ml-service/ARCHITECTURE.md)
+
+---
+
+## Project Status
+
+**Current Phase:** Advanced MVP Development
+
+### Service Completion
+
+| Service | Backend | API | Security | Overall Status |
+|---------|:-------:|:---:|:--------:|:--------------:|
+| User Service | 95% | 90% | JWT | **90%** |
+| Catalog Service | 90% | 80% | JWT | **85%** |
+| Engagement Service | 80% | 60% | JWT | **80%** |
+| Recommendation Service | 75% | 70% | JWT | **75%** |
+| ML Service | 95% | 95% | N/A | **95%** |
+| Infrastructure | 100% | N/A | N/A | **100%** |
+
+### Implemented Features
+
+<details>
+<summary><strong>Infrastructure</strong></summary>
+
+- Docker Compose configuration for all services
+- PostgreSQL 15 with multi-database architecture
+- Apache Kafka and Zookeeper integration
+- Database auto-initialization scripts
+- Multi-stage Dockerfiles for all services
+
+</details>
+
+<details>
+<summary><strong>User Service</strong></summary>
+
+- User authentication (register/login)
+- JWT token generation and validation
+- User CRUD operations
+- Role-based access control (USER, ADMIN)
+- User preferences management
+- OAuth2 Resource Server security
+
+</details>
+
+<details>
+<summary><strong>Catalog Service</strong></summary>
+
+- Media entity with metadata
+- CRUD operations (Create, Read, Read All, Delete)
+- Builder Pattern implementation
+- Kafka integration for media events
+- Admin-only operations with `@PreAuthorize`
+
+</details>
+
+<details>
+<summary><strong>Engagement Service</strong></summary>
+
+- Interaction tracking (VIEW, LIKE, DISLIKE, RATING, WATCH_TIME, CLICK, SHARE, SAVE)
+- Interaction recording endpoint
+- Kafka event publishing
+- Validation and persistence handlers
+
+</details>
+
+<details>
+<summary><strong>Recommendation Service</strong></summary>
+
+- UserProfile and MediaFeature entities
+- Kafka event consumers
+- User profile updates from interactions
+- ML Service integration via REST
+- Recommendation retrieval endpoint
+
+</details>
+
+<details>
+<summary><strong>ML Service</strong></summary>
+
+- Hybrid recommendation algorithm
+- Efficient API design
+- PostgreSQL connection pooling
+- Gunicorn production server
+- Health check endpoint
+- Comprehensive documentation
+
+</details>
+
+### Roadmap
+
+#### High Priority
+- [ ] Complete inter-service communication
+- [ ] Media update endpoint
+- [ ] Media search/filter functionality
+- [ ] User interaction history endpoint
+- [ ] Unit and integration tests
+
+#### Medium Priority
+- [ ] Standardized exception handlers
+- [ ] OpenAPI/Swagger documentation
+- [ ] Dead Letter Queue for Kafka
+- [ ] Circuit breaker implementation
+
+#### Future Enhancements
+- [ ] API Gateway
+- [ ] Refresh token support
+- [ ] Redis caching
+- [ ] CI/CD pipelines
+- [ ] Kubernetes orchestration
+- [ ] Monitoring stack (Prometheus, Grafana)
+- [ ] Distributed tracing
+- [ ] Frontend applications
+
+---
+
+## Project Structure
+
+```
+media-recommendation-system/
+│
+├── docker-compose.yml                 # Service orchestration
+├── .env                               # Environment configuration
+├── scripts/
+│   └── create-databases.sql           # Database initialization
+│
+├── catalog-service/                   # Media Catalog Microservice
+│   ├── Dockerfile
+│   ├── pom.xml
+│   └── src/main/java/com/mrs/catalog_service/
+│       ├── controller/                # REST Controllers
+│       ├── model/                     # Entity Models
+│       ├── dto/                       # Data Transfer Objects
+│       ├── service/                   # Business Logic
+│       ├── handler/                   # Command Handlers
+│       ├── repository/                # Data Access Layer
+│       └── security/                  # Security Configuration
+│
+├── user-service/                      # User Management Microservice
+│   ├── Dockerfile
+│   ├── pom.xml
+│   └── src/main/java/com/mrs/user_service/
+│       ├── controller/                # REST Controllers
+│       ├── model/                     # Entity Models
+│       ├── dto/                       # Data Transfer Objects
+│       ├── service/                   # Business Logic
+│       ├── security/                  # JWT & Security
+│       └── validator/                 # Input Validation
+│
+├── engagement-service/                # User Engagement Microservice
+│   ├── Dockerfile
+│   ├── pom.xml
+│   └── src/main/java/com/mrs/engagement_service/
+│       ├── controller/                # REST Controllers
+│       ├── model/                     # Entity Models
+│       ├── event/                     # Kafka Events
+│       └── handler/                   # Event Handlers
+│
+├── recommendation-service/            # Recommendation Orchestration
+│   ├── Dockerfile
+│   ├── pom.xml
+│   └── src/main/java/com/mrs/recommendation_service/
+│       ├── controller/                # REST Controllers
+│       ├── model/                     # Entity Models
+│       ├── consumer/                  # Kafka Consumers
+│       └── service/                   # ML Integration
+│
+└── ml-service/                        # Machine Learning Service
+    ├── Dockerfile
+    ├── requirements.txt
+    ├── app.py                         # Flask Application
+    ├── services/
+    │   └── recommendation_engine.py   # ML Algorithm
+    ├── database/
+    │   ├── db_connection.py           # Connection Pool
+    │   └── media_feature_repository.py
+    ├── README.md
+    └── ARCHITECTURE.md
+```
+
+---
+
+## Commands Reference
+
+### Docker Management
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Stop all services
+docker-compose down
+
+# View running containers
+docker-compose ps
+
+# View logs
+docker-compose logs -f [service-name]
+
+# Restart specific service
+docker-compose restart [service-name]
+
+# Remove all data (WARNING: destructive)
+docker-compose down -v
+```
+
+### Database Operations
+
+```bash
+# Access PostgreSQL CLI
+docker exec -it media-db psql -U user -d user_db
+
+# List all databases
+docker exec -it media-db psql -U user -d user_db -c "\l"
+
+# View PostgreSQL logs
+docker logs media-db
+```
+
+### Kafka Operations
+
+```bash
+# List topics
+docker exec -it kafka kafka-topics --list --bootstrap-server localhost:9092
+
+# Create topic
+docker exec -it kafka kafka-topics --create \
+  --topic engagement-events \
+  --bootstrap-server localhost:9092 \
+  --partitions 3 \
+  --replication-factor 1
+
+# View Kafka logs
+docker logs kafka
+```
+
+---
+
+## Contributing
+
+Contributions are welcome. Please follow these guidelines:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/new-feature`)
+3. **Commit** changes with descriptive messages
+4. **Push** to your fork
+5. **Open** a Pull Request
+
+### Code Standards
+
+- Follow existing code style and patterns
+- Include unit tests for new functionality
+- Update documentation as needed
+- Ensure all tests pass before submitting
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [ML Service README](ml-service/README.md) | ML Service documentation |
+| [Architecture Decisions](ml-service/ARCHITECTURE.md) | Design rationale |
+| [Project Analysis](PROJECT_ANALYSIS.md) | Complete project analysis |
+
+---
+
+## License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Contact
+
+For questions, issues, or contributions, please open an issue in the [GitHub repository](https://github.com/Luca5Eckert/media-recommendation-system/issues).
