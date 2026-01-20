@@ -59,7 +59,7 @@ Crie um arquivo `.env` na raiz do projeto com o seguinte conteúdo:
 POSTGRES_USER=admin
 POSTGRES_PASSWORD=admin123
 
-# JWT Configuration
+# JWT Configuration (TEST-ONLY - never use in production!)
 JWT_KEY=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
 JWT_EXPIRATION=86400000
 ```
@@ -89,6 +89,23 @@ curl http://localhost:5000/health           # ML Service
 #### Passo 4: Executar o Teste
 
 ```bash
+python3 scripts/e2e_test.py
+```
+
+### Configuração Avançada
+
+Você pode personalizar o teste usando variáveis de ambiente:
+
+```bash
+# Customizar usuário de teste
+export E2E_TEST_EMAIL="custom@test.com"
+export E2E_TEST_PASSWORD="CustomPass123!"
+export E2E_TEST_NAME="Custom Test User"
+
+# Aumentar tempo de espera do Kafka (em segundos)
+export E2E_KAFKA_WAIT=10
+
+# Executar teste
 python3 scripts/e2e_test.py
 ```
 
