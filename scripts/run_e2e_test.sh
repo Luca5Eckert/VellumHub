@@ -36,6 +36,7 @@ POSTGRES_USER=admin
 POSTGRES_PASSWORD=admin123
 
 # JWT Configuration
+# NOTE: This is a TEST-ONLY key. NEVER use this in production!
 JWT_KEY=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
 JWT_EXPIRATION=86400000
 EOF

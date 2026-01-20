@@ -13,6 +13,7 @@ import requests
 import json
 import time
 import sys
+import os
 from typing import Dict, List, Optional
 
 
@@ -37,9 +38,11 @@ class E2ETest:
         self.engagement_service = "http://localhost:8083"
         self.recommendation_service = "http://localhost:8085"
         
-        self.test_user_email = "teste@exemplo.com"
-        self.test_user_password = "SecurePass123!"
-        self.test_user_name = "Test User E2E"
+        # Test user configuration (can be overridden via environment variables)
+        self.test_user_email = os.getenv("E2E_TEST_EMAIL", "teste@exemplo.com")
+        self.test_user_password = os.getenv("E2E_TEST_PASSWORD", "SecurePass123!")
+        self.test_user_name = os.getenv("E2E_TEST_NAME", "Test User E2E")
+        self.kafka_wait_time = int(os.getenv("E2E_KAFKA_WAIT", "5"))
         
         self.jwt_token: Optional[str] = None
         self.user_id: Optional[str] = None
@@ -114,10 +117,25 @@ class E2ETest:
             )
             
             if response.status_code == 200:
-                self.jwt_token = response.text.strip('"')  # Remove quotes from token string
-                self.log_success(f"Login realizado com sucesso")
-                self.log_info(f"Token obtido: {self.jwt_token[:50]}...")
-                return True
+                # Handle different response formats
+                try:
+                    # First try parsing as JSON
+                    token_data = response.json()
+                    if isinstance(token_data, dict):
+                        self.jwt_token = token_data.get('token', token_data.get('accessToken', ''))
+                    else:
+                        self.jwt_token = str(token_data)
+                except (ValueError, json.JSONDecodeError):
+                    # If not JSON, assume plain text token
+                    self.jwt_token = response.text.strip('"').strip()
+                
+                if self.jwt_token:
+                    self.log_success(f"Login realizado com sucesso")
+                    self.log_info(f"Token obtido: {self.jwt_token[:50]}...")
+                    return True
+                else:
+                    self.log_error("Token não encontrado na resposta")
+                    return False
             else:
                 self.log_error(f"Falha no login: {response.status_code} - {response.text}")
                 return False
@@ -182,7 +200,7 @@ class E2ETest:
                         try:
                             response_data = response.json()
                             media_id = response_data.get('id')
-                        except:
+                        except (ValueError, json.JSONDecodeError, KeyError):
                             media_id = None
                     
                     if media_id:
@@ -312,10 +330,9 @@ class E2ETest:
         """Step 5: Wait for Kafka to process events"""
         self.log_step(5, "Aguardar processamento Kafka")
         
-        wait_time = 5
-        self.log_info(f"Aguardando {wait_time} segundos para processamento dos eventos Kafka...")
+        self.log_info(f"Aguardando {self.kafka_wait_time} segundos para processamento dos eventos Kafka...")
         
-        for i in range(wait_time):
+        for i in range(self.kafka_wait_time):
             time.sleep(1)
             print(".", end="", flush=True)
         
