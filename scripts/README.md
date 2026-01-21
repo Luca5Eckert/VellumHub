@@ -1,34 +1,45 @@
 # E2E Test Quick Reference
 
-## 🆕 Versão Melhorada (RECOMENDADO)
+## 🚀 Como Executar
 
 ```bash
-# Solução completa e automatizada
-./scripts/run_e2e_complete.sh
-```
-
-Esta versão resolve os problemas conhecidos:
-- ✅ Erro 401 ao criar mídias (usa dados pré-seeded)
-- ✅ Serviços não respondendo (health checks robustos)
-- ✅ Porta 8085 inacessível (espera adequada)
-
-## Versão Original (Legado)
-
-```bash
-# Ainda disponível mas com limitações conhecidas
+# Modo Automatizado (RECOMENDADO)
 ./scripts/run_e2e_test.sh
+
+# Modo Manual
+docker-compose up -d
+sleep 120
+docker exec -i media-db psql -U admin < scripts/seed-e2e-data.sql
 python3 scripts/e2e_test.py
 ```
 
-## Quick Start
+## ⚠️ Pré-requisitos IMPORTANTES
 
-```bash
-# Automated
-./scripts/run_e2e_complete.sh
+**Antes de executar, você DEVE ter um arquivo `.env` na raiz do projeto:**
 
-# Use a versão melhorada do teste
-python3 scripts/e2e_test_improved.py
+```env
+# Database Configuration
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin123
+
+# JWT Configuration (CRITICAL: Must be the same across ALL services!)
+JWT_KEY=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
+JWT_EXPIRATION=86400000
 ```
+
+**IMPORTANTE**: O `JWT_KEY` deve ser EXATAMENTE o mesmo em todos os serviços. Se não for, você terá erros 401 (Unauthorized).
+
+## ✅ O que o Teste Faz
+
+O teste valida o fluxo completo:
+1. ✅ Verifica saúde de todos os serviços
+2. ✅ Registra/verifica usuário de teste
+3. ✅ Faz login e obtém JWT token
+4. ✅ Busca mídias do catálogo (dados pré-seeded)
+5. ✅ Registra 5 interações com mídias ACTION
+6. ✅ Aguarda processamento Kafka
+7. ✅ Busca recomendações
+8. ✅ Valida que recomendações foram geradas
 
 ## Manual Execution
 
