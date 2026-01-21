@@ -6,8 +6,20 @@ This script creates admin user and test media directly in the database
 using Python and psycopg2. Use this if the SQL seed script fails.
 """
 
-import psycopg2
-import bcrypt
+try:
+    import psycopg2
+except ImportError:
+    print("ERROR: psycopg2 is not installed.")
+    print("Install it with: pip3 install psycopg2-binary")
+    exit(1)
+
+try:
+    import bcrypt
+except ImportError:
+    print("ERROR: bcrypt is not installed.")
+    print("Install it with: pip3 install bcrypt")
+    exit(1)
+
 import os
 from datetime import datetime
 

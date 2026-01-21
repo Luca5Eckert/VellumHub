@@ -203,6 +203,10 @@ if [ -f "$SEED_SCRIPT" ]; then
     else
         echo -e "${YELLOW}⚠ SQL seed script failed, trying Python seeder...${NC}"
         
+        # Install Python dependencies for seeder
+        echo -e "${CYAN}Installing Python seed dependencies...${NC}"
+        pip3 install psycopg2-binary bcrypt --quiet 2>/dev/null || pip3 install psycopg2-binary bcrypt
+        
         # Try Python seeder as fallback
         if python3 "$SCRIPT_DIR/seed_e2e_python.py"; then
             echo -e "${GREEN}✓ Test data seeded successfully (Python)${NC}"
@@ -211,7 +215,7 @@ if [ -f "$SEED_SCRIPT" ]; then
             echo -e "${YELLOW}Manual seed command:${NC}"
             echo -e "${YELLOW}  docker exec -i media-db psql -U $PG_USER < scripts/seed-e2e-data.sql${NC}"
             echo -e "${YELLOW}  OR${NC}"
-            echo -e "${YELLOW}  pip3 install psycopg2-binary && python3 scripts/seed_e2e_python.py${NC}"
+            echo -e "${YELLOW}  pip3 install psycopg2-binary bcrypt && python3 scripts/seed_e2e_python.py${NC}"
         fi
     fi
 else
