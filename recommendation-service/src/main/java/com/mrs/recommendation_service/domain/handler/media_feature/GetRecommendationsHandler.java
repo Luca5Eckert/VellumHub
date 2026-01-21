@@ -22,9 +22,9 @@ public class GetRecommendationsHandler {
     @Value("${ml. service.url:http://ml-service:5000}")
     private String mlServiceUrl;
 
-    public GetRecommendationsHandler(UserProfileRepository userProfileRepository, RestClient.Builder restClientBuilder) {
+    public GetRecommendationsHandler(UserProfileRepository userProfileRepository, RestClient restClient) {
         this.userProfileRepository = userProfileRepository;
-        this.restClient = restClientBuilder.build();
+        this.restClient = restClient;
     }
 
     public List<Recommendation> execute(UUID userId) {

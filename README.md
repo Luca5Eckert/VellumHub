@@ -540,6 +540,7 @@ For detailed documentation, see:
 - [ ] Media update endpoint
 - [ ] Media search/filter functionality
 - [ ] User interaction history endpoint
+- [x] End-to-end test for complete recommendation flow
 - [ ] Unit and integration tests
 
 #### Medium Priority
@@ -736,6 +737,31 @@ docker exec -it kafka kafka-topics --create \
 docker logs kafka
 ```
 
+### Testing
+
+#### End-to-End Test
+
+Run the complete E2E test to validate the entire recommendation flow:
+
+```bash
+# Run E2E test (automated - starts services and runs test)
+./scripts/run_e2e_test.sh
+
+# Or run manually
+docker-compose up -d
+python3 scripts/e2e_test.py
+```
+
+The E2E test validates:
+- User registration and authentication
+- Media catalog management
+- User engagement tracking
+- Kafka event processing
+- ML-powered recommendations
+- Complete flow from interaction to personalized recommendations
+
+For detailed documentation, see [E2E Test Guide](docs/E2E_TEST_GUIDE.md).
+
 ---
 
 ## Contributing
@@ -764,6 +790,7 @@ Contributions are welcome. Please follow these guidelines:
 | [ML Service README](ml-service/README.md) | ML Service documentation |
 | [Architecture Decisions](ml-service/ARCHITECTURE.md) | Design rationale |
 | [Project Analysis](PROJECT_ANALYSIS.md) | Complete project analysis |
+| [E2E Test Guide](docs/E2E_TEST_GUIDE.md) | End-to-end testing guide |
 
 ---
 
