@@ -22,12 +22,17 @@ python3 scripts/e2e_test.py
 POSTGRES_USER=admin
 POSTGRES_PASSWORD=admin123
 
-# JWT Configuration (CRITICAL: Must be the same across ALL services!)
+# JWT Configuration
+# ⚠️ CRITICAL: Set BOTH JWT_KEY and JWT_SECRET to the SAME value!
 JWT_KEY=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
+JWT_SECRET=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
 JWT_EXPIRATION=86400000
 ```
 
-**IMPORTANTE**: O `JWT_KEY` deve ser EXATAMENTE o mesmo em todos os serviços. Se não for, você terá erros 401 (Unauthorized).
+**IMPORTANTE**: 
+- Diferentes serviços podem usar `JWT_KEY` ou `JWT_SECRET`
+- Ambos devem ter EXATAMENTE o mesmo valor
+- Se não forem iguais, você terá erros 401 (Unauthorized)
 
 ## ✅ O que o Teste Faz
 

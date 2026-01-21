@@ -32,7 +32,7 @@ O teste executa o seguinte fluxo:
 
 ### Pré-requisito OBRIGATÓRIO
 
-**Antes de executar qualquer teste, você DEVE criar o arquivo `.env` na raiz do projeto:**
+**Before running tests, you **MUST** create a `.env` file in the project root:**
 
 ```env
 # Database Configuration
@@ -40,16 +40,17 @@ POSTGRES_USER=admin
 POSTGRES_PASSWORD=admin123
 
 # JWT Configuration
-# ⚠️ CRITICAL: Este valor DEVE ser EXATAMENTE o mesmo em TODOS os serviços!
-# Se for diferente, você terá erros 401 (Unauthorized)
+# ⚠️ CRITICAL: Both JWT_KEY and JWT_SECRET must be set to the SAME value!
+# Different services may use different variable names, so set both
 JWT_KEY=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
+JWT_SECRET=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
 JWT_EXPIRATION=86400000
 ```
 
 **Por que isso é importante?**
-- Todos os serviços (user, catalog, engagement, recommendation) usam `${JWT_KEY}` do .env
-- Se o JWT_KEY não existir ou for diferente, o token gerado pelo user-service não será aceito pelos outros serviços
-- Resultado: Erros 401 em todas as requisições autenticadas
+- Alguns serviços usam `JWT_KEY` e outros usam `JWT_SECRET`
+- Ambos devem ter EXATAMENTE o mesmo valor para a validação JWT funcionar
+- Se qualquer serviço tiver uma chave diferente, você terá erros 401 (Unauthorized)
 
 ### Opção 1: Script Automatizado (Recomendado)
 

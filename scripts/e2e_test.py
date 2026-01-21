@@ -478,11 +478,13 @@ class E2ETestImproved:
 POSTGRES_USER=admin
 POSTGRES_PASSWORD=admin123
 
-# JWT Configuration (CRITICAL: Must be the same across all services!)
+# JWT Configuration (CRITICAL: Set BOTH variables to the SAME value!)
 JWT_KEY=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
+JWT_SECRET=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
 JWT_EXPIRATION=86400000
 """)
             self.log_error("Sem o arquivo .env, os serviços não terão a mesma chave JWT e a autenticação falhará!")
+            self.log_warning("IMPORTANTE: Alguns serviços usam JWT_KEY e outros JWT_SECRET - ambos devem ter o mesmo valor!")
             return False
         else:
             self.log_success(f"Arquivo .env encontrado em {env_file}")

@@ -124,7 +124,7 @@ curl http://localhost:5000/health           # ML
 #### 4. Verificar Dados no Banco
 
 ```bash
-# Conectar ao PostgreSQL
+# Conectar ao PostgreSQL (use o usuário do seu .env)
 docker exec -it media-db psql -U admin
 
 # Verificar usuários
@@ -137,6 +137,51 @@ SELECT id, title FROM media WHERE id LIKE 'media-action%';
 
 # Sair
 \q
+```
+
+**IMPORTANTE**: Se você receber erro "role does not exist", verifique qual usuário está configurado no .env:
+
+```bash
+# Verificar usuário configurado
+cat .env | grep POSTGRES_USER
+
+# Use o usuário correto (exemplo se for "postgres" ao invés de "admin")
+docker exec -it media-db psql -U postgres
+```
+
+#### 4.1 Seed Script Falha com "role does not exist"
+
+**Sintoma**: 
+```
+psql: FATAL: role "admin" does not exist
+```
+
+**Solução**:
+
+1. Verifique o usuário no .env:
+```bash
+cat .env | grep POSTGRES_USER
+# Deve mostrar: POSTGRES_USER=admin
+```
+
+2. Se o usuário for diferente, use o correto no seed:
+```bash
+# Exemplo se POSTGRES_USER=postgres
+docker exec -i media-db psql -U postgres < scripts/seed-e2e-data.sql
+```
+
+3. Ou atualize o .env para usar "admin":
+```env
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin123
+```
+
+4. Depois reinicie completamente:
+```bash
+docker-compose down -v
+docker-compose up -d
+sleep 120
+docker exec -i media-db psql -U admin < scripts/seed-e2e-data.sql
 ```
 
 #### 5. Resetar Completamente

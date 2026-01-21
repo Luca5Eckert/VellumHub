@@ -49,7 +49,9 @@ POSTGRES_PASSWORD=admin123
 
 # JWT Configuration
 # NOTE: This is a TEST-ONLY key. NEVER use this in production!
+# Both JWT_KEY and JWT_SECRET must be set to the same value for all services
 JWT_KEY=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
+JWT_SECRET=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
 JWT_EXPIRATION=86400000
 EOF
     
@@ -183,10 +185,25 @@ echo -e "${YELLOW}[4/6] Seeding test data...${NC}"
 
 if [ -f "$SEED_SCRIPT" ]; then
     echo -e "${CYAN}Running seed script...${NC}"
-    if docker exec -i media-db psql -U admin < "$SEED_SCRIPT" > /dev/null 2>&1; then
+    
+    # Check .env file for the actual PostgreSQL user
+    if [ -f "$PROJECT_ROOT/.env" ]; then
+        PG_USER=$(grep "^POSTGRES_USER=" "$PROJECT_ROOT/.env" | cut -d'=' -f2)
+        if [ -z "$PG_USER" ]; then
+            PG_USER="admin"
+        fi
+    else
+        PG_USER="admin"
+    fi
+    
+    echo -e "${CYAN}Using PostgreSQL user: $PG_USER${NC}"
+    
+    if docker exec -i media-db psql -U "$PG_USER" < "$SEED_SCRIPT" > /dev/null 2>&1; then
         echo -e "${GREEN}✓ Test data seeded successfully${NC}"
     else
         echo -e "${YELLOW}⚠ Warning: Seed script failed (data may already exist)${NC}"
+        echo -e "${YELLOW}If this is the first run, try manually:${NC}"
+        echo -e "${YELLOW}  docker exec -i media-db psql -U $PG_USER < scripts/seed-e2e-data.sql${NC}"
     fi
 else
     echo -e "${YELLOW}⚠ Warning: Seed script not found at $SEED_SCRIPT${NC}"
