@@ -1,8 +1,9 @@
 package com.mrs.user_service.handler.user;
 
-import com.mrs.user_service.dto.PageUser;
-import com.mrs.user_service.model.UserEntity;
-import com.mrs.user_service.repository.UserRepository;
+import com.mrs.user_service.module.user.domain.UserEntity;
+import com.mrs.user_service.module.user.domain.handler.GetAllUserHandler;
+import com.mrs.user_service.module.user.domain.page.PageUser;
+import com.mrs.user_service.module.user.domain.port.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

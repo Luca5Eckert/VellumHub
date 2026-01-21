@@ -1,0 +1,35 @@
+package com.mrs.user_service.module.user_preference.domain;
+
+import com.mrs.user_service.module.user.domain.Genre;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+import java.util.UUID;
+
+@Entity
+@Table(name = "user_preferences")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserPreference {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    private UUID userId;
+
+    @ElementCollection
+    @CollectionTable(
+            name = "tb_user_genre",
+            joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "genre_name")
+    private List<Genre> genres;
+
+
+}
