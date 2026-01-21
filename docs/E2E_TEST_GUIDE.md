@@ -30,6 +30,27 @@ O teste executa o seguinte fluxo:
 
 ## 🚀 Como Executar
 
+### Pré-requisito OBRIGATÓRIO
+
+**Antes de executar qualquer teste, você DEVE criar o arquivo `.env` na raiz do projeto:**
+
+```env
+# Database Configuration
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin123
+
+# JWT Configuration
+# ⚠️ CRITICAL: Este valor DEVE ser EXATAMENTE o mesmo em TODOS os serviços!
+# Se for diferente, você terá erros 401 (Unauthorized)
+JWT_KEY=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security
+JWT_EXPIRATION=86400000
+```
+
+**Por que isso é importante?**
+- Todos os serviços (user, catalog, engagement, recommendation) usam `${JWT_KEY}` do .env
+- Se o JWT_KEY não existir ou for diferente, o token gerado pelo user-service não será aceito pelos outros serviços
+- Resultado: Erros 401 em todas as requisições autenticadas
+
 ### Opção 1: Script Automatizado (Recomendado)
 
 O script `run_e2e_test.sh` cuida de tudo automaticamente:
@@ -40,11 +61,12 @@ O script `run_e2e_test.sh` cuida de tudo automaticamente:
 ```
 
 Este script irá:
-1. Verificar se o arquivo `.env` existe (e criar se necessário)
+1. Verificar se o arquivo `.env` existe
 2. Iniciar todos os serviços com Docker Compose
 3. Aguardar até que todos os serviços estejam saudáveis
-4. Executar o teste E2E
-5. Exibir os resultados
+4. Executar o seed de dados de teste
+5. Executar o teste E2E
+6. Exibir os resultados
 
 ### Opção 2: Execução Manual
 
