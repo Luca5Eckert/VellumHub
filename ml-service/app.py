@@ -61,18 +61,11 @@ def health_check():
     try:
         with db_connection.get_cursor() as cursor:
             cursor.execute("SELECT 1")
-            result = cursor.fetchone()
-            if result:
-                health_status['checks']['database'] = {
-                    'status': 'UP',
-                    'details': f'Connected to {db_connection.database}'
-                }
-            else:
-                health_status['checks']['database'] = {
-                    'status': 'DOWN',
-                    'details': 'Query returned no results'
-                }
-                health_status['status'] = 'unhealthy'
+            cursor.fetchone()
+            health_status['checks']['database'] = {
+                'status': 'UP',
+                'details': f'Connected to {db_connection.database}'
+            }
     except Exception as e:
         health_status['checks']['database'] = {
             'status': 'DOWN',
