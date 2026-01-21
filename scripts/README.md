@@ -1,10 +1,33 @@
 # E2E Test Quick Reference
 
+## 🆕 Versão Melhorada (RECOMENDADO)
+
+```bash
+# Solução completa e automatizada
+./scripts/run_e2e_complete.sh
+```
+
+Esta versão resolve os problemas conhecidos:
+- ✅ Erro 401 ao criar mídias (usa dados pré-seeded)
+- ✅ Serviços não respondendo (health checks robustos)
+- ✅ Porta 8085 inacessível (espera adequada)
+
+## Versão Original (Legado)
+
+```bash
+# Ainda disponível mas com limitações conhecidas
+./scripts/run_e2e_test.sh
+python3 scripts/e2e_test.py
+```
+
 ## Quick Start
 
 ```bash
-# Run E2E test (automated)
-./scripts/run_e2e_test.sh
+# Automated
+./scripts/run_e2e_complete.sh
+
+# Use a versão melhorada do teste
+python3 scripts/e2e_test_improved.py
 ```
 
 ## Manual Execution
