@@ -9,7 +9,13 @@
 # Modo Manual
 docker-compose up -d
 sleep 120
-docker exec -i media-db psql -U admin < scripts/seed-e2e-data.sql
+
+# Seeding (escolha uma opção)
+docker exec -i media-db psql -U admin < scripts/seed-e2e-data.sql  # SQL
+# OU
+pip3 install psycopg2-binary && python3 scripts/seed_e2e_python.py  # Python
+
+# Execute o teste
 python3 scripts/e2e_test.py
 ```
 
@@ -34,6 +40,37 @@ JWT_EXPIRATION=86400000
 - Ambos devem ter EXATAMENTE o mesmo valor
 - Se não forem iguais, você terá erros 401 (Unauthorized)
 
+## 🗄️ Seeding de Dados de Teste
+
+**Por que o seed é necessário?**
+O usuário de teste padrão (`teste@exemplo.com`) tem role USER e NÃO pode criar mídias. As mídias precisam ser criadas através do seed, que também cria um usuário ADMIN.
+
+**Método 1: SQL Seed (Via Docker)**
+```bash
+docker exec -i media-db psql -U admin < scripts/seed-e2e-data.sql
+```
+
+**Método 2: Python Seed (Programático)**
+```bash
+pip3 install psycopg2-binary
+python3 scripts/seed_e2e_python.py
+```
+
+**Verificar se o seed funcionou:**
+```bash
+pip3 install psycopg2-binary
+python3 scripts/verify_e2e_data.py
+```
+
+## 📋 Scripts Disponíveis
+
+- `run_e2e_test.sh` - Orquestração completa (recomendado)
+- `e2e_test.py` - Teste E2E principal
+- `seed-e2e-data.sql` - Seed SQL (admin user + mídias)
+- `seed_e2e_python.py` - Seed Python (alternativa)
+- `verify_e2e_data.py` - Verifica se dados de teste existem
+- `generate_password_hash.py` - Gera hashes BCrypt
+
 ## ✅ O que o Teste Faz
 
 O teste valida o fluxo completo:
@@ -45,6 +82,38 @@ O teste valida o fluxo completo:
 6. ✅ Aguarda processamento Kafka
 7. ✅ Busca recomendações
 8. ✅ Valida que recomendações foram geradas
+
+## 🔧 Troubleshooting Rápido
+
+**Erro: "role admin does not exist"**
+```bash
+# Verifique o usuário no .env
+cat .env | grep POSTGRES_USER
+
+# Se for diferente de "admin", use o usuário correto
+docker exec -i media-db psql -U postgres < scripts/seed-e2e-data.sql
+```
+
+**Erro: 401 Unauthorized ao buscar mídias**
+```bash
+# O seed não foi executado, execute-o:
+docker exec -i media-db psql -U admin < scripts/seed-e2e-data.sql
+
+# Ou use o Python seed:
+python3 scripts/seed_e2e_python.py
+
+# Verifique se funcionou:
+python3 scripts/verify_e2e_data.py
+```
+
+**Erro: JWT inválido (401 em todos endpoints)**
+```bash
+# Adicione JWT_SECRET ao .env (deve ser igual a JWT_KEY)
+echo "JWT_SECRET=test-secret-key-for-jwt-authentication-min-256-bits-long-key-here-for-security" >> .env
+
+# Reinicie os serviços
+docker-compose down && docker-compose up -d
+```
 
 ## Manual Execution
 

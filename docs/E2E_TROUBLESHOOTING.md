@@ -184,6 +184,75 @@ sleep 120
 docker exec -i media-db psql -U admin < scripts/seed-e2e-data.sql
 ```
 
+#### 4.2 Erro 401 - Usuário sem permissão para criar mídia
+
+**Sintoma**: 
+```
+✗ Falha ao buscar mídias: 401
+⚠ Falha na etapa: Buscar mídias existentes
+```
+
+**Causa**: O usuário de teste `teste@exemplo.com` tem role USER e não pode criar mídias. As mídias precisam ser criadas através do seed.
+
+**Solução - Opção 1 (SQL Seed - Recomendado)**:
+```bash
+# Verifique se PostgreSQL está rodando
+docker-compose ps media-db
+
+# Execute o seed SQL
+docker exec -i media-db psql -U admin < scripts/seed-e2e-data.sql
+
+# Verifique se os dados foram criados
+docker exec -it media-db psql -U admin -d user_db -c "SELECT email, role FROM users WHERE email LIKE '%e2e%';"
+docker exec -it media-db psql -U admin -d catalog_db -c "SELECT COUNT(*) FROM media;"
+```
+
+**Solução - Opção 2 (Python Seed)**:
+```bash
+# Instale dependências (se necessário)
+pip3 install psycopg2-binary
+
+# Execute o seeder Python
+python3 scripts/seed_e2e_python.py
+```
+
+**Solução - Opção 3 (Manual via SQL)**:
+```bash
+# Conecte ao banco
+docker exec -it media-db psql -U admin
+
+# Crie o usuário admin
+\c user_db
+INSERT INTO users (id, name, email, password, role, created_at, updated_at)
+VALUES (
+    'e2e-admin-uuid-0000-0000-000000000001',
+    'E2E Admin User',
+    'admin@e2e.test',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+    'ADMIN',
+    NOW(),
+    NOW()
+);
+
+# Crie mídias de teste
+\c catalog_db
+INSERT INTO media (id, title, description, release_year, media_type, cover_url, created_at, updated_at)
+VALUES 
+    ('media-action-uuid-0000-0000-000000000001', 'Action Hero 1', 'Uma história emocionante de ACTION', 2024, 'MOVIE', 'https://example.com/action-hero-1.jpg', NOW(), NOW()),
+    ('media-action-uuid-0000-0000-000000000002', 'Action Hero 2', 'Uma história emocionante de ACTION', 2024, 'MOVIE', 'https://example.com/action-hero-2.jpg', NOW(), NOW());
+
+# Adicione gêneros
+INSERT INTO media_genres (media_id, genres) VALUES ('media-action-uuid-0000-0000-000000000001', 'ACTION');
+INSERT INTO media_genres (media_id, genres) VALUES ('media-action-uuid-0000-0000-000000000002', 'ACTION');
+
+\q
+```
+
+**Depois de seed, execute o teste novamente**:
+```bash
+python3 scripts/e2e_test.py
+```
+
 #### 5. Resetar Completamente
 
 Se nada funcionar, reset completo:

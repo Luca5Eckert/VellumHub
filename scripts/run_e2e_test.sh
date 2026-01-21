@@ -199,11 +199,20 @@ if [ -f "$SEED_SCRIPT" ]; then
     echo -e "${CYAN}Using PostgreSQL user: $PG_USER${NC}"
     
     if docker exec -i media-db psql -U "$PG_USER" < "$SEED_SCRIPT" > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ Test data seeded successfully${NC}"
+        echo -e "${GREEN}✓ Test data seeded successfully (SQL)${NC}"
     else
-        echo -e "${YELLOW}⚠ Warning: Seed script failed (data may already exist)${NC}"
-        echo -e "${YELLOW}If this is the first run, try manually:${NC}"
-        echo -e "${YELLOW}  docker exec -i media-db psql -U $PG_USER < scripts/seed-e2e-data.sql${NC}"
+        echo -e "${YELLOW}⚠ SQL seed script failed, trying Python seeder...${NC}"
+        
+        # Try Python seeder as fallback
+        if python3 "$SCRIPT_DIR/seed_e2e_python.py"; then
+            echo -e "${GREEN}✓ Test data seeded successfully (Python)${NC}"
+        else
+            echo -e "${RED}✗ Both seed methods failed${NC}"
+            echo -e "${YELLOW}Manual seed command:${NC}"
+            echo -e "${YELLOW}  docker exec -i media-db psql -U $PG_USER < scripts/seed-e2e-data.sql${NC}"
+            echo -e "${YELLOW}  OR${NC}"
+            echo -e "${YELLOW}  pip3 install psycopg2-binary && python3 scripts/seed_e2e_python.py${NC}"
+        fi
     fi
 else
     echo -e "${YELLOW}⚠ Warning: Seed script not found at $SEED_SCRIPT${NC}"
