@@ -323,18 +323,23 @@ class E2ETestImproved:
         self.log_info(f"Total de interações registradas: {interactions_created}/{num_interactions}")
         return interactions_created >= 1  # At least 1 interaction needed
     
+    def wait_for_kafka_and_return_true(self):
+        """Step 5: Wait for Kafka processing and return True for test flow"""
+        self.wait_for_kafka_processing()
+        return True
+    
     def wait_for_kafka_processing(self):
-        """Step 5: Wait for Kafka to process events"""
-        self.log_step(5, "Aguardar processamento Kafka")
+        """Wait for Kafka to process events"""
+        self.log_step(5, "Wait for Kafka processing")
         
-        self.log_info(f"Aguardando {self.kafka_wait_time} segundos para processamento dos eventos Kafka...")
+        self.log_info(f"Waiting {self.kafka_wait_time} seconds for Kafka event processing...")
         
         for i in range(self.kafka_wait_time):
             time.sleep(1)
             print(".", end="", flush=True)
         
         print()
-        self.log_success("Processamento concluído")
+        self.log_success("Processing completed")
     
     def get_recommendations(self) -> bool:
         """Step 6: Get personalized recommendations"""
@@ -437,9 +442,8 @@ class E2ETestImproved:
         
         # First check service health
         if not self.check_all_services():
-            self.log_error("Alguns serviços não estão saudáveis. Continue mesmo assim? (s/n)")
-            # For automation, continue anyway
-            self.log_warning("Continuando com testes apesar de falhas na verificação de saúde...")
+            self.log_warning("Alguns serviços não estão saudáveis. Continuando mesmo assim...")
+            self.log_info("Os testes podem falhar se serviços críticos não estiverem prontos")
         
         # Execute test steps
         steps = [
@@ -447,7 +451,7 @@ class E2ETestImproved:
             ("Fazer login", self.login_user),
             ("Buscar mídias existentes", self.fetch_existing_media),
             ("Registrar interações", self.register_interactions),
-            ("Aguardar Kafka", lambda: (self.wait_for_kafka_processing(), True)[1]),
+            ("Aguardar Kafka", self.wait_for_kafka_and_return_true),
             ("Buscar recomendações", self.get_recommendations),
         ]
         

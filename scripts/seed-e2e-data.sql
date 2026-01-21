@@ -1,11 +1,19 @@
 -- Seed script for E2E testing
 -- This script creates an admin user and test media for E2E testing
+-- 
+-- ⚠️  WARNING: FOR TESTING ONLY ⚠️
+-- This script contains test credentials and should NEVER be used in production
+-- The password hashes and data are intentionally simple for automated testing
+-- 
+-- Test Credentials (DO NOT USE IN PRODUCTION):
+-- - admin@e2e.test / SecurePass123! (ADMIN role)
+-- - teste@exemplo.com / SecurePass123! (USER role)
 
 \c user_db
 
 -- Create admin user for E2E testing
 -- Password: SecurePass123! (BCrypt hash with rounds=10)
--- Note: This hash is for testing only and should NOT be used in production
+-- ⚠️ TEST-ONLY: This hash is for testing and publicly visible in source control
 INSERT INTO users (id, name, email, password, role, created_at, updated_at)
 VALUES (
     'e2e-admin-uuid-0000-0000-000000000001',
@@ -18,6 +26,7 @@ VALUES (
 ) ON CONFLICT (email) DO NOTHING;
 
 -- Create regular test user
+-- ⚠️ TEST-ONLY: This hash is for testing and publicly visible in source control
 INSERT INTO users (id, name, email, password, role, created_at, updated_at)
 VALUES (
     'e2e-user-uuid-0000-0000-000000000001',
