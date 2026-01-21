@@ -2,10 +2,12 @@ package com.mrs.recommendation_service.infrastructure.repository.media_feature;
 
 import com.mrs.recommendation_service.domain.model.MediaFeature;
 import com.mrs.recommendation_service.domain.port.MediaFeatureRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
 
+@Repository
 public class MediaFeatureRepositoryAdapter implements MediaFeatureRepository {
 
     private final JpaMediaFeatureRepository mediaFeatureRepositoryJpa;
