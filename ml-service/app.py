@@ -49,12 +49,40 @@ recommendation_engine = RecommendationEngine()
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
-    return jsonify({
+    """Health check endpoint with database connectivity validation"""
+    health_status = {
         'status': 'healthy',
         'service': 'ml-service',
-        'version': '2.0.0'
-    }), 200
+        'version': '2.0.0',
+        'checks': {}
+    }
+    
+    # Check database connectivity
+    try:
+        with db_connection.get_cursor() as cursor:
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()
+            if result:
+                health_status['checks']['database'] = {
+                    'status': 'UP',
+                    'details': f'Connected to {db_connection.database}'
+                }
+            else:
+                health_status['checks']['database'] = {
+                    'status': 'DOWN',
+                    'details': 'Query returned no results'
+                }
+                health_status['status'] = 'unhealthy'
+    except Exception as e:
+        health_status['checks']['database'] = {
+            'status': 'DOWN',
+            'error': str(e)
+        }
+        health_status['status'] = 'unhealthy'
+        logger.error(f"Database health check failed: {str(e)}")
+    
+    status_code = 200 if health_status['status'] == 'healthy' else 503
+    return jsonify(health_status), status_code
 
 
 @app.route('/api/recommendations', methods=['POST'])
