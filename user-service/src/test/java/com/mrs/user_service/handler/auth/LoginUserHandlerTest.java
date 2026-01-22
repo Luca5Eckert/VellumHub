@@ -53,7 +53,7 @@ class LoginUserHandlerTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(tokenProvider.createToken(anyString(), any(UUID.class), any()))
+        when(tokenProvider.createToken(anyString(), any(UUID.class), any(Collection.class)))
                 .thenReturn(expectedToken);
 
         // Act
@@ -98,7 +98,7 @@ class LoginUserHandlerTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(tokenProvider.createToken(anyString(), any(UUID.class), any()))
+        when(tokenProvider.createToken(anyString(), any(UUID.class), any(Collection.class)))
                 .thenReturn("token");
 
         // Act
