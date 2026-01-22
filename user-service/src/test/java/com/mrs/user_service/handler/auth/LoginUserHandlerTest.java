@@ -1,6 +1,7 @@
 package com.mrs.user_service.handler.auth;
 
 import com.mrs.user_service.module.auth.domain.handler.LoginUserHandler;
+import com.mrs.user_service.module.user.domain.RoleUser;
 import com.mrs.user_service.share.security.token.TokenProvider;
 import com.mrs.user_service.share.security.user.UserDetailImpl;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,12 +48,12 @@ class LoginUserHandlerTest {
         UUID userId = UUID.randomUUID();
         String expectedToken = "jwt-token-12345";
 
-        UserDetailImpl userDetails = new UserDetailImpl(userId, email, password, List.of());
+        UserDetailImpl userDetails = new UserDetailImpl(userId, email, password, RoleUser.USER);
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(tokenProvider.createToken(anyString(), any(UUID.class), anyList()))
+        when(tokenProvider.createToken(anyString(), any(UUID.class), any()))
                 .thenReturn(expectedToken);
 
         // Act
@@ -93,12 +93,12 @@ class LoginUserHandlerTest {
         String password = "securePassword";
         UUID userId = UUID.randomUUID();
 
-        UserDetailImpl userDetails = new UserDetailImpl(userId, email, password, List.of());
+        UserDetailImpl userDetails = new UserDetailImpl(userId, email, password, RoleUser.USER);
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(tokenProvider.createToken(anyString(), any(UUID.class), anyList()))
+        when(tokenProvider.createToken(anyString(), any(UUID.class), any()))
                 .thenReturn("token");
 
         // Act
@@ -110,10 +110,5 @@ class LoginUserHandlerTest {
                         email.equals(auth.getPrincipal()) &&
                         password.equals(auth.getCredentials())
         ));
-    }
-
-    @SuppressWarnings("unchecked")
-    private Collection<? extends GrantedAuthority> anyList() {
-        return any(Collection.class);
     }
 }
