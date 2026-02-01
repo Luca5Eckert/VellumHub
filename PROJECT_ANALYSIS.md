@@ -17,9 +17,8 @@ O **Media Recommendation System** é uma plataforma de recomendação de mídia 
 
 #### 1. **Infraestrutura (100% Completa)**
 - ✅ Docker Compose configurado com todos os serviços
-- ✅ PostgreSQL 15 com 4 bancos de dados isolados (`user_db`, `catalog_db`, `engagement_db`, `recommendation_db`)
+- ✅ PostgreSQL 15 com 4 containers separados para cada banco de dados (`postgres-catalog`, `postgres-engagement`, `postgres-user`, `postgres-recommendation`)
 - ✅ Apache Kafka + Zookeeper para comunicação assíncrona
-- ✅ Scripts de inicialização automática de bancos de dados
 - ✅ Dockerfiles otimizados com multi-stage build para todos os serviços
 
 #### 2. **Catalog Service (85% Completo)**

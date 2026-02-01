@@ -1,20 +1,76 @@
 services:
-  postgres:
+  postgres-catalog:
     image: postgres:15
-    container_name: media-db
+    container_name: postgres-catalog
     restart: always
     env_file: .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: default_db
+      POSTGRES_DB: catalog_db
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts:/docker-entrypoint-initdb.d
+      - postgres_catalog_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d default_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d catalog_db"]
+      interval: 20s
+      timeout: 25s
+      retries: 10
+
+  postgres-engagement:
+    image: postgres:15
+    container_name: postgres-engagement
+    restart: always
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: engagement_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_engagement_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d engagement_db"]
+      interval: 20s
+      timeout: 25s
+      retries: 10
+
+  postgres-user:
+    image: postgres:15
+    container_name: postgres-user
+    restart: always
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: user_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_user_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d user_db"]
+      interval: 20s
+      timeout: 25s
+      retries: 10
+
+  postgres-recommendation:
+    image: postgres:15
+    container_name: postgres-recommendation
+    restart: always
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: recommendation_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_recommendation_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d recommendation_db"]
       interval: 20s
       timeout: 25s
       retries: 10
@@ -51,7 +107,7 @@ services:
       - "8081:8080"
     env_file: .env
     environment:
-      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres:5432/catalog_db'
+      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres-catalog:5432/catalog_db'
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: 'kafka:29092'
@@ -59,7 +115,7 @@ services:
       JWT_KEY: ${JWT_KEY}
       JWT_SECRET: ${JWT_KEY}
     depends_on:
-      postgres:
+      postgres-catalog:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
@@ -76,7 +132,7 @@ services:
       - "8083:8080"
     env_file: .env
     environment:
-      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres:5432/engagement_db'
+      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres-engagement:5432/engagement_db'
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: 'kafka:29092'
@@ -84,7 +140,7 @@ services:
       JWT_KEY: ${JWT_KEY}
       JWT_SECRET: ${JWT_KEY}
     depends_on:
-      postgres:
+      postgres-engagement:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
@@ -101,7 +157,7 @@ services:
       - "8084:8080"
     env_file: .env
     environment:
-      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres:5432/user_db'
+      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres-user:5432/user_db'
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: 'kafka:29092'
@@ -110,7 +166,7 @@ services:
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       SERVER_PORT: 8080
     depends_on:
-      postgres:
+      postgres-user:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
@@ -127,7 +183,7 @@ services:
       - "8085:8080"
     env_file: .env
     environment:
-      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres:5432/recommendation_db'
+      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres-recommendation:5432/recommendation_db'
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: 'kafka:29092'
@@ -136,7 +192,7 @@ services:
       JWT_SECRET: ${JWT_KEY}
       ML_SERVICE_URL: 'http://ml-service:5000'
     depends_on:
-      postgres:
+      postgres-recommendation:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
@@ -153,14 +209,14 @@ services:
       - "5000:5000"
     env_file: .env
     environment:
-      DB_HOST: postgres
+      DB_HOST: postgres-recommendation
       DB_PORT: 5432
       DB_NAME: recommendation_db
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       PORT: 5000
     depends_on:
-      postgres:
+      postgres-recommendation:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import requests; import sys; r = requests.get('http://localhost:5000/health', timeout=5); sys.exit(0 if r.status_code == 200 else 1)\" || exit 1"]
@@ -170,4 +226,7 @@ services:
       start_period: 60s
 
 volumes:
-  postgres_data:
+  postgres_catalog_data:
+  postgres_engagement_data:
+  postgres_user_data:
+  postgres_recommendation_data:
