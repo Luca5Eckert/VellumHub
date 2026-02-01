@@ -108,7 +108,7 @@ graph TB
 | **Recommendation Service** | Spring Boot 4.0 | `recommendation_db` | Event consumption, ML orchestration |
 | **ML Service** | Flask 3.0 | `recommendation_db` | Recommendation algorithm execution |
 
-> **Note:** In local development, all databases run within a single PostgreSQL 15 container for simplicity. In production, each database should be deployed as an independent instance for complete isolation.
+> **Note:** Each service now has its own dedicated PostgreSQL 15 container (`postgres-catalog`, `postgres-engagement`, `postgres-user`, `postgres-recommendation`) ensuring complete database isolation and independent scalability.
 
 ---
 
@@ -221,7 +221,10 @@ docker-compose --version
 | Engagement Service | 8083 | `http://localhost:8083` | `/actuator/health` |
 | Recommendation Service | 8085 | `http://localhost:8085` | `/actuator/health` |
 | ML Service | 5000 | `http://localhost:5000` | `/health` |
-| PostgreSQL | 5432 | `localhost:5432` | - |
+| PostgreSQL (Catalog) | 5432 | `localhost:5432` | - |
+| PostgreSQL (Engagement) | 5433 | `localhost:5433` | - |
+| PostgreSQL (User) | 5434 | `localhost:5434` | - |
+| PostgreSQL (Recommendation) | 5435 | `localhost:5435` | - |
 | Apache Kafka | 9092 | `localhost:9092` | - |
 | Zookeeper | 2181 | `localhost:2181` | - |
 
@@ -393,7 +396,7 @@ The system implements the **Database per Service** pattern, a fundamental micros
 
 ### Auto-Initialization
 
-Databases are automatically initialized on first startup via Docker's `docker-entrypoint-initdb.d` mechanism using the `./scripts/create-databases.sql` script.
+Each database is automatically initialized on first startup via the `POSTGRES_DB` environment variable configured in each PostgreSQL container. This approach ensures complete database isolation with each service having its own dedicated PostgreSQL instance.
 
 ---
 
@@ -710,14 +713,17 @@ docker-compose down -v
 ### Database Operations
 
 ```bash
-# Access PostgreSQL CLI
-docker exec -it media-db psql -U user -d user_db
-
-# List all databases
-docker exec -it media-db psql -U user -d user_db -c "\l"
+# Access PostgreSQL CLI for each service (replace ${POSTGRES_USER} with your configured username)
+docker exec -it postgres-user psql -U ${POSTGRES_USER} -d user_db
+docker exec -it postgres-catalog psql -U ${POSTGRES_USER} -d catalog_db
+docker exec -it postgres-engagement psql -U ${POSTGRES_USER} -d engagement_db
+docker exec -it postgres-recommendation psql -U ${POSTGRES_USER} -d recommendation_db
 
 # View PostgreSQL logs
-docker logs media-db
+docker logs postgres-user
+docker logs postgres-catalog
+docker logs postgres-engagement
+docker logs postgres-recommendation
 ```
 
 ### Kafka Operations
