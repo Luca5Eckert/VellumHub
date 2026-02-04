@@ -73,7 +73,7 @@ class UpdateMediaHandlerTest {
         verify(eventProducer, times(1))
                 .send(eq("update-media"), eq(mediaId.toString()), eventCaptor.capture());
 
-        assertEquals(mediaId.toString(), eventCaptor.getValue().mediaId());
+        assertEquals(mediaId, eventCaptor.getValue().mediaId());
         assertEquals(newGenres.stream().map(Object::toString).toList(), eventCaptor.getValue().genres());
     }
 
