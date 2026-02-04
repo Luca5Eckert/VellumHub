@@ -100,7 +100,7 @@ class MediaServiceTest {
                     2008,
                     MediaType.SERIES,
                     "https://example.com/bb.jpg",
-                    List.of(Genre.HORROR, Genre.THRILLER)
+                    List.of(Genre.THRILLER, Genre.ACTION)
             );
 
             // Act

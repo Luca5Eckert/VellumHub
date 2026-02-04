@@ -233,10 +233,11 @@ class UserServiceTest {
             ArgumentCaptor<PageUser> pageCaptor = ArgumentCaptor.forClass(PageUser.class);
             verify(getAllUserHandler, times(1)).execute(pageCaptor.capture());
 
-            // Note: Due to a bug in UserService where parameters are passed in wrong order to PageUser constructor,
-            // the captured values will be different from the input. The PageUser constructor also normalizes values.
+            // NOTE: There is a known bug in UserService where pageNumber and pageSize are passed
+            // in the wrong order to PageUser constructor (PageUser expects pageSize first).
+            // This test documents the current behavior. TODO: Fix UserService to pass parameters correctly.
             // Input: pageNumber=0, pageSize=10 -> PageUser(pageSize=0, pageNumber=10) 
-            // After normalization: pageSize=10 (default), pageNumber=10
+            // After normalization: pageSize=10 (default because 0 is invalid), pageNumber=10
             PageUser capturedPage = pageCaptor.getValue();
             assertThat(capturedPage.pageSize()).isEqualTo(10);  // normalized from 0 to default
             assertThat(capturedPage.pageNumber()).isEqualTo(10); // pageSize value passed here
@@ -279,8 +280,8 @@ class UserServiceTest {
             ArgumentCaptor<PageUser> pageCaptor = ArgumentCaptor.forClass(PageUser.class);
             verify(getAllUserHandler).execute(pageCaptor.capture());
 
-            // Note: Due to a bug in UserService where parameters are passed in wrong order to PageUser constructor,
-            // and PageUser's validation logic, the values are different than expected inputs.
+            // NOTE: There is a known bug in UserService where pageNumber and pageSize are passed
+            // in the wrong order to PageUser constructor. TODO: Fix UserService to pass parameters correctly.
             // Input: pageNumber=2, pageSize=25 -> PageUser(pageSize=2, pageNumber=25)
             // After normalization: pageSize=2 (valid), pageNumber=25
             PageUser capturedPage = pageCaptor.getValue();
