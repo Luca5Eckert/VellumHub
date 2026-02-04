@@ -2,8 +2,8 @@ package com.mrs.catalog_service.domain.handler;
 
 import com.mrs.catalog_service.domain.event.DeleteMediaEvent;
 import com.mrs.catalog_service.domain.exception.MediaNotExistException;
+import com.mrs.catalog_service.domain.port.EventProducer;
 import com.mrs.catalog_service.domain.port.MediaRepository;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,11 +13,11 @@ import java.util.UUID;
 public class DeleteMediaHandler {
 
     private final MediaRepository mediaRepository;
-    private final KafkaTemplate<String, DeleteMediaEvent> kafka;
+    private final EventProducer<String, DeleteMediaEvent> eventProducer;
 
-    public DeleteMediaHandler(MediaRepository mediaRepository, KafkaTemplate<String, DeleteMediaEvent> kafka) {
+    public DeleteMediaHandler(MediaRepository mediaRepository, EventProducer<String, DeleteMediaEvent> eventProducer) {
         this.mediaRepository = mediaRepository;
-        this.kafka = kafka;
+        this.eventProducer = eventProducer;
     }
 
     @Transactional
@@ -28,7 +28,7 @@ public class DeleteMediaHandler {
 
         DeleteMediaEvent deleteMediaEvent = new DeleteMediaEvent(mediaId);
 
-        kafka.send("delete-media", mediaId.toString(), deleteMediaEvent);
+        eventProducer.send("delete-media", mediaId.toString(), deleteMediaEvent);
     }
 
 

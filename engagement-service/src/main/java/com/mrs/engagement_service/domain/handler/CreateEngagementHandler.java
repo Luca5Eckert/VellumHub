@@ -4,7 +4,6 @@ import com.mrs.engagement_service.domain.event.InteractionEvent;
 import com.mrs.engagement_service.domain.exception.InvalidInteractionException;
 import com.mrs.engagement_service.domain.model.Interaction;
 import com.mrs.engagement_service.domain.port.EngagementRepository;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
