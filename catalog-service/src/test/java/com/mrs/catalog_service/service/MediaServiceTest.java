@@ -72,7 +72,7 @@ class MediaServiceTest {
                     1999,
                     MediaType.MOVIE,
                     "https://example.com/matrix.jpg",
-                    List.of(Genre.ACTION, Genre.SCIFI)
+                    List.of(Genre.ACTION, Genre.THRILLER)
             );
 
             // Act
@@ -87,7 +87,7 @@ class MediaServiceTest {
             assertThat(capturedMedia.getDescription()).isEqualTo("A computer hacker learns about the true nature of reality");
             assertThat(capturedMedia.getReleaseYear()).isEqualTo(1999);
             assertThat(capturedMedia.getMediaType()).isEqualTo(MediaType.MOVIE);
-            assertThat(capturedMedia.getGenres()).containsExactlyInAnyOrder(Genre.ACTION, Genre.SCIFI);
+            assertThat(capturedMedia.getGenres()).containsExactlyInAnyOrder(Genre.ACTION, Genre.THRILLER);
         }
 
         @Test
@@ -100,7 +100,7 @@ class MediaServiceTest {
                     2008,
                     MediaType.SERIES,
                     "https://example.com/bb.jpg",
-                    List.of(Genre.DRAMA, Genre.CRIME)
+                    List.of(Genre.HORROR, Genre.THRILLER)
             );
 
             // Act
@@ -151,9 +151,7 @@ class MediaServiceTest {
                     .releaseYear(1999)
                     .mediaType(MediaType.MOVIE)
                     .coverUrl("https://example.com/matrix.jpg")
-                    .genres(List.of(Genre.ACTION, Genre.SCIFI))
-                    .createAt(now)
-                    .updateAt(now)
+                    .genres(List.of(Genre.ACTION, Genre.THRILLER))
                     .build();
 
             GetMediaResponse expectedResponse = new GetMediaResponse(
@@ -163,7 +161,7 @@ class MediaServiceTest {
                     1999,
                     MediaType.MOVIE,
                     "https://example.com/matrix.jpg",
-                    List.of(Genre.ACTION, Genre.SCIFI),
+                    List.of(Genre.ACTION, Genre.THRILLER),
                     now,
                     now
             );
@@ -210,7 +208,7 @@ class MediaServiceTest {
                     .id(mediaId2)
                     .title("Breaking Bad")
                     .mediaType(MediaType.SERIES)
-                    .genres(List.of(Genre.DRAMA))
+                    .genres(List.of(Genre.HORROR))
                     .build();
 
             Page<Media> mediaPage = new PageImpl<>(List.of(media1, media2));
@@ -218,7 +216,7 @@ class MediaServiceTest {
             GetMediaResponse response1 = new GetMediaResponse(mediaId1, "The Matrix", "Desc 1",
                     1999, MediaType.MOVIE, "url1", List.of(Genre.ACTION), now, now);
             GetMediaResponse response2 = new GetMediaResponse(mediaId2, "Breaking Bad", "Desc 2",
-                    2008, MediaType.SERIES, "url2", List.of(Genre.DRAMA), now, now);
+                    2008, MediaType.SERIES, "url2", List.of(Genre.HORROR), now, now);
 
             when(getAllMediaHandler.execute(any(PageMedia.class))).thenReturn(mediaPage);
             when(mediaMapper.toGetResponse(media1)).thenReturn(response1);
@@ -274,7 +272,7 @@ class MediaServiceTest {
                     "Updated Description",
                     2000,
                     "https://example.com/updated.jpg",
-                    List.of(Genre.COMEDY, Genre.DRAMA)
+                    List.of(Genre.COMEDY, Genre.HORROR)
             );
 
             // Act

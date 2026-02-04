@@ -99,7 +99,7 @@ class EngagementServiceTest {
             InteractionCreateRequest request = new InteractionCreateRequest(
                     userId,
                     mediaId,
-                    InteractionType.RATING,
+                    InteractionType.LIKE,
                     4.5
             );
 
@@ -111,7 +111,7 @@ class EngagementServiceTest {
             verify(createEngagementHandler).handler(interactionCaptor.capture());
 
             Interaction capturedInteraction = interactionCaptor.getValue();
-            assertThat(capturedInteraction.getType()).isEqualTo(InteractionType.RATING);
+            assertThat(capturedInteraction.getType()).isEqualTo(InteractionType.LIKE);
             assertThat(capturedInteraction.getInteractionValue()).isEqualTo(4.5);
         }
 
@@ -125,7 +125,7 @@ class EngagementServiceTest {
             InteractionCreateRequest request = new InteractionCreateRequest(
                     userId,
                     mediaId,
-                    InteractionType.VIEW,
+                    InteractionType.WATCH,
                     1.0
             );
 
@@ -137,7 +137,7 @@ class EngagementServiceTest {
             verify(createEngagementHandler).handler(interactionCaptor.capture());
 
             Interaction capturedInteraction = interactionCaptor.getValue();
-            assertThat(capturedInteraction.getType()).isEqualTo(InteractionType.VIEW);
+            assertThat(capturedInteraction.getType()).isEqualTo(InteractionType.WATCH);
         }
     }
 
@@ -163,7 +163,7 @@ class EngagementServiceTest {
             Interaction interaction2 = new Interaction(
                     userId,
                     UUID.randomUUID(),
-                    InteractionType.VIEW,
+                    InteractionType.WATCH,
                     1.0,
                     now
             );
@@ -174,7 +174,7 @@ class EngagementServiceTest {
                     1L, userId, interaction1.getMediaId(), InteractionType.LIKE, 1.0, now
             );
             InteractionGetResponse response2 = new InteractionGetResponse(
-                    2L, userId, interaction2.getMediaId(), InteractionType.VIEW, 1.0, now
+                    2L, userId, interaction2.getMediaId(), InteractionType.WATCH, 1.0, now
             );
 
             when(getUserInteractionHandler.execute(any(InteractionFilter.class), eq(userId), anyInt(), anyInt()))
@@ -190,7 +190,7 @@ class EngagementServiceTest {
             // Assert
             assertThat(result).hasSize(2);
             assertThat(result.get(0).type()).isEqualTo(InteractionType.LIKE);
-            assertThat(result.get(1).type()).isEqualTo(InteractionType.VIEW);
+            assertThat(result.get(1).type()).isEqualTo(InteractionType.WATCH);
 
             verify(getUserInteractionHandler, times(1))
                     .execute(any(InteractionFilter.class), eq(userId), eq(0), eq(10));
@@ -294,13 +294,6 @@ class EngagementServiceTest {
             UUID mediaId = UUID.randomUUID();
 
             EngagementStats engagementStats = mock(EngagementStats.class);
-            when(engagementStats.getTotalViews()).thenReturn(1000L);
-            when(engagementStats.getTotalLikes()).thenReturn(500L);
-            when(engagementStats.getTotalDislikes()).thenReturn(50L);
-            when(engagementStats.getAverageRating()).thenReturn(4.5);
-            when(engagementStats.getTotalRatings()).thenReturn(200L);
-            when(engagementStats.getTotalInteractions()).thenReturn(1750L);
-            when(engagementStats.getPopularityScore()).thenReturn(85.5);
 
             GetMediaStatusResponse expectedResponse = new GetMediaStatusResponse(
                     mediaId,
@@ -332,13 +325,6 @@ class EngagementServiceTest {
             UUID mediaId = UUID.randomUUID();
 
             EngagementStats emptyStats = mock(EngagementStats.class);
-            when(emptyStats.getTotalViews()).thenReturn(0L);
-            when(emptyStats.getTotalLikes()).thenReturn(0L);
-            when(emptyStats.getTotalDislikes()).thenReturn(0L);
-            when(emptyStats.getAverageRating()).thenReturn(0.0);
-            when(emptyStats.getTotalRatings()).thenReturn(0L);
-            when(emptyStats.getTotalInteractions()).thenReturn(0L);
-            when(emptyStats.getPopularityScore()).thenReturn(0.0);
 
             GetMediaStatusResponse expectedResponse = new GetMediaStatusResponse(
                     mediaId,
