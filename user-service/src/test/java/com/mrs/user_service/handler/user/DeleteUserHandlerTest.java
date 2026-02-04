@@ -1,5 +1,6 @@
 package com.mrs.user_service.handler.user;
 
+import com.mrs.user_service.module.user.application.exception.UserNotFoundException;
 import com.mrs.user_service.module.user.domain.handler.DeleteUserHandler;
 import com.mrs.user_service.module.user.domain.port.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -47,8 +48,8 @@ class DeleteUserHandlerTest {
 
         // Act & Assert
         assertThatThrownBy(() -> deleteUserHandler.execute(userId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("User not exist");
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found");
 
         // Garante que o delete nunca foi chamado após a falha do check
         verify(userRepository, never()).deleteById(any());

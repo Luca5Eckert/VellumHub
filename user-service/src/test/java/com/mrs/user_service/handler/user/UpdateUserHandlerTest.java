@@ -1,6 +1,7 @@
 package com.mrs.user_service.handler.user;
 
 import com.mrs.user_service.module.user.application.dto.UpdateUserRequest;
+import com.mrs.user_service.module.user.application.exception.UserNotFoundException;
 import com.mrs.user_service.module.user.domain.RoleUser;
 import com.mrs.user_service.module.user.domain.UserEntity;
 import com.mrs.user_service.module.user.domain.handler.UpdateUserHandler;
@@ -62,14 +63,14 @@ class UpdateUserHandlerTest {
     }
 
     @Test
-    @DisplayName("Should throw IllegalArgumentException when user ID does not exist")
+    @DisplayName("Should throw UserNotFoundException when user ID does not exist")
     void execute_ShouldThrowException_WhenUserNotFound() {
         UUID userId = UUID.randomUUID();
         UpdateUserRequest request = new UpdateUserRequest("Name", "email@test.com");
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> updateUserHandler.execute(userId, request));
+        assertThrows(UserNotFoundException.class, () -> updateUserHandler.execute(userId, request));
         verify(userRepository, never()).save(any());
     }
 

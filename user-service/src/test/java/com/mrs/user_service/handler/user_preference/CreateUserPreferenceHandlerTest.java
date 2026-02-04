@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import com.mrs.user_service.module.user.domain.port.UserRepository;
 import com.mrs.user_service.module.user_preference.domain.UserPreference;
 import com.mrs.user_service.module.user_preference.domain.event.CreateUserPrefenceEvent;
+import com.mrs.user_service.module.user_preference.domain.exception.UserPreferenceAlreadyExistDomainException;
 import com.mrs.user_service.module.user_preference.domain.handler.CreateUserPreferenceHandler;
 import com.mrs.user_service.module.user_preference.domain.port.UserPreferenceRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,7 +82,7 @@ class CreateUserPreferenceHandlerTest {
         when(userPreferenceRepository.existsByUserId(any(UUID.class))).thenReturn(true);
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        UserPreferenceAlreadyExistDomainException exception = assertThrows(UserPreferenceAlreadyExistDomainException.class,
                 () -> handler.execute(validPreference));
 
         assertEquals("User already have a preference", exception.getMessage());
