@@ -1,7 +1,8 @@
 package com.mrs.user_service.handler.user;
 
-import com.mrs.user_service.model.UserEntity;
-import com.mrs.user_service.repository.UserRepository;
+import com.mrs.user_service.module.user.domain.UserEntity;
+import com.mrs.user_service.module.user.domain.handler.GetUserHandler;
+import com.mrs.user_service.module.user.domain.port.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +54,6 @@ class GetUserHandlerTest {
 
         // Act & Assert
         assertThatThrownBy(() -> getUserHandler.execute(userId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("User not found by id");
+                .isInstanceOf(com.mrs.user_service.module.user.application.exception.UserNotFoundException.class);
     }
 }

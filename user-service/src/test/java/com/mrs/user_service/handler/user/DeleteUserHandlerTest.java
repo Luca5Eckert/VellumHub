@@ -1,6 +1,7 @@
 package com.mrs.user_service.handler.user;
 
-import com.mrs.user_service.repository.UserRepository;
+import com.mrs.user_service.module.user.domain.handler.DeleteUserHandler;
+import com.mrs.user_service.module.user.domain.port.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
