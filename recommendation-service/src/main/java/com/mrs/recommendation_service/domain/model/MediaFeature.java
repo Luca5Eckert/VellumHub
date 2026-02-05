@@ -6,35 +6,47 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "medias_features")
-@Data
+@Table(name = "media_features")
+@Getter
+@Setter
+@NoArgsConstructor
 public class MediaFeature {
 
     @Id
     private UUID mediaId;
 
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "genres", columnDefinition = "text[]")
-    private List<String> genres;
+    @Column(columnDefinition = "vector(5)")
+    private float[] embedding;
 
+    @Column(name = "popularity_score")
     private double popularityScore;
 
-    public MediaFeature(){
+    @Column(name = "last_updated", nullable = false)
+    private Instant lastUpdated;
+
+    public void update(List<Genre> genres) {
+        float[] newEmbedding = new float[Genre.total()];
+
+        if (genres != null) {
+            for (Genre genre : genres) {
+                newEmbedding[genre.index] = 1.0f;
+        }
+
     }
 
-    public MediaFeature(UUID mediaId, List<String> genres){
-        this.mediaId = mediaId;
-        this.genres = genres;
-    }
+        this.embedding =newEmbedding;
+        this.lastUpdated =Instant.now();
+}
 
-    public void update(List<String> genres) {
-        this.genres = genres;
-    }
 }
