@@ -2,6 +2,7 @@ package com.mrs.recommendation_service.application.client;
 
 import com.mrs.recommendation_service.application.dto.MediaFeatureResponse;
 import com.mrs.recommendation_service.domain.port.CatalogClient;
+import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
