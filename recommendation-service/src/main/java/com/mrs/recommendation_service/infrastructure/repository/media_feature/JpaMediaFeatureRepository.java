@@ -12,13 +12,17 @@ import java.util.UUID;
 public interface JpaMediaFeatureRepository extends JpaRepository<MediaFeature, UUID> {
 
     @Query(value = """
-        SELECT m.media_id 
-        FROM media_features m
-        JOIN user_profiles u ON u.user_id = :userId
-        WHERE m.media_id NOT IN (SELECT unnest(u.interacted_media_ids))
-        ORDER BY (m.embedding <=> u.profile_vector) * 0.7 + (m.popularity_score * 0.3) ASC
-        LIMIT :limit OFFSET :offset
-        """, nativeQuery = true)
+    WITH current_user AS (
+        SELECT profile_vector, interacted_media_ids 
+        FROM user_profiles 
+        WHERE user_id = :userId
+    )
+    SELECT m.media_id 
+    FROM media_features m, current_user u
+    WHERE m.media_id NOT IN (SELECT unnest(u.interacted_media_ids))
+    ORDER BY (m.embedding <=> u.profile_vector) * 0.7 + (m.popularity_score * 0.3) ASC
+    LIMIT :limit OFFSET :offset
+    """, nativeQuery = true)
     List<UUID> findTopVectorRecommendations(UUID userId, int limit, int offset);
 
 }
