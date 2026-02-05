@@ -1,4 +1,5 @@
 services:
+  # --- DATABASES ---
   postgres-catalog:
     image: postgres:15
     container_name: postgres-catalog
@@ -14,9 +15,9 @@ services:
       - postgres_catalog_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d catalog_db"]
-      interval: 20s
-      timeout: 25s
-      retries: 10
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres-engagement:
     image: postgres:15
@@ -33,9 +34,9 @@ services:
       - postgres_engagement_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d engagement_db"]
-      interval: 20s
-      timeout: 25s
-      retries: 10
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres-user:
     image: postgres:15
@@ -52,9 +53,9 @@ services:
       - postgres_user_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d user_db"]
-      interval: 20s
-      timeout: 25s
-      retries: 10
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres-recommendation:
     image: postgres:15
@@ -72,14 +73,14 @@ services:
       - ./create-vector-in-recommendation-db.sql:/docker-entrypoint-initdb.d/create-vector-in-recommendation-db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d recommendation_db"]
-      interval: 20s
-      timeout: 25s
-      retries: 10
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # --- MESSAGING (KAFKA) ---
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     container_name: zookeeper
-    restart: always
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -87,7 +88,6 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.3.0
     container_name: kafka
-    restart: always
     depends_on:
       - zookeeper
     ports:
@@ -100,107 +100,75 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  # --- MICROSERVICES ---
   catalog-service:
     build: ./catalog-service
     container_name: catalog-service
-    restart: on-failure
     ports:
       - "8081:8080"
     env_file: .env
     environment:
-      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres-catalog:5432/catalog_db'
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-catalog:5432/catalog_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      KAFKA_BOOTSTRAP_SERVERS: 'kafka:29092'
-      SERVER_PORT: 8080
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_KEY: ${JWT_KEY}
-      JWT_SECRET: ${JWT_KEY}
     depends_on:
       postgres-catalog:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
   engagement-service:
     build: ./engagement-service
     container_name: engagement-service
-    restart: on-failure
     ports:
       - "8083:8080"
     env_file: .env
     environment:
-      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres-engagement:5432/engagement_db'
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-engagement:5432/engagement_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      KAFKA_BOOTSTRAP_SERVERS: 'kafka:29092'
-      SERVER_PORT: 8080
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_KEY: ${JWT_KEY}
-      JWT_SECRET: ${JWT_KEY}
     depends_on:
       postgres-engagement:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
   user-service:
     build: ./user-service
     container_name: user-service
-    restart: on-failure
     ports:
       - "8084:8080"
     env_file: .env
     environment:
-      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres-user:5432/user_db'
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/user_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      KAFKA_BOOTSTRAP_SERVERS: 'kafka:29092'
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_KEY: ${JWT_KEY}
-      JWT_SECRET: ${JWT_KEY}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
-      SERVER_PORT: 8080
     depends_on:
       postgres-user:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
   recommendation-service:
     build: ./recommendation-service
     container_name: recommendation-service
-    restart: on-failure
     ports:
       - "8085:8080"
     env_file: .env
     environment:
-      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres-recommendation:5432/recommendation_db'
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-recommendation:5432/recommendation_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      KAFKA_BOOTSTRAP_SERVERS: 'kafka:29092'
-      SERVER_PORT: 8080
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_KEY: ${JWT_KEY}
-      JWT_SECRET: ${JWT_KEY}
-      ML_SERVICE_URL: 'http://ml-service:5000'
     depends_on:
       postgres-recommendation:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
 volumes:
   postgres_catalog_data:
