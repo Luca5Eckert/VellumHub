@@ -35,6 +35,11 @@ public class MediaFeature {
     @Column(name = "last_updated", nullable = false)
     private Instant lastUpdated;
 
+    public MediaFeature(UUID uuid, float[] genresVector) {
+        this.mediaId = uuid;
+        this.embedding = genresVector;
+    }
+
     public void update(List<Genre> genres) {
         float[] newEmbedding = new float[Genre.total()];
 

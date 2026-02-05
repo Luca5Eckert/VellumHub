@@ -1,5 +1,6 @@
 package com.mrs.recommendation_service.domain.handler.media_feature;
 
+import com.mrs.recommendation_service.application.mapper.MediaFeatureMapper;
 import com.mrs.recommendation_service.domain.command.UpdateMediaFeatureCommand;
 import com.mrs.recommendation_service.domain.exception.media_feature.MediaFeatureNotFoundException;
 import com.mrs.recommendation_service.domain.model.MediaFeature;

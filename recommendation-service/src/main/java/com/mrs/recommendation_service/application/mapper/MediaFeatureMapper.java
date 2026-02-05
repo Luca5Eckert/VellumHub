@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.domain.mapper;
+package com.mrs.recommendation_service.application.mapper;
 
 import com.mrs.recommendation_service.domain.model.Genre;
 import lombok.extern.slf4j.Slf4j;
