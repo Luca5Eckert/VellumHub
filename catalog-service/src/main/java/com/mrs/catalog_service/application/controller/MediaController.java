@@ -2,6 +2,7 @@ package com.mrs.catalog_service.application.controller;
 
 import com.mrs.catalog_service.application.dto.CreateMediaRequest;
 import com.mrs.catalog_service.application.dto.GetMediaResponse;
+import com.mrs.catalog_service.application.dto.MediaFeatureResponse;
 import com.mrs.catalog_service.application.dto.UpdateMediaRequest; // Import adicionado
 import com.mrs.catalog_service.domain.service.MediaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -117,8 +118,8 @@ public class MediaController {
     }
 
     @PostMapping("/bulk")
-    public ResponseEntity<List<GetMediaResponse>> getByIds(List<UUID> mediaIds) {
-        List<GetMediaResponse> mediaFeatures = mediaService.getByIds(mediaIds);
+    public ResponseEntity<List<MediaFeatureResponse>> getByIds(List<UUID> mediaIds) {
+        List<MediaFeatureResponse> mediaFeatures = mediaService.getByIds(mediaIds);
 
         return ResponseEntity.ok(mediaFeatures);
     }
