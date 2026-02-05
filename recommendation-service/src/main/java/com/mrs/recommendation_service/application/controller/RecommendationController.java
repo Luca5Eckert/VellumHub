@@ -1,5 +1,6 @@
 package com.mrs.recommendation_service.application.controller;
 
+import com.mrs.recommendation_service.application.dto.MediaFeatureResponse;
 import com.mrs.recommendation_service.domain.model.Recommendation;
 import com.mrs.recommendation_service.infrastructure.provider.UserAuthenticationProvider;
 import com.mrs.recommendation_service.domain.service.RecommendationService;
@@ -46,7 +47,7 @@ public class RecommendationController {
                     content = @Content(schema = @Schema(implementation = Recommendation.class))),
             @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content)
     })
-    public ResponseEntity<List<UUID>> getRecommendations(int limit, int offset) {
+    public ResponseEntity<List<MediaFeatureResponse>> getRecommendations(int limit, int offset) {
         var userId = userAuthenticationProvider.getUserId();
 
         var recommendations = recommendationService.get(userId, limit, offset);
