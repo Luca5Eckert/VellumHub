@@ -19,7 +19,7 @@ public class UserProfile {
     private UUID userId;
 
     @Column(columnDefinition = "vector(5)")
-    private float[] profileVector = new float[5];
+    private float[] profileVector = new float[10];
 
     @Column(name = "interacted_media_ids", columnDefinition = "uuid[]")
     @JdbcTypeCode(SqlTypes.ARRAY)
@@ -74,5 +74,5 @@ public class UserProfile {
         double scoreIncrement = weight * (1 + interactionValue);
         this.totalEngagementScore += scoreIncrement;
     }
-    
+
 }
