@@ -27,9 +27,6 @@ public class GetRecommendationsHandler {
     }
 
     public List<UUID> execute(UUID userId, int limit, int offset) {
-        UserProfile userProfile = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new UserProfileNotFoundException(userId.toString()));
-
         return mediaFeatureRepository.findAllByUserId(userId, limit, offset);
     }
 

@@ -26,7 +26,7 @@ public class CreateMediaHandler {
 
         CreateMediaEvent createMediaEvent = new CreateMediaEvent(
                 media.getId(),
-                media.getGenres().stream().map(Enum::toString).toList()
+                media.getGenres()
         );
 
         eventProducer.send("create-media", createMediaEvent.mediaId().toString(), createMediaEvent);

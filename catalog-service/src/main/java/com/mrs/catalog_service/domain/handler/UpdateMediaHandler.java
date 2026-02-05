@@ -44,7 +44,7 @@ public class UpdateMediaHandler {
 
         UpdateMediaEvent updateMediaEvent = new UpdateMediaEvent(
                 media.getId(),
-                request.genres().stream().map(Objects::toString).toList()
+                request.genres()
         );
 
         eventProducer.send("update-media", media.getId().toString(), updateMediaEvent);
