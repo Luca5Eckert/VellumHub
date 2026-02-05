@@ -1,5 +1,6 @@
 package com.mrs.recommendation_service.infrastructure.repository.media_feature;
 
+import com.mrs.recommendation_service.application.dto.MediaFeatureResponse;
 import com.mrs.recommendation_service.domain.model.MediaFeature;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -24,5 +25,13 @@ public interface JpaMediaFeatureRepository extends JpaRepository<MediaFeature, U
     LIMIT :limit OFFSET :offset
     """, nativeQuery = true)
     List<UUID> findTopVectorRecommendations(UUID userId, int limit, int offset);
+
+    @Query(value = """
+            SELECT m.media_id
+            FROM media_features m
+            ORDER BY m.popularity_score
+            LIMIT :limit OFFSET :offset
+            """)
+    List<UUID> findMostPopularMedias(int limit, int offset);
 
 }

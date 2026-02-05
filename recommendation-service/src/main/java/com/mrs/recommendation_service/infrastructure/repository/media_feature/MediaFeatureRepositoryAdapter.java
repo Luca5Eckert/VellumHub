@@ -1,5 +1,6 @@
 package com.mrs.recommendation_service.infrastructure.repository.media_feature;
 
+import com.mrs.recommendation_service.application.dto.MediaFeatureResponse;
 import com.mrs.recommendation_service.domain.model.MediaFeature;
 import com.mrs.recommendation_service.domain.model.UserProfile;
 import com.mrs.recommendation_service.domain.port.MediaFeatureRepository;
@@ -36,6 +37,11 @@ public class MediaFeatureRepositoryAdapter implements MediaFeatureRepository {
     @Override
     public Optional<MediaFeature> findById(UUID uuid) {
         return mediaFeatureRepositoryJpa.findById(uuid);
+    }
+
+    @Override
+    public List<UUID> findMostPopularMedias(int limit, int offset) {
+        return mediaFeatureRepositoryJpa.findMostPopularMedias(limit, offset);
     }
 
 }
