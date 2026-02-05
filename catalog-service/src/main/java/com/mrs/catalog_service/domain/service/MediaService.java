@@ -21,15 +21,17 @@ public class MediaService {
     private final GetMediaHandler getMediaHandler;
     private final GetAllMediaHandler getAllMediaHandler;
     private final UpdateMediaHandler updateMediaHandler;
+    private final GetMediaByIdsHandler getMediaByIdsHandler;
 
     private final MediaMapper mediaMapper;
 
-    public MediaService(CreateMediaHandler createMediaHandler, DeleteMediaHandler deleteMediaHandler, GetMediaHandler getMediaHandler, GetAllMediaHandler getAllMediaHandler, UpdateMediaHandler updateMediaHandler, MediaMapper mediaMapper) {
+    public MediaService(CreateMediaHandler createMediaHandler, DeleteMediaHandler deleteMediaHandler, GetMediaHandler getMediaHandler, GetAllMediaHandler getAllMediaHandler, UpdateMediaHandler updateMediaHandler, GetMediaByIdsHandler getMediaByIdsHandler, MediaMapper mediaMapper) {
         this.createMediaHandler = createMediaHandler;
         this.deleteMediaHandler = deleteMediaHandler;
         this.getMediaHandler = getMediaHandler;
         this.getAllMediaHandler = getAllMediaHandler;
         this.updateMediaHandler = updateMediaHandler;
+        this.getMediaByIdsHandler = getMediaByIdsHandler;
         this.mediaMapper = mediaMapper;
     }
 
@@ -67,5 +69,11 @@ public class MediaService {
         updateMediaHandler.execute(mediaId, updateMediaRequest);
     }
 
+
+    public List<GetMediaResponse> getByIds(List<UUID> mediaIds) {
+        List<Media> mediaList = getMediaByIdsHandler.execute(mediaIds);
+
+        return mediaList.stream().map(mediaMapper::toGetResponse).toList();
+    }
 
 }

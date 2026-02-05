@@ -4,6 +4,7 @@ import com.mrs.catalog_service.domain.model.Media;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,4 +18,6 @@ public interface MediaRepository {
     Optional<Media> findById(UUID mediaId);
 
     void deleteById(UUID mediaId);
+
+    List<Media> findAllById(List<UUID> uuids);
 }

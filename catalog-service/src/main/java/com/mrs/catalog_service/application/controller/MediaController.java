@@ -115,4 +115,13 @@ public class MediaController {
 
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/bulk")
+    public ResponseEntity<List<GetMediaResponse>> getByIds(List<UUID> mediaIds) {
+        List<GetMediaResponse> mediaFeatures = mediaService.getByIds(mediaIds);
+
+        return ResponseEntity.ok(mediaFeatures);
+    }
+
+
 }

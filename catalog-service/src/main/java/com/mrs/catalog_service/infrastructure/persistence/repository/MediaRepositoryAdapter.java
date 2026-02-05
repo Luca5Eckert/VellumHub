@@ -5,6 +5,7 @@ import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,6 +40,11 @@ public class MediaRepositoryAdapter implements MediaRepository {
     @Override
     public void deleteById(UUID mediaId) {
         mediaRepositoryJpa.deleteById(mediaId);
+    }
+
+    @Override
+    public List<Media> findAllById(List<UUID> uuids) {
+        return mediaRepositoryJpa.findAllById(uuids);
     }
 
 }
