@@ -1,9 +1,6 @@
 package com.mrs.catalog_service.domain.service;
 
-import com.mrs.catalog_service.application.dto.CreateMediaRequest;
-import com.mrs.catalog_service.application.dto.GetMediaResponse;
-import com.mrs.catalog_service.application.dto.PageMedia;
-import com.mrs.catalog_service.application.dto.UpdateMediaRequest;
+import com.mrs.catalog_service.application.dto.*;
 import com.mrs.catalog_service.domain.handler.*;
 import com.mrs.catalog_service.application.mapper.MediaMapper;
 import com.mrs.catalog_service.domain.model.Media;
@@ -70,10 +67,10 @@ public class MediaService {
     }
 
 
-    public List<GetMediaResponse> getByIds(List<UUID> mediaIds) {
+    public List<MediaFeatureResponse> getByIds(List<UUID> mediaIds) {
         List<Media> mediaList = getMediaByIdsHandler.execute(mediaIds);
 
-        return mediaList.stream().map(mediaMapper::toGetResponse).toList();
+        return mediaList.stream().map(mediaMapper::toFeatureResponse).toList();
     }
 
 }
