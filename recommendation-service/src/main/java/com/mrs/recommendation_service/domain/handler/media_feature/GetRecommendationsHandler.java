@@ -3,8 +3,10 @@ package com.mrs.recommendation_service.domain.handler.media_feature;
 import com.mrs.recommendation_service.application.dto.GetRecommendationRequest;
 import com.mrs.recommendation_service.application.dto.RecommendationMlResponse;
 import com.mrs.recommendation_service.domain.exception.user_profile.UserProfileNotFoundException;
+import com.mrs.recommendation_service.domain.model.MediaFeature;
 import com.mrs.recommendation_service.domain.model.Recommendation;
 import com.mrs.recommendation_service.domain.model.UserProfile;
+import com.mrs.recommendation_service.domain.port.MediaFeatureRepository;
 import com.mrs.recommendation_service.domain.port.UserProfileRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -17,34 +19,18 @@ import java.util.UUID;
 public class GetRecommendationsHandler {
 
     private final UserProfileRepository userProfileRepository;
-    private final RestClient restClient;
+    private final MediaFeatureRepository mediaFeatureRepository;
 
-    @Value("${ml. service.url:http://ml-service:5000}")
-    private String mlServiceUrl;
-
-    public GetRecommendationsHandler(UserProfileRepository userProfileRepository, RestClient restClient) {
+    public GetRecommendationsHandler(UserProfileRepository userProfileRepository, RestClient restClient, MediaFeatureRepository mediaFeatureRepository) {
         this.userProfileRepository = userProfileRepository;
-        this.restClient = restClient;
+        this.mediaFeatureRepository = mediaFeatureRepository;
     }
 
-    public List<Recommendation> execute(UUID userId) {
+    public List<UUID> execute(UUID userId, int limit, int offset) {
         UserProfile userProfile = userProfileRepository.findById(userId)
                 .orElseThrow(() -> new UserProfileNotFoundException(userId.toString()));
 
-        GetRecommendationRequest request = GetRecommendationRequest.builder()
-                .userProfile(GetRecommendationRequest.UserProfileDTO.fromEntity(userProfile))
-                .limit(10)
-                .build();
-
-        RecommendationMlResponse recommendationMlResponse = restClient.post()
-                .uri(mlServiceUrl + "/api/recommendations")
-                .body(request)
-                .retrieve()
-                .body(RecommendationMlResponse.class);
-
-        assert recommendationMlResponse != null;
-
-        return recommendationMlResponse.recommendations();
+        return mediaFeatureRepository.findAllByUserId(userId, limit, offset);
     }
 
 }

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/recommendations")
@@ -45,10 +46,10 @@ public class RecommendationController {
                     content = @Content(schema = @Schema(implementation = Recommendation.class))),
             @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content)
     })
-    public ResponseEntity<List<Recommendation>> getRecommendations() {
+    public ResponseEntity<List<UUID>> getRecommendations(int limit, int offset) {
         var userId = userAuthenticationProvider.getUserId();
 
-        var recommendations = recommendationService.get(userId);
+        var recommendations = recommendationService.get(userId, limit, offset);
 
         return ResponseEntity.ok(recommendations);
     }

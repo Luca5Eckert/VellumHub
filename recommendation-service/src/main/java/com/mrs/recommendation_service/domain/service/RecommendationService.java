@@ -16,8 +16,8 @@ public class RecommendationService {
         this.getRecommendationsHandler = getRecommendationsHandler;
     }
 
-    public List<Recommendation> get(UUID userId){
-        return getRecommendationsHandler.execute(userId);
+    public List<UUID> get(UUID userId, int limit, int offset) {
+        return getRecommendationsHandler.execute(userId, limit, offset);
     }
 
 }

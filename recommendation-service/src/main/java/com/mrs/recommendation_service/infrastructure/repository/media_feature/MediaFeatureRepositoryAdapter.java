@@ -1,9 +1,11 @@
 package com.mrs.recommendation_service.infrastructure.repository.media_feature;
 
 import com.mrs.recommendation_service.domain.model.MediaFeature;
+import com.mrs.recommendation_service.domain.model.UserProfile;
 import com.mrs.recommendation_service.domain.port.MediaFeatureRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,6 +26,11 @@ public class MediaFeatureRepositoryAdapter implements MediaFeatureRepository {
     @Override
     public void deleteById(UUID uuid) {
         mediaFeatureRepositoryJpa.deleteById(uuid);
+    }
+
+    @Override
+    public List<UUID> findAllByUserId(UUID userId, int limit, int offset) {
+        return mediaFeatureRepositoryJpa.findTopVectorRecommendations(userId, limit, offset);
     }
 
     @Override

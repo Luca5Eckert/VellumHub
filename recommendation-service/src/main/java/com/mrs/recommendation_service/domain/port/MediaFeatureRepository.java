@@ -13,7 +13,7 @@ public interface MediaFeatureRepository{
 
     void deleteById(UUID uuid);
 
-    List<MediaFeature> findAllByUserProfile(UserProfile userProfile);
+    List<UUID> findAllByUserId(UUID userId, int limit, int offset);
 
     Optional<MediaFeature> findById(UUID uuid);
 }
