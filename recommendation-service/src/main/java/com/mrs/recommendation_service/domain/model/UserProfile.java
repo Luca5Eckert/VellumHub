@@ -12,31 +12,17 @@ import java.util.*;
 
 @Entity
 @Table(name = "user_profiles")
-@Getter
-@Setter
-@NoArgsConstructor
+@Getter @Setter @NoArgsConstructor
 public class UserProfile {
 
     @Id
     private UUID userId;
 
-    @Version
-    private Long version;
+    @Column(columnDefinition = "vector(5)")
+    private float[] profileVector = new float[5];
 
-    /**
-     * Scores por gênero usando JSONB do PostgreSQL
-     * Exemplo: {"Terror": 5.0, "Suspense": 3.0}
-     */
-    @JdbcTypeCode(SqlTypes. JSON)
-    @Column(name = "genre_scores", columnDefinition = "jsonb")
-    private Map<String, Double> genreScores = new HashMap<>();
-
-    /**
-     * IDs das mídias interagidas usando ARRAY do PostgreSQL
-     * Set evita duplicatas automaticamente
-     */
-    @JdbcTypeCode(SqlTypes. ARRAY)
     @Column(name = "interacted_media_ids", columnDefinition = "uuid[]")
+    @JdbcTypeCode(SqlTypes.ARRAY)
     private Set<UUID> interactedMediaIds = new HashSet<>();
 
     @Column(name = "total_likes")
@@ -64,18 +50,15 @@ public class UserProfile {
     }
 
     public void processInteraction(MediaFeature media, InteractionType type, double interactionValue) {
-        if (media.getGenres() != null) {
-            for (String genre : media.getGenres()) {
-                this.genreScores.merge(genre, type.getWeightInteraction(), Double::sum);
-            }
+        float[] mediaVector = media.getEmbedding();
+        double weight = type.getWeightInteraction();
+
+        for (int i = 0; i < profileVector.length; i++) {
+            this.profileVector[i] += (float) (mediaVector[i] * weight * (1 + interactionValue));
         }
 
         this.interactedMediaIds.add(media.getMediaId());
-
-        updateCounters(type);
-        updateEngagementScore(type, interactionValue);
-
-        this.lastUpdated = Instant. now();
+        this.lastUpdated = Instant.now();
     }
 
     private void updateCounters(InteractionType type) {
@@ -91,4 +74,5 @@ public class UserProfile {
         double scoreIncrement = weight * (1 + interactionValue);
         this.totalEngagementScore += scoreIncrement;
     }
+    
 }
