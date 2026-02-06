@@ -3,7 +3,6 @@ package com.mrs.catalog_service.domain.handler;
 import com.mrs.catalog_service.application.dto.PageMedia;
 import com.mrs.catalog_service.domain.model.Genre;
 import com.mrs.catalog_service.domain.model.Media;
-import com.mrs.catalog_service.domain.model.MediaType;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,13 +42,11 @@ class GetAllMediaHandlerTest {
                 Media.builder()
                         .id(UUID.randomUUID())
                         .title("Movie 1")
-                        .mediaType(MediaType.MOVIE)
                         .genres(List.of(Genre.ACTION))
                         .build(),
                 Media.builder()
                         .id(UUID.randomUUID())
                         .title("Series 1")
-                        .mediaType(MediaType.SERIES)
                         .genres(List.of(Genre.COMEDY))
                         .build()
         );

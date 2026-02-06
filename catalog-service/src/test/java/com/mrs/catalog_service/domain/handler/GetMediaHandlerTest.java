@@ -3,7 +3,6 @@ package com.mrs.catalog_service.domain.handler;
 import com.mrs.catalog_service.domain.exception.MediaNotFoundException;
 import com.mrs.catalog_service.domain.model.Genre;
 import com.mrs.catalog_service.domain.model.Media;
-import com.mrs.catalog_service.domain.model.MediaType;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,7 +37,6 @@ class GetMediaHandlerTest {
                 .title("Test Movie")
                 .description("A test movie")
                 .releaseYear(2024)
-                .mediaType(MediaType.MOVIE)
                 .genres(List.of(Genre.ACTION, Genre.COMEDY))
                 .build();
 

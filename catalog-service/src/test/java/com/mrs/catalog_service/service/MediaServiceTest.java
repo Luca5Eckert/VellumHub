@@ -8,7 +8,6 @@ import com.mrs.catalog_service.application.mapper.MediaMapper;
 import com.mrs.catalog_service.domain.handler.*;
 import com.mrs.catalog_service.domain.model.Genre;
 import com.mrs.catalog_service.domain.model.Media;
-import com.mrs.catalog_service.domain.model.MediaType;
 import com.mrs.catalog_service.domain.service.MediaService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -70,7 +69,7 @@ class MediaServiceTest {
                     "The Matrix",
                     "A computer hacker learns about the true nature of reality",
                     1999,
-                    MediaType.MOVIE,
+                    MediaType.BOOK,
                     "https://example.com/matrix.jpg",
                     List.of(Genre.ACTION, Genre.THRILLER)
             );
@@ -86,7 +85,7 @@ class MediaServiceTest {
             assertThat(capturedMedia.getTitle()).isEqualTo("The Matrix");
             assertThat(capturedMedia.getDescription()).isEqualTo("A computer hacker learns about the true nature of reality");
             assertThat(capturedMedia.getReleaseYear()).isEqualTo(1999);
-            assertThat(capturedMedia.getMediaType()).isEqualTo(MediaType.MOVIE);
+            assertThat(capturedMedia.getMediaType()).isEqualTo(MediaType.BOOK);
             assertThat(capturedMedia.getGenres()).containsExactlyInAnyOrder(Genre.ACTION, Genre.THRILLER);
         }
 
@@ -98,7 +97,7 @@ class MediaServiceTest {
                     "Breaking Bad",
                     "A chemistry teacher turns to a life of crime",
                     2008,
-                    MediaType.SERIES,
+                    MediaType.BOOK,
                     "https://example.com/bb.jpg",
                     List.of(Genre.THRILLER, Genre.ACTION)
             );
@@ -111,7 +110,7 @@ class MediaServiceTest {
             verify(createMediaHandler).handler(mediaCaptor.capture());
 
             Media capturedMedia = mediaCaptor.getValue();
-            assertThat(capturedMedia.getMediaType()).isEqualTo(MediaType.SERIES);
+            assertThat(capturedMedia.getMediaType()).isEqualTo(MediaType.BOOK);
         }
     }
 
@@ -149,7 +148,7 @@ class MediaServiceTest {
                     .title("The Matrix")
                     .description("A computer hacker learns about the true nature of reality")
                     .releaseYear(1999)
-                    .mediaType(MediaType.MOVIE)
+                    .mediaType(MediaType.BOOK)
                     .coverUrl("https://example.com/matrix.jpg")
                     .genres(List.of(Genre.ACTION, Genre.THRILLER))
                     .build();
@@ -159,7 +158,7 @@ class MediaServiceTest {
                     "The Matrix",
                     "A computer hacker learns about the true nature of reality",
                     1999,
-                    MediaType.MOVIE,
+                    MediaType.BOOK,
                     "https://example.com/matrix.jpg",
                     List.of(Genre.ACTION, Genre.THRILLER),
                     now,
@@ -200,23 +199,23 @@ class MediaServiceTest {
             Media media1 = Media.builder()
                     .id(mediaId1)
                     .title("The Matrix")
-                    .mediaType(MediaType.MOVIE)
+                    .mediaType(MediaType.BOOK)
                     .genres(List.of(Genre.ACTION))
                     .build();
 
             Media media2 = Media.builder()
                     .id(mediaId2)
                     .title("Breaking Bad")
-                    .mediaType(MediaType.SERIES)
+                    .mediaType(MediaType.BOOK)
                     .genres(List.of(Genre.HORROR))
                     .build();
 
             Page<Media> mediaPage = new PageImpl<>(List.of(media1, media2));
 
             GetMediaResponse response1 = new GetMediaResponse(mediaId1, "The Matrix", "Desc 1",
-                    1999, MediaType.MOVIE, "url1", List.of(Genre.ACTION), now, now);
+                    1999, MediaType.BOOK, "url1", List.of(Genre.ACTION), now, now);
             GetMediaResponse response2 = new GetMediaResponse(mediaId2, "Breaking Bad", "Desc 2",
-                    2008, MediaType.SERIES, "url2", List.of(Genre.HORROR), now, now);
+                    2008, MediaType.BOOK, "url2", List.of(Genre.HORROR), now, now);
 
             when(getAllMediaHandler.execute(any(PageMedia.class))).thenReturn(mediaPage);
             when(mediaMapper.toGetResponse(media1)).thenReturn(response1);

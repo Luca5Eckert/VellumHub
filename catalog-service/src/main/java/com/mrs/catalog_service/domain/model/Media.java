@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "medias")
+@Table(name = "books")
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
@@ -37,11 +37,20 @@ public class Media {
     @Column(nullable = false)
     private int releaseYear;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MediaType mediaType;
-
+    @Column(name = "cover_url")
     private String coverUrl;
+
+    @Column(nullable = false)
+    private String author;
+
+    @Column(nullable = false)
+    private String isbn;
+
+    @Column(name = "page_count")
+    private int pageCount;
+
+    @Column(nullable = false)
+    private String publisher;
 
     @Version
     private long version;
@@ -96,4 +105,5 @@ public class Media {
             this.genres = new ArrayList<>(genres);
         }
     }
+
 }

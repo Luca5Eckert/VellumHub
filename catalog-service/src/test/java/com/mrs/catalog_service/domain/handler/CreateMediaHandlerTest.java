@@ -4,7 +4,6 @@ import com.mrs.catalog_service.domain.event.CreateMediaEvent;
 import com.mrs.catalog_service.domain.exception.InvalidMediaException;
 import com.mrs.catalog_service.domain.model.Genre;
 import com.mrs.catalog_service.domain.model.Media;
-import com.mrs.catalog_service.domain.model.MediaType;
 import com.mrs.catalog_service.domain.port.EventProducer;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +18,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -47,7 +45,6 @@ class CreateMediaHandlerTest {
                 .title("Test Movie")
                 .description("A test movie description")
                 .releaseYear(2024)
-                .mediaType(MediaType.MOVIE)
                 .genres(genres)
                 .build();
 
@@ -66,7 +63,7 @@ class CreateMediaHandlerTest {
 
         CreateMediaEvent capturedEvent = eventCaptor.getValue();
         assertEquals(mediaId, capturedEvent.mediaId());
-        assertEquals(genres.stream().map(Enum::toString).toList(), capturedEvent.genres());
+        assertEquals(genres.stream(), capturedEvent.genres());
     }
 
     @Test
@@ -93,7 +90,6 @@ class CreateMediaHandlerTest {
                 .title("Test Movie")
                 .description("A test movie description")
                 .releaseYear(2024)
-                .mediaType(MediaType.SERIES)
                 .genres(List.of())
                 .build();
 

@@ -36,7 +36,6 @@ public class MediaService {
         Media media = Media.builder()
                 .title( createMediaRequest.title() )
                 .description( createMediaRequest.description() )
-                .mediaType( createMediaRequest.mediaType() )
                 .releaseYear( createMediaRequest.releaseYear() )
                 .genres( createMediaRequest.genres() )
                 .build();
