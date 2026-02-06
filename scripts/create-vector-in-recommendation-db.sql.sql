@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE media_features (
     media_id UUID PRIMARY KEY,
-    embedding vector(3), -- Ajuste a dimensão conforme o número de gêneros
+    embedding vector(11),
     popularity_score FLOAT DEFAULT 0.0,
     last_updated TIMESTAMP NOT NULL
 );
