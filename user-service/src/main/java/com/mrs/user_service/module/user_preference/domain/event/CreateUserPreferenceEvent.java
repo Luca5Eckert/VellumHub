@@ -6,7 +6,7 @@ import com.mrs.user_service.module.user.domain.Genre;
 import java.util.List;
 import java.util.UUID;
 
-public record CreateUserPrefenceEvent(
+public record CreateUserPreferenceEvent (
         UUID userId,
         List<Genre> genres
 ) {

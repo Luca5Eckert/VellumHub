@@ -1,7 +1,7 @@
 package com.mrs.user_service.module.user_preference.domain.handler;
 
 import com.mrs.user_service.module.user_preference.domain.UserPreference;
-import com.mrs.user_service.module.user_preference.domain.event.CreateUserPrefenceEvent;
+import com.mrs.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
 import com.mrs.user_service.module.user_preference.domain.exception.UserPreferenceAlreadyExistDomainException;
 import com.mrs.user_service.module.user_preference.domain.port.UserPreferenceRepository;
 import com.mrs.user_service.module.user.domain.port.UserRepository;
@@ -15,9 +15,9 @@ public class CreateUserPreferenceHandler {
     private final UserPreferenceRepository userPreferenceRepository;
     private final UserRepository userRepository;
 
-    private final KafkaTemplate<String, CreateUserPrefenceEvent> kafkaTemplate;
+    private final KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate;
 
-    public CreateUserPreferenceHandler(UserPreferenceRepository userPreferenceRepository, UserRepository userRepository, KafkaTemplate<String, CreateUserPrefenceEvent> kafkaTemplate) {
+    public CreateUserPreferenceHandler(UserPreferenceRepository userPreferenceRepository, UserRepository userRepository, KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate) {
         this.userPreferenceRepository = userPreferenceRepository;
         this.userRepository = userRepository;
         this.kafkaTemplate = kafkaTemplate;
@@ -32,12 +32,12 @@ public class CreateUserPreferenceHandler {
 
         userPreferenceRepository.save(userPreference);
 
-        CreateUserPrefenceEvent createUserPrefenceEvent = new CreateUserPrefenceEvent(
+        CreateUserPreferenceEvent createUserPreferenceEvent = new CreateUserPreferenceEvent(
                 userPreference.getUserId(),
                 userPreference.getGenres()
         );
 
-        kafkaTemplate.send("create_user_preference", createUserPrefenceEvent.userId().toString(), createUserPrefenceEvent);
+        kafkaTemplate.send("create_user_preference", createUserPreferenceEvent.userId().toString(), createUserPreferenceEvent);
 
     }
 
