@@ -1,4 +1,4 @@
-# 📖 BookEra
+# 📖 VellumHub
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/Luca5Eckert/media-recommendation-system)
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
@@ -31,7 +31,7 @@ A book-focused recommendation platform inspired by Letterboxd, built for readers
 
 ## Overview
 
-**BookEra** — *Book* + *Era* (a new era of reading) — is a scalable, distributed application designed to help readers discover, track, and rate books. Think of it as **Letterboxd, but for books**. The platform provides a community-driven book catalog, star ratings, reading status tracking, and personalized recommendations powered by vector similarity search.
+**VellumHub** — *Vellum* (the ancient parchment used for manuscripts) + *Hub* (a central gathering point) — is a scalable, distributed application designed to help readers discover, track, and rate books. Think of it as **Letterboxd, but for books**. The platform provides a community-driven book catalog, star ratings, reading status tracking, and personalized recommendations powered by vector similarity search.
 
 Built with a **microservices architecture** and **event-driven communication**, the system leverages **Apache Kafka** for real-time data streaming and **pgvector** for high-performance book recommendations.
 

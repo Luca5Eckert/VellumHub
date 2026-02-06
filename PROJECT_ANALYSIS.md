@@ -1,4 +1,4 @@
-# 📊 Project Analysis — BookEra
+# 📊 Project Analysis — VellumHub
 
 > **Complete Analysis of Current State, New Identity, and Execution Plan**  
 > **Date:** February 2026
@@ -7,7 +7,7 @@
 
 ## 📋 Executive Summary
 
-**BookEra** — *Book* + *Era* (a new era of reading) — is a book-focused recommendation platform inspired by Letterboxd, but designed specifically for books. The project has undergone a **strategic pivot** — shifting from a general media platform to a specialized book community where users can catalog, rate, track reading progress, and receive personalized book recommendations.
+**VellumHub** — *Vellum* (the ancient parchment used for manuscripts) + *Hub* (a central gathering point) — is a book-focused recommendation platform inspired by Letterboxd, but designed specifically for books. The project has undergone a **strategic pivot** — shifting from a general media platform to a specialized book community where users can catalog, rate, track reading progress, and receive personalized book recommendations.
 
 ### Identity Evolution
 
