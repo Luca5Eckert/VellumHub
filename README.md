@@ -137,17 +137,6 @@ Client → Recommendation Service → ML Service (Flask/Python) → recommendati
          Client must call Catalog Service separately for full media data
 ```
 
-#### Why v1 was replaced
-
-The original architecture had four critical problems that made it unsustainable:
-
-| Problem | Impact | Root Cause |
-|---------|--------|------------|
-| **Excessive latency** | Every recommendation request required 3+ network hops (Recommendation Service → ML Service → Database → back) | The ML Service was a synchronous REST intermediary between the Java backend and the database |
-| **Tight coupling** | A failure in the Python ML Service brought down recommendations entirely | The Java Recommendation Service and the Flask ML Service shared the same database, creating hidden dependencies |
-| **Redundant computation** | Recommendations were recalculated from scratch on every single request, wasting CPU and increasing response times | No caching or pre-computation strategy — the ML Service ran the full scoring algorithm per request |
-| **Weak API abstraction** | The front-end had to orchestrate multiple service calls manually (get recommendations, then fetch media details separately) | The Recommendation Service returned only media IDs, forcing the client to make additional calls to the Catalog Service |
-
 ### Architecture v2 — General Media + pgvector
 
 These problems were solved by eliminating the ML Service entirely and moving vector similarity search into PostgreSQL with pgvector:
@@ -160,15 +149,6 @@ Client → Recommendation Service (pgvector query) → recommendation_db
          Returns fully enriched recommendations in a single response
 ```
 
-#### How v2 solved each problem
-
-| Problem | v1 | v2 Solution |
-|---------|-----|-------------|
-| **Excessive latency** | 3+ network hops per request | Single database query using pgvector's `<=>` cosine distance operator + one bulk fetch |
-| **Tight coupling** | Java ↔ Python ↔ shared DB | Pure Java stack — ML Service eliminated, vector queries run natively in PostgreSQL |
-| **Redundant computation** | Full recalculation per request | User profiles updated in real-time via Kafka events; recommendations are a simple vector lookup |
-| **Weak API abstraction** | Client orchestrates multiple calls | Aggregator pattern — Recommendation Service enriches results server-side via `/media/bulk` before returning |
-
 ### Architecture v3 (Current) — Book Platform
 
 ```
@@ -178,6 +158,27 @@ Client → Recommendation Service (pgvector query) → recommendation_db
                 ↓
          Returns enriched book recommendations with ratings & reading status
 ```
+
+#### Why v1 was replaced
+
+The original architecture had four critical problems that made it unsustainable:
+
+| Problem | Impact | Root Cause |
+|---------|--------|------------|
+| **Excessive latency** | Every recommendation request required 3+ network hops (Recommendation Service → ML Service → Database → back) | The ML Service was a synchronous REST intermediary between the Java backend and the database |
+| **Tight coupling** | A failure in the Python ML Service brought down recommendations entirely | The Java Recommendation Service and the Flask ML Service shared the same database, creating hidden dependencies |
+| **Redundant computation** | Recommendations were recalculated from scratch on every single request, wasting CPU and increasing response times | No caching or pre-computation strategy — the ML Service ran the full scoring algorithm per request |
+| **Weak API abstraction** | The front-end had to orchestrate multiple service calls manually (get recommendations, then fetch media details separately) | The Recommendation Service returned only media IDs, forcing the client to make additional calls to the Catalog Service |
+
+#### How v2 solved each problem
+
+| Problem | v1 | v2 Solution |
+|---------|-----|-------------|
+| **Excessive latency** | 3+ network hops per request | Single database query using pgvector's `<=>` cosine distance operator + one bulk fetch |
+| **Tight coupling** | Java ↔ Python ↔ shared DB | Pure Java stack — ML Service eliminated, vector queries run natively in PostgreSQL |
+| **Redundant computation** | Full recalculation per request | User profiles updated in real-time via Kafka events; recommendations are a simple vector lookup |
+| **Weak API abstraction** | Client orchestrates multiple calls | Aggregator pattern — Recommendation Service enriches results server-side via `/media/bulk` before returning |
+
 
 ### Evolution Summary
 
