@@ -26,7 +26,8 @@ public class MediaFeature {
     @Id
     private UUID mediaId;
 
-    @Column(columnDefinition = "vector(5)")
+    @JdbcTypeCode(SqlTypes.VECTOR)
+    @Column(name = "embedding")
     private float[] embedding;
 
     @Column(name = "popularity_score")
