@@ -4,11 +4,13 @@ import com.mrs.catalog_service.domain.model.Media;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Repository
 public class MediaRepositoryAdapter implements MediaRepository {
 
     private final JpaMediaRepository mediaRepositoryJpa;
