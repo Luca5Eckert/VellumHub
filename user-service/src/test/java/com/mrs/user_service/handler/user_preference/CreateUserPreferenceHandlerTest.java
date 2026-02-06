@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.mrs.user_service.module.user.domain.port.UserRepository;
 import com.mrs.user_service.module.user_preference.domain.UserPreference;
-import com.mrs.user_service.module.user_preference.domain.event.CreateUserPrefenceEvent;
+import com.mrs.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
 import com.mrs.user_service.module.user_preference.domain.exception.UserPreferenceAlreadyExistDomainException;
 import com.mrs.user_service.module.user_preference.domain.handler.CreateUserPreferenceHandler;
 import com.mrs.user_service.module.user_preference.domain.port.UserPreferenceRepository;
@@ -31,7 +31,7 @@ class CreateUserPreferenceHandlerTest {
     private UserRepository userRepository;
 
     @Mock
-    private KafkaTemplate<String, CreateUserPrefenceEvent> kafkaTemplate;
+    private KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate;
 
     @InjectMocks
     private CreateUserPreferenceHandler handler;
