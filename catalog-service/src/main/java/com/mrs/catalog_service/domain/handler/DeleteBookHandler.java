@@ -28,7 +28,7 @@ public class DeleteBookHandler {
 
         DeleteBookEvent deleteMediaEvent = new DeleteBookEvent(bookId);
 
-        eventProducer.send("delete-book", bookId.toString(), deleteMediaEvent);
+        eventProducer.send("deleted-book", bookId.toString(), deleteMediaEvent);
     }
 
 

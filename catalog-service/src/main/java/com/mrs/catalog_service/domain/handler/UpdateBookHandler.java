@@ -51,7 +51,7 @@ public class UpdateBookHandler {
                 request.genres()
         );
 
-        eventProducer.send("update-book", book.getId().toString(), updateMediaEvent);
+        eventProducer.send("updated-book", book.getId().toString(), updateMediaEvent);
 
     }
 

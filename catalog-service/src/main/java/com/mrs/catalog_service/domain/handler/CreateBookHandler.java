@@ -29,7 +29,7 @@ public class CreateBookHandler {
                 book.getGenres()
         );
 
-        eventProducer.send("create-book", createMediaEvent.bookId().toString(), createMediaEvent);
+        eventProducer.send("created-book", createMediaEvent.bookId().toString(), createMediaEvent);
     }
 
 }
