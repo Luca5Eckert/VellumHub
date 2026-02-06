@@ -1,4 +1,4 @@
-# 📊 Project Analysis — Leaflit
+# 📊 Project Analysis — Bookera
 
 > **Complete Analysis of Current State, New Identity, and Execution Plan**  
 > **Date:** February 2026
@@ -7,7 +7,7 @@
 
 ## 📋 Executive Summary
 
-**Leaflit** — from *leaf* (the turning of a page) and *lit* (literature) — is a book-focused recommendation platform inspired by Letterboxd, but designed specifically for books. The project has undergone a **strategic pivot** — shifting from a general media platform to a specialized book community where users can catalog, rate, track reading progress, and receive personalized book recommendations.
+**Bookera** — *Book* + *era* (a new era of reading) — is a book-focused recommendation platform inspired by Letterboxd, but designed specifically for books. The project has undergone a **strategic pivot** — shifting from a general media platform to a specialized book community where users can catalog, rate, track reading progress, and receive personalized book recommendations.
 
 ### Identity Evolution
 
