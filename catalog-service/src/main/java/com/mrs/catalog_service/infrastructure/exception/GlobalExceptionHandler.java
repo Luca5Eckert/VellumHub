@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
                 .status(status.value())
                 .error("Book Not Found")
                 .message(ex.getMessage())
-                .details(List.of("The requested media resource was not found"))
+                .details(List.of("The requested book resource was not found"))
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
                 .status(status.value())
                 .error("Book Not Found")
                 .message(ex.getMessage())
-                .details(List.of("The requested media resource does not exist"))
+                .details(List.of("The requested book resource does not exist"))
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
@@ -87,7 +87,7 @@ public class GlobalExceptionHandler {
                 .status(status.value())
                 .error("Book Domain Error")
                 .message(ex.getMessage())
-                .details(List.of("Business rule violation in media domain"))
+                .details(List.of("Business rule violation in book domain"))
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
