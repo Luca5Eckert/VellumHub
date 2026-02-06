@@ -333,17 +333,17 @@ Response:
 
 ### Book Catalog Service (Port 8081)
 
+**Current Endpoints** (using legacy `/media` paths — will be migrated to `/books` in Sprint 3):
+
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| GET | `/media` | List all approved books (paginated) | Yes |
-| GET | `/media/{id}` | Get book by ID | Yes |
-| POST | `/media` | Submit new book (pending approval) | Yes |
-| POST | `/media/bulk` | Get multiple books by IDs | Yes |
-| DELETE | `/media/{id}` | Delete book | Yes (ADMIN) |
+| GET | `/media` | List all media/books (paginated) | Yes |
+| GET | `/media/{id}` | Get media/book by ID | Yes |
+| POST | `/media` | Create new media/book | Yes (ADMIN) |
+| POST | `/media/bulk` | Get multiple media/books by IDs | Yes |
+| DELETE | `/media/{id}` | Delete media/book | Yes (ADMIN) |
 
-> **Note:** Endpoints currently use `/media` paths. These will be migrated to `/books` in Sprint 3.
-
-**Planned Endpoints (Sprint 3):**
+**Planned Endpoints (Sprint 3)** — new book-specific paths with approval workflow:
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
@@ -497,16 +497,25 @@ The service implements a **Hybrid Scoring Algorithm** combining vector similarit
 
 ### Event-Driven Profile Updates
 
-User profiles are updated in real-time through Kafka event consumption:
+User profiles are updated in real-time through Kafka event consumption.
+
+**Current Kafka Topics** (will be renamed in Sprint 3–4):
 
 | Kafka Topic | Producer | Consumer Action |
 |-------------|----------|-----------------|
-| `create-media` | Book Catalog Service | Creates `BookFeature` with genre-based embedding vector |
-| `update-media` | Book Catalog Service | Updates `BookFeature` embedding |
-| `delete-media` | Book Catalog Service | Removes `BookFeature` |
-| `engagement-created` | Reading & Rating Service | Updates `UserProfile` preference vector based on rating/status |
+| `create-media` | Catalog Service | Creates `BookFeature` with genre-based embedding vector |
+| `update-media` | Catalog Service | Updates `BookFeature` embedding |
+| `delete-media` | Catalog Service | Removes `BookFeature` |
+| `engagement-created` | Engagement Service | Updates `UserProfile` preference vector based on interaction |
 
-> **Note:** Kafka topics will be renamed to `create-book`, `update-book`, `delete-book`, and `book-rated` in Sprint 3–4.
+**Planned Kafka Topics** (Sprint 3–4):
+
+| Kafka Topic | Producer | Consumer Action |
+|-------------|----------|-----------------|
+| `create-book` | Book Catalog Service | Creates `BookFeature` with genre-based embedding vector |
+| `update-book` | Book Catalog Service | Updates `BookFeature` embedding |
+| `delete-book` | Book Catalog Service | Removes `BookFeature` |
+| `book-rated` | Reading & Rating Service | Updates `UserProfile` preference vector based on rating/status |
 
 ---
 
