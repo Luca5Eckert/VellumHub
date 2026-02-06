@@ -31,6 +31,7 @@ public class CreateBookRequestUseCase {
                 .isbn(command.isbn())
                 .pageCount(command.pageCount())
                 .publisher(command.publisher())
+                .genres(command.genres())
                 .build();
 
         bookRequestRepository.save(bookRequest);

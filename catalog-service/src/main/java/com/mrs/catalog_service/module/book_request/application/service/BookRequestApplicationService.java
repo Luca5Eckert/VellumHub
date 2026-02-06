@@ -1,7 +1,9 @@
 package com.mrs.catalog_service.module.book_request.application.service;
 
+import com.mrs.catalog_service.module.book_request.application.dto.BookRequestResponse;
 import com.mrs.catalog_service.module.book_request.application.dto.CreateBookRequestDto;
 import com.mrs.catalog_service.module.book_request.application.mapper.BookRequestMapper;
+import com.mrs.catalog_service.module.book_request.domain.BookRequest;
 import com.mrs.catalog_service.module.book_request.domain.command.CreateBookRequestCommand;
 import com.mrs.catalog_service.module.book_request.domain.use_case.CreateBookRequestUseCase;
 import org.springframework.stereotype.Service;
@@ -18,10 +20,12 @@ public class BookRequestApplicationService {
         this.bookRequestMapper = bookRequestMapper;
     }
 
-    public void create(CreateBookRequestDto createBookRequestDto) {
+    public BookRequestResponse create(CreateBookRequestDto createBookRequestDto) {
         CreateBookRequestCommand command = bookRequestMapper.toCreateBookRequestCommand(createBookRequestDto);
 
-        createBookRequestUseCase.execute(command);
+        BookRequest bookRequest = createBookRequestUseCase.execute(command);
+
+        return bookRequestMapper.toBookRequestResponse(bookRequest);
     }
 
 }

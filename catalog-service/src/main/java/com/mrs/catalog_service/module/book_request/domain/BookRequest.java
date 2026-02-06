@@ -1,11 +1,14 @@
 package com.mrs.catalog_service.module.book_request.domain;
 
+import com.mrs.catalog_service.module.book.domain.model.Genre;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "book_requests")
@@ -58,6 +61,15 @@ public class BookRequest {
 
     private Instant deletedAt;
 
+    @ElementCollection
+    @CollectionTable(
+            name = "tb_media_genre",
+            joinColumns = @JoinColumn(name = "media_id")
+    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "genre_name")
+    @Builder.Default
+    private List<Genre> genres = new ArrayList<>();
 
     public BookRequest(String title, String description, int releaseYear, String coverUrl, String author, String isbn, int pageCount, String publisher) {
         this.title = title;

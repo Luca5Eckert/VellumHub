@@ -1,6 +1,8 @@
 package com.mrs.catalog_service.module.book_request.application.mapper;
 
+import com.mrs.catalog_service.module.book_request.application.dto.BookRequestResponse;
 import com.mrs.catalog_service.module.book_request.application.dto.CreateBookRequestDto;
+import com.mrs.catalog_service.module.book_request.domain.BookRequest;
 import com.mrs.catalog_service.module.book_request.domain.command.CreateBookRequestCommand;
 import org.springframework.stereotype.Component;
 
@@ -21,4 +23,19 @@ public class BookRequestMapper {
         );
     }
 
+    public BookRequestResponse toBookRequestResponse(BookRequest bookRequest) {
+        return new BookRequestResponse(
+                bookRequest.getId(),
+                bookRequest.getTitle(),
+                bookRequest.getDescription(),
+                bookRequest.getReleaseYear(),
+                bookRequest.getCoverUrl(),
+                bookRequest.getAuthor(),
+                bookRequest.getIsbn(),
+                bookRequest.getPageCount(),
+                bookRequest.getPublisher(),
+                bookRequest.getGenres()
+        );
+
+    }
 }
