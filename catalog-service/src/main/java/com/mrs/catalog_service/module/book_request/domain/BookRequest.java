@@ -1,8 +1,7 @@
 package com.mrs.catalog_service.module.book_request.domain;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
@@ -10,8 +9,11 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "book_requests")
-@Builder
 @Getter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class BookRequest {
 
     @Id
@@ -56,8 +58,6 @@ public class BookRequest {
 
     private Instant deletedAt;
 
-    public BookRequest() {
-    }
 
     public BookRequest(String title, String description, int releaseYear, String coverUrl, String author, String isbn, int pageCount, String publisher) {
         this.title = title;

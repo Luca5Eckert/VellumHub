@@ -13,40 +13,45 @@ import java.util.UUID;
 @Repository
 public class BookRepositoryAdapter implements BookRepository {
 
-    private final JpaBookRepository mediaRepositoryJpa;
+    private final JpaBookRepository bookRepository;
 
-    public BookRepositoryAdapter(JpaBookRepository mediaRepositoryJpa) {
-        this.mediaRepositoryJpa = mediaRepositoryJpa;
+    public BookRepositoryAdapter(JpaBookRepository bookRepository) {
+        this.bookRepository = bookRepository;
     }
 
     @Override
     public void save(Book book) {
-        mediaRepositoryJpa.save(book);
+        bookRepository.save(book);
     }
 
     @Override
     public boolean existsById(UUID bookId) {
-        return mediaRepositoryJpa.existsById(bookId);
+        return bookRepository.existsById(bookId);
     }
 
     @Override
     public Page<Book> findAll(PageRequest pageRequest) {
-        return mediaRepositoryJpa.findAll(pageRequest);
+        return bookRepository.findAll(pageRequest);
     }
 
     @Override
     public Optional<Book> findById(UUID bookId) {
-        return mediaRepositoryJpa.findById(bookId);
+        return bookRepository.findById(bookId);
     }
 
     @Override
     public void deleteById(UUID bookId) {
-        mediaRepositoryJpa.deleteById(bookId);
+        bookRepository.deleteById(bookId);
     }
 
     @Override
     public List<Book> findAllById(List<UUID> uuids) {
-        return mediaRepositoryJpa.findAllById(uuids);
+        return bookRepository.findAllById(uuids);
+    }
+
+    @Override
+    public boolean existByTitleAndAuthor(String title, String author) {
+        return bookRepository.existsByTitleAndAuthor(title, author);
     }
 
 }
