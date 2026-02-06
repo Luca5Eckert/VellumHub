@@ -1,15 +1,16 @@
 package com.mrs.catalog_service.module.book_request.domain;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
 
 @Entity
-@Table(name = "books_request")
+@Table(name = "book_requests")
+@Builder
 @Getter
 public class BookRequest {
 

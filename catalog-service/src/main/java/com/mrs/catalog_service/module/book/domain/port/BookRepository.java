@@ -20,4 +20,6 @@ public interface BookRepository {
     void deleteById(UUID bookId);
 
     List<Book> findAllById(List<UUID> uuids);
+
+    boolean existByTitleAndAuthor(String title, String author);
 }
