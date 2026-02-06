@@ -1,13 +1,22 @@
-# 📊 Project Analysis — Media Recommendation System
+# 📊 Project Analysis — Book Recommendation System (BookShelf)
 
-> **Complete Analysis of Current State and Execution Plan**  
+> **Complete Analysis of Current State, New Identity, and Execution Plan**  
 > **Date:** February 2026
 
 ---
 
 ## 📋 Executive Summary
 
-The **Media Recommendation System** is a media recommendation platform inspired by services like Netflix and Spotify, built with a microservices architecture and event-driven communication. The project has undergone a **major architectural refactoring** — the former Python/Flask ML Service has been eliminated and replaced by **pgvector-powered vector similarity search** running natively inside PostgreSQL, resulting in a leaner, faster, and fully Java-based system.
+The **Book Recommendation System (BookShelf)** is a book-focused recommendation platform inspired by Letterboxd, but designed specifically for books. The project has undergone a **strategic pivot** — shifting from a general media platform to a specialized book community where users can catalog, rate, track reading progress, and receive personalized book recommendations.
+
+### Identity Evolution
+
+| Aspect | Previous Identity | New Identity |
+|--------|------------------|--------------|
+| **Concept** | General media recommendation platform (Netflix/Spotify-like) | Book-focused platform (Letterboxd for books) |
+| **Content** | Movies, TV shows, music, and other media | Books exclusively |
+| **Core Interactions** | Like, Dislike, Watch | Star ratings (0–5), Reading status, Reviews |
+| **Target Users** | General media consumers | Book readers and literary communities |
 
 ---
 
@@ -15,12 +24,12 @@ The **Media Recommendation System** is a media recommendation platform inspired 
 
 ### Architecture Overview (v2)
 
-The system now consists of **4 Spring Boot microservices** (down from 5) with the Recommendation Service acting as an **Aggregator**. Recommendations are computed via native SQL cosine distance queries against pgvector embeddings, and results are enriched through a bulk fetch call to the Catalog Service.
+The system consists of **4 Spring Boot microservices** with the Recommendation Service acting as an **Aggregator**. Recommendations are computed via native SQL cosine distance queries against pgvector embeddings, and results are enriched through a bulk fetch call to the Catalog Service.
 
 ```
 Client → Recommendation Service (pgvector query) → recommendation_db
                 ↓
-         Bulk fetch enrichment → Catalog Service /media/bulk
+         Bulk fetch enrichment → Catalog Service /books/bulk
                 ↓
          Returns fully enriched recommendations in a single response
 ```
@@ -29,54 +38,38 @@ Client → Recommendation Service (pgvector query) → recommendation_db
 
 #### 1. **Infrastructure (100% Complete)**
 - ✅ Docker Compose configured for all services
-- ✅ PostgreSQL 15 with 4 isolated containers (`postgres-catalog`, `postgres-engagement`, `postgres-user`, `postgres-recommendation`)
-- ✅ pgvector extension enabled in `recommendation_db` with HNSW indexing
+- ✅ PostgreSQL 15 with 4 isolated containers
+- ✅ pgvector extension enabled with HNSW indexing
 - ✅ Apache Kafka + Zookeeper for asynchronous communication
 - ✅ Optimized multi-stage Dockerfiles for all services
-- ✅ SQL init script for vector extension and index creation (`create-vector-in-recommendation-db.sql`)
+- ✅ SQL init script for vector extension and index creation
 
-#### 2. **Catalog Service (85% Complete)**
-- ✅ `Media` entity with fields: id, title, description, releaseYear, mediaType, coverUrl, genres
+#### 2. **Catalog Service → Book Catalog Service (needs refactoring)**
+- ✅ Entity with fields: id, title, description, releaseYear, mediaType, coverUrl, genres
 - ✅ Full CRUD: Create, Read (by ID), Read All (paginated), Delete
-- ✅ Bulk fetch endpoint: `POST /media/bulk` for batch retrieval by IDs
-- ✅ Builder Pattern for object creation
-- ✅ Kafka integration: publishes events on `create-media`, `update-media`, `delete-media` topics
+- ✅ Bulk fetch endpoint for batch retrieval by IDs
+- ✅ Kafka integration: publishes events on create, update, delete topics
 - ✅ JWT security with `@PreAuthorize` for admin operations
-- ✅ Request validation with Bean Validation
-- ⚠️ **Missing:** Media update endpoint, search/filter by genre/type
+- ⚠️ **Needs refactoring:** Rename `Media` → `Book`, add book-specific fields (author, ISBN, pageCount), add admin approval workflow
 
 #### 3. **User Service (90% Complete)**
 - ✅ `UserEntity` with fields: id, name, email, password, role
 - ✅ Full authentication: `/auth/register` and `/auth/login`
-- ✅ User CRUD: Create, Read (by ID), Read All (paginated), Update, Delete
-- ✅ JWT token generation and validation
-- ✅ Roles: USER and ADMIN
-- ✅ User preferences (`UserPreference`, `Genre`)
-- ✅ OAuth2 Resource Server security
-- ⚠️ **Missing:** Refresh token, password recovery
+- ✅ User CRUD with JWT and role-based access control
+- ✅ User preferences (genres)
+- ⚠️ **Needs:** Reading status tracking, user profile enhancements for book platform
 
-#### 4. **Engagement Service (80% Complete)**
-- ✅ `Interaction` entity with fields: userId, mediaId, type, interactionValue, timestamp
-- ✅ Interaction types: `LIKE`, `DISLIKE`, `WATCH`
-- ✅ `POST /engagement` endpoint for recording interactions
-- ✅ Kafka event publishing (`engagement-created` topic)
-- ✅ Handler with validation and persistence
-- ⚠️ **Missing:** User interaction history, analytics endpoints, GET endpoints
+#### 4. **Engagement Service → Reading & Rating Service (needs refactoring)**
+- ✅ Interaction entity with event publishing
+- ✅ Kafka event publishing
+- ⚠️ **Needs refactoring:** Replace LIKE/DISLIKE/WATCH with star ratings (0–5), reading status (TO_READ, READING, COMPLETED), and page tracking
 
 #### 5. **Recommendation Service (85% Complete)**
-- ✅ `MediaFeature` entity with pgvector embeddings (`vector(3)` column via `@JdbcTypeCode(SqlTypes.VECTOR)`)
-- ✅ `UserProfile` entity with real-time profile vector (`vector(5)` column)
-- ✅ Kafka consumers for media events (`create-media`, `update-media`, `delete-media`) and interaction events (`engagement-created`)
-- ✅ Vector similarity search using cosine distance (`<=>` operator)
-- ✅ Hybrid scoring algorithm: 70% vector similarity + 30% popularity
-- ✅ HNSW index for approximate nearest neighbor queries
-- ✅ Catalog Service integration via OpenFeign (bulk fetch for data enrichment)
-- ✅ Fallback to popularity-based recommendations for new users (cold-start handling)
-- ✅ `GET /api/recommendations` endpoint returning fully enriched results
-- ⚠️ **Missing:** Paginated aggregator with Spring `Pageable`, recommendation caching
-
-#### 6. **ML Service — ❌ Removed**
-The Flask/Python ML Service has been **completely eliminated** as part of the v2 architecture refactoring. Its responsibilities (hybrid recommendation algorithm) are now handled natively by the Recommendation Service via pgvector.
+- ✅ pgvector-powered vector similarity search
+- ✅ Hybrid scoring algorithm (70% vector + 30% popularity)
+- ✅ Kafka consumers for media and interaction events
+- ✅ Catalog Service integration via OpenFeign
+- ⚠️ **Needs:** Adapt recommendations to leverage star ratings, reading status, and book-specific data
 
 ---
 
@@ -84,168 +77,221 @@ The Flask/Python ML Service has been **completely eliminated** as part of the v2
 
 | Service | Backend | API | Tests | Documentation | Overall |
 |---------|:-------:|:---:|:-----:|:-------------:|:-------:|
-| **Catalog Service** | ✅ 90% | ✅ 85% | ⚠️ 10% | ⚠️ 30% | **54%** |
-| **User Service** | ✅ 95% | ✅ 90% | ⚠️ 10% | ⚠️ 30% | **56%** |
-| **Engagement Service** | ✅ 80% | ⚠️ 60% | ⚠️ 10% | ⚠️ 20% | **43%** |
-| **Recommendation Service** | ✅ 85% | ✅ 80% | ⚠️ 10% | ⚠️ 30% | **51%** |
+| **Book Catalog Service** | ✅ 70% | ⚠️ 60% | ⚠️ 10% | ⚠️ 30% | **43%** |
+| **User Service** | ✅ 85% | ✅ 80% | ⚠️ 10% | ⚠️ 30% | **51%** |
+| **Reading & Rating Service** | ⚠️ 50% | ⚠️ 40% | ⚠️ 10% | ⚠️ 20% | **30%** |
+| **Recommendation Service** | ✅ 75% | ⚠️ 65% | ⚠️ 10% | ⚠️ 30% | **45%** |
 | **Infrastructure** | ✅ 100% | N/A | N/A | ✅ 85% | **93%** |
+
+---
+
+## 🎯 MVP (1.0) — Feature Definition
+
+The MVP transforms the platform into a book-focused experience with the following core features:
+
+### 📚 1. Book Catalog with Admin Approval
+- A comprehensive catalog of books with metadata (title, author, ISBN, genre, cover, page count, description)
+- Any authenticated user can **submit** a book to the catalog
+- Submitted books enter a **pending approval** state
+- Only **ADMIN** users can approve or reject book submissions
+- Approved books become visible in the public catalog
+
+### ⭐ 2. Star Rating System
+- Users can rate books from **0 to 5 stars** (supporting half-star increments)
+- Ratings contribute to an aggregate book score displayed in the catalog
+- Ratings feed into the recommendation engine for personalization
+- Users can update their rating at any time
+
+### 📖 3. Reading Status Tracking
+- Users can set a reading status for each book:
+  - **TO_READ** — Book is on the user's reading list
+  - **READING** — Currently reading, with current page tracking
+  - **COMPLETED** — Finished reading the book
+- Users can update their current page while in READING status
+- Reading progress is used by the recommendation engine
+
+### 🎯 4. Personalized Recommendations
+- Recommendations based on:
+  - Books the user is **currently reading**
+  - Books the user has **interacted with** (rated, added to list)
+  - Books the user has **rated highly** (4+ stars)
+- Vector similarity search using pgvector for content-based recommendations
+- Hybrid scoring: vector similarity + popularity + user rating patterns
 
 ---
 
 ## 🔄 Architecture Evolution
 
-### What Changed (v1 → v2)
+### What Changed (v1 → v2 → v3)
 
-| Aspect | Before (v1) | After (v2) |
-|--------|-------------|------------|
-| **Services** | 5 (including Flask ML Service) | 4 (pure Java/Spring Boot) |
-| **Recommendation Compute** | Synchronous REST to Python service | Native SQL vector similarity via pgvector |
-| **Latency** | 3+ network hops per request | Single DB query + one bulk fetch |
-| **Profile Updates** | On-demand recomputation | Real-time via Kafka event consumption |
-| **Data Enrichment** | Client-side orchestration | Server-side aggregation (Aggregator pattern) |
-| **Vector Indexing** | None | HNSW index with cosine distance operators |
-| **Tech Stack** | Java + Python + Gunicorn | Java-only (simplified operations) |
-
-### Problems Solved
-
-1. **Excessive latency** — eliminated synchronous REST calls between Recommendation Service → ML Service → Database
-2. **Tight coupling** — removed the shared-database dependency between Java and Python services
-3. **Redundant computation** — recommendations are no longer recalculated on every request; user profiles are updated in real-time via Kafka
-4. **Weak API abstraction** — the Aggregator pattern now enriches results server-side, so clients receive complete data in a single call
+| Aspect | v1 (Original) | v2 (Current) | v3 (Book Platform) |
+|--------|---------------|--------------|---------------------|
+| **Concept** | General media platform | Optimized media platform | Book-focused platform |
+| **Content** | Movies, TV, Music | Movies, TV, Music | Books only |
+| **Services** | 5 (incl. Flask ML) | 4 (pure Java) | 4 (refactored for books) |
+| **Interactions** | Like, Dislike, Watch | Like, Dislike, Watch | Star ratings, Reading status |
+| **Catalog** | Open creation | Open creation | Submission + Admin approval |
+| **Recommendation** | ML Service | pgvector | pgvector + reading patterns |
 
 ---
 
-## 🎯 What Remains for MVP Completion
+## 📅 Sprint Planning
 
-### 🔴 High Priority (Essential for MVP)
+### Sprint 1–2: Previous (Completed) ✅
 
-#### 1. **Paginated Aggregation**
-```
-Status: 🔄 In Progress
-```
-- [ ] Implement paginated vector search with Spring `Pageable` support
-- [ ] Return enriched results with full media data in paginated responses
+<details>
+<summary><strong>Sprint 1 — Autonomy & Vector Infrastructure ✅</strong></summary>
 
-#### 2. **Missing Endpoints**
+- [x] pgvector setup: `vector` extension enabled in PostgreSQL
+- [x] Local media embeddings: `MediaFeature` entity with `vector` columns
+- [x] Kafka sync (vectorized): Consumer converts genres into vectors
 
-**Catalog Service:**
-- [ ] `PUT /media/{id}` — Update media
-- [ ] `GET /media/search?genre=ACTION&type=MOVIE` — Search with filters
+</details>
 
-**Engagement Service:**
-- [ ] `GET /engagement/user/{userId}` — User interaction history
-- [ ] `GET /engagement/media/{mediaId}/stats` — Per-media statistics
+<details>
+<summary><strong>Sprint 2 — Geometric Intelligence (ML-Service Removal) ✅</strong></summary>
 
-#### 3. **Automated Tests**
-```
-Status: ❌ Nearly Nonexistent
-```
-- [ ] Unit tests for each service (minimum 50% coverage)
-- [ ] Integration tests for APIs
-- [ ] Contract tests for Kafka event communication
-- [ ] End-to-end test for the main recommendation flow
+- [x] User vectorization: `UserProfile` with real-time `profile_vector`
+- [x] Vector similarity query: Cosine distance search implementation
+- [x] ML-Service shutdown: Flask API removed
 
-### 🟡 Medium Priority (Important for MVP)
-
-#### 4. **Error Handling and Resilience**
-- [ ] Standardized global exception handlers
-- [ ] Retry policies for inter-service calls
-- [ ] Dead Letter Queue for failed Kafka events
-- [ ] Circuit breaker for Catalog Service calls (OpenFeign)
-
-#### 5. **Validation and Security**
-- [ ] Consistent validation across all endpoints
-- [ ] Basic rate limiting
-- [ ] Properly configured CORS
-- [ ] Structured logging
-
-#### 6. **API Documentation**
-- [ ] OpenAPI/Swagger for all services
-- [ ] Postman Collection
-- [ ] Usage examples
-
-### 🟢 Low Priority (Nice to Have for MVP)
-
-#### 7. **Performance Improvements**
-- [ ] Redis caching for hot recommendations
-- [ ] Database index optimization
-- [ ] Connection pooling tuning
-
-#### 8. **Basic Observability**
-- [ ] Standardized health checks (`/actuator/health`)
-- [ ] Structured JSON logging
-- [ ] Basic request metrics
+</details>
 
 ---
 
-## 📅 Sprint Progress
+### Sprint 3: Book Catalog Foundation 🔄
+```
+Objective: Transform the catalog service into a book-specific catalog with admin approval workflow
+```
+- [ ] Rename `Media` entity to `Book` with book-specific fields (author, ISBN, pageCount, publisher)
+- [ ] Add `ApprovalStatus` enum (PENDING, APPROVED, REJECTED) to Book entity
+- [ ] Create book submission endpoint (any authenticated user)
+- [ ] Create admin approval/rejection endpoints
+- [ ] Update bulk fetch endpoint for books
+- [ ] Update Kafka topics to book events (`create-book`, `update-book`, `delete-book`)
+- [ ] Update catalog listing to only show APPROVED books by default
 
-### Sprint 1: Autonomy & Vector Infrastructure ✅
+### Sprint 4: Star Ratings & Reading Status 📋
 ```
-Objective: Enable vector-based recommendation infrastructure
+Objective: Implement the star rating system and reading status tracking
 ```
-- [x] pgvector setup: `vector` extension enabled in PostgreSQL, configured in Spring Boot
-- [x] Local media embeddings: `MediaFeature` entity with `vector` columns for genre-based embeddings
-- [x] Kafka sync (vectorized): Consumer converts incoming media genres into vectors before persisting
+- [ ] Replace interaction types (LIKE/DISLIKE/WATCH) with star rating model (0–5 stars)
+- [ ] Create `ReadingStatus` entity (TO_READ, READING, COMPLETED) with page tracking
+- [ ] Implement `POST /books/{bookId}/rating` — Submit or update a star rating
+- [ ] Implement `GET /books/{bookId}/ratings` — Get aggregate rating for a book
+- [ ] Implement `POST /books/{bookId}/status` — Set or update reading status
+- [ ] Implement `GET /users/{userId}/reading-list` — Get user's reading list with statuses
+- [ ] Implement `PUT /books/{bookId}/progress` — Update current page (for READING status)
+- [ ] Publish rating and status events to Kafka for recommendation updates
 
-### Sprint 2: Geometric Intelligence (ML-Service Removal) ✅
+### Sprint 5: Book-Based Recommendations 📋
 ```
-Objective: Replace ML Service with native vector similarity queries
+Objective: Adapt the recommendation engine to leverage book-specific data
 ```
-- [x] User vectorization: `UserProfile` maintains a `profile_vector` updated in real-time from interactions
-- [x] Vector similarity query: Cosine distance search (`<=>`) implemented in the repository layer
-- [x] ML-Service shutdown: Flask API removed, all synchronous REST calls eliminated
+- [ ] Update `MediaFeature` → `BookFeature` with book-specific embedding vectors
+- [ ] Incorporate star ratings into user profile vector updates
+- [ ] Incorporate reading status into recommendation signals
+- [ ] Weight recommendations: currently reading > high ratings > to-read list
+- [ ] Paginated recommendation responses with full book data enrichment
+- [ ] Cold-start handling: recommend popular and highly-rated books for new users
 
-### Sprint 3: Aggregation & High-Performance Pagination 🔄
+### Sprint 6: Integration, Testing & Polish 📋
 ```
-Objective: Enriched, paginated recommendation responses
+Objective: End-to-end integration, testing, and documentation
 ```
-- [x] Bulk catalog integration: `POST /media/bulk` endpoint in Catalog Service
-- [ ] Paginated aggregator: Top-X media via vector search with enriched data in a single response
-- [x] HNSW indexing: Approximate nearest neighbor index created on embeddings
+- [ ] Unit tests for all services (minimum 50% coverage)
+- [ ] Integration tests for book submission → approval → catalog flow
+- [ ] Integration tests for rating → recommendation pipeline
+- [ ] End-to-end test: register → submit book → approve → rate → get recommendations
+- [ ] OpenAPI/Swagger documentation for all endpoints
+- [ ] Updated README with new API reference and examples
+- [ ] Error handling standardization across all services
+
+---
+
+## 📋 Issue Backlog (Organized by Priority)
+
+### 🔴 High Priority — MVP Essential
+
+| # | Issue | Sprint | Service |
+|---|-------|--------|---------|
+| 1 | Rename Media entity to Book with book-specific fields | Sprint 3 | Catalog |
+| 2 | Implement book submission with PENDING approval status | Sprint 3 | Catalog |
+| 3 | Implement admin approval/rejection workflow | Sprint 3 | Catalog |
+| 4 | Implement star rating system (0–5) | Sprint 4 | Engagement |
+| 5 | Implement reading status tracking (TO_READ, READING, COMPLETED) | Sprint 4 | Engagement |
+| 6 | Implement page progress tracking for READING status | Sprint 4 | Engagement |
+| 7 | Adapt recommendation engine for book ratings and reading status | Sprint 5 | Recommendation |
+| 8 | Paginated aggregator for book recommendations | Sprint 5 | Recommendation |
+
+### 🟡 Medium Priority — MVP Important
+
+| # | Issue | Sprint | Service |
+|---|-------|--------|---------|
+| 9 | Update Kafka topics for book events | Sprint 3 | All |
+| 10 | Book search/filter by genre, author, title | Sprint 3 | Catalog |
+| 11 | User reading list endpoint | Sprint 4 | Engagement |
+| 12 | Aggregate rating display per book | Sprint 4 | Catalog |
+| 13 | Standardized error handling across services | Sprint 6 | All |
+| 14 | OpenAPI/Swagger documentation | Sprint 6 | All |
+
+### 🟢 Low Priority — MVP Nice to Have
+
+| # | Issue | Sprint | Service |
+|---|-------|--------|---------|
+| 15 | Redis caching for popular book recommendations | Sprint 6 | Recommendation |
+| 16 | Health check endpoints (actuator) | Sprint 6 | All |
+| 17 | CI/CD pipeline with GitHub Actions | Sprint 6 | Infrastructure |
+| 18 | Rate limiting for API endpoints | Sprint 6 | All |
 
 ---
 
 ## 🚀 Future Features (Post-MVP)
 
-### Phase 2: Recommendation Enhancements
-- [ ] **Collaborative Filtering:** Recommendations based on similar users
-- [ ] **Embedding Upgrades:** Use Spring AI with an embedding model (e.g., Ollama) instead of one-hot encoding
-- [ ] **Real-time Learning:** Learn from immediate feedback
-- [ ] **A/B Testing Framework:** Test different scoring algorithms
-- [ ] **Diversity Enhancement:** Avoid filter bubbles
+### Phase 2.0: Group Reading & Social Features
+- [ ] **Group Reading Chats:** Create reading groups for collaborative discussions on books
+- [ ] **Group Book Clubs:** Organize scheduled reading sessions with shared reading lists
+- [ ] **Activity Feed:** See what friends are reading and rating
 
-### Phase 3: Frontend
+### Phase 2.1: Intelligent Book Approval
+- [ ] **Algorithmic Approval System:** Automated book approval based on:
+  - ISBN validation against external databases
+  - Duplicate detection using title/author similarity
+  - Cover image validation
+  - Metadata completeness scoring
+- [ ] **Community Voting:** Allow trusted users to vote on pending submissions
+
+### Phase 2.2: User Levels & Premium Features
+- [ ] **Normal User:**
+  - Can rate books (star ratings)
+  - Can track reading status
+  - Can join reading groups
+  - Can receive recommendations
+- [ ] **Premium User:**
+  - All Normal features
+  - Can upload custom book covers
+  - Can create and manage reading groups
+  - Can access advanced recommendation filters
+  - Priority in book submission approval queue
+
+### Phase 3: Advanced Recommendations
+- [ ] **Collaborative Filtering:** Recommendations based on similar readers
+- [ ] **Embedding Upgrades:** Spring AI with embedding models for richer book vectors
+- [ ] **Real-time Learning:** Adaptive recommendations from immediate feedback
+- [ ] **Diversity Enhancement:** Avoid genre filter bubbles
+
+### Phase 4: Frontend
 - [ ] **Web Application:** React / Next.js
 - [ ] **Mobile App:** React Native or Flutter
 - [ ] **Design System:** Reusable component library
-- [ ] **PWA Support:** Offline functionality
+- [ ] **PWA Support:** Offline reading list access
 
-### Phase 4: Scalability
+### Phase 5: Scalability & DevOps
 - [ ] **Kubernetes:** Container orchestration
-- [ ] **Service Mesh:** Istio for inter-service communication
-- [ ] **Database Sharding:** Data partitioning
-- [ ] **CDN:** Static content distribution
-
-### Phase 5: Analytics & Insights
-- [ ] **Analytics Dashboard:** Business metrics
-- [ ] **User Behavior Analysis:** Behavioral analytics
-- [ ] **Recommendation Quality Metrics:** Precision, Recall, NDCG
-- [ ] **Business Intelligence:** Automated reports
-
-### Phase 6: Advanced DevOps
-- [ ] **Full CI/CD:** GitHub Actions / Jenkins
-- [ ] **Blue/Green Deployments:** Zero-downtime deploys
+- [ ] **Full CI/CD:** GitHub Actions pipelines
 - [ ] **Monitoring Stack:** Prometheus + Grafana
 - [ ] **Distributed Tracing:** Jaeger / Zipkin
 - [ ] **Log Aggregation:** ELK Stack
-
-### Phase 7: Advanced Features
-- [ ] **Social Features:** Follow users, share content
-- [ ] **Watch Parties:** Shared viewing sessions
-- [ ] **Notifications:** Push notifications
-- [ ] **Multi-tenant:** Support for multiple organizations
-- [ ] **Content Moderation:** Review moderation
 
 ---
 
@@ -259,7 +305,7 @@ media-recommendation-system/
 ├── scripts/
 │   └── create-vector-in-recommendation-db.sql  # pgvector initialization
 │
-├── catalog-service/                   # Media Catalog (Hexagonal Architecture)
+├── catalog-service/                   # Book Catalog (Hexagonal Architecture)
 │   ├── Dockerfile
 │   ├── pom.xml
 │   └── src/main/java/com/mrs/catalog_service/
@@ -271,27 +317,24 @@ media-recommendation-system/
 │   ├── Dockerfile
 │   ├── pom.xml
 │   └── src/main/java/com/mrs/user_service/
-│       ├── controller/                # REST Controllers
-│       ├── model/                     # Entities
-│       ├── service/                   # Business Logic
-│       ├── repository/                # Data Access
-│       └── security/                  # JWT & Security
+│       ├── module/                    # User, Auth, User Preference modules
+│       └── share/                     # Config, Security, Validators
 │
-├── engagement-service/                # User Engagement (Hexagonal Architecture)
+├── engagement-service/                # Reading & Rating Service (Hexagonal Architecture)
 │   ├── Dockerfile
 │   ├── pom.xml
 │   └── src/main/java/com/mrs/engagement_service/
 │       ├── application/               # Controllers, DTOs, Mappers
-│       ├── domain/                    # Entities, Services, Handlers, Events
+│       ├── domain/                    # Entities, Services, Handlers
 │       └── infrastructure/            # Repositories, Kafka, Security
 │
-└── recommendation-service/            # Recommendation Aggregator (Hexagonal + pgvector)
+└── recommendation-service/            # Book Recommendation Aggregator (Hexagonal + pgvector)
     ├── Dockerfile
     ├── pom.xml
     └── src/main/java/com/mrs/recommendation_service/
-        ├── application/               # Controllers, Kafka Consumers, DTOs, Events
-        ├── domain/                    # MediaFeature, UserProfile, Recommendation, Handlers
-        └── infrastructure/            # JPA Repositories (pgvector), OpenFeign Client, Security
+        ├── application/               # Controllers, Kafka Consumers, DTOs
+        ├── domain/                    # Entities, Handlers, Commands
+        └── infrastructure/            # JPA Repositories, OpenFeign Client
 ```
 
 ---
@@ -317,35 +360,23 @@ media-recommendation-system/
 ## 📝 Final Notes
 
 ### Project Strengths
-1. **Solid Architecture:** Well-defined microservices with clear responsibilities and hexagonal architecture
-2. **Infrastructure Ready:** Docker Compose enables straightforward local development
-3. **Native Vector Search:** pgvector eliminates external ML dependencies and reduces latency
-4. **Real-Time Updates:** Kafka-driven profile vectorization keeps recommendations fresh
-5. **Security Implemented:** JWT configured across all services with role-based access
-6. **Consistent Patterns:** Builder pattern, command handlers, DTOs, hexagonal layers
+1. **Solid Architecture:** Microservices with hexagonal architecture and clear separation
+2. **Infrastructure Ready:** Docker Compose for straightforward development
+3. **Native Vector Search:** pgvector eliminates external ML dependencies
+4. **Real-Time Updates:** Kafka-driven profile updates keep recommendations fresh
+5. **Security Implemented:** JWT with role-based access across all services
 
 ### Priority Improvement Areas
-1. **Tests:** Nearly nonexistent — the single biggest risk in the project
-2. **API Documentation:** No Swagger/OpenAPI
-3. **Error Handling:** Inconsistent across services
-4. **Observability:** No metrics or distributed tracing
+1. **Book Domain Refactoring:** Rename and adapt entities from generic media to books
+2. **Tests:** Nearly nonexistent — critical risk
+3. **API Documentation:** No Swagger/OpenAPI
+4. **New Interaction Models:** Star ratings and reading status need implementation
 
-### Immediate Recommendations
-1. **Before any new feature:** Implement tests for existing code
-2. **Create CI pipeline:** Ensure builds don't break
-3. **Document APIs:** Facilitate testing and integration
-4. **Standardize errors:** Consistent error responses across all services
-
----
-
-## 📞 Next Steps
-
-1. ✅ **Architecture refactoring** — ML Service eliminated, pgvector integrated
-2. ✅ **Documentation update** — README and PROJECT_ANALYSIS aligned with v2
-3. 🔄 **Paginated aggregator** — Complete Sprint 3 with `Pageable` support
-4. ⏳ **Automated tests** — Unit, integration, and E2E
-5. ⏳ **API documentation** — OpenAPI/Swagger for all services
-6. ⏳ **CI pipeline** — GitHub Actions for automated builds and tests
+### Immediate Next Steps
+1. 🔄 **Sprint 3:** Transform catalog to book-specific with admin approval
+2. ⏳ **Sprint 4:** Implement star ratings and reading status
+3. ⏳ **Sprint 5:** Adapt recommendation engine for books
+4. ⏳ **Sprint 6:** Testing, documentation, and polish
 
 ---
 
