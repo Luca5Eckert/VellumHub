@@ -6,16 +6,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record GetMediaResponse(
+public record BookFeatureResponse(
         UUID id,
         String title,
         String description,
         int releaseYear,
         String coverUrl,
-        String author,
-        String isbn,
-        int pageCount,
-        String publisher,
         List<Genre> genres,
         Instant createAt,
         Instant updateAt

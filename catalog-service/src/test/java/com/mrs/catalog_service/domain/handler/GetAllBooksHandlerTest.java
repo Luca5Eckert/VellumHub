@@ -1,9 +1,9 @@
 package com.mrs.catalog_service.domain.handler;
 
-import com.mrs.catalog_service.application.dto.PageMedia;
+import com.mrs.catalog_service.application.dto.PageBook;
 import com.mrs.catalog_service.domain.model.Genre;
 import com.mrs.catalog_service.domain.model.Book;
-import com.mrs.catalog_service.domain.port.MediaRepository;
+import com.mrs.catalog_service.domain.port.BookRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,21 +24,21 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class GetAllMediaHandlerTest {
+class GetAllBooksHandlerTest {
 
     @Mock
-    private MediaRepository mediaRepository;
+    private BookRepository bookRepository;
 
     @InjectMocks
-    private GetAllMediaHandler getAllMediaHandler;
+    private GetAllBooksHandler getAllMediaHandler;
 
     @Test
-    @DisplayName("Should return page of media when repository has data")
+    @DisplayName("Should return page of book when repository has data")
     void shouldReturnPageOfMedia_WhenRepositoryHasData() {
         // Arrange
-        PageMedia pageMedia = new PageMedia(10, 0);
+        PageBook pageMedia = new PageBook(10, 0);
 
-        List<Book> mediaList = List.of(
+        List<Book> bookList = List.of(
                 Book.builder()
                         .id(UUID.randomUUID())
                         .title("Movie 1")
@@ -51,8 +51,8 @@ class GetAllMediaHandlerTest {
                         .build()
         );
 
-        Page<Book> expectedPage = new PageImpl<>(mediaList);
-        when(mediaRepository.findAll(any(PageRequest.class))).thenReturn(expectedPage);
+        Page<Book> expectedPage = new PageImpl<>(bookList);
+        when(bookRepository.findAll(any(PageRequest.class))).thenReturn(expectedPage);
 
         // Act
         Page<Book> result = getAllMediaHandler.execute(pageMedia);
@@ -60,10 +60,10 @@ class GetAllMediaHandlerTest {
         // Assert
         assertNotNull(result);
         assertEquals(2, result.getTotalElements());
-        assertEquals(mediaList, result.getContent());
+        assertEquals(bookList, result.getContent());
 
         ArgumentCaptor<PageRequest> pageRequestCaptor = ArgumentCaptor.forClass(PageRequest.class);
-        verify(mediaRepository, times(1)).findAll(pageRequestCaptor.capture());
+        verify(bookRepository, times(1)).findAll(pageRequestCaptor.capture());
 
         PageRequest capturedPageRequest = pageRequestCaptor.getValue();
         assertEquals(0, capturedPageRequest.getPageNumber());
@@ -74,9 +74,9 @@ class GetAllMediaHandlerTest {
     @DisplayName("Should return empty page when repository has no data")
     void shouldReturnEmptyPage_WhenRepositoryHasNoData() {
         // Arrange
-        PageMedia pageMedia = new PageMedia(10, 0);
+        PageBook pageMedia = new PageBook(10, 0);
         Page<Book> emptyPage = new PageImpl<>(Collections.emptyList());
-        when(mediaRepository.findAll(any(PageRequest.class))).thenReturn(emptyPage);
+        when(bookRepository.findAll(any(PageRequest.class))).thenReturn(emptyPage);
 
         // Act
         Page<Book> result = getAllMediaHandler.execute(pageMedia);
@@ -91,15 +91,15 @@ class GetAllMediaHandlerTest {
     @DisplayName("Should create correct PageRequest with provided pagination")
     void shouldCreateCorrectPageRequest_WithProvidedPagination() {
         // Arrange
-        PageMedia pageMedia = new PageMedia(20, 2);
-        when(mediaRepository.findAll(any(PageRequest.class))).thenReturn(Page.empty());
+        PageBook pageMedia = new PageBook(20, 2);
+        when(bookRepository.findAll(any(PageRequest.class))).thenReturn(Page.empty());
 
         // Act
         getAllMediaHandler.execute(pageMedia);
 
         // Assert
         ArgumentCaptor<PageRequest> pageRequestCaptor = ArgumentCaptor.forClass(PageRequest.class);
-        verify(mediaRepository).findAll(pageRequestCaptor.capture());
+        verify(bookRepository).findAll(pageRequestCaptor.capture());
 
         PageRequest capturedRequest = pageRequestCaptor.getValue();
         assertEquals(2, capturedRequest.getPageNumber());

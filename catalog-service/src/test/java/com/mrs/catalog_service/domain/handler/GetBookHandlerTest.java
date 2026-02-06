@@ -1,9 +1,9 @@
 package com.mrs.catalog_service.domain.handler;
 
-import com.mrs.catalog_service.domain.exception.MediaNotFoundException;
+import com.mrs.catalog_service.domain.exception.BookNotFoundException;
 import com.mrs.catalog_service.domain.model.Genre;
 import com.mrs.catalog_service.domain.model.Book;
-import com.mrs.catalog_service.domain.port.MediaRepository;
+import com.mrs.catalog_service.domain.port.BookRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,54 +19,54 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class GetMediaHandlerTest {
+class GetBookHandlerTest {
 
     @Mock
-    private MediaRepository mediaRepository;
+    private BookRepository bookRepository;
 
     @InjectMocks
-    private GetMediaHandler getMediaHandler;
+    private GetBookHandler getMediaHandler;
 
     @Test
-    @DisplayName("Should return media when it exists")
+    @DisplayName("Should return book when it exists")
     void shouldReturnMedia_WhenMediaExists() {
         // Arrange
-        UUID mediaId = UUID.randomUUID();
+        UUID bookId = UUID.randomUUID();
         Book expectedMedia = Book.builder()
-                .id(mediaId)
+                .id(bookId)
                 .title("Test Movie")
                 .description("A test movie")
                 .releaseYear(2024)
                 .genres(List.of(Genre.ACTION, Genre.COMEDY))
                 .build();
 
-        when(mediaRepository.findById(mediaId)).thenReturn(Optional.of(expectedMedia));
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(expectedMedia));
 
         // Act
-        Book result = getMediaHandler.execute(mediaId);
+        Book result = getMediaHandler.execute(bookId);
 
         // Assert
         assertNotNull(result);
         assertEquals(expectedMedia, result);
-        assertEquals(mediaId, result.getId());
+        assertEquals(bookId, result.getId());
         assertEquals("Test Movie", result.getTitle());
 
-        verify(mediaRepository, times(1)).findById(mediaId);
+        verify(bookRepository, times(1)).findById(bookId);
     }
 
     @Test
-    @DisplayName("Should throw MediaNotFoundException when media does not exist")
+    @DisplayName("Should throw BookNotFoundException when book does not exist")
     void shouldThrowException_WhenMediaDoesNotExist() {
         // Arrange
-        UUID mediaId = UUID.randomUUID();
-        when(mediaRepository.findById(mediaId)).thenReturn(Optional.empty());
+        UUID bookId = UUID.randomUUID();
+        when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        MediaNotFoundException exception = assertThrows(MediaNotFoundException.class, () ->
-                getMediaHandler.execute(mediaId)
+        BookNotFoundException exception = assertThrows(BookNotFoundException.class, () ->
+                getMediaHandler.execute(bookId)
         );
 
-        assertTrue(exception.getMessage().contains(mediaId.toString()));
-        verify(mediaRepository, times(1)).findById(mediaId);
+        assertTrue(exception.getMessage().contains(bookId.toString()));
+        verify(bookRepository, times(1)).findById(bookId);
     }
 }

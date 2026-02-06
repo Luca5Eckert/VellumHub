@@ -2,9 +2,12 @@ package com.mrs.catalog_service.application.dto;
 
 import com.mrs.catalog_service.domain.model.Genre;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
-public record CreateMediaRequest(
+public record GetBookResponse(
+        UUID id,
         String title,
         String description,
         int releaseYear,
@@ -13,6 +16,8 @@ public record CreateMediaRequest(
         String isbn,
         int pageCount,
         String publisher,
-        List<Genre> genres
+        List<Genre> genres,
+        Instant createAt,
+        Instant updateAt
 ) {
 }

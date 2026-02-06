@@ -1,7 +1,7 @@
 package com.mrs.catalog_service.infrastructure.persistence.repository;
 
 import com.mrs.catalog_service.domain.model.Book;
-import com.mrs.catalog_service.domain.port.MediaRepository;
+import com.mrs.catalog_service.domain.port.BookRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -11,22 +11,22 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public class MediaRepositoryAdapter implements MediaRepository {
+public class BookRepositoryAdapter implements BookRepository {
 
-    private final JpaMediaRepository mediaRepositoryJpa;
+    private final JpaBookRepository mediaRepositoryJpa;
 
-    public MediaRepositoryAdapter(JpaMediaRepository mediaRepositoryJpa) {
+    public BookRepositoryAdapter(JpaBookRepository mediaRepositoryJpa) {
         this.mediaRepositoryJpa = mediaRepositoryJpa;
     }
 
     @Override
-    public void save(Book media) {
-        mediaRepositoryJpa.save(media);
+    public void save(Book book) {
+        mediaRepositoryJpa.save(book);
     }
 
     @Override
-    public boolean existsById(UUID mediaId) {
-        return mediaRepositoryJpa.existsById(mediaId);
+    public boolean existsById(UUID bookId) {
+        return mediaRepositoryJpa.existsById(bookId);
     }
 
     @Override
@@ -35,13 +35,13 @@ public class MediaRepositoryAdapter implements MediaRepository {
     }
 
     @Override
-    public Optional<Book> findById(UUID mediaId) {
-        return mediaRepositoryJpa.findById(mediaId);
+    public Optional<Book> findById(UUID bookId) {
+        return mediaRepositoryJpa.findById(bookId);
     }
 
     @Override
-    public void deleteById(UUID mediaId) {
-        mediaRepositoryJpa.deleteById(mediaId);
+    public void deleteById(UUID bookId) {
+        mediaRepositoryJpa.deleteById(bookId);
     }
 
     @Override

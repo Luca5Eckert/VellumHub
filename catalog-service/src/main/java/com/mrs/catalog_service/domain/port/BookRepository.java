@@ -8,16 +8,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface MediaRepository {
-    void save(Book media);
+public interface BookRepository {
+    void save(Book book);
 
-    boolean existsById(UUID mediaId);
+    boolean existsById(UUID bookId);
 
     Page<Book> findAll(PageRequest pageRequest);
 
-    Optional<Book> findById(UUID mediaId);
+    Optional<Book> findById(UUID bookId);
 
-    void deleteById(UUID mediaId);
+    void deleteById(UUID bookId);
 
     List<Book> findAllById(List<UUID> uuids);
 }

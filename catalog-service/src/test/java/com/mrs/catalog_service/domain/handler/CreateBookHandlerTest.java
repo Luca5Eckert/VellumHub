@@ -1,11 +1,11 @@
 package com.mrs.catalog_service.domain.handler;
 
-import com.mrs.catalog_service.domain.event.CreateMediaEvent;
-import com.mrs.catalog_service.domain.exception.InvalidMediaException;
+import com.mrs.catalog_service.domain.event.CreateBookEvent;
+import com.mrs.catalog_service.domain.exception.InvalidBookException;
 import com.mrs.catalog_service.domain.model.Genre;
 import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.port.EventProducer;
-import com.mrs.catalog_service.domain.port.MediaRepository;
+import com.mrs.catalog_service.domain.port.BookRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,26 +22,26 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class CreateMediaHandlerTest {
+class CreateBookHandlerTest {
 
     @Mock
-    private MediaRepository mediaRepository;
+    private BookRepository bookRepository;
 
     @Mock
-    private EventProducer<String, CreateMediaEvent> eventProducer;
+    private EventProducer<String, CreateBookEvent> eventProducer;
 
     @InjectMocks
-    private CreateMediaHandler createMediaHandler;
+    private CreateBookHandler createMediaHandler;
 
     @Test
-    @DisplayName("Should save media and send event when media is valid")
+    @DisplayName("Should save book and send event when book is valid")
     void shouldSaveMediaAndSendEvent_WhenMediaIsValid() {
         // Arrange
-        UUID mediaId = UUID.randomUUID();
+        UUID bookId = UUID.randomUUID();
         List<Genre> genres = List.of(Genre.ACTION, Genre.COMEDY);
 
-        Book media = Book.builder()
-                .id(mediaId)
+        Book book = Book.builder()
+                .id(bookId)
                 .title("Test Movie")
                 .description("A test movie description")
                 .releaseYear(2024)
@@ -49,44 +49,44 @@ class CreateMediaHandlerTest {
                 .build();
 
         // Act
-        createMediaHandler.handler(media);
+        createMediaHandler.handler(book);
 
         // Assert
-        verify(mediaRepository, times(1)).save(media);
+        verify(bookRepository, times(1)).save(book);
 
-        ArgumentCaptor<CreateMediaEvent> eventCaptor = ArgumentCaptor.forClass(CreateMediaEvent.class);
+        ArgumentCaptor<CreateBookEvent> eventCaptor = ArgumentCaptor.forClass(CreateBookEvent.class);
         verify(eventProducer, times(1)).send(
-                eq("create-media"),
-                eq(mediaId.toString()),
+                eq("create-book"),
+                eq(bookId.toString()),
                 eventCaptor.capture()
         );
 
-        CreateMediaEvent capturedEvent = eventCaptor.getValue();
-        assertEquals(mediaId, capturedEvent.mediaId());
+        CreateBookEvent capturedEvent = eventCaptor.getValue();
+        assertEquals(bookId, capturedEvent.bookId());
         assertEquals(genres.stream(), capturedEvent.genres());
     }
 
     @Test
-    @DisplayName("Should throw InvalidMediaException when media is null")
+    @DisplayName("Should throw InvalidBookException when book is null")
     void shouldThrowException_WhenMediaIsNull() {
         // Act & Assert
-        InvalidMediaException exception = assertThrows(InvalidMediaException.class, () ->
+        InvalidBookException exception = assertThrows(InvalidBookException.class, () ->
                 createMediaHandler.handler(null)
         );
 
         assertEquals("Book cannot be null", exception.getMessage());
-        verifyNoInteractions(mediaRepository);
+        verifyNoInteractions(bookRepository);
         verifyNoInteractions(eventProducer);
     }
 
     @Test
-    @DisplayName("Should save media with empty genres and send event")
+    @DisplayName("Should save book with empty genres and send event")
     void shouldSaveMediaWithEmptyGenres_AndSendEvent() {
         // Arrange
-        UUID mediaId = UUID.randomUUID();
+        UUID bookId = UUID.randomUUID();
 
-        Book media = Book.builder()
-                .id(mediaId)
+        Book book = Book.builder()
+                .id(bookId)
                 .title("Test Movie")
                 .description("A test movie description")
                 .releaseYear(2024)
@@ -94,20 +94,20 @@ class CreateMediaHandlerTest {
                 .build();
 
         // Act
-        createMediaHandler.handler(media);
+        createMediaHandler.handler(book);
 
         // Assert
-        verify(mediaRepository, times(1)).save(media);
+        verify(bookRepository, times(1)).save(book);
 
-        ArgumentCaptor<CreateMediaEvent> eventCaptor = ArgumentCaptor.forClass(CreateMediaEvent.class);
+        ArgumentCaptor<CreateBookEvent> eventCaptor = ArgumentCaptor.forClass(CreateBookEvent.class);
         verify(eventProducer, times(1)).send(
-                eq("create-media"),
-                eq(mediaId.toString()),
+                eq("create-book"),
+                eq(bookId.toString()),
                 eventCaptor.capture()
         );
 
-        CreateMediaEvent capturedEvent = eventCaptor.getValue();
-        assertEquals(mediaId, capturedEvent.mediaId());
+        CreateBookEvent capturedEvent = eventCaptor.getValue();
+        assertEquals(bookId, capturedEvent.bookId());
         assertTrue(capturedEvent.genres().isEmpty());
     }
 }

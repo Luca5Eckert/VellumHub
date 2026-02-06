@@ -1,12 +1,12 @@
 package com.mrs.catalog_service.domain.handler;
 
-import com.mrs.catalog_service.application.dto.UpdateMediaRequest;
-import com.mrs.catalog_service.domain.event.UpdateMediaEvent;
-import com.mrs.catalog_service.domain.exception.MediaNotFoundException;
+import com.mrs.catalog_service.application.dto.UpdateBookRequest;
+import com.mrs.catalog_service.domain.event.UpdateBookEvent;
+import com.mrs.catalog_service.domain.exception.BookNotFoundException;
 import com.mrs.catalog_service.domain.model.Genre;
 import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.port.EventProducer;
-import com.mrs.catalog_service.domain.port.MediaRepository;
+import com.mrs.catalog_service.domain.port.BookRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,25 +24,25 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class UpdateMediaHandlerTest {
+class UpdateBookHandlerTest {
 
     @Mock
-    private MediaRepository mediaRepository;
+    private BookRepository bookRepository;
 
     @Mock
-    private EventProducer<String, UpdateMediaEvent> eventProducer;
+    private EventProducer<String, UpdateBookEvent> eventProducer;
 
     @InjectMocks
-    private UpdateMediaHandler updateMediaHandler;
+    private UpdateBookHandler updateMediaHandler;
 
     @Test
-    @DisplayName("Should update media and send event when genres are provided")
+    @DisplayName("Should update book and send event when genres are provided")
     void shouldUpdateMediaAndSendEvent_WhenGenresArePresent() {
         // Arrange
-        UUID mediaId = UUID.randomUUID();
+        UUID bookId = UUID.randomUUID();
         List<Genre> newGenres = List.of(Genre.COMEDY, Genre.ACTION);
 
-        UpdateMediaRequest request = new UpdateMediaRequest(
+        UpdateBookRequest request = new UpdateBookRequest(
                 "New Title",
                 "New Desc",
                 2024,
@@ -56,38 +56,38 @@ class UpdateMediaHandlerTest {
 
 
         Book existingMedia = Book.builder()
-                .id(mediaId)
+                .id(bookId)
                 .title("Old Title")
                 .genres(List.of(Genre.COMEDY))
                 .build();
 
-        when(mediaRepository.findById(mediaId)).thenReturn(Optional.of(existingMedia));
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(existingMedia));
 
         // Act
-        updateMediaHandler.execute(mediaId, request);
+        updateMediaHandler.execute(bookId, request);
 
         // Assert
         ArgumentCaptor<Book> mediaCaptor = ArgumentCaptor.forClass(Book.class);
-        verify(mediaRepository).save(mediaCaptor.capture());
+        verify(bookRepository).save(mediaCaptor.capture());
 
         Book savedMedia = mediaCaptor.getValue();
         assertEquals("New Title", savedMedia.getTitle());
 
-        ArgumentCaptor<UpdateMediaEvent> eventCaptor = ArgumentCaptor.forClass(UpdateMediaEvent.class);
+        ArgumentCaptor<UpdateBookEvent> eventCaptor = ArgumentCaptor.forClass(UpdateBookEvent.class);
         verify(eventProducer, times(1))
-                .send(eq("update-media"), eq(mediaId.toString()), eventCaptor.capture());
+                .send(eq("update-book"), eq(bookId.toString()), eventCaptor.capture());
 
-        assertEquals(mediaId, eventCaptor.getValue().mediaId());
+        assertEquals(bookId, eventCaptor.getValue().bookId());
         assertEquals(newGenres.stream().map(Object::toString).toList(), eventCaptor.getValue().genres());
     }
 
     @Test
-    @DisplayName("Should update media but NOT send event when genres are null")
+    @DisplayName("Should update book but NOT send event when genres are null")
     void shouldUpdateMediaButNotSendEvent_WhenGenresAreNull() {
         // Arrange
-        UUID mediaId = UUID.randomUUID();
+        UUID bookId = UUID.randomUUID();
 
-        UpdateMediaRequest request = new UpdateMediaRequest(
+        UpdateBookRequest request = new UpdateBookRequest(
                 "New Title",
                 "New Desc",
                 2024,
@@ -100,37 +100,37 @@ class UpdateMediaHandlerTest {
         );
 
         Book existingMedia = Book.builder()
-                .id(mediaId)
+                .id(bookId)
                 .title("Old Title")
                 .genres(List.of(Genre.COMEDY))
                 .build();
 
-        when(mediaRepository.findById(mediaId)).thenReturn(Optional.of(existingMedia));
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(existingMedia));
 
         // Act
-        updateMediaHandler.execute(mediaId, request);
+        updateMediaHandler.execute(bookId, request);
 
         // Assert
-        verify(mediaRepository).save(any(Book.class));
+        verify(bookRepository).save(any(Book.class));
 
         verify(eventProducer, never()).send(any(), any(), any());
     }
 
     @Test
-    @DisplayName("Should throw MediaNotFoundException when media does not exist")
+    @DisplayName("Should throw BookNotFoundException when book does not exist")
     void shouldThrowException_WhenMediaNotFound() {
         // Arrange
-        UUID mediaId = UUID.randomUUID();
-        UpdateMediaRequest request = new UpdateMediaRequest("T", "D", 2022, "U", "A", "978-0-7653-0000-0", 300, "P", List.of(Genre.COMEDY));
+        UUID bookId = UUID.randomUUID();
+        UpdateBookRequest request = new UpdateBookRequest("T", "D", 2022, "U", "A", "978-0-7653-0000-0", 300, "P", List.of(Genre.COMEDY));
 
-        when(mediaRepository.findById(mediaId)).thenReturn(Optional.empty());
+        when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(MediaNotFoundException.class, () ->
-                updateMediaHandler.execute(mediaId, request)
+        assertThrows(BookNotFoundException.class, () ->
+                updateMediaHandler.execute(bookId, request)
         );
 
-        verify(mediaRepository, never()).save(any());
+        verify(bookRepository, never()).save(any());
         verify(eventProducer, never()).send(any(), any(), any());
     }
 
@@ -138,15 +138,15 @@ class UpdateMediaHandlerTest {
     @DisplayName("Should throw NullPointerException when request is null")
     void shouldThrowException_WhenRequestIsNull() {
         // Arrange
-        UUID mediaId = UUID.randomUUID();
+        UUID bookId = UUID.randomUUID();
 
         // Act & Assert
         NullPointerException exception = assertThrows(NullPointerException.class, () ->
-                updateMediaHandler.execute(mediaId, null)
+                updateMediaHandler.execute(bookId, null)
         );
 
-        assertEquals("UpdateMediaRequest must not be null", exception.getMessage());
-        verifyNoInteractions(mediaRepository);
+        assertEquals("UpdateBookRequest must not be null", exception.getMessage());
+        verifyNoInteractions(bookRepository);
         verifyNoInteractions(eventProducer);
     }
 

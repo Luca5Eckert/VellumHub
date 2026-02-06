@@ -1,14 +1,14 @@
 package com.mrs.catalog_service.service;
 
-import com.mrs.catalog_service.application.dto.CreateMediaRequest;
-import com.mrs.catalog_service.application.dto.GetMediaResponse;
-import com.mrs.catalog_service.application.dto.PageMedia;
-import com.mrs.catalog_service.application.dto.UpdateMediaRequest;
-import com.mrs.catalog_service.application.mapper.MediaMapper;
+import com.mrs.catalog_service.application.dto.CreateBookRequest;
+import com.mrs.catalog_service.application.dto.GetBookResponse;
+import com.mrs.catalog_service.application.dto.PageBook;
+import com.mrs.catalog_service.application.dto.UpdateBookRequest;
+import com.mrs.catalog_service.application.mapper.BookMapper;
 import com.mrs.catalog_service.domain.handler.*;
 import com.mrs.catalog_service.domain.model.Genre;
 import com.mrs.catalog_service.domain.model.Book;
-import com.mrs.catalog_service.domain.service.MediaService;
+import com.mrs.catalog_service.domain.service.BookService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,33 +29,33 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for MediaService.
+ * Unit tests for BookService.
  * Tests cover all service methods with mocked handlers.
  * Follows the pattern: condition_expectedBehavior.
  */
 @ExtendWith(MockitoExtension.class)
-class MediaServiceTest {
+class BookServiceTest {
 
     @Mock
-    private CreateMediaHandler createMediaHandler;
+    private CreateBookHandler createMediaHandler;
 
     @Mock
-    private DeleteMediaHandler deleteMediaHandler;
+    private DeleteBookHandler deleteMediaHandler;
 
     @Mock
-    private GetMediaHandler getMediaHandler;
+    private GetBookHandler getMediaHandler;
 
     @Mock
-    private GetAllMediaHandler getAllMediaHandler;
+    private GetAllBooksHandler getAllMediaHandler;
 
     @Mock
-    private UpdateMediaHandler updateMediaHandler;
+    private UpdateBookHandler updateMediaHandler;
 
     @Mock
-    private MediaMapper mediaMapper;
+    private BookMapper bookMapper;
 
     @InjectMocks
-    private MediaService mediaService;
+    private BookService bookService;
 
     @Nested
     @DisplayName("create() method tests")
@@ -65,7 +65,7 @@ class MediaServiceTest {
         @DisplayName("whenValidRequest_shouldCreateMedia")
         void whenValidRequest_shouldCreateMedia() {
             // Arrange
-            CreateMediaRequest request = new CreateMediaRequest(
+            CreateBookRequest request = new CreateBookRequest(
                     "The Matrix",
                     "A computer hacker learns about the true nature of reality",
                     1999,
@@ -78,7 +78,7 @@ class MediaServiceTest {
             );
 
             // Act
-            mediaService.create(request);
+            bookService.create(request);
 
             // Assert
             ArgumentCaptor<Book> mediaCaptor = ArgumentCaptor.forClass(Book.class);
@@ -99,7 +99,7 @@ class MediaServiceTest {
         @DisplayName("whenSeriesType_shouldCreateSeries")
         void whenSeriesType_shouldCreateSeries() {
             // Arrange
-            CreateMediaRequest request = new CreateMediaRequest(
+            CreateBookRequest request = new CreateBookRequest(
                     "Breaking Bad",
                     "A chemistry teacher turns to a life of crime",
                     2008,
@@ -112,7 +112,7 @@ class MediaServiceTest {
             );
 
             // Act
-            mediaService.create(request);
+            bookService.create(request);
 
             // Assert
             ArgumentCaptor<Book> mediaCaptor = ArgumentCaptor.forClass(Book.class);
@@ -132,13 +132,13 @@ class MediaServiceTest {
         @DisplayName("whenValidMediaId_shouldDeleteMedia")
         void whenValidMediaId_shouldDeleteMedia() {
             // Arrange
-            UUID mediaId = UUID.randomUUID();
+            UUID bookId = UUID.randomUUID();
 
             // Act
-            mediaService.delete(mediaId);
+            bookService.delete(bookId);
 
             // Assert
-            verify(deleteMediaHandler, times(1)).execute(mediaId);
+            verify(deleteMediaHandler, times(1)).execute(bookId);
         }
     }
 
@@ -150,11 +150,11 @@ class MediaServiceTest {
         @DisplayName("whenValidMediaId_shouldReturnMediaResponse")
         void whenValidMediaId_shouldReturnMediaResponse() {
             // Arrange
-            UUID mediaId = UUID.randomUUID();
+            UUID bookId = UUID.randomUUID();
             Instant now = Instant.now();
 
-            Book media = Book.builder()
-                    .id(mediaId)
+            Book book = Book.builder()
+                    .id(bookId)
                     .title("The Matrix")
                     .description("A computer hacker learns about the true nature of reality")
                     .releaseYear(1999)
@@ -166,8 +166,8 @@ class MediaServiceTest {
                     .genres(List.of(Genre.ACTION, Genre.THRILLER))
                     .build();
 
-            GetMediaResponse expectedResponse = new GetMediaResponse(
-                    mediaId,
+            GetBookResponse expectedResponse = new GetBookResponse(
+                    bookId,
                     "The Matrix",
                     "A computer hacker learns about the true nature of reality",
                     1999,
@@ -181,19 +181,19 @@ class MediaServiceTest {
                     now
             );
 
-            when(getMediaHandler.execute(mediaId)).thenReturn(media);
-            when(mediaMapper.toGetResponse(media)).thenReturn(expectedResponse);
+            when(getMediaHandler.execute(bookId)).thenReturn(book);
+            when(bookMapper.toGetResponse(book)).thenReturn(expectedResponse);
 
             // Act
-            GetMediaResponse result = mediaService.get(mediaId);
+            GetBookResponse result = bookService.get(bookId);
 
             // Assert
             assertThat(result).isEqualTo(expectedResponse);
-            assertThat(result.id()).isEqualTo(mediaId);
+            assertThat(result.id()).isEqualTo(bookId);
             assertThat(result.title()).isEqualTo("The Matrix");
 
-            verify(getMediaHandler, times(1)).execute(mediaId);
-            verify(mediaMapper, times(1)).toGetResponse(media);
+            verify(getMediaHandler, times(1)).execute(bookId);
+            verify(bookMapper, times(1)).toGetResponse(book);
         }
     }
 
@@ -232,29 +232,29 @@ class MediaServiceTest {
                     .genres(List.of(Genre.HORROR))
                     .build();
 
-            Page<Book> mediaPage = new PageImpl<>(List.of(media1, media2));
+            Page<Book> bookPage = new PageImpl<>(List.of(media1, media2));
 
-            GetMediaResponse response1 = new GetMediaResponse(mediaId1, "The Matrix", "Desc 1",
+            GetBookResponse response1 = new GetBookResponse(mediaId1, "The Matrix", "Desc 1",
                     1999, "url1", "Wachowski Sisters", "978-0-7653-0000-0", 300, "Warner Bros", List.of(Genre.ACTION), now, now);
-            GetMediaResponse response2 = new GetMediaResponse(mediaId2, "Breaking Bad", "Desc 2",
+            GetBookResponse response2 = new GetBookResponse(mediaId2, "Breaking Bad", "Desc 2",
                     2008, "url2", "Vince Gilligan", "978-0-7653-1111-1", 250, "AMC Books", List.of(Genre.HORROR), now, now);
 
-            when(getAllMediaHandler.execute(any(PageMedia.class))).thenReturn(mediaPage);
-            when(mediaMapper.toGetResponse(media1)).thenReturn(response1);
-            when(mediaMapper.toGetResponse(media2)).thenReturn(response2);
+            when(getAllMediaHandler.execute(any(PageBook.class))).thenReturn(bookPage);
+            when(bookMapper.toGetResponse(media1)).thenReturn(response1);
+            when(bookMapper.toGetResponse(media2)).thenReturn(response2);
 
             // Act
-            List<GetMediaResponse> result = mediaService.getAll(pageNumber, pageSize);
+            List<GetBookResponse> result = bookService.getAll(pageNumber, pageSize);
 
             // Assert
             assertThat(result).hasSize(2);
             assertThat(result.get(0).title()).isEqualTo("The Matrix");
             assertThat(result.get(1).title()).isEqualTo("Breaking Bad");
 
-            ArgumentCaptor<PageMedia> pageCaptor = ArgumentCaptor.forClass(PageMedia.class);
+            ArgumentCaptor<PageBook> pageCaptor = ArgumentCaptor.forClass(PageBook.class);
             verify(getAllMediaHandler, times(1)).execute(pageCaptor.capture());
 
-            PageMedia capturedPage = pageCaptor.getValue();
+            PageBook capturedPage = pageCaptor.getValue();
             assertThat(capturedPage.pageNumber()).isEqualTo(pageNumber);
             assertThat(capturedPage.pageSize()).isEqualTo(pageSize);
         }
@@ -267,15 +267,15 @@ class MediaServiceTest {
             int pageSize = 10;
 
             Page<Book> emptyPage = new PageImpl<>(List.of());
-            when(getAllMediaHandler.execute(any(PageMedia.class))).thenReturn(emptyPage);
+            when(getAllMediaHandler.execute(any(PageBook.class))).thenReturn(emptyPage);
 
             // Act
-            List<GetMediaResponse> result = mediaService.getAll(pageNumber, pageSize);
+            List<GetBookResponse> result = bookService.getAll(pageNumber, pageSize);
 
             // Assert
             assertThat(result).isEmpty();
-            verify(getAllMediaHandler, times(1)).execute(any(PageMedia.class));
-            verify(mediaMapper, never()).toGetResponse(any(Book.class));
+            verify(getAllMediaHandler, times(1)).execute(any(PageBook.class));
+            verify(bookMapper, never()).toGetResponse(any(Book.class));
         }
     }
 
@@ -287,8 +287,8 @@ class MediaServiceTest {
         @DisplayName("whenValidRequest_shouldUpdateMedia")
         void whenValidRequest_shouldUpdateMedia() {
             // Arrange
-            UUID mediaId = UUID.randomUUID();
-            UpdateMediaRequest request = new UpdateMediaRequest(
+            UUID bookId = UUID.randomUUID();
+            UpdateBookRequest request = new UpdateBookRequest(
                     "Updated Title",
                     "Updated Description",
                     2000,
@@ -301,10 +301,10 @@ class MediaServiceTest {
             );
 
             // Act
-            mediaService.update(mediaId, request);
+            bookService.update(bookId, request);
 
             // Assert
-            verify(updateMediaHandler, times(1)).execute(mediaId, request);
+            verify(updateMediaHandler, times(1)).execute(bookId, request);
         }
     }
 }

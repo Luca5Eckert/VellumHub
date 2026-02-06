@@ -1,9 +1,9 @@
 package com.mrs.catalog_service.infrastructure.exception;
 
-import com.mrs.catalog_service.application.exception.MediaApplicationException;
-import com.mrs.catalog_service.domain.exception.MediaDomainException;
-import com.mrs.catalog_service.domain.exception.MediaNotExistException;
-import com.mrs.catalog_service.domain.exception.MediaNotFoundException;
+import com.mrs.catalog_service.application.exception.BookApplicationException;
+import com.mrs.catalog_service.domain.exception.BookDomainException;
+import com.mrs.catalog_service.domain.exception.BookNotExistException;
+import com.mrs.catalog_service.domain.exception.BookNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,9 +48,9 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-    @ExceptionHandler(MediaNotFoundException.class)
+    @ExceptionHandler(BookNotFoundException.class)
     public ResponseEntity<ApiResponseError> handleMediaNotFoundException(
-            MediaNotFoundException ex, HttpServletRequest request) {
+            BookNotFoundException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.NOT_FOUND;
         return ResponseEntity.status(status).body(ApiResponseError.builder()
@@ -63,9 +63,9 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-    @ExceptionHandler(MediaNotExistException.class)
+    @ExceptionHandler(BookNotExistException.class)
     public ResponseEntity<ApiResponseError> handleMediaNotExistException(
-            MediaNotExistException ex, HttpServletRequest request) {
+            BookNotExistException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.NOT_FOUND;
         return ResponseEntity.status(status).body(ApiResponseError.builder()
@@ -78,9 +78,9 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-    @ExceptionHandler(MediaDomainException.class)
+    @ExceptionHandler(BookDomainException.class)
     public ResponseEntity<ApiResponseError> handleMediaDomainException(
-            MediaDomainException ex, HttpServletRequest request) {
+            BookDomainException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(ApiResponseError.builder()
@@ -93,9 +93,9 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-    @ExceptionHandler(MediaApplicationException.class)
+    @ExceptionHandler(BookApplicationException.class)
     public ResponseEntity<ApiResponseError> handleMediaApplicationException(
-            MediaApplicationException ex, HttpServletRequest request) {
+            BookApplicationException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(ApiResponseError.builder()
