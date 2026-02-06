@@ -1,9 +1,9 @@
 package com.mrs.catalog_service.infrastructure.exception;
 
-import com.mrs.catalog_service.application.exception.BookApplicationException;
-import com.mrs.catalog_service.domain.exception.BookDomainException;
-import com.mrs.catalog_service.domain.exception.BookNotExistException;
-import com.mrs.catalog_service.domain.exception.BookNotFoundException;
+import com.mrs.catalog_service.module.book.application.exception.BookApplicationException;
+import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;
+import com.mrs.catalog_service.module.book.domain.exception.BookNotExistException;
+import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

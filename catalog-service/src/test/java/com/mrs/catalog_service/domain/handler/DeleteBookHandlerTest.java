@@ -1,9 +1,10 @@
 package com.mrs.catalog_service.domain.handler;
 
-import com.mrs.catalog_service.domain.event.DeleteBookEvent;
-import com.mrs.catalog_service.domain.exception.BookNotExistException;
-import com.mrs.catalog_service.domain.port.BookRepository;
-import com.mrs.catalog_service.domain.port.EventProducer;
+import com.mrs.catalog_service.module.book.domain.event.DeleteBookEvent;
+import com.mrs.catalog_service.module.book.domain.exception.BookNotExistException;
+import com.mrs.catalog_service.module.book.domain.handler.DeleteBookHandler;
+import com.mrs.catalog_service.module.book.domain.port.BookRepository;
+import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +25,7 @@ class DeleteBookHandlerTest {
     private BookRepository bookRepository;
 
     @Mock
-    private EventProducer<String, DeleteBookEvent> eventProducer;
+    private BookEventProducer<String, DeleteBookEvent> bookEventProducer;
 
     @InjectMocks
     private DeleteBookHandler deleteMediaHandler;
@@ -44,7 +45,7 @@ class DeleteBookHandlerTest {
         verify(bookRepository, times(1)).deleteById(bookId);
 
         ArgumentCaptor<DeleteBookEvent> eventCaptor = ArgumentCaptor.forClass(DeleteBookEvent.class);
-        verify(eventProducer, times(1)).send(
+        verify(bookEventProducer, times(1)).send(
                 eq("delete-book"),
                 eq(bookId.toString()),
                 eventCaptor.capture()
@@ -69,6 +70,6 @@ class DeleteBookHandlerTest {
         assertTrue(exception.getMessage().contains(bookId.toString()));
         verify(bookRepository, times(1)).existsById(bookId);
         verify(bookRepository, never()).deleteById(any());
-        verifyNoInteractions(eventProducer);
+        verifyNoInteractions(bookEventProducer);
     }
 }

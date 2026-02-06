@@ -1,11 +1,12 @@
 package com.mrs.catalog_service.domain.handler;
 
-import com.mrs.catalog_service.domain.event.CreateBookEvent;
-import com.mrs.catalog_service.domain.exception.InvalidBookException;
-import com.mrs.catalog_service.domain.model.Genre;
-import com.mrs.catalog_service.domain.model.Book;
-import com.mrs.catalog_service.domain.port.EventProducer;
-import com.mrs.catalog_service.domain.port.BookRepository;
+import com.mrs.catalog_service.module.book.domain.event.CreateBookEvent;
+import com.mrs.catalog_service.module.book.domain.exception.InvalidBookException;
+import com.mrs.catalog_service.module.book.domain.handler.CreateBookHandler;
+import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.mrs.catalog_service.module.book.domain.model.Book;
+import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
+import com.mrs.catalog_service.module.book.domain.port.BookRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +29,7 @@ class CreateBookHandlerTest {
     private BookRepository bookRepository;
 
     @Mock
-    private EventProducer<String, CreateBookEvent> eventProducer;
+    private BookEventProducer<String, CreateBookEvent> bookEventProducer;
 
     @InjectMocks
     private CreateBookHandler createMediaHandler;
@@ -55,7 +56,7 @@ class CreateBookHandlerTest {
         verify(bookRepository, times(1)).save(book);
 
         ArgumentCaptor<CreateBookEvent> eventCaptor = ArgumentCaptor.forClass(CreateBookEvent.class);
-        verify(eventProducer, times(1)).send(
+        verify(bookEventProducer, times(1)).send(
                 eq("create-book"),
                 eq(bookId.toString()),
                 eventCaptor.capture()
@@ -76,7 +77,7 @@ class CreateBookHandlerTest {
 
         assertEquals("Book cannot be null", exception.getMessage());
         verifyNoInteractions(bookRepository);
-        verifyNoInteractions(eventProducer);
+        verifyNoInteractions(bookEventProducer);
     }
 
     @Test
@@ -100,7 +101,7 @@ class CreateBookHandlerTest {
         verify(bookRepository, times(1)).save(book);
 
         ArgumentCaptor<CreateBookEvent> eventCaptor = ArgumentCaptor.forClass(CreateBookEvent.class);
-        verify(eventProducer, times(1)).send(
+        verify(bookEventProducer, times(1)).send(
                 eq("create-book"),
                 eq(bookId.toString()),
                 eventCaptor.capture()

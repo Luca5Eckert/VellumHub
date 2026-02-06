@@ -1,12 +1,13 @@
 package com.mrs.catalog_service.domain.handler;
 
-import com.mrs.catalog_service.application.dto.UpdateBookRequest;
-import com.mrs.catalog_service.domain.event.UpdateBookEvent;
-import com.mrs.catalog_service.domain.exception.BookNotFoundException;
-import com.mrs.catalog_service.domain.model.Genre;
-import com.mrs.catalog_service.domain.model.Book;
-import com.mrs.catalog_service.domain.port.EventProducer;
-import com.mrs.catalog_service.domain.port.BookRepository;
+import com.mrs.catalog_service.module.book.application.dto.UpdateBookRequest;
+import com.mrs.catalog_service.module.book.domain.event.UpdateBookEvent;
+import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
+import com.mrs.catalog_service.module.book.domain.handler.UpdateBookHandler;
+import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.mrs.catalog_service.module.book.domain.model.Book;
+import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
+import com.mrs.catalog_service.module.book.domain.port.BookRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +31,7 @@ class UpdateBookHandlerTest {
     private BookRepository bookRepository;
 
     @Mock
-    private EventProducer<String, UpdateBookEvent> eventProducer;
+    private BookEventProducer<String, UpdateBookEvent> bookEventProducer;
 
     @InjectMocks
     private UpdateBookHandler updateMediaHandler;
@@ -74,7 +75,7 @@ class UpdateBookHandlerTest {
         assertEquals("New Title", savedMedia.getTitle());
 
         ArgumentCaptor<UpdateBookEvent> eventCaptor = ArgumentCaptor.forClass(UpdateBookEvent.class);
-        verify(eventProducer, times(1))
+        verify(bookEventProducer, times(1))
                 .send(eq("update-book"), eq(bookId.toString()), eventCaptor.capture());
 
         assertEquals(bookId, eventCaptor.getValue().bookId());
@@ -113,7 +114,7 @@ class UpdateBookHandlerTest {
         // Assert
         verify(bookRepository).save(any(Book.class));
 
-        verify(eventProducer, never()).send(any(), any(), any());
+        verify(bookEventProducer, never()).send(any(), any(), any());
     }
 
     @Test
@@ -131,7 +132,7 @@ class UpdateBookHandlerTest {
         );
 
         verify(bookRepository, never()).save(any());
-        verify(eventProducer, never()).send(any(), any(), any());
+        verify(bookEventProducer, never()).send(any(), any(), any());
     }
 
     @Test
@@ -147,7 +148,7 @@ class UpdateBookHandlerTest {
 
         assertEquals("UpdateBookRequest must not be null", exception.getMessage());
         verifyNoInteractions(bookRepository);
-        verifyNoInteractions(eventProducer);
+        verifyNoInteractions(bookEventProducer);
     }
 
 }

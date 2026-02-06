@@ -1,9 +1,10 @@
 package com.mrs.catalog_service.domain.handler;
 
-import com.mrs.catalog_service.domain.exception.BookNotFoundException;
-import com.mrs.catalog_service.domain.model.Genre;
-import com.mrs.catalog_service.domain.model.Book;
-import com.mrs.catalog_service.domain.port.BookRepository;
+import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
+import com.mrs.catalog_service.module.book.domain.handler.GetBookHandler;
+import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.mrs.catalog_service.module.book.domain.model.Book;
+import com.mrs.catalog_service.module.book.domain.port.BookRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
