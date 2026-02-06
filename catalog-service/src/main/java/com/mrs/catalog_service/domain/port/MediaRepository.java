@@ -1,6 +1,6 @@
 package com.mrs.catalog_service.domain.port;
 
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
@@ -9,15 +9,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface MediaRepository {
-    void save(Media media);
+    void save(Book media);
 
     boolean existsById(UUID mediaId);
 
-    Page<Media> findAll(PageRequest pageRequest);
+    Page<Book> findAll(PageRequest pageRequest);
 
-    Optional<Media> findById(UUID mediaId);
+    Optional<Book> findById(UUID mediaId);
 
     void deleteById(UUID mediaId);
 
-    List<Media> findAllById(List<UUID> uuids);
+    List<Book> findAllById(List<UUID> uuids);
 }

@@ -1,7 +1,7 @@
 package com.mrs.catalog_service.domain.handler;
 
 import com.mrs.catalog_service.domain.exception.InvalidMediaException;
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.port.EventProducer;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import com.mrs.catalog_service.domain.event.CreateMediaEvent;
@@ -19,7 +19,7 @@ public class CreateMediaHandler {
         this.eventProducer = eventProducer;
     }
 
-    public void handler(Media media){
+    public void handler(Book media){
         if(media == null) throw new InvalidMediaException();
 
         mediaRepository.save(media);

@@ -21,7 +21,7 @@ import java.util.UUID;
 @Builder
 @DynamicUpdate
 @EntityListeners(AuditingEntityListener.class)
-public class Media {
+public class Book {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

@@ -3,7 +3,7 @@ package com.mrs.catalog_service.domain.service;
 import com.mrs.catalog_service.application.dto.*;
 import com.mrs.catalog_service.domain.handler.*;
 import com.mrs.catalog_service.application.mapper.MediaMapper;
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +33,7 @@ public class MediaService {
     }
 
     public void create(CreateMediaRequest createMediaRequest) {
-        Media media = Media.builder()
+        Book media = Book.builder()
                 .title( createMediaRequest.title() )
                 .description( createMediaRequest.description() )
                 .releaseYear( createMediaRequest.releaseYear() )
@@ -52,7 +52,7 @@ public class MediaService {
     }
 
     public GetMediaResponse get(UUID mediaId){
-        Media media = getMediaHandler.execute(mediaId);
+        Book media = getMediaHandler.execute(mediaId);
 
         return mediaMapper.toGetResponse(media);
     }
@@ -60,7 +60,7 @@ public class MediaService {
     public List<GetMediaResponse> getAll(int pageNumber, int pageSize){
         PageMedia pageMedia = new PageMedia(pageSize, pageNumber);
 
-        Page<Media> mediaPage = getAllMediaHandler.execute(pageMedia);
+        Page<Book> mediaPage = getAllMediaHandler.execute(pageMedia);
 
         return mediaPage.stream().map(mediaMapper::toGetResponse).toList();
     }
@@ -71,7 +71,7 @@ public class MediaService {
 
 
     public List<MediaFeatureResponse> getByIds(List<UUID> mediaIds) {
-        List<Media> mediaList = getMediaByIdsHandler.execute(mediaIds);
+        List<Book> mediaList = getMediaByIdsHandler.execute(mediaIds);
 
         return mediaList.stream().map(mediaMapper::toFeatureResponse).toList();
     }

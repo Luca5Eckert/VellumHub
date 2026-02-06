@@ -1,7 +1,7 @@
 package com.mrs.catalog_service.domain.handler;
 
 import com.mrs.catalog_service.application.dto.PageMedia;
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,7 +16,7 @@ public class GetAllMediaHandler {
         this.mediaRepository = mediaRepository;
     }
 
-    public Page<Media> execute(PageMedia pageMedia){
+    public Page<Book> execute(PageMedia pageMedia){
         PageRequest pageRequest = PageRequest.of(
                 pageMedia.pageNumber(),
                 pageMedia.pageSize()

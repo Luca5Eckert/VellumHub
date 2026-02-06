@@ -2,10 +2,10 @@ package com.mrs.catalog_service.domain.exception;
 
 public class MediaNotFoundException extends MediaDomainException {
     public MediaNotFoundException() {
-        super("Media not found");
+        super("Book not found");
     }
 
     public MediaNotFoundException(String mediaId) {
-        super("Media not found with ID: " + mediaId);
+        super("Book not found with ID: " + mediaId);
     }
 }

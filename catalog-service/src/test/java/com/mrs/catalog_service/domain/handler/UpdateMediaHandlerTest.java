@@ -4,7 +4,7 @@ import com.mrs.catalog_service.application.dto.UpdateMediaRequest;
 import com.mrs.catalog_service.domain.event.UpdateMediaEvent;
 import com.mrs.catalog_service.domain.exception.MediaNotFoundException;
 import com.mrs.catalog_service.domain.model.Genre;
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.port.EventProducer;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -55,7 +55,7 @@ class UpdateMediaHandlerTest {
         );
 
 
-        Media existingMedia = Media.builder()
+        Book existingMedia = Book.builder()
                 .id(mediaId)
                 .title("Old Title")
                 .genres(List.of(Genre.COMEDY))
@@ -67,10 +67,10 @@ class UpdateMediaHandlerTest {
         updateMediaHandler.execute(mediaId, request);
 
         // Assert
-        ArgumentCaptor<Media> mediaCaptor = ArgumentCaptor.forClass(Media.class);
+        ArgumentCaptor<Book> mediaCaptor = ArgumentCaptor.forClass(Book.class);
         verify(mediaRepository).save(mediaCaptor.capture());
 
-        Media savedMedia = mediaCaptor.getValue();
+        Book savedMedia = mediaCaptor.getValue();
         assertEquals("New Title", savedMedia.getTitle());
 
         ArgumentCaptor<UpdateMediaEvent> eventCaptor = ArgumentCaptor.forClass(UpdateMediaEvent.class);
@@ -99,7 +99,7 @@ class UpdateMediaHandlerTest {
                 null
         );
 
-        Media existingMedia = Media.builder()
+        Book existingMedia = Book.builder()
                 .id(mediaId)
                 .title("Old Title")
                 .genres(List.of(Genre.COMEDY))
@@ -111,7 +111,7 @@ class UpdateMediaHandlerTest {
         updateMediaHandler.execute(mediaId, request);
 
         // Assert
-        verify(mediaRepository).save(any(Media.class));
+        verify(mediaRepository).save(any(Book.class));
 
         verify(eventProducer, never()).send(any(), any(), any());
     }

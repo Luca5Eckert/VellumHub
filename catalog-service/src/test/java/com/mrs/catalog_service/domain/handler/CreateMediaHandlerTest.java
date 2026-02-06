@@ -3,7 +3,7 @@ package com.mrs.catalog_service.domain.handler;
 import com.mrs.catalog_service.domain.event.CreateMediaEvent;
 import com.mrs.catalog_service.domain.exception.InvalidMediaException;
 import com.mrs.catalog_service.domain.model.Genre;
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.port.EventProducer;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +40,7 @@ class CreateMediaHandlerTest {
         UUID mediaId = UUID.randomUUID();
         List<Genre> genres = List.of(Genre.ACTION, Genre.COMEDY);
 
-        Media media = Media.builder()
+        Book media = Book.builder()
                 .id(mediaId)
                 .title("Test Movie")
                 .description("A test movie description")
@@ -74,7 +74,7 @@ class CreateMediaHandlerTest {
                 createMediaHandler.handler(null)
         );
 
-        assertEquals("Media cannot be null", exception.getMessage());
+        assertEquals("Book cannot be null", exception.getMessage());
         verifyNoInteractions(mediaRepository);
         verifyNoInteractions(eventProducer);
     }
@@ -85,7 +85,7 @@ class CreateMediaHandlerTest {
         // Arrange
         UUID mediaId = UUID.randomUUID();
 
-        Media media = Media.builder()
+        Book media = Book.builder()
                 .id(mediaId)
                 .title("Test Movie")
                 .description("A test movie description")

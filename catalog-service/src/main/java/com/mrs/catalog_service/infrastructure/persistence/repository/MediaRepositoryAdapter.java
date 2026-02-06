@@ -1,6 +1,6 @@
 package com.mrs.catalog_service.infrastructure.persistence.repository;
 
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +20,7 @@ public class MediaRepositoryAdapter implements MediaRepository {
     }
 
     @Override
-    public void save(Media media) {
+    public void save(Book media) {
         mediaRepositoryJpa.save(media);
     }
 
@@ -30,12 +30,12 @@ public class MediaRepositoryAdapter implements MediaRepository {
     }
 
     @Override
-    public Page<Media> findAll(PageRequest pageRequest) {
+    public Page<Book> findAll(PageRequest pageRequest) {
         return mediaRepositoryJpa.findAll(pageRequest);
     }
 
     @Override
-    public Optional<Media> findById(UUID mediaId) {
+    public Optional<Book> findById(UUID mediaId) {
         return mediaRepositoryJpa.findById(mediaId);
     }
 
@@ -45,7 +45,7 @@ public class MediaRepositoryAdapter implements MediaRepository {
     }
 
     @Override
-    public List<Media> findAllById(List<UUID> uuids) {
+    public List<Book> findAllById(List<UUID> uuids) {
         return mediaRepositoryJpa.findAllById(uuids);
     }
 

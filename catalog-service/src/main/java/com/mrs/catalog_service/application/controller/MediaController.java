@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/media")
-@Tag(name = "Media", description = "Endpoints para gerenciamento de catálogo de mídia")
+@Tag(name = "Book", description = "Endpoints para gerenciamento de catálogo de mídia")
 public class MediaController {
 
     private final MediaService mediaService;

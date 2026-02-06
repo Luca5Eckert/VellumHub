@@ -2,7 +2,7 @@ package com.mrs.catalog_service.domain.handler;
 
 import com.mrs.catalog_service.domain.exception.MediaNotFoundException;
 import com.mrs.catalog_service.domain.model.Genre;
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class GetMediaHandlerTest {
     void shouldReturnMedia_WhenMediaExists() {
         // Arrange
         UUID mediaId = UUID.randomUUID();
-        Media expectedMedia = Media.builder()
+        Book expectedMedia = Book.builder()
                 .id(mediaId)
                 .title("Test Movie")
                 .description("A test movie")
@@ -43,7 +43,7 @@ class GetMediaHandlerTest {
         when(mediaRepository.findById(mediaId)).thenReturn(Optional.of(expectedMedia));
 
         // Act
-        Media result = getMediaHandler.execute(mediaId);
+        Book result = getMediaHandler.execute(mediaId);
 
         // Assert
         assertNotNull(result);

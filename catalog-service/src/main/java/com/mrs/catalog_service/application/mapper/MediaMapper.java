@@ -2,13 +2,13 @@ package com.mrs.catalog_service.application.mapper;
 
 import com.mrs.catalog_service.application.dto.GetMediaResponse;
 import com.mrs.catalog_service.application.dto.MediaFeatureResponse;
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import org.springframework.stereotype.Component;
 
 @Component
 public class MediaMapper {
 
-    public GetMediaResponse toGetResponse(Media media){
+    public GetMediaResponse toGetResponse(Book media){
         return new GetMediaResponse(
                 media.getId(),
                 media.getTitle(),
@@ -26,7 +26,7 @@ public class MediaMapper {
 
     }
 
-    public MediaFeatureResponse toFeatureResponse(Media media) {
+    public MediaFeatureResponse toFeatureResponse(Book media) {
         return new MediaFeatureResponse(
                 media.getId(),
                 media.getTitle(),

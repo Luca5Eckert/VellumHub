@@ -7,7 +7,7 @@ import com.mrs.catalog_service.application.dto.UpdateMediaRequest;
 import com.mrs.catalog_service.application.mapper.MediaMapper;
 import com.mrs.catalog_service.domain.handler.*;
 import com.mrs.catalog_service.domain.model.Genre;
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.service.MediaService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -81,10 +81,10 @@ class MediaServiceTest {
             mediaService.create(request);
 
             // Assert
-            ArgumentCaptor<Media> mediaCaptor = ArgumentCaptor.forClass(Media.class);
+            ArgumentCaptor<Book> mediaCaptor = ArgumentCaptor.forClass(Book.class);
             verify(createMediaHandler, times(1)).handler(mediaCaptor.capture());
 
-            Media capturedMedia = mediaCaptor.getValue();
+            Book capturedMedia = mediaCaptor.getValue();
             assertThat(capturedMedia.getTitle()).isEqualTo("The Matrix");
             assertThat(capturedMedia.getDescription()).isEqualTo("A computer hacker learns about the true nature of reality");
             assertThat(capturedMedia.getReleaseYear()).isEqualTo(1999);
@@ -115,10 +115,10 @@ class MediaServiceTest {
             mediaService.create(request);
 
             // Assert
-            ArgumentCaptor<Media> mediaCaptor = ArgumentCaptor.forClass(Media.class);
+            ArgumentCaptor<Book> mediaCaptor = ArgumentCaptor.forClass(Book.class);
             verify(createMediaHandler).handler(mediaCaptor.capture());
 
-            Media capturedMedia = mediaCaptor.getValue();
+            Book capturedMedia = mediaCaptor.getValue();
             assertThat(capturedMedia.getAuthor()).isEqualTo("Vince Gilligan");
             assertThat(capturedMedia.getIsbn()).isEqualTo("978-0-7653-1111-1");
         }
@@ -153,7 +153,7 @@ class MediaServiceTest {
             UUID mediaId = UUID.randomUUID();
             Instant now = Instant.now();
 
-            Media media = Media.builder()
+            Book media = Book.builder()
                     .id(mediaId)
                     .title("The Matrix")
                     .description("A computer hacker learns about the true nature of reality")
@@ -212,7 +212,7 @@ class MediaServiceTest {
             UUID mediaId1 = UUID.randomUUID();
             UUID mediaId2 = UUID.randomUUID();
 
-            Media media1 = Media.builder()
+            Book media1 = Book.builder()
                     .id(mediaId1)
                     .title("The Matrix")
                     .author("Wachowski Sisters")
@@ -222,7 +222,7 @@ class MediaServiceTest {
                     .genres(List.of(Genre.ACTION))
                     .build();
 
-            Media media2 = Media.builder()
+            Book media2 = Book.builder()
                     .id(mediaId2)
                     .title("Breaking Bad")
                     .author("Vince Gilligan")
@@ -232,7 +232,7 @@ class MediaServiceTest {
                     .genres(List.of(Genre.HORROR))
                     .build();
 
-            Page<Media> mediaPage = new PageImpl<>(List.of(media1, media2));
+            Page<Book> mediaPage = new PageImpl<>(List.of(media1, media2));
 
             GetMediaResponse response1 = new GetMediaResponse(mediaId1, "The Matrix", "Desc 1",
                     1999, "url1", "Wachowski Sisters", "978-0-7653-0000-0", 300, "Warner Bros", List.of(Genre.ACTION), now, now);
@@ -266,7 +266,7 @@ class MediaServiceTest {
             int pageNumber = 0;
             int pageSize = 10;
 
-            Page<Media> emptyPage = new PageImpl<>(List.of());
+            Page<Book> emptyPage = new PageImpl<>(List.of());
             when(getAllMediaHandler.execute(any(PageMedia.class))).thenReturn(emptyPage);
 
             // Act
@@ -275,7 +275,7 @@ class MediaServiceTest {
             // Assert
             assertThat(result).isEmpty();
             verify(getAllMediaHandler, times(1)).execute(any(PageMedia.class));
-            verify(mediaMapper, never()).toGetResponse(any(Media.class));
+            verify(mediaMapper, never()).toGetResponse(any(Book.class));
         }
     }
 

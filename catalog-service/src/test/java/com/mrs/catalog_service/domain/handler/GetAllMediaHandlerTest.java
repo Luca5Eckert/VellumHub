@@ -2,7 +2,7 @@ package com.mrs.catalog_service.domain.handler;
 
 import com.mrs.catalog_service.application.dto.PageMedia;
 import com.mrs.catalog_service.domain.model.Genre;
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,24 +38,24 @@ class GetAllMediaHandlerTest {
         // Arrange
         PageMedia pageMedia = new PageMedia(10, 0);
 
-        List<Media> mediaList = List.of(
-                Media.builder()
+        List<Book> mediaList = List.of(
+                Book.builder()
                         .id(UUID.randomUUID())
                         .title("Movie 1")
                         .genres(List.of(Genre.ACTION))
                         .build(),
-                Media.builder()
+                Book.builder()
                         .id(UUID.randomUUID())
                         .title("Series 1")
                         .genres(List.of(Genre.COMEDY))
                         .build()
         );
 
-        Page<Media> expectedPage = new PageImpl<>(mediaList);
+        Page<Book> expectedPage = new PageImpl<>(mediaList);
         when(mediaRepository.findAll(any(PageRequest.class))).thenReturn(expectedPage);
 
         // Act
-        Page<Media> result = getAllMediaHandler.execute(pageMedia);
+        Page<Book> result = getAllMediaHandler.execute(pageMedia);
 
         // Assert
         assertNotNull(result);
@@ -75,11 +75,11 @@ class GetAllMediaHandlerTest {
     void shouldReturnEmptyPage_WhenRepositoryHasNoData() {
         // Arrange
         PageMedia pageMedia = new PageMedia(10, 0);
-        Page<Media> emptyPage = new PageImpl<>(Collections.emptyList());
+        Page<Book> emptyPage = new PageImpl<>(Collections.emptyList());
         when(mediaRepository.findAll(any(PageRequest.class))).thenReturn(emptyPage);
 
         // Act
-        Page<Media> result = getAllMediaHandler.execute(pageMedia);
+        Page<Book> result = getAllMediaHandler.execute(pageMedia);
 
         // Assert
         assertNotNull(result);

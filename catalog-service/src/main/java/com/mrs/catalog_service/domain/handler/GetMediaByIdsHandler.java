@@ -1,6 +1,6 @@
 package com.mrs.catalog_service.domain.handler;
 
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +16,7 @@ public class GetMediaByIdsHandler {
         this.mediaRepository = mediaRepository;
     }
 
-    public List<Media> execute(List<UUID> uuids) {
+    public List<Book> execute(List<UUID> uuids) {
         return mediaRepository.findAllById(uuids);
     }
 

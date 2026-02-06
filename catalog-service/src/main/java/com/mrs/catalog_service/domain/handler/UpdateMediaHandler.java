@@ -3,7 +3,7 @@ package com.mrs.catalog_service.domain.handler;
 import com.mrs.catalog_service.application.dto.UpdateMediaRequest;
 import com.mrs.catalog_service.domain.event.UpdateMediaEvent;
 import com.mrs.catalog_service.domain.exception.MediaNotFoundException;
-import com.mrs.catalog_service.domain.model.Media;
+import com.mrs.catalog_service.domain.model.Book;
 import com.mrs.catalog_service.domain.port.EventProducer;
 import com.mrs.catalog_service.domain.port.MediaRepository;
 import org.springframework.stereotype.Component;
@@ -27,7 +27,7 @@ public class UpdateMediaHandler {
     public void execute(UUID mediaId, UpdateMediaRequest request) {
         Objects.requireNonNull(request, "UpdateMediaRequest must not be null");
 
-        Media media = mediaRepository.findById(mediaId)
+        Book media = mediaRepository.findById(mediaId)
                 .orElseThrow(MediaNotFoundException::new);
 
         media.update(
