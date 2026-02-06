@@ -63,7 +63,7 @@ class CreateBookHandlerTest {
 
         CreateBookEvent capturedEvent = eventCaptor.getValue();
         assertEquals(bookId, capturedEvent.bookId());
-        assertEquals(genres.stream(), capturedEvent.genres());
+        assertEquals(genres, capturedEvent.genres());
     }
 
     @Test

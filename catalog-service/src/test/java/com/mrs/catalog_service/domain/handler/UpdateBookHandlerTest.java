@@ -78,7 +78,7 @@ class UpdateBookHandlerTest {
                 .send(eq("update-book"), eq(bookId.toString()), eventCaptor.capture());
 
         assertEquals(bookId, eventCaptor.getValue().bookId());
-        assertEquals(newGenres.stream().map(Object::toString).toList(), eventCaptor.getValue().genres());
+        assertEquals(newGenres, eventCaptor.getValue().genres());
     }
 
     @Test

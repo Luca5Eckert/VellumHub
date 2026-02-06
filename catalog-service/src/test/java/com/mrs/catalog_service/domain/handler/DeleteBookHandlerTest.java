@@ -3,6 +3,7 @@ package com.mrs.catalog_service.domain.handler;
 import com.mrs.catalog_service.domain.event.DeleteBookEvent;
 import com.mrs.catalog_service.domain.exception.BookNotExistException;
 import com.mrs.catalog_service.domain.port.BookRepository;
+import com.mrs.catalog_service.domain.port.EventProducer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,7 +11,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.UUID;
 
@@ -24,7 +24,7 @@ class DeleteBookHandlerTest {
     private BookRepository bookRepository;
 
     @Mock
-    private KafkaTemplate<String, DeleteBookEvent> kafka;
+    private EventProducer<String, DeleteBookEvent> eventProducer;
 
     @InjectMocks
     private DeleteBookHandler deleteMediaHandler;
@@ -44,7 +44,7 @@ class DeleteBookHandlerTest {
         verify(bookRepository, times(1)).deleteById(bookId);
 
         ArgumentCaptor<DeleteBookEvent> eventCaptor = ArgumentCaptor.forClass(DeleteBookEvent.class);
-        verify(kafka, times(1)).send(
+        verify(eventProducer, times(1)).send(
                 eq("delete-book"),
                 eq(bookId.toString()),
                 eventCaptor.capture()
@@ -69,6 +69,6 @@ class DeleteBookHandlerTest {
         assertTrue(exception.getMessage().contains(bookId.toString()));
         verify(bookRepository, times(1)).existsById(bookId);
         verify(bookRepository, never()).deleteById(any());
-        verifyNoInteractions(kafka);
+        verifyNoInteractions(eventProducer);
     }
 }
