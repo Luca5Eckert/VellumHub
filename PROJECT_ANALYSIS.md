@@ -122,16 +122,75 @@ The MVP transforms the platform into a book-focused experience with the followin
 
 ## 🔄 Architecture Evolution
 
-### What Changed (v1 → v2 → v3)
+The system underwent two major evolutions — first to solve critical performance and coupling problems, then to pivot toward a book-focused platform.
 
-| Aspect | v1 (Original) | v2 (Current) | v3 (Book Platform) |
-|--------|---------------|--------------|---------------------|
+### Previous Architecture (v1) — General Media + ML Service
+
+```
+Client → Recommendation Service → ML Service (Flask/Python) → recommendation_db
+                                        ↓
+                                  Computes scores
+                                        ↓
+         Recommendation Service ← Returns media IDs
+                ↓
+         Client must call Catalog Service separately for full media data
+```
+
+#### Why v1 was replaced
+
+The original architecture had four critical problems that made it unsustainable:
+
+| Problem | Impact | Root Cause |
+|---------|--------|------------|
+| **Excessive latency** | Every recommendation request required 3+ network hops (Recommendation Service → ML Service → Database → back) | The ML Service was a synchronous REST intermediary between the Java backend and the database |
+| **Tight coupling** | A failure in the Python ML Service brought down recommendations entirely | The Java Recommendation Service and the Flask ML Service shared the same database, creating hidden dependencies |
+| **Redundant computation** | Recommendations were recalculated from scratch on every single request, wasting CPU and increasing response times | No caching or pre-computation strategy — the ML Service ran the full scoring algorithm per request |
+| **Weak API abstraction** | The front-end had to orchestrate multiple service calls manually (get recommendations, then fetch media details separately) | The Recommendation Service returned only media IDs, forcing the client to make additional calls to the Catalog Service |
+
+### Architecture v2 — General Media + pgvector
+
+These problems were solved by eliminating the ML Service entirely and moving vector similarity search into PostgreSQL with pgvector:
+
+```
+Client → Recommendation Service (pgvector query) → recommendation_db
+                ↓
+         Bulk fetch enrichment → Catalog Service /media/bulk
+                ↓
+         Returns fully enriched recommendations in a single response
+```
+
+#### How v2 solved each problem
+
+| Problem | v1 | v2 Solution |
+|---------|-----|-------------|
+| **Excessive latency** | 3+ network hops per request | Single database query using pgvector's `<=>` cosine distance operator + one bulk fetch |
+| **Tight coupling** | Java ↔ Python ↔ shared DB | Pure Java stack — ML Service eliminated, vector queries run natively in PostgreSQL |
+| **Redundant computation** | Full recalculation per request | User profiles updated in real-time via Kafka events; recommendations are a simple vector lookup |
+| **Weak API abstraction** | Client orchestrates multiple calls | Aggregator pattern — Recommendation Service enriches results server-side via `/media/bulk` before returning |
+
+### Architecture v3 (Current) — Book Platform
+
+```
+Client → Recommendation Service (pgvector query) → recommendation_db
+                ↓
+         Bulk fetch enrichment → Book Catalog Service /books/bulk
+                ↓
+         Returns enriched book recommendations with ratings & reading status
+```
+
+### Evolution Summary
+
+| Aspect | v1 (Original) | v2 (Optimized) | v3 (Book Platform) |
+|--------|---------------|----------------|---------------------|
 | **Concept** | General media platform | Optimized media platform | Book-focused platform |
 | **Content** | Movies, TV, Music | Movies, TV, Music | Books only |
 | **Services** | 5 (incl. Flask ML) | 4 (pure Java) | 4 (refactored for books) |
-| **Interactions** | Like, Dislike, Watch | Like, Dislike, Watch | Star ratings, Reading status |
+| **Interactions** | Like, Dislike, Watch | Like, Dislike, Watch | Star ratings (0–5), Reading status |
 | **Catalog** | Open creation | Open creation | Submission + Admin approval |
-| **Recommendation** | ML Service | pgvector | pgvector + reading patterns |
+| **Recommendation** | ML Service (sync REST) | pgvector (native SQL) | pgvector + reading patterns |
+| **Latency** | 3+ network hops | 1 DB query + 1 bulk fetch | 1 DB query + 1 bulk fetch |
+| **Profile Updates** | On-demand recalculation | Real-time via Kafka | Real-time via Kafka |
+| **Data Enrichment** | Client-side orchestration | Server-side aggregation | Server-side aggregation |
 
 ---
 
