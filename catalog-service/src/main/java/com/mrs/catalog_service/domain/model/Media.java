@@ -83,6 +83,10 @@ public class Media {
             String description,
             String coverUrl,
             Integer releaseYear,
+            String author,
+            String isbn,
+            Integer pageCount,
+            String publisher,
             List<Genre> genres
     ) {
         if (title != null && !title.isBlank()) {
@@ -99,6 +103,22 @@ public class Media {
 
         if (releaseYear != null && releaseYear > 0) {
             this.releaseYear = releaseYear;
+        }
+
+        if (author != null && !author.isBlank()) {
+            this.author = author;
+        }
+
+        if (isbn != null && !isbn.isBlank()) {
+            this.isbn = isbn;
+        }
+
+        if (pageCount != null && pageCount > 0) {
+            this.pageCount = pageCount;
+        }
+
+        if (publisher != null && !publisher.isBlank()) {
+            this.publisher = publisher;
         }
 
         if (genres != null && !genres.isEmpty()) {

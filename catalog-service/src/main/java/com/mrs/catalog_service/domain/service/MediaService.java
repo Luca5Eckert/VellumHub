@@ -37,6 +37,10 @@ public class MediaService {
                 .title( createMediaRequest.title() )
                 .description( createMediaRequest.description() )
                 .releaseYear( createMediaRequest.releaseYear() )
+                .author( createMediaRequest.author() )
+                .isbn( createMediaRequest.isbn() )
+                .pageCount( createMediaRequest.pageCount() )
+                .publisher( createMediaRequest.publisher() )
                 .genres( createMediaRequest.genres() )
                 .build();
 

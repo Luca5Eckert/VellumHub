@@ -47,6 +47,10 @@ class UpdateMediaHandlerTest {
                 "New Desc",
                 2024,
                 "http://url.com",
+                "Author Name",
+                "978-0-7653-0000-0",
+                300,
+                "Publisher Name",
                 newGenres
         );
 
@@ -88,6 +92,10 @@ class UpdateMediaHandlerTest {
                 "New Desc",
                 2024,
                 "http://url.com",
+                "Author Name",
+                "978-0-7653-0000-0",
+                300,
+                "Publisher Name",
                 null
         );
 
@@ -113,7 +121,7 @@ class UpdateMediaHandlerTest {
     void shouldThrowException_WhenMediaNotFound() {
         // Arrange
         UUID mediaId = UUID.randomUUID();
-        UpdateMediaRequest request = new UpdateMediaRequest("T", "D", 2022, "U", List.of(Genre.COMEDY));
+        UpdateMediaRequest request = new UpdateMediaRequest("T", "D", 2022, "U", "A", "978-0-7653-0000-0", 300, "P", List.of(Genre.COMEDY));
 
         when(mediaRepository.findById(mediaId)).thenReturn(Optional.empty());
 

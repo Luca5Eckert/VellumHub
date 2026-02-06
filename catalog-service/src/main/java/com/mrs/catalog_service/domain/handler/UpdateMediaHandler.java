@@ -35,6 +35,10 @@ public class UpdateMediaHandler {
                 request.description(),
                 request.coverUrl(),
                 request.releaseYear(),
+                request.author(),
+                request.isbn(),
+                request.pageCount(),
+                request.publisher(),
                 request.genres()
         );
 

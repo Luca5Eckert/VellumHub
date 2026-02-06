@@ -14,8 +14,11 @@ public class MediaMapper {
                 media.getTitle(),
                 media.getDescription(),
                 media.getReleaseYear(),
-                media.getMediaType(),
                 media.getCoverUrl(),
+                media.getAuthor(),
+                media.getIsbn(),
+                media.getPageCount(),
+                media.getPublisher(),
                 media.getGenres(),
                 media.getCreatedAt(),
                 media.getUpdatedAt()

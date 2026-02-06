@@ -69,8 +69,11 @@ class MediaServiceTest {
                     "The Matrix",
                     "A computer hacker learns about the true nature of reality",
                     1999,
-                    MediaType.BOOK,
                     "https://example.com/matrix.jpg",
+                    "Wachowski Sisters",
+                    "978-0-7653-0000-0",
+                    300,
+                    "Warner Bros",
                     List.of(Genre.ACTION, Genre.THRILLER)
             );
 
@@ -85,7 +88,10 @@ class MediaServiceTest {
             assertThat(capturedMedia.getTitle()).isEqualTo("The Matrix");
             assertThat(capturedMedia.getDescription()).isEqualTo("A computer hacker learns about the true nature of reality");
             assertThat(capturedMedia.getReleaseYear()).isEqualTo(1999);
-            assertThat(capturedMedia.getMediaType()).isEqualTo(MediaType.BOOK);
+            assertThat(capturedMedia.getAuthor()).isEqualTo("Wachowski Sisters");
+            assertThat(capturedMedia.getIsbn()).isEqualTo("978-0-7653-0000-0");
+            assertThat(capturedMedia.getPageCount()).isEqualTo(300);
+            assertThat(capturedMedia.getPublisher()).isEqualTo("Warner Bros");
             assertThat(capturedMedia.getGenres()).containsExactlyInAnyOrder(Genre.ACTION, Genre.THRILLER);
         }
 
@@ -97,8 +103,11 @@ class MediaServiceTest {
                     "Breaking Bad",
                     "A chemistry teacher turns to a life of crime",
                     2008,
-                    MediaType.BOOK,
                     "https://example.com/bb.jpg",
+                    "Vince Gilligan",
+                    "978-0-7653-1111-1",
+                    250,
+                    "AMC Books",
                     List.of(Genre.THRILLER, Genre.ACTION)
             );
 
@@ -110,7 +119,8 @@ class MediaServiceTest {
             verify(createMediaHandler).handler(mediaCaptor.capture());
 
             Media capturedMedia = mediaCaptor.getValue();
-            assertThat(capturedMedia.getMediaType()).isEqualTo(MediaType.BOOK);
+            assertThat(capturedMedia.getAuthor()).isEqualTo("Vince Gilligan");
+            assertThat(capturedMedia.getIsbn()).isEqualTo("978-0-7653-1111-1");
         }
     }
 
@@ -148,7 +158,10 @@ class MediaServiceTest {
                     .title("The Matrix")
                     .description("A computer hacker learns about the true nature of reality")
                     .releaseYear(1999)
-                    .mediaType(MediaType.BOOK)
+                    .author("Wachowski Sisters")
+                    .isbn("978-0-7653-0000-0")
+                    .pageCount(300)
+                    .publisher("Warner Bros")
                     .coverUrl("https://example.com/matrix.jpg")
                     .genres(List.of(Genre.ACTION, Genre.THRILLER))
                     .build();
@@ -158,8 +171,11 @@ class MediaServiceTest {
                     "The Matrix",
                     "A computer hacker learns about the true nature of reality",
                     1999,
-                    MediaType.BOOK,
                     "https://example.com/matrix.jpg",
+                    "Wachowski Sisters",
+                    "978-0-7653-0000-0",
+                    300,
+                    "Warner Bros",
                     List.of(Genre.ACTION, Genre.THRILLER),
                     now,
                     now
@@ -199,23 +215,29 @@ class MediaServiceTest {
             Media media1 = Media.builder()
                     .id(mediaId1)
                     .title("The Matrix")
-                    .mediaType(MediaType.BOOK)
+                    .author("Wachowski Sisters")
+                    .isbn("978-0-7653-0000-0")
+                    .pageCount(300)
+                    .publisher("Warner Bros")
                     .genres(List.of(Genre.ACTION))
                     .build();
 
             Media media2 = Media.builder()
                     .id(mediaId2)
                     .title("Breaking Bad")
-                    .mediaType(MediaType.BOOK)
+                    .author("Vince Gilligan")
+                    .isbn("978-0-7653-1111-1")
+                    .pageCount(250)
+                    .publisher("AMC Books")
                     .genres(List.of(Genre.HORROR))
                     .build();
 
             Page<Media> mediaPage = new PageImpl<>(List.of(media1, media2));
 
             GetMediaResponse response1 = new GetMediaResponse(mediaId1, "The Matrix", "Desc 1",
-                    1999, MediaType.BOOK, "url1", List.of(Genre.ACTION), now, now);
+                    1999, "url1", "Wachowski Sisters", "978-0-7653-0000-0", 300, "Warner Bros", List.of(Genre.ACTION), now, now);
             GetMediaResponse response2 = new GetMediaResponse(mediaId2, "Breaking Bad", "Desc 2",
-                    2008, MediaType.BOOK, "url2", List.of(Genre.HORROR), now, now);
+                    2008, "url2", "Vince Gilligan", "978-0-7653-1111-1", 250, "AMC Books", List.of(Genre.HORROR), now, now);
 
             when(getAllMediaHandler.execute(any(PageMedia.class))).thenReturn(mediaPage);
             when(mediaMapper.toGetResponse(media1)).thenReturn(response1);
@@ -271,6 +293,10 @@ class MediaServiceTest {
                     "Updated Description",
                     2000,
                     "https://example.com/updated.jpg",
+                    "Updated Author",
+                    "978-0-7653-9999-9",
+                    350,
+                    "Updated Publisher",
                     List.of(Genre.COMEDY, Genre.HORROR)
             );
 

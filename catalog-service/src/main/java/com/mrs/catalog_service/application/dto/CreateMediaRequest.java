@@ -8,8 +8,11 @@ public record CreateMediaRequest(
         String title,
         String description,
         int releaseYear,
-        MediaType mediaType,
         String coverUrl,
+        String author,
+        String isbn,
+        int pageCount,
+        String publisher,
         List<Genre> genres
 ) {
 }

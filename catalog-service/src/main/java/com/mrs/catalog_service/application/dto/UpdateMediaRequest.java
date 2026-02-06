@@ -9,6 +9,10 @@ public record UpdateMediaRequest(
         String description,
         int releaseYear,
         String coverUrl,
+        String author,
+        String isbn,
+        int pageCount,
+        String publisher,
         List<Genre> genres
 ) {
 }
