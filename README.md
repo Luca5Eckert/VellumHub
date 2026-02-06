@@ -1,13 +1,12 @@
 # Media Recommendation System
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/Luca5Eckert/media-recommendation-system)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
-[![Python](https://img.shields.io/badge/Python-3.11+-blue)](https://www.python.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.0-green)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.2-green)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%20+%20pgvector-blue)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 
-A production-ready, event-driven media recommendation platform built with microservices architecture. Inspired by industry leaders like Netflix and Spotify, this system delivers personalized content recommendations using machine learning algorithms in real-time.
+A production-ready, event-driven media recommendation platform built with microservices architecture. The system delivers personalized content recommendations using **vector similarity search** powered by **pgvector**, eliminating the need for a separate ML service by computing recommendations directly in the database layer.
 
 ---
 
@@ -16,11 +15,12 @@ A production-ready, event-driven media recommendation platform built with micros
 - [Overview](#overview)
 - [Key Features](#key-features)
 - [Architecture](#architecture)
+- [Architecture Evolution](#architecture-evolution)
 - [Technology Stack](#technology-stack)
 - [Getting Started](#getting-started)
 - [API Reference](#api-reference)
 - [Database Architecture](#database-architecture)
-- [ML Service](#ml-service)
+- [Recommendation Engine](#recommendation-engine)
 - [Project Status](#project-status)
 - [Project Structure](#project-structure)
 - [Commands Reference](#commands-reference)
@@ -31,28 +31,30 @@ A production-ready, event-driven media recommendation platform built with micros
 
 ## Overview
 
-The **Media Recommendation System** is a scalable, distributed application designed to deliver personalized content recommendations to users in real-time. Built with a **microservices architecture** and **event-driven communication**, the system leverages **Apache Kafka** for asynchronous messaging between services, enabling real-time analytics and seamless data flow.
+The **Media Recommendation System** is a scalable, distributed application designed to deliver personalized content recommendations to users in real-time. Built with a **microservices architecture** and **event-driven communication**, the system leverages **Apache Kafka** for asynchronous messaging and **pgvector** for high-performance vector similarity search, enabling real-time analytics and seamless data flow without the overhead of a separate ML service.
 
 ## Key Features
 
 | Feature | Description |
 |---------|-------------|
-| **Microservices Architecture** | 5 independent services with clear separation of concerns |
+| **Microservices Architecture** | 4 independent Spring Boot services with clear separation of concerns |
 | **Event-Driven Communication** | Apache Kafka for asynchronous messaging and real-time data streaming |
-| **Hybrid ML Algorithm** | Content-based filtering (70%) combined with popularity scoring (30%) |
+| **Vector Similarity Search** | pgvector-powered cosine distance queries for instant recommendations |
+| **Hybrid Scoring Algorithm** | 70% vector similarity (content-based) + 30% popularity scoring |
+| **HNSW Indexing** | Approximate nearest neighbor indexing for sub-millisecond vector lookups |
+| **Aggregator Pattern** | Recommendation Service enriches results via Catalog Service bulk endpoint |
 | **JWT Authentication** | Secure role-based access control (USER/ADMIN roles) |
 | **Database Isolation** | Database-per-service pattern ensuring complete service autonomy |
-| **Production Ready** | Docker Compose orchestration with health checks and auto-initialization |
 
 ---
 
 ## Architecture
 
-The system follows a **microservices architecture** with event-driven communication. Each microservice adheres to the **Database per Service** pattern, ensuring complete isolation and independent scalability.
+The system follows a **microservices architecture** with event-driven communication. Each microservice adheres to the **Database per Service** pattern, ensuring complete isolation and independent scalability. The Recommendation Service acts as an **Aggregator**, performing vector similarity queries locally and enriching results through the Catalog Service.
 
 ```mermaid
 graph TB
-    subgraph "API Gateway Layer"
+    subgraph "Client Layer"
         CLIENT[Client Applications]
     end
     
@@ -60,8 +62,7 @@ graph TB
         US[User Service<br/>Port 8084]
         CS[Catalog Service<br/>Port 8081]
         ES[Engagement Service<br/>Port 8083]
-        RS[Recommendation Service<br/>Port 8085]
-        ML[ML Service<br/>Port 5000]
+        RS[Recommendation Service<br/>Port 8085<br/>Aggregator + pgvector]
     end
     
     subgraph "Event Streaming Layer"
@@ -72,7 +73,7 @@ graph TB
         USER_DB[(user_db)]
         CATALOG_DB[(catalog_db)]
         ENGAGEMENT_DB[(engagement_db)]
-        RECOMMENDATION_DB[(recommendation_db)]
+        REC_DB[(recommendation_db<br/>pgvector enabled)]
     end
     
     CLIENT --> US
@@ -83,19 +84,18 @@ graph TB
     US --> USER_DB
     CS --> CATALOG_DB
     ES --> ENGAGEMENT_DB
-    ES -->|Publishes Events| KAFKA
-    CS -->|Publishes Events| KAFKA
+    ES -->|Publishes Interactions| KAFKA
+    CS -->|Publishes Media Events| KAFKA
     KAFKA -->|Consumes Events| RS
-    RS --> RECOMMENDATION_DB
-    RS --> ML
-    ML --> RECOMMENDATION_DB
+    RS --> REC_DB
+    RS -->|Bulk Fetch /media/bulk| CS
     
     style KAFKA fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
     style US fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
     style CS fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
     style ES fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
-    style RS fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
-    style ML fill:#3776AB,stroke:#fff,stroke-width:2px,color:#fff
+    style RS fill:#FF6B35,stroke:#fff,stroke-width:2px,color:#fff
+    style REC_DB fill:#336791,stroke:#fff,stroke-width:2px,color:#fff
 ```
 
 ### Service Descriptions
@@ -103,12 +103,57 @@ graph TB
 | Service | Technology | Database | Responsibilities |
 |---------|------------|----------|------------------|
 | **User Service** | Spring Boot 4.0 | `user_db` | Authentication, user management, preferences |
-| **Catalog Service** | Spring Boot 4.0 | `catalog_db` | Media catalog management, CRUD operations |
-| **Engagement Service** | Spring Boot 4.0 | `engagement_db` | Interaction tracking, event publishing |
-| **Recommendation Service** | Spring Boot 4.0 | `recommendation_db` | Event consumption, ML orchestration |
-| **ML Service** | Flask 3.0 | `recommendation_db` | Recommendation algorithm execution |
+| **Catalog Service** | Spring Boot 4.0 | `catalog_db` | Media catalog management, CRUD operations, bulk fetch endpoint |
+| **Engagement Service** | Spring Boot 4.0 | `engagement_db` | Interaction tracking, Kafka event publishing |
+| **Recommendation Service** | Spring Boot 4.0 + pgvector | `recommendation_db` | Vector similarity search, profile vectorization, catalog aggregation |
 
-> **Note:** Each service now has its own dedicated PostgreSQL 15 container (`postgres-catalog`, `postgres-engagement`, `postgres-user`, `postgres-recommendation`) ensuring complete database isolation and independent scalability.
+> **Note:** Each service has its own dedicated PostgreSQL 15 container (`postgres-catalog`, `postgres-engagement`, `postgres-user`, `postgres-recommendation`) ensuring complete database isolation and independent scalability. The Recommendation Service database has the `vector` extension enabled for pgvector support.
+
+---
+
+## Architecture Evolution
+
+The system underwent a significant architectural refactoring to improve performance, reduce latency, and simplify the overall design.
+
+### Previous Architecture (v1)
+
+```
+Client → Recommendation Service → ML Service (Flask/Python) → recommendation_db
+                                        ↓
+                                  Computes scores
+                                        ↓
+         Recommendation Service ← Returns media IDs
+                ↓
+         Client must call Catalog Service separately for full media data
+```
+
+**Problems identified:**
+- **Excessive latency** from synchronous REST calls between Recommendation Service → ML Service → Database
+- **Tight coupling** between Java and Python services sharing the same database
+- **Redundant computation** — recommendations were recalculated on every request
+- **Weak API abstraction** — the front-end had to orchestrate multiple service calls manually
+
+### Current Architecture (v2)
+
+```
+Client → Recommendation Service (pgvector query) → recommendation_db
+                ↓
+         Bulk fetch enrichment → Catalog Service /media/bulk
+                ↓
+         Returns fully enriched recommendations in a single response
+```
+
+**Key improvements:**
+
+| Aspect | Before (v1) | After (v2) |
+|--------|-------------|------------|
+| **Services** | 5 (including Flask ML Service) | 4 (pure Java/Spring Boot) |
+| **Recommendation Compute** | Synchronous REST to Python service | Native SQL vector similarity via pgvector |
+| **Latency** | 3+ network hops per request | Single DB query + one bulk fetch |
+| **Profile Updates** | On-demand recomputation | Real-time via Kafka event consumption |
+| **Data Enrichment** | Client-side orchestration | Server-side aggregation (Aggregator pattern) |
+| **Vector Indexing** | None | HNSW index with cosine distance operators |
+| **Tech Stack** | Java + Python + Gunicorn | Java-only (simplified operations) |
 
 ---
 
@@ -118,11 +163,10 @@ graph TB
 
 | Category | Technology | Version | Purpose |
 |----------|------------|---------|---------|
-| **Runtime (Java)** | Java | 21 (LTS) | Backend services runtime |
-| **Runtime (Python)** | Python | 3.11+ | ML service runtime |
-| **Framework (Java)** | Spring Boot | 4.0.0 | Microservices framework |
-| **Framework (Python)** | Flask | 3.0.0 | REST API framework |
+| **Runtime** | Java | 21 (LTS) | Backend services runtime |
+| **Framework** | Spring Boot | 4.0.2 | Microservices framework |
 | **Database** | PostgreSQL | 15 | Primary data storage |
+| **Vector Search** | pgvector | — | Vector similarity search extension |
 | **Message Broker** | Apache Kafka | 7.3.0 | Event streaming platform |
 | **Coordination** | Apache Zookeeper | 7.3.0 | Kafka cluster coordination |
 
@@ -132,16 +176,16 @@ graph TB
 |----------|------------|---------|
 | **Containerization** | Docker | Application containerization |
 | **Orchestration** | Docker Compose | Multi-container orchestration |
-| **WSGI Server** | Gunicorn | Python production server |
 | **Build Tool** | Maven | Java project build |
+| **Service Communication** | Spring Cloud OpenFeign | Declarative REST client for inter-service calls |
 
 ### Security & Data Access
 
 | Category | Technology | Purpose |
 |----------|------------|---------|
 | **Authentication** | Spring Security + JWT | Token-based authentication |
-| **ORM** | Spring Data JPA / Hibernate | Database abstraction |
-| **Connection Pooling** | psycopg2 | PostgreSQL connection management |
+| **ORM** | Spring Data JPA / Hibernate | Database abstraction with native vector type support |
+| **Vector Storage** | Hibernate `@JdbcTypeCode(SqlTypes.VECTOR)` | Native vector column mapping |
 
 ---
 
@@ -192,6 +236,8 @@ docker-compose --version
    docker-compose up -d
    ```
 
+   > The `recommendation_db` is automatically initialized with the pgvector extension and HNSW indexes via the `create-vector-in-recommendation-db.sql` init script.
+
 4. **Verify deployment:**
 
    ```bash
@@ -203,13 +249,13 @@ docker-compose --version
 5. **Validate service health:**
 
    ```bash
-   # Check ML Service
-   curl -s http://localhost:5000/health | jq
-   
    # Check User Service (register test user)
    curl -X POST http://localhost:8084/auth/register \
      -H "Content-Type: application/json" \
      -d '{"name": "Test User", "email": "test@example.com", "password": "SecurePass123!"}'
+   
+   # Check Catalog Service
+   curl -s http://localhost:8081/actuator/health | jq
    ```
 
 ### Service Endpoints
@@ -220,13 +266,12 @@ docker-compose --version
 | Catalog Service | 8081 | `http://localhost:8081` | `/actuator/health` |
 | Engagement Service | 8083 | `http://localhost:8083` | `/actuator/health` |
 | Recommendation Service | 8085 | `http://localhost:8085` | `/actuator/health` |
-| ML Service | 5000 | `http://localhost:5000` | `/health` |
-| PostgreSQL (Catalog) | 5432 | `localhost:5432` | - |
-| PostgreSQL (Engagement) | 5433 | `localhost:5433` | - |
-| PostgreSQL (User) | 5434 | `localhost:5434` | - |
-| PostgreSQL (Recommendation) | 5435 | `localhost:5435` | - |
-| Apache Kafka | 9092 | `localhost:9092` | - |
-| Zookeeper | 2181 | `localhost:2181` | - |
+| PostgreSQL (Catalog) | 5432 | `localhost:5432` | — |
+| PostgreSQL (Engagement) | 5433 | `localhost:5433` | — |
+| PostgreSQL (User) | 5434 | `localhost:5434` | — |
+| PostgreSQL (Recommendation) | 5435 | `localhost:5435` | — |
+| Apache Kafka | 9092 | `localhost:9092` | — |
+| Zookeeper | 2181 | `localhost:2181` | — |
 
 ---
 
@@ -250,7 +295,7 @@ docker-compose --version
 | PUT | `/users/{id}` | Update user | Yes |
 | DELETE | `/users/{id}` | Delete user | Yes (ADMIN) |
 
-**Request Example - Register:**
+**Request Example — Register:**
 
 ```json
 POST /auth/register
@@ -261,7 +306,7 @@ POST /auth/register
 }
 ```
 
-**Response Example - Login:**
+**Response Example — Login:**
 
 ```json
 POST /auth/login
@@ -280,9 +325,10 @@ Response:
 | GET | `/media` | List all media (paginated) | Yes |
 | GET | `/media/{id}` | Get media by ID | Yes |
 | POST | `/media` | Create new media | Yes (ADMIN) |
+| POST | `/media/bulk` | Get multiple media by IDs | Yes |
 | DELETE | `/media/{id}` | Delete media | Yes (ADMIN) |
 
-**Request Example - Create Media:**
+**Request Example — Create Media:**
 
 ```json
 POST /media
@@ -297,13 +343,21 @@ Authorization: Bearer <token>
 }
 ```
 
+**Request Example — Bulk Fetch:**
+
+```json
+POST /media/bulk
+Authorization: Bearer <token>
+["uuid-1", "uuid-2", "uuid-3"]
+```
+
 ### Engagement Service (Port 8083)
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
 | POST | `/engagement` | Record user interaction | Yes |
 
-**Interaction Types:** `VIEW`, `LIKE`, `DISLIKE`, `RATING`, `WATCH_TIME`, `CLICK`, `SHARE`, `SAVE`
+**Interaction Types:** `LIKE`, `DISLIKE`, `WATCH`
 
 **Request Example:**
 
@@ -313,8 +367,8 @@ Authorization: Bearer <token>
 {
   "userId": "uuid",
   "mediaId": "uuid",
-  "type": "RATING",
-  "interactionValue": 4.5
+  "type": "LIKE",
+  "interactionValue": 1.0
 }
 ```
 
@@ -331,44 +385,10 @@ Authorization: Bearer <token>
 | `userId` | UUID | Yes | User identifier |
 | `limit` | Integer | No | Max results (default: 10) |
 
-### ML Service (Port 5000)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Service health check |
-| POST | `/api/recommendations` | Calculate recommendations |
-
-**Request Example:**
-
-```json
-POST /api/recommendations
-{
-  "user_profile": {
-    "user_id": "uuid",
-    "genre_scores": {"ACTION": 5.0, "THRILLER": 3.0},
-    "interacted_media_ids": []
-  },
-  "limit": 10
-}
-```
-
-**Response Example:**
-
-```json
-{
-  "user_id": "uuid",
-  "recommendations": [
-    {
-      "media_id": "uuid",
-      "genres": ["ACTION", "THRILLER"],
-      "popularity_score": 0.8,
-      "recommendation_score": 0.8745,
-      "content_score": 0.8500
-    }
-  ],
-  "count": 10
-}
-```
+The endpoint returns fully enriched media recommendations in a single response. Internally, the service:
+1. Queries the local `recommendation_db` using pgvector cosine similarity
+2. Fetches full media details from the Catalog Service via the `/media/bulk` endpoint
+3. Returns the aggregated result to the client
 
 ---
 
@@ -387,85 +407,124 @@ The system implements the **Database per Service** pattern, a fundamental micros
 
 ### Database Schema
 
-| Database | Owner | Tables | Description |
-|----------|-------|--------|-------------|
+| Database | Owner | Key Tables | Description |
+|----------|-------|------------|-------------|
 | `user_db` | User Service | `users`, `user_preferences` | User accounts, authentication, genre preferences |
 | `catalog_db` | Catalog Service | `media` | Media catalog with metadata |
 | `engagement_db` | Engagement Service | `interactions` | User interaction events |
-| `recommendation_db` | Recommendation + ML Service | `user_profiles`, `media_features`, `recommendations` | Recommendation computation data |
+| `recommendation_db` | Recommendation Service | `user_profiles`, `media_features`, `recommendations` | Vector embeddings, user profiles, recommendation data |
+
+### pgvector Setup
+
+The `recommendation_db` is initialized with the `vector` extension on first startup via an SQL init script:
+
+- **`media_features`** table stores media embeddings as `vector(3)` columns
+- **`user_profiles`** table stores user preference vectors as `vector(5)` columns
+- **HNSW index** is created on the `embedding` column using `vector_cosine_ops` for fast approximate nearest neighbor search
 
 ### Auto-Initialization
 
-Each database is automatically initialized on first startup via the `POSTGRES_DB` environment variable configured in each PostgreSQL container. This approach ensures complete database isolation with each service having its own dedicated PostgreSQL instance.
+Each database is automatically initialized on first startup. The Recommendation Service database additionally runs `create-vector-in-recommendation-db.sql` to enable pgvector and create the necessary indexes.
 
 ---
 
-## ML Service
+## Recommendation Engine
 
-The ML Service is a production-ready Python microservice responsible for computing personalized recommendations.
+The Recommendation Service computes personalized recommendations entirely within the Java/Spring Boot ecosystem, using **pgvector** for vector similarity search.
 
 ### Algorithm
 
-The service implements a **Hybrid Recommendation Algorithm**:
+The service implements a **Hybrid Scoring Algorithm** combining vector similarity with popularity:
 
 | Component | Weight | Description |
 |-----------|--------|-------------|
-| **Content-Based Filtering** | 70% | Matches media genres to user preference scores |
-| **Popularity Boost** | 30% | Incorporates media popularity metrics |
+| **Vector Similarity (Content-Based)** | 70% | Cosine distance between user profile vector and media embedding vectors |
+| **Popularity Score** | 30% | Normalized popularity metric from media features |
 
-### Architecture
+### How It Works
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Recommendation Service (Java)                 │
-│  1. Fetches UserProfile from recommendation_db                  │
-│  2. Calls ML Service API with UserProfile                       │
-└────────────────────────────────┬────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                       ML Service (Python)                        │
-│  3. Fetches MediaFeatures from recommendation_db                │
-│  4. Executes hybrid recommendation algorithm                    │
-│  5. Returns scored media list                                   │
-└────────────────────────────────┬────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Recommendation Service (Java)                 │
-│  6. Stores and returns personalized recommendations             │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                  Recommendation Service (Spring Boot)                │
+│                                                                      │
+│  1. Kafka consumers receive media & interaction events in real-time  │
+│  2. MediaFeature embeddings are stored as pgvector columns           │
+│  3. UserProfile vectors are updated on each interaction event        │
+│  4. On recommendation request:                                       │
+│     → Native SQL query with cosine distance (<=>) ranking           │
+│     → HNSW index enables sub-millisecond vector lookups             │
+│     → Results enriched via Catalog Service /media/bulk              │
+│  5. Returns fully enriched recommendations to the client            │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-### Performance Specifications
+### Event-Driven Profile Updates
 
-| Metric | Value |
-|--------|-------|
-| Processing Time | < 100ms per request |
-| Concurrent Capacity | 8 requests (4 workers × 2 threads) |
-| Connection Pool | 2-10 PostgreSQL connections |
-| Scalability | Horizontal with shared database |
+User profiles are updated in real-time through Kafka event consumption:
 
-For detailed documentation, see:
-- [ML Service README](ml-service/README.md)
-- [Architecture Decisions](ml-service/ARCHITECTURE.md)
+| Kafka Topic | Producer | Consumer Action |
+|-------------|----------|-----------------|
+| `create-media` | Catalog Service | Creates `MediaFeature` with genre-based embedding vector |
+| `update-media` | Catalog Service | Updates `MediaFeature` embedding |
+| `delete-media` | Catalog Service | Removes `MediaFeature` |
+| `engagement-created` | Engagement Service | Updates `UserProfile` preference vector based on interaction |
+
+### Cosine Similarity Query
+
+The core recommendation query leverages PostgreSQL's `<=>` operator (cosine distance):
+
+```sql
+SELECT m.media_id
+FROM media_features m, user_profiles u
+WHERE u.user_id = :userId
+ORDER BY (m.embedding <=> u.profile_vector) * 0.7 + (m.popularity_score * 0.3) ASC
+LIMIT :limit
+```
+
+This approach replaces the previous ML Service with a single, efficient database query.
 
 ---
 
 ## Project Status
 
-**Current Phase:** Advanced MVP Development
+**Current Phase:** Architecture Refactoring (v2)
 
-### Service Completion
+### Sprint Progress
 
-| Service | Backend | API | Security | Overall Status |
-|---------|:-------:|:---:|:--------:|:--------------:|
-| User Service | 95% | 90% | JWT | **90%** |
-| Catalog Service | 90% | 80% | JWT | **85%** |
-| Engagement Service | 80% | 60% | JWT | **80%** |
-| Recommendation Service | 75% | 70% | JWT | **75%** |
-| ML Service | 95% | 95% | N/A | **95%** |
-| Infrastructure | 100% | N/A | N/A | **100%** |
+| Sprint | Focus | Status |
+|--------|-------|--------|
+| **Sprint 1** | Autonomy & Vector Infrastructure | ✅ Complete |
+| **Sprint 2** | Geometric Intelligence (ML-Service Removal) | ✅ Complete |
+| **Sprint 3** | Aggregation & High-Performance Pagination | 🔄 In Progress |
+
+### Sprint Details
+
+<details>
+<summary><strong>Sprint 1 — Autonomy & Vector Infrastructure ✅</strong></summary>
+
+- [x] pgvector setup: `vector` extension enabled in PostgreSQL, configured in Spring Boot
+- [x] Local media embeddings: `MediaFeature` entity with `vector` columns for genre-based embeddings
+- [x] Kafka sync (vectorized): Consumer converts incoming media genres into vectors before persisting
+
+</details>
+
+<details>
+<summary><strong>Sprint 2 — Geometric Intelligence ✅</strong></summary>
+
+- [x] User vectorization: `UserProfile` maintains a `profile_vector` updated in real-time from interactions
+- [x] Vector similarity query: Cosine distance search implemented in the repository layer
+- [x] ML-Service shutdown: Flask API removed, all synchronous REST calls eliminated
+
+</details>
+
+<details>
+<summary><strong>Sprint 3 — Aggregation & Pagination 🔄</strong></summary>
+
+- [x] Bulk catalog integration: `POST /media/bulk` endpoint in Catalog Service
+- [ ] Paginated aggregator: Top-X media via vector search with enriched data in a single response
+- [x] HNSW indexing: Approximate nearest neighbor index created on embeddings
+
+</details>
 
 ### Implemented Features
 
@@ -474,6 +533,7 @@ For detailed documentation, see:
 
 - Docker Compose configuration for all services
 - PostgreSQL 15 with multi-database architecture
+- pgvector extension with HNSW indexing
 - Apache Kafka and Zookeeper integration
 - Database auto-initialization scripts
 - Multi-stage Dockerfiles for all services
@@ -497,8 +557,9 @@ For detailed documentation, see:
 
 - Media entity with metadata
 - CRUD operations (Create, Read, Read All, Delete)
+- Bulk fetch endpoint (`POST /media/bulk`)
 - Builder Pattern implementation
-- Kafka integration for media events
+- Kafka integration for media events (`create-media`, `update-media`, `delete-media`)
 - Admin-only operations with `@PreAuthorize`
 
 </details>
@@ -506,9 +567,9 @@ For detailed documentation, see:
 <details>
 <summary><strong>Engagement Service</strong></summary>
 
-- Interaction tracking (VIEW, LIKE, DISLIKE, RATING, WATCH_TIME, CLICK, SHARE, SAVE)
+- Interaction tracking (LIKE, DISLIKE, WATCH)
 - Interaction recording endpoint
-- Kafka event publishing
+- Kafka event publishing (`engagement-created`)
 - Validation and persistence handlers
 
 </details>
@@ -516,34 +577,21 @@ For detailed documentation, see:
 <details>
 <summary><strong>Recommendation Service</strong></summary>
 
-- UserProfile and MediaFeature entities
-- Kafka event consumers
-- User profile updates from interactions
-- ML Service integration via REST
-- Recommendation retrieval endpoint
-
-</details>
-
-<details>
-<summary><strong>ML Service</strong></summary>
-
-- Hybrid recommendation algorithm
-- Efficient API design
-- PostgreSQL connection pooling
-- Gunicorn production server
-- Health check endpoint
-- Comprehensive documentation
+- `MediaFeature` entity with pgvector embeddings
+- `UserProfile` entity with real-time profile vectors
+- Kafka consumers for media and interaction events
+- Vector similarity search with cosine distance
+- HNSW index for approximate nearest neighbor queries
+- Catalog Service integration via OpenFeign (bulk fetch)
+- Fallback to popularity-based recommendations for new users
 
 </details>
 
 ### Roadmap
 
 #### High Priority
-- [ ] Complete inter-service communication
-- [ ] Media update endpoint
+- [ ] Paginated aggregator with Spring `Pageable` support
 - [ ] Media search/filter functionality
-- [ ] User interaction history endpoint
-- [x] End-to-end test for complete recommendation flow
 - [ ] Unit and integration tests
 
 #### Medium Priority
@@ -555,7 +603,7 @@ For detailed documentation, see:
 #### Future Enhancements
 - [ ] API Gateway
 - [ ] Refresh token support
-- [ ] Redis caching
+- [ ] Redis caching for hot recommendations
 - [ ] CI/CD pipelines
 - [ ] Kubernetes orchestration
 - [ ] Monitoring stack (Prometheus, Grafana)
@@ -572,16 +620,15 @@ media-recommendation-system/
 ├── docker-compose.yml                 # Service orchestration
 ├── PROJECT_ANALYSIS.md                # Project analysis documentation
 ├── scripts/
-│   └── create-databases.sql           # Database initialization
+│   └── create-vector-in-recommendation-db.sql  # pgvector initialization
 │
 ├── catalog-service/                   # Media Catalog Microservice (Hexagonal Architecture)
 │   ├── Dockerfile
 │   ├── pom.xml
-│   ├── mvnw, mvnw.cmd                 # Maven wrapper
 │   └── src/main/java/com/mrs/catalog_service/
 │       ├── CatalogServiceApplication.java
 │       ├── application/               # Application Layer
-│       │   ├── controller/            # REST Controllers
+│       │   ├── controller/            # REST Controllers (incl. bulk endpoint)
 │       │   ├── dto/                   # Data Transfer Objects
 │       │   ├── exception/             # Application Exceptions
 │       │   └── mapper/                # Object Mappers
@@ -601,7 +648,6 @@ media-recommendation-system/
 ├── user-service/                      # User Management Microservice (Layered Architecture)
 │   ├── Dockerfile
 │   ├── pom.xml
-│   ├── mvnw, mvnw.cmd                 # Maven wrapper
 │   └── src/main/java/com/mrs/user_service/
 │       ├── UserServiceApplication.java
 │       ├── controller/                # REST Controllers
@@ -619,7 +665,6 @@ media-recommendation-system/
 ├── engagement-service/                # User Engagement Microservice (Hexagonal Architecture)
 │   ├── Dockerfile
 │   ├── pom.xml
-│   ├── mvnw, mvnw.cmd                 # Maven wrapper
 │   └── src/main/java/com/mrs/engagement_service/
 │       ├── EngagementServiceApplication.java
 │       ├── application/               # Application Layer
@@ -640,48 +685,29 @@ media-recommendation-system/
 │           ├── security/              # Security Configuration
 │           └── exception/             # Infrastructure Exceptions
 │
-├── recommendation-service/            # Recommendation Orchestration (Hexagonal Architecture)
-│   ├── Dockerfile
-│   ├── pom.xml
-│   ├── mvnw, mvnw.cmd                 # Maven wrapper
-│   └── src/main/java/com/mrs/recommendation_service/
-│       ├── RecommendationServiceApplication.java
-│       ├── application/               # Application Layer
-│       │   ├── controller/            # REST Controllers
-│       │   ├── consumer/              # Kafka Consumers
-│       │   ├── dto/                   # Data Transfer Objects
-│       │   ├── event/                 # Application Events
-│       │   └── exception/             # Application Exceptions
-│       ├── domain/                    # Domain Layer
-│       │   ├── model/                 # Domain Entities
-│       │   ├── service/               # Business Logic
-│       │   ├── handler/               # Command Handlers
-│       │   ├── command/               # Command Objects
-│       │   ├── port/                  # Interfaces/Ports
-│       │   └── exception/             # Domain Exceptions
-│       └── infrastructure/            # Infrastructure Layer
-│           ├── repository/            # Database Adapters
-│           ├── provider/              # External Service Providers (ML Service)
-│           ├── security/              # Security Configuration
-│           └── exception/             # Infrastructure Exceptions
-│
-└── ml-service/                        # Machine Learning Service (Python/Flask)
+└── recommendation-service/            # Recommendation Aggregator (Hexagonal Architecture + pgvector)
     ├── Dockerfile
-    ├── requirements.txt
-    ├── app.py                         # Flask Application Entry Point
-    ├── models/                        # ML Models (future use)
-    │   └── __init__.py
-    ├── services/                      # Business Logic
-    │   ├── __init__.py
-    │   └── recommendation_engine.py   # Hybrid Recommendation Algorithm
-    ├── database/                      # Database Access
-    │   ├── __init__.py
-    │   ├── db_connection.py           # Connection Pool Management
-    │   └── media_feature_repository.py # Media Feature Data Access
-    ├── test_api.py                    # API Tests
-    ├── test_structure.py              # Structure Tests
-    ├── README.md                      # Service Documentation
-    └── ARCHITECTURE.md                # Architecture Decisions
+    ├── pom.xml
+    └── src/main/java/com/mrs/recommendation_service/
+        ├── RecommendationServiceApplication.java
+        ├── application/               # Application Layer
+        │   ├── controller/            # REST Controllers
+        │   ├── consumer/              # Kafka Consumers (media + interaction events)
+        │   ├── dto/                   # Data Transfer Objects
+        │   ├── event/                 # Application Events
+        │   └── exception/             # Application Exceptions
+        ├── domain/                    # Domain Layer
+        │   ├── model/                 # Domain Entities (MediaFeature, UserProfile, Recommendation)
+        │   ├── service/               # Business Logic
+        │   ├── handler/               # Command Handlers (vector similarity queries)
+        │   ├── command/               # Command Objects
+        │   ├── port/                  # Interfaces/Ports
+        │   └── exception/             # Domain Exceptions
+        └── infrastructure/            # Infrastructure Layer
+            ├── repository/            # JPA Repositories (pgvector native queries)
+            ├── provider/              # Catalog Service Client (OpenFeign)
+            ├── security/              # Security Configuration
+            └── exception/             # Infrastructure Exceptions
 ```
 
 ---
@@ -713,17 +739,14 @@ docker-compose down -v
 ### Database Operations
 
 ```bash
-# Access PostgreSQL CLI for each service (replace ${POSTGRES_USER} with your configured username)
+# Access PostgreSQL CLI for each service
 docker exec -it postgres-user psql -U ${POSTGRES_USER} -d user_db
 docker exec -it postgres-catalog psql -U ${POSTGRES_USER} -d catalog_db
 docker exec -it postgres-engagement psql -U ${POSTGRES_USER} -d engagement_db
 docker exec -it postgres-recommendation psql -U ${POSTGRES_USER} -d recommendation_db
 
-# View PostgreSQL logs
-docker logs postgres-user
-docker logs postgres-catalog
-docker logs postgres-engagement
-docker logs postgres-recommendation
+# Verify pgvector extension
+docker exec -it postgres-recommendation psql -U ${POSTGRES_USER} -d recommendation_db -c "SELECT extname FROM pg_extension WHERE extname = 'vector';"
 ```
 
 ### Kafka Operations
@@ -732,41 +755,9 @@ docker logs postgres-recommendation
 # List topics
 docker exec -it kafka kafka-topics --list --bootstrap-server localhost:9092
 
-# Create topic
-docker exec -it kafka kafka-topics --create \
-  --topic engagement-events \
-  --bootstrap-server localhost:9092 \
-  --partitions 3 \
-  --replication-factor 1
-
 # View Kafka logs
 docker logs kafka
 ```
-
-### Testing
-
-#### End-to-End Test
-
-Run the complete E2E test to validate the entire recommendation flow:
-
-```bash
-# Run E2E test (automated - starts services and runs test)
-./scripts/run_e2e_test.sh
-
-# Or run manually
-docker-compose up -d
-python3 scripts/e2e_test.py
-```
-
-The E2E test validates:
-- User registration and authentication
-- Media catalog management
-- User engagement tracking
-- Kafka event processing
-- ML-powered recommendations
-- Complete flow from interaction to personalized recommendations
-
-For detailed documentation, see [E2E Test Guide](docs/E2E_TEST_GUIDE.md).
 
 ---
 
@@ -793,10 +784,7 @@ Contributions are welcome. Please follow these guidelines:
 
 | Document | Description |
 |----------|-------------|
-| [ML Service README](ml-service/README.md) | ML Service documentation |
-| [Architecture Decisions](ml-service/ARCHITECTURE.md) | Design rationale |
 | [Project Analysis](PROJECT_ANALYSIS.md) | Complete project analysis |
-| [E2E Test Guide](docs/E2E_TEST_GUIDE.md) | End-to-end testing guide |
 
 ---
 

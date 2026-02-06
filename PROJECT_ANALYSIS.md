@@ -1,402 +1,352 @@
-# 📊 Análise do Projeto - Media Recommendation System
+# 📊 Project Analysis — Media Recommendation System
 
-> **Documento de Análise Completa do Estado Atual e Plano de Execução**  
-> **Data:** Janeiro 2026
-
----
-
-## 📋 Sumário Executivo
-
-O **Media Recommendation System** é uma plataforma de recomendação de mídia inspirada em serviços como Netflix e Spotify, construída com arquitetura de microserviços e comunicação orientada a eventos. O projeto está em **estágio avançado de desenvolvimento do MVP**, com infraestrutura sólida e microserviços parcialmente implementados.
+> **Complete Analysis of Current State and Execution Plan**  
+> **Date:** February 2026
 
 ---
 
-## 🏗️ Estado Atual do Projeto
+## 📋 Executive Summary
 
-### ✅ Componentes Implementados
-
-#### 1. **Infraestrutura (100% Completa)**
-- ✅ Docker Compose configurado com todos os serviços
-- ✅ PostgreSQL 15 com 4 containers separados para cada banco de dados (`postgres-catalog`, `postgres-engagement`, `postgres-user`, `postgres-recommendation`)
-- ✅ Apache Kafka + Zookeeper para comunicação assíncrona
-- ✅ Dockerfiles otimizados com multi-stage build para todos os serviços
-
-#### 2. **Catalog Service (85% Completo)**
-- ✅ Entidade `Media` com campos: id, title, description, releaseYear, mediaType, coverUrl, genres
-- ✅ CRUD completo: Create, Read (by ID), Read All (paginado), Delete
-- ✅ Builder Pattern implementado para criação de objetos
-- ✅ Integração com Kafka configurada
-- ✅ Segurança JWT configurada com `@PreAuthorize` para operações admin
-- ✅ Validação de requests com Bean Validation
-- ⚠️ **Faltando:** Update de mídia, busca/filtro por gênero/tipo
-
-#### 3. **User Service (90% Completo)**
-- ✅ Entidade `UserEntity` com campos: id, name, email, password, role
-- ✅ Autenticação completa: `/auth/register` e `/auth/login`
-- ✅ CRUD de usuários: Create, Read (by ID), Read All (paginado), Update, Delete
-- ✅ JWT Token generation e validation
-- ✅ Roles: USER e ADMIN
-- ✅ Preferências de usuário (`UserPreference`, `Genre`)
-- ✅ Segurança configurada com OAuth2 Resource Server
-- ⚠️ **Faltando:** Refresh token, recuperação de senha
-
-#### 4. **Engagement Service (80% Completo)**
-- ✅ Entidade `Interaction` com campos: userId, mediaId, type, interactionValue, timestamp
-- ✅ Tipos de interação: VIEW, LIKE, DISLIKE, RATING, WATCH_TIME, CLICK, SHARE, SAVE
-- ✅ Endpoint POST `/engagement` para registro de interações
-- ✅ Publicação de eventos para Kafka (`engagement-created` topic)
-- ✅ Handler com validação e persistência
-- ⚠️ **Faltando:** Histórico de interações por usuário, analytics endpoints, GET endpoints
-
-#### 5. **Recommendation Service (75% Completo)**
-- ✅ Entidades: `UserProfile`, `MediaFeature`, `Recommendation`
-- ✅ Consumer Kafka para eventos de interação, criação e deleção de mídia
-- ✅ Integração com ML Service via REST Client
-- ✅ `UserProfileService` para atualizar perfis baseado em interações
-- ✅ Endpoint GET `/api/recommendations` para obter recomendações
-- ⚠️ **Faltando:** Cache de recomendações, endpoints de feedback, batch processing
-
-#### 6. **ML Service (95% Completo)** 🐍
-- ✅ **Arquitetura Híbrida:** Recebe perfil via API, busca mídias no banco
-- ✅ **Algoritmo de Recomendação:**
-  - Content-Based Filtering (70% peso)
-  - Popularity Boost (30% peso)
-- ✅ Connection pooling com PostgreSQL
-- ✅ Endpoint: `POST /api/recommendations`
-- ✅ Health check: `GET /health`
-- ✅ Validação completa de inputs
-- ✅ Gunicorn para produção
-- ✅ Documentação completa (README.md, ARCHITECTURE.md)
-- ⚠️ **Faltando:** Testes automatizados, métricas de performance
+The **Media Recommendation System** is a media recommendation platform inspired by services like Netflix and Spotify, built with a microservices architecture and event-driven communication. The project has undergone a **major architectural refactoring** — the former Python/Flask ML Service has been eliminated and replaced by **pgvector-powered vector similarity search** running natively inside PostgreSQL, resulting in a leaner, faster, and fully Java-based system.
 
 ---
 
-### 📊 Métricas de Completude por Serviço
+## 🏗️ Current State of the Project
 
-| Serviço | Backend | API | Testes | Documentação | Total |
-|---------|---------|-----|--------|--------------|-------|
-| **Catalog Service** | ✅ 90% | ✅ 80% | ⚠️ 10% | ⚠️ 20% | **50%** |
-| **User Service** | ✅ 95% | ✅ 90% | ⚠️ 10% | ⚠️ 20% | **54%** |
+### Architecture Overview (v2)
+
+The system now consists of **4 Spring Boot microservices** (down from 5) with the Recommendation Service acting as an **Aggregator**. Recommendations are computed via native SQL cosine distance queries against pgvector embeddings, and results are enriched through a bulk fetch call to the Catalog Service.
+
+```
+Client → Recommendation Service (pgvector query) → recommendation_db
+                ↓
+         Bulk fetch enrichment → Catalog Service /media/bulk
+                ↓
+         Returns fully enriched recommendations in a single response
+```
+
+### ✅ Implemented Components
+
+#### 1. **Infrastructure (100% Complete)**
+- ✅ Docker Compose configured for all services
+- ✅ PostgreSQL 15 with 4 isolated containers (`postgres-catalog`, `postgres-engagement`, `postgres-user`, `postgres-recommendation`)
+- ✅ pgvector extension enabled in `recommendation_db` with HNSW indexing
+- ✅ Apache Kafka + Zookeeper for asynchronous communication
+- ✅ Optimized multi-stage Dockerfiles for all services
+- ✅ SQL init script for vector extension and index creation (`create-vector-in-recommendation-db.sql`)
+
+#### 2. **Catalog Service (85% Complete)**
+- ✅ `Media` entity with fields: id, title, description, releaseYear, mediaType, coverUrl, genres
+- ✅ Full CRUD: Create, Read (by ID), Read All (paginated), Delete
+- ✅ Bulk fetch endpoint: `POST /media/bulk` for batch retrieval by IDs
+- ✅ Builder Pattern for object creation
+- ✅ Kafka integration: publishes events on `create-media`, `update-media`, `delete-media` topics
+- ✅ JWT security with `@PreAuthorize` for admin operations
+- ✅ Request validation with Bean Validation
+- ⚠️ **Missing:** Media update endpoint, search/filter by genre/type
+
+#### 3. **User Service (90% Complete)**
+- ✅ `UserEntity` with fields: id, name, email, password, role
+- ✅ Full authentication: `/auth/register` and `/auth/login`
+- ✅ User CRUD: Create, Read (by ID), Read All (paginated), Update, Delete
+- ✅ JWT token generation and validation
+- ✅ Roles: USER and ADMIN
+- ✅ User preferences (`UserPreference`, `Genre`)
+- ✅ OAuth2 Resource Server security
+- ⚠️ **Missing:** Refresh token, password recovery
+
+#### 4. **Engagement Service (80% Complete)**
+- ✅ `Interaction` entity with fields: userId, mediaId, type, interactionValue, timestamp
+- ✅ Interaction types: `LIKE`, `DISLIKE`, `WATCH`
+- ✅ `POST /engagement` endpoint for recording interactions
+- ✅ Kafka event publishing (`engagement-created` topic)
+- ✅ Handler with validation and persistence
+- ⚠️ **Missing:** User interaction history, analytics endpoints, GET endpoints
+
+#### 5. **Recommendation Service (85% Complete)**
+- ✅ `MediaFeature` entity with pgvector embeddings (`vector(3)` column via `@JdbcTypeCode(SqlTypes.VECTOR)`)
+- ✅ `UserProfile` entity with real-time profile vector (`vector(5)` column)
+- ✅ Kafka consumers for media events (`create-media`, `update-media`, `delete-media`) and interaction events (`engagement-created`)
+- ✅ Vector similarity search using cosine distance (`<=>` operator)
+- ✅ Hybrid scoring algorithm: 70% vector similarity + 30% popularity
+- ✅ HNSW index for approximate nearest neighbor queries
+- ✅ Catalog Service integration via OpenFeign (bulk fetch for data enrichment)
+- ✅ Fallback to popularity-based recommendations for new users (cold-start handling)
+- ✅ `GET /api/recommendations` endpoint returning fully enriched results
+- ⚠️ **Missing:** Paginated aggregator with Spring `Pageable`, recommendation caching
+
+#### 6. **ML Service — ❌ Removed**
+The Flask/Python ML Service has been **completely eliminated** as part of the v2 architecture refactoring. Its responsibilities (hybrid recommendation algorithm) are now handled natively by the Recommendation Service via pgvector.
+
+---
+
+### 📊 Completion Metrics by Service
+
+| Service | Backend | API | Tests | Documentation | Overall |
+|---------|:-------:|:---:|:-----:|:-------------:|:-------:|
+| **Catalog Service** | ✅ 90% | ✅ 85% | ⚠️ 10% | ⚠️ 30% | **54%** |
+| **User Service** | ✅ 95% | ✅ 90% | ⚠️ 10% | ⚠️ 30% | **56%** |
 | **Engagement Service** | ✅ 80% | ⚠️ 60% | ⚠️ 10% | ⚠️ 20% | **43%** |
-| **Recommendation Service** | ✅ 75% | ⚠️ 70% | ⚠️ 10% | ⚠️ 30% | **46%** |
-| **ML Service** | ✅ 95% | ✅ 95% | ⚠️ 40% | ✅ 90% | **80%** |
-| **Infraestrutura** | ✅ 100% | N/A | N/A | ✅ 80% | **90%** |
+| **Recommendation Service** | ✅ 85% | ✅ 80% | ⚠️ 10% | ⚠️ 30% | **51%** |
+| **Infrastructure** | ✅ 100% | N/A | N/A | ✅ 85% | **93%** |
 
 ---
 
-## 🎯 O Que Falta Para Terminar o MVP
+## 🔄 Architecture Evolution
 
-### 🔴 Prioridade Alta (Essencial para MVP)
+### What Changed (v1 → v2)
 
-#### 1. **Comunicação Entre Serviços**
-```
-Status: ⚠️ Parcialmente Implementado
-```
-- [ ] **Catalog → Recommendation:** Criar evento quando mídia é criada/atualizada
-  - O consumer `CreateMediaConsumerEvent` existe mas precisa do producer no catalog-service
-- [ ] **Atualização de MediaFeatures:** Sincronizar dados do catálogo com recommendation_db
-- [ ] **Schemas de Eventos:** Definir schemas consistentes para todos os eventos Kafka
+| Aspect | Before (v1) | After (v2) |
+|--------|-------------|------------|
+| **Services** | 5 (including Flask ML Service) | 4 (pure Java/Spring Boot) |
+| **Recommendation Compute** | Synchronous REST to Python service | Native SQL vector similarity via pgvector |
+| **Latency** | 3+ network hops per request | Single DB query + one bulk fetch |
+| **Profile Updates** | On-demand recomputation | Real-time via Kafka event consumption |
+| **Data Enrichment** | Client-side orchestration | Server-side aggregation (Aggregator pattern) |
+| **Vector Indexing** | None | HNSW index with cosine distance operators |
+| **Tech Stack** | Java + Python + Gunicorn | Java-only (simplified operations) |
 
-#### 2. **Fluxo Completo de Recomendação**
-```
-Status: ⚠️ Parcialmente Implementado
-```
-- [ ] Testar fluxo completo: User → Engagement → Kafka → Recommendation → ML
-- [ ] Criar tabela `medias_features` no recommendation_db
-- [ ] Implementar sincronização inicial de catálogo para recommendation_db
-- [ ] Verificar formato de dados entre serviços
+### Problems Solved
 
-#### 3. **Endpoints Faltantes**
+1. **Excessive latency** — eliminated synchronous REST calls between Recommendation Service → ML Service → Database
+2. **Tight coupling** — removed the shared-database dependency between Java and Python services
+3. **Redundant computation** — recommendations are no longer recalculated on every request; user profiles are updated in real-time via Kafka
+4. **Weak API abstraction** — the Aggregator pattern now enriches results server-side, so clients receive complete data in a single call
+
+---
+
+## 🎯 What Remains for MVP Completion
+
+### 🔴 High Priority (Essential for MVP)
+
+#### 1. **Paginated Aggregation**
+```
+Status: 🔄 In Progress
+```
+- [ ] Implement paginated vector search with Spring `Pageable` support
+- [ ] Return enriched results with full media data in paginated responses
+
+#### 2. **Missing Endpoints**
 
 **Catalog Service:**
-- [ ] `PUT /media/{id}` - Update de mídia
-- [ ] `GET /media/search?genre=ACTION&type=MOVIE` - Busca com filtros
+- [ ] `PUT /media/{id}` — Update media
+- [ ] `GET /media/search?genre=ACTION&type=MOVIE` — Search with filters
 
 **Engagement Service:**
-- [ ] `GET /engagement/user/{userId}` - Histórico de interações
-- [ ] `GET /engagement/media/{mediaId}/stats` - Estatísticas por mídia
+- [ ] `GET /engagement/user/{userId}` — User interaction history
+- [ ] `GET /engagement/media/{mediaId}/stats` — Per-media statistics
 
-**Recommendation Service:**
-- [ ] `POST /api/recommendations/refresh` - Forçar recálculo
-- [ ] `GET /api/recommendations/popular` - Mídias populares (fallback)
-
-#### 4. **Testes Automatizados**
+#### 3. **Automated Tests**
 ```
-Status: ❌ Quase Inexistente
+Status: ❌ Nearly Nonexistent
 ```
-- [ ] Testes unitários para cada serviço (mínimo 50% cobertura)
-- [ ] Testes de integração para APIs
-- [ ] Testes de contrato para comunicação Kafka
-- [ ] Testes end-to-end do fluxo principal
+- [ ] Unit tests for each service (minimum 50% coverage)
+- [ ] Integration tests for APIs
+- [ ] Contract tests for Kafka event communication
+- [ ] End-to-end test for the main recommendation flow
 
-### 🟡 Prioridade Média (Importante para MVP)
+### 🟡 Medium Priority (Important for MVP)
 
-#### 5. **Tratamento de Erros e Resiliência**
-- [ ] Exception handlers globais padronizados
-- [ ] Retry policies para chamadas entre serviços
-- [ ] Dead Letter Queue para eventos Kafka com erro
-- [ ] Circuit breaker para ML Service
+#### 4. **Error Handling and Resilience**
+- [ ] Standardized global exception handlers
+- [ ] Retry policies for inter-service calls
+- [ ] Dead Letter Queue for failed Kafka events
+- [ ] Circuit breaker for Catalog Service calls (OpenFeign)
 
-#### 6. **Validação e Segurança**
-- [ ] Validação consistente em todos os endpoints
-- [ ] Rate limiting básico
-- [ ] CORS configurado corretamente
-- [ ] Logs estruturados
+#### 5. **Validation and Security**
+- [ ] Consistent validation across all endpoints
+- [ ] Basic rate limiting
+- [ ] Properly configured CORS
+- [ ] Structured logging
 
-#### 7. **Documentação da API**
-- [ ] OpenAPI/Swagger para todos os serviços
-- [ ] Collection do Postman
-- [ ] Exemplos de uso
+#### 6. **API Documentation**
+- [ ] OpenAPI/Swagger for all services
+- [ ] Postman Collection
+- [ ] Usage examples
 
-### 🟢 Prioridade Baixa (Nice to have para MVP)
+### 🟢 Low Priority (Nice to Have for MVP)
 
-#### 8. **Melhorias de Performance**
-- [ ] Cache Redis para recomendações frequentes
-- [ ] Índices de banco de dados otimizados
-- [ ] Connection pooling configurado
+#### 7. **Performance Improvements**
+- [ ] Redis caching for hot recommendations
+- [ ] Database index optimization
+- [ ] Connection pooling tuning
 
-#### 9. **Observabilidade Básica**
-- [ ] Health checks padronizados (`/actuator/health`)
-- [ ] Logs estruturados em JSON
-- [ ] Métricas básicas de requests
+#### 8. **Basic Observability**
+- [ ] Standardized health checks (`/actuator/health`)
+- [ ] Structured JSON logging
+- [ ] Basic request metrics
 
 ---
 
-## 🚀 Funcionalidades Futuras (Pós-MVP)
+## 📅 Sprint Progress
 
-### Fase 2: Melhorias de ML
-- [ ] **Collaborative Filtering:** Recomendações baseadas em usuários similares
-- [ ] **Model Training Pipeline:** Treinar modelos com dados históricos
-- [ ] **Real-time Learning:** Aprender com feedback imediato
-- [ ] **A/B Testing Framework:** Testar diferentes algoritmos
-- [ ] **Diversity Enhancement:** Evitar bolhas de filtro
+### Sprint 1: Autonomy & Vector Infrastructure ✅
+```
+Objective: Enable vector-based recommendation infrastructure
+```
+- [x] pgvector setup: `vector` extension enabled in PostgreSQL, configured in Spring Boot
+- [x] Local media embeddings: `MediaFeature` entity with `vector` columns for genre-based embeddings
+- [x] Kafka sync (vectorized): Consumer converts incoming media genres into vectors before persisting
 
-### Fase 3: Frontend
-- [ ] **Web Application:** React/Next.js
-- [ ] **Mobile App:** React Native ou Flutter
-- [ ] **Design System:** Componentes reutilizáveis
-- [ ] **PWA Support:** Funcionamento offline
+### Sprint 2: Geometric Intelligence (ML-Service Removal) ✅
+```
+Objective: Replace ML Service with native vector similarity queries
+```
+- [x] User vectorization: `UserProfile` maintains a `profile_vector` updated in real-time from interactions
+- [x] Vector similarity query: Cosine distance search (`<=>`) implemented in the repository layer
+- [x] ML-Service shutdown: Flask API removed, all synchronous REST calls eliminated
 
-### Fase 4: Escalabilidade
-- [ ] **Kubernetes:** Orquestração de containers
-- [ ] **Service Mesh:** Istio para comunicação entre serviços
-- [ ] **Database Sharding:** Particionamento de dados
-- [ ] **CDN:** Distribuição de conteúdo estático
+### Sprint 3: Aggregation & High-Performance Pagination 🔄
+```
+Objective: Enriched, paginated recommendation responses
+```
+- [x] Bulk catalog integration: `POST /media/bulk` endpoint in Catalog Service
+- [ ] Paginated aggregator: Top-X media via vector search with enriched data in a single response
+- [x] HNSW indexing: Approximate nearest neighbor index created on embeddings
 
-### Fase 5: Analytics e Insights
-- [ ] **Dashboard Analytics:** Métricas de negócio
-- [ ] **User Behavior Analysis:** Análise de comportamento
+---
+
+## 🚀 Future Features (Post-MVP)
+
+### Phase 2: Recommendation Enhancements
+- [ ] **Collaborative Filtering:** Recommendations based on similar users
+- [ ] **Embedding Upgrades:** Use Spring AI with an embedding model (e.g., Ollama) instead of one-hot encoding
+- [ ] **Real-time Learning:** Learn from immediate feedback
+- [ ] **A/B Testing Framework:** Test different scoring algorithms
+- [ ] **Diversity Enhancement:** Avoid filter bubbles
+
+### Phase 3: Frontend
+- [ ] **Web Application:** React / Next.js
+- [ ] **Mobile App:** React Native or Flutter
+- [ ] **Design System:** Reusable component library
+- [ ] **PWA Support:** Offline functionality
+
+### Phase 4: Scalability
+- [ ] **Kubernetes:** Container orchestration
+- [ ] **Service Mesh:** Istio for inter-service communication
+- [ ] **Database Sharding:** Data partitioning
+- [ ] **CDN:** Static content distribution
+
+### Phase 5: Analytics & Insights
+- [ ] **Analytics Dashboard:** Business metrics
+- [ ] **User Behavior Analysis:** Behavioral analytics
 - [ ] **Recommendation Quality Metrics:** Precision, Recall, NDCG
-- [ ] **Business Intelligence:** Reports automatizados
+- [ ] **Business Intelligence:** Automated reports
 
-### Fase 6: DevOps Avançado
-- [ ] **CI/CD Completo:** GitHub Actions/Jenkins
-- [ ] **Blue/Green Deployments:** Zero downtime
+### Phase 6: Advanced DevOps
+- [ ] **Full CI/CD:** GitHub Actions / Jenkins
+- [ ] **Blue/Green Deployments:** Zero-downtime deploys
 - [ ] **Monitoring Stack:** Prometheus + Grafana
-- [ ] **Distributed Tracing:** Jaeger/Zipkin
+- [ ] **Distributed Tracing:** Jaeger / Zipkin
 - [ ] **Log Aggregation:** ELK Stack
 
-### Fase 7: Funcionalidades Avançadas
-- [ ] **Social Features:** Seguir usuários, compartilhar
-- [ ] **Watch Parties:** Assistir junto
+### Phase 7: Advanced Features
+- [ ] **Social Features:** Follow users, share content
+- [ ] **Watch Parties:** Shared viewing sessions
 - [ ] **Notifications:** Push notifications
-- [ ] **Multi-tenant:** Suporte a múltiplas organizações
-- [ ] **Content Moderation:** Moderação de reviews
+- [ ] **Multi-tenant:** Support for multiple organizations
+- [ ] **Content Moderation:** Review moderation
 
 ---
 
-## 📅 Plano de Execução
-
-### Sprint 1: Finalização de Infraestrutura (1 semana)
-```
-Objetivo: Comunicação completa entre serviços funcionando
-```
-
-**Dias 1-2:**
-- [ ] Criar producer de eventos no Catalog Service
-- [ ] Criar script SQL para tabela `medias_features`
-- [ ] Implementar handler de sincronização inicial
-
-**Dias 3-4:**
-- [ ] Testar fluxo: Catalog → Kafka → Recommendation
-- [ ] Testar fluxo: Engagement → Kafka → Recommendation
-- [ ] Verificar UserProfile está sendo atualizado
-
-**Dia 5:**
-- [ ] Testar fluxo completo E2E
-- [ ] Documentar issues encontrados
-
-### Sprint 2: Endpoints e Testes (1 semana)
-```
-Objetivo: APIs completas e testadas
-```
-
-**Dias 1-2:**
-- [ ] Implementar endpoints faltantes (Update, Search)
-- [ ] Implementar endpoints de histórico
-
-**Dias 3-4:**
-- [ ] Escrever testes unitários (mínimo 50% cobertura)
-- [ ] Escrever testes de integração para APIs
-
-**Dia 5:**
-- [ ] Escrever testes de contrato Kafka
-- [ ] Revisar cobertura de testes
-
-### Sprint 3: Qualidade e Documentação (1 semana)
-```
-Objetivo: Projeto pronto para demonstração
-```
-
-**Dias 1-2:**
-- [ ] Implementar exception handlers globais
-- [ ] Adicionar validações faltantes
-
-**Dias 3-4:**
-- [ ] Configurar OpenAPI/Swagger
-- [ ] Criar Collection Postman
-
-**Dia 5:**
-- [ ] Atualizar README com instruções detalhadas
-- [ ] Criar guia de contribuição
-
-### Sprint 4: MVP Polido (1 semana)
-```
-Objetivo: MVP pronto para produção
-```
-
-**Dias 1-2:**
-- [ ] Implementar health checks padronizados
-- [ ] Configurar logs estruturados
-
-**Dias 3-4:**
-- [ ] Performance tuning básico
-- [ ] Testes de carga simples
-
-**Dia 5:**
-- [ ] Deploy de demonstração
-- [ ] Documentação final
-
----
-
-## 📁 Estrutura Atual do Projeto
+## 📁 Current Project Structure
 
 ```
 media-recommendation-system/
-├── docker-compose.yml          # ✅ Orquestração de todos os serviços
+├── docker-compose.yml                 # Service orchestration
+├── PROJECT_ANALYSIS.md                # This document
+├── README.md                          # Project documentation
 ├── scripts/
-│   └── create-databases.sql    # ✅ Inicialização dos bancos
+│   └── create-vector-in-recommendation-db.sql  # pgvector initialization
 │
-├── catalog-service/            # ✅ Spring Boot (Java 21)
-│   ├── src/main/java/com/mrs/catalog_service/
-│   │   ├── controller/         # MediaController
-│   │   ├── model/              # Media, Genre, MediaType
-│   │   ├── dto/                # CreateMediaRequest, GetMediaResponse
-│   │   ├── service/            # MediaService
-│   │   ├── handler/            # CRUD Handlers
-│   │   ├── repository/         # MediaRepository
-│   │   └── security/           # JWT Config
-│   └── Dockerfile
+├── catalog-service/                   # Media Catalog (Hexagonal Architecture)
+│   ├── Dockerfile
+│   ├── pom.xml
+│   └── src/main/java/com/mrs/catalog_service/
+│       ├── application/               # Controllers, DTOs, Mappers
+│       ├── domain/                    # Entities, Services, Handlers, Ports, Events
+│       └── infrastructure/            # Persistence, Kafka Producers, Security
 │
-├── user-service/               # ✅ Spring Boot (Java 21)
-│   ├── src/main/java/com/mrs/user_service/
-│   │   ├── controller/         # AuthController, UserController
-│   │   ├── model/              # UserEntity, RoleUser, UserPreference
-│   │   ├── dto/                # Login, Register, User DTOs
-│   │   ├── service/            # AuthService, UserService
-│   │   ├── handler/            # Auth & User Handlers
-│   │   ├── repository/         # UserRepository, UserPreferenceRepository
-│   │   ├── security/           # JWT Token Service
-│   │   └── validator/          # Validações customizadas
-│   └── Dockerfile
+├── user-service/                      # User Management (Layered Architecture)
+│   ├── Dockerfile
+│   ├── pom.xml
+│   └── src/main/java/com/mrs/user_service/
+│       ├── controller/                # REST Controllers
+│       ├── model/                     # Entities
+│       ├── service/                   # Business Logic
+│       ├── repository/                # Data Access
+│       └── security/                  # JWT & Security
 │
-├── engagement-service/         # ✅ Spring Boot (Java 21)
-│   ├── src/main/java/com/mrs/engagement_service/
-│   │   ├── controller/         # EngagementController
-│   │   ├── model/              # Interaction, InteractionType
-│   │   ├── dto/                # InteractionCreateRequest
-│   │   ├── service/            # EngagementService
-│   │   ├── handler/            # CreateEngagementHandler
-│   │   ├── event/              # InteractionEvent
-│   │   └── repository/         # EngagementRepository
-│   └── Dockerfile
+├── engagement-service/                # User Engagement (Hexagonal Architecture)
+│   ├── Dockerfile
+│   ├── pom.xml
+│   └── src/main/java/com/mrs/engagement_service/
+│       ├── application/               # Controllers, DTOs, Mappers
+│       ├── domain/                    # Entities, Services, Handlers, Events
+│       └── infrastructure/            # Repositories, Kafka, Security
 │
-├── recommendation-service/     # ✅ Spring Boot (Java 21)
-│   ├── src/main/java/com/mrs/recommendation_service/
-│   │   ├── controller/         # RecommendationController
-│   │   ├── model/              # UserProfile, MediaFeature, Recommendation
-│   │   ├── dto/                # GetRecommendationRequest, RecommendationMlResponse
-│   │   ├── service/            # RecommendationService, UserProfileService
-│   │   ├── handler/            # GetRecommendationsHandler
-│   │   ├── consumer/           # Kafka Consumers
-│   │   ├── event/              # Event DTOs
-│   │   └── repository/         # UserProfileRepository, MediaFeatureRepository
-│   └── Dockerfile
-│
-└── ml-service/                 # ✅ Python/Flask
-    ├── app.py                  # Flask API
-    ├── services/
-    │   └── recommendation_engine.py  # Algoritmo de recomendação
-    ├── database/
-    │   ├── db_connection.py    # Connection pooling
-    │   └── media_feature_repository.py  # Data access
-    ├── requirements.txt
+└── recommendation-service/            # Recommendation Aggregator (Hexagonal + pgvector)
     ├── Dockerfile
-    ├── README.md               # Documentação detalhada
-    └── ARCHITECTURE.md         # Decisões de arquitetura
+    ├── pom.xml
+    └── src/main/java/com/mrs/recommendation_service/
+        ├── application/               # Controllers, Kafka Consumers, DTOs, Events
+        ├── domain/                    # MediaFeature, UserProfile, Recommendation, Handlers
+        └── infrastructure/            # JPA Repositories (pgvector), OpenFeign Client, Security
 ```
 
 ---
 
-## 🔧 Tecnologias Utilizadas
+## 🔧 Technology Stack
 
-| Categoria | Tecnologia | Versão | Status |
-|-----------|------------|--------|--------|
-| **Container** | Docker + Compose | Latest | ✅ |
+| Category | Technology | Version | Status |
+|----------|------------|---------|--------|
+| **Runtime** | Java | 21 (LTS) | ✅ |
+| **Framework** | Spring Boot | 4.0.2 | ✅ |
 | **Database** | PostgreSQL | 15 | ✅ |
+| **Vector Search** | pgvector | — | ✅ |
 | **Message Broker** | Apache Kafka | 7.3.0 | ✅ |
-| **Backend (Java)** | Spring Boot | 4.0.0 | ✅ |
-| **Backend (Python)** | Flask | 3.0.0 | ✅ |
-| **JDK** | Java | 21 | ✅ |
-| **Python** | Python | 3.11+ | ✅ |
-| **Security** | Spring Security + JWT | - | ✅ |
-| **ORM** | Spring Data JPA / Hibernate | - | ✅ |
-| **Build** | Maven | 3.9 | ✅ |
+| **Coordination** | Apache Zookeeper | 7.3.0 | ✅ |
+| **Containerization** | Docker + Compose | Latest | ✅ |
+| **Security** | Spring Security + JWT | — | ✅ |
+| **ORM** | Spring Data JPA / Hibernate | — | ✅ |
+| **Inter-Service Calls** | Spring Cloud OpenFeign | — | ✅ |
+| **Build** | Maven | — | ✅ |
 
 ---
 
-## 📝 Observações Finais
+## 📝 Final Notes
 
-### Pontos Fortes do Projeto
-1. **Arquitetura Sólida:** Microserviços bem definidos com responsabilidades claras
-2. **Infraestrutura Pronta:** Docker Compose facilita desenvolvimento local
-3. **ML Service Completo:** Algoritmo funcional com documentação excelente
-4. **Segurança Implementada:** JWT configurado em todos os serviços
-5. **Padrões Consistentes:** Builder pattern, handlers, DTOs
+### Project Strengths
+1. **Solid Architecture:** Well-defined microservices with clear responsibilities and hexagonal architecture
+2. **Infrastructure Ready:** Docker Compose enables straightforward local development
+3. **Native Vector Search:** pgvector eliminates external ML dependencies and reduces latency
+4. **Real-Time Updates:** Kafka-driven profile vectorization keeps recommendations fresh
+5. **Security Implemented:** JWT configured across all services with role-based access
+6. **Consistent Patterns:** Builder pattern, command handlers, DTOs, hexagonal layers
 
-### Áreas de Melhoria Prioritárias
-1. **Testes:** Praticamente inexistentes - maior risco do projeto
-2. **Documentação API:** Sem Swagger/OpenAPI
-3. **Tratamento de Erros:** Inconsistente entre serviços
-4. **Observabilidade:** Sem métricas ou tracing
+### Priority Improvement Areas
+1. **Tests:** Nearly nonexistent — the single biggest risk in the project
+2. **API Documentation:** No Swagger/OpenAPI
+3. **Error Handling:** Inconsistent across services
+4. **Observability:** No metrics or distributed tracing
 
-### Recomendações Imediatas
-1. **Antes de qualquer nova feature:** Implementar testes para código existente
-2. **Criar pipeline CI:** Garantir que builds não quebrem
-3. **Documentar APIs:** Facilitar testes e integração
-4. **Padronizar erros:** Respostas consistentes de erro
-
----
-
-## 📞 Próximos Passos
-
-1. ✅ **Revisão deste documento** - Validar análise
-2. ⏳ **Priorizar tarefas** - Definir o que entra no MVP
-3. ⏳ **Criar issues** - Transformar tarefas em tickets
-4. ⏳ **Sprint Planning** - Planejar primeira sprint
-5. ⏳ **Início do desenvolvimento** - Executar plano
+### Immediate Recommendations
+1. **Before any new feature:** Implement tests for existing code
+2. **Create CI pipeline:** Ensure builds don't break
+3. **Document APIs:** Facilitate testing and integration
+4. **Standardize errors:** Consistent error responses across all services
 
 ---
 
-*Documento gerado automaticamente em Janeiro 2026*
-*Para atualizações, editar este arquivo diretamente*
+## 📞 Next Steps
+
+1. ✅ **Architecture refactoring** — ML Service eliminated, pgvector integrated
+2. ✅ **Documentation update** — README and PROJECT_ANALYSIS aligned with v2
+3. 🔄 **Paginated aggregator** — Complete Sprint 3 with `Pageable` support
+4. ⏳ **Automated tests** — Unit, integration, and E2E
+5. ⏳ **API documentation** — OpenAPI/Swagger for all services
+6. ⏳ **CI pipeline** — GitHub Actions for automated builds and tests
+
+---
+
+*Last updated: February 2026*
