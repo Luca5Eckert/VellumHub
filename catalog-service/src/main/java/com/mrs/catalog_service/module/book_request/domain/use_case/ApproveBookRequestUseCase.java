@@ -6,6 +6,7 @@ import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
 import com.mrs.catalog_service.module.book_request.domain.BookRequest;
 import com.mrs.catalog_service.module.book_request.domain.port.BookRequestRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,6 +23,7 @@ public class ApproveBookRequestUseCase {
         this.producer = producer;
     }
 
+    @Transactional
     public void execute(long requestId) {
         BookRequest bookRequest = bookRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Book request not found"));

@@ -4,7 +4,9 @@ import com.mrs.catalog_service.module.book_request.application.dto.BookRequestRe
 import com.mrs.catalog_service.module.book_request.application.dto.CreateBookRequestDto;
 import com.mrs.catalog_service.module.book_request.application.service.BookRequestApplicationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +29,8 @@ public class BookRequestController {
     }
 
     @PostMapping("/approve")
-    public ResponseEntity<Void> approve(String requestId) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> approve(@NotNull Long requestId) {
         bookRequestApplicationService.approve(requestId);
         return ResponseEntity.ok().build();
     }
