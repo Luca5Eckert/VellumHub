@@ -28,4 +28,6 @@ public class BookRequestApplicationService {
         return bookRequestMapper.toBookRequestResponse(bookRequest);
     }
 
+    public void approve(String requestId) {
+    }
 }

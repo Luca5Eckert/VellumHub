@@ -26,4 +26,10 @@ public class BookRequestController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/approve")
+    public ResponseEntity<Void> approve(String requestId) {
+        bookRequestApplicationService.approve(requestId);
+        return ResponseEntity.ok().build();
+    }
+
 }
