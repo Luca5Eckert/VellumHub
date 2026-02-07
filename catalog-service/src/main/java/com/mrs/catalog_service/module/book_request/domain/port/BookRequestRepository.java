@@ -11,4 +11,6 @@ public interface BookRequestRepository {
     boolean existByTitleAndAuthor(String title, String author);
 
     Optional<BookRequest> findById(long requestId);
+
+    void deleteById(long requestId);
 }
