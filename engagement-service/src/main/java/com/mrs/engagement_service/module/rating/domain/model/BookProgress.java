@@ -19,19 +19,30 @@ public class BookProgress {
             nullable = false,
             name = "book_id"
     )
-    private final UUID bookId;
+    private UUID bookId;
+
+    @Column(
+            nullable = false,
+            name = "user_id"
+    )
+    private UUID userId;
 
     @Enumerated(EnumType.STRING)
     @Column(
             nullable = false,
             name = "reading_status"
     )
-    private final ReadingStatus readingStatus;
+    private ReadingStatus readingStatus;
 
     @Column(
             nullable = true,
             name = "current_page"
     )
-    private final int currentPage;
+    private int currentPage;
+
+    public BookProgress(UUID bookId, UUID userId) {
+        this.bookId = bookId;
+        this.userId = userId;
+    }
 
 }
