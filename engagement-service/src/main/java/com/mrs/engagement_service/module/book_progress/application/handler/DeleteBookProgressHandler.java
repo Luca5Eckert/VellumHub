@@ -3,6 +3,7 @@ package com.mrs.engagement_service.module.book_progress.application.handler;
 import com.mrs.engagement_service.module.book_progress.domain.command.DeleteBookProgressCommand;
 import com.mrs.engagement_service.module.book_progress.domain.use_case.DeleteBookProgressUseCase;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -15,6 +16,7 @@ public class DeleteBookProgressHandler {
         this.deleteBookProgressUseCase = deleteBookProgressUseCase;
     }
 
+    @Transactional
     public void handle(UUID bookId, UUID userId) {
         DeleteBookProgressCommand command = new DeleteBookProgressCommand(
                 bookId,
