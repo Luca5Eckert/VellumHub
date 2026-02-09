@@ -40,7 +40,7 @@ public class JwtTokenProvider implements TokenProvider {
 
         return Jwts.builder()
                 .setSubject(email)
-                .claim("userId", userId. toString())
+                .claim("user_id", userId.toString())
                 .claim("roles", roles)
                 .setIssuedAt(now)
                 .setExpiration(validity)
