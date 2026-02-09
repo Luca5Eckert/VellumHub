@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class EngagementService {
+public class RatingService {
 
     private final CreateRatingHandler createRatingHandler;
     private final GetUserRatingHandler getUserRatingHandler;
@@ -27,7 +27,7 @@ public class EngagementService {
 
     private final RatingMapper ratingMapper;
 
-    public EngagementService(CreateRatingHandler createRatingHandler, GetUserRatingHandler getUserRatingHandler, GetMediaStatsHandler getMediaStatsHandler, RatingMapper ratingMapper) {
+    public RatingService(CreateRatingHandler createRatingHandler, GetUserRatingHandler getUserRatingHandler, GetMediaStatsHandler getMediaStatsHandler, RatingMapper ratingMapper) {
         this.createRatingHandler = createRatingHandler;
         this.getUserRatingHandler = getUserRatingHandler;
         this.getMediaStatsHandler = getMediaStatsHandler;

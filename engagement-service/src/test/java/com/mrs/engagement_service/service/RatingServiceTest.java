@@ -10,7 +10,7 @@ import com.mrs.engagement_service.domain.handler.GetUserRatingHandler;
 import com.mrs.engagement_service.domain.model.EngagementStats;
 import com.mrs.engagement_service.domain.model.Rating;
 import com.mrs.engagement_service.domain.port.RatingMapper;
-import com.mrs.engagement_service.domain.service.EngagementService;
+import com.mrs.engagement_service.domain.service.RatingService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -33,12 +33,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for EngagementService.
+ * Unit tests for RatingService.
  * Tests cover all service methods with mocked handlers.
  * Follows the pattern: condition_expectedBehavior.
  */
 @ExtendWith(MockitoExtension.class)
-class EngagementServiceTest {
+class RatingServiceTest {
 
     @Mock
     private CreateRatingHandler createRatingHandler;
@@ -53,7 +53,7 @@ class EngagementServiceTest {
     private RatingMapper ratingMapper;
 
     @InjectMocks
-    private EngagementService engagementService;
+    private RatingService ratingService;
 
     @Nested
     @DisplayName("create() method tests")
@@ -74,7 +74,7 @@ class EngagementServiceTest {
             );
 
             // Act
-            engagementService.create(request);
+            ratingService.create(request);
 
             // Assert
             ArgumentCaptor<Rating> ratingCaptor = ArgumentCaptor.forClass(Rating.class);
@@ -103,7 +103,7 @@ class EngagementServiceTest {
             );
 
             // Act
-            engagementService.create(request);
+            ratingService.create(request);
 
             // Assert
             ArgumentCaptor<Rating> ratingCaptor = ArgumentCaptor.forClass(Rating.class);
@@ -129,7 +129,7 @@ class EngagementServiceTest {
             );
 
             // Act
-            engagementService.create(request);
+            ratingService.create(request);
 
             // Assert
             ArgumentCaptor<Rating> ratingCaptor = ArgumentCaptor.forClass(Rating.class);
@@ -182,7 +182,7 @@ class EngagementServiceTest {
             when(ratingMapper.toGetResponse(rating2)).thenReturn(response2);
 
             // Act
-            List<RatingGetResponse> result = engagementService.findAllOfUser(
+            List<RatingGetResponse> result = ratingService.findAllOfUser(
                     userId, null, null, null, null, 0, 10
             );
 
@@ -207,7 +207,7 @@ class EngagementServiceTest {
                     .thenReturn(emptyPage);
 
             // Act
-            engagementService.findAllOfUser(userId, minStars, null, null, null, 0, 10);
+            ratingService.findAllOfUser(userId, minStars, null, null, null, 0, 10);
 
             // Assert
             ArgumentCaptor<RatingFilter> filterCaptor = ArgumentCaptor.forClass(RatingFilter.class);
@@ -230,7 +230,7 @@ class EngagementServiceTest {
                     .thenReturn(emptyPage);
 
             // Act
-            engagementService.findAllOfUser(userId, null, null, fromDate, toDate, 0, 10);
+            ratingService.findAllOfUser(userId, null, null, fromDate, toDate, 0, 10);
 
             // Assert
             ArgumentCaptor<RatingFilter> filterCaptor = ArgumentCaptor.forClass(RatingFilter.class);
@@ -252,7 +252,7 @@ class EngagementServiceTest {
                     .thenReturn(emptyPage);
 
             // Act
-            List<RatingGetResponse> result = engagementService.findAllOfUser(
+            List<RatingGetResponse> result = ratingService.findAllOfUser(
                     userId, null, null, null, null, 0, 10
             );
 
@@ -274,7 +274,7 @@ class EngagementServiceTest {
                     .thenReturn(emptyPage);
 
             // Act
-            engagementService.findAllOfUser(userId, null, null, null, null, pageNumber, pageSize);
+            ratingService.findAllOfUser(userId, null, null, null, null, pageNumber, pageSize);
 
             // Assert
             verify(getUserRatingHandler)
@@ -304,7 +304,7 @@ class EngagementServiceTest {
             when(ratingMapper.toMediaStatusResponse(engagementStats, mediaId)).thenReturn(expectedResponse);
 
             // Act
-            GetMediaStatusResponse result = engagementService.getMediaStatus(mediaId);
+            GetMediaStatusResponse result = ratingService.getMediaStatus(mediaId);
 
             // Assert
             assertThat(result).isEqualTo(expectedResponse);
@@ -334,7 +334,7 @@ class EngagementServiceTest {
             when(ratingMapper.toMediaStatusResponse(emptyStats, mediaId)).thenReturn(expectedResponse);
 
             // Act
-            GetMediaStatusResponse result = engagementService.getMediaStatus(mediaId);
+            GetMediaStatusResponse result = ratingService.getMediaStatus(mediaId);
 
             // Assert
             assertThat(result.totalRatings()).isZero();

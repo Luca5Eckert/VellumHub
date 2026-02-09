@@ -3,7 +3,7 @@ package com.mrs.engagement_service.application.controller;
 import com.mrs.engagement_service.application.dto.GetMediaStatusResponse;
 import com.mrs.engagement_service.application.dto.RatingCreateRequest;
 import com.mrs.engagement_service.application.dto.RatingGetResponse;
-import com.mrs.engagement_service.domain.service.EngagementService;
+import com.mrs.engagement_service.domain.service.RatingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,14 +23,14 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/engagement")
-@Tag(name = "Engagement", description = "Endpoints para gerenciamento de ratings de usuários com mídia")
-public class EngagementController {
+@RequestMapping("/rating")
+@Tag(name = "Rating", description = "Endpoints para gerenciamento de ratings de usuários de livros")
+public class RatingController {
 
-    private final EngagementService engagementService;
+    private final RatingService ratingService;
 
-    public EngagementController(EngagementService engagementService) {
-        this.engagementService = engagementService;
+    public RatingController(RatingService ratingService) {
+        this.ratingService = ratingService;
     }
 
     @PostMapping
@@ -43,7 +43,7 @@ public class EngagementController {
             @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content)
     })
     public ResponseEntity<String> create(@RequestBody @Valid RatingCreateRequest engagement) {
-        engagementService.create(engagement);
+        ratingService.create(engagement);
         return ResponseEntity.status(HttpStatus.CREATED).body("Rating registered with success");
     }
 
@@ -64,7 +64,7 @@ public class EngagementController {
             @Parameter(description = "Número da página") @RequestParam(defaultValue = "0") int pageNumber,
             @Parameter(description = "Tamanho da página") @RequestParam(defaultValue = "10") int pageSize
     ) {
-        List<RatingGetResponse> response = engagementService.findAllOfUser(
+        List<RatingGetResponse> response = ratingService.findAllOfUser(
                 userId, minStars, maxStars, from, to, pageNumber, pageSize
         );
         return ResponseEntity.ok(response);
@@ -81,7 +81,7 @@ public class EngagementController {
             @ApiResponse(responseCode = "404", description = "Mídia não encontrada", content = @Content)
     })
     public ResponseEntity<GetMediaStatusResponse> getMediaStatus(@Parameter(description = "ID da mídia") @PathVariable UUID mediaId) {
-        GetMediaStatusResponse response = engagementService.getMediaStatus(mediaId);
+        GetMediaStatusResponse response = ratingService.getMediaStatus(mediaId);
 
         return ResponseEntity.ok(response);
     }
