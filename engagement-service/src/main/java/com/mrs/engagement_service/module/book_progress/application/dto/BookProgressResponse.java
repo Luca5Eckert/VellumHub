@@ -6,7 +6,6 @@ import java.util.UUID;
 
 public record BookProgressResponse(
         Long id,
-        UUID userId,
         UUID bookId,
         ReadingStatus status,
         int currentPage
