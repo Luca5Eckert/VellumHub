@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface BookProgressRepository {
-    Optional<BookProgress> findByUserIdAndBookId(UUID uuid, UUID uuid1);
+    Optional<BookProgress> findByUserIdAndBookId(UUID userId, UUID bookId);
 
     BookProgress save(BookProgress bookProgress);
 
@@ -15,5 +15,5 @@ public interface BookProgressRepository {
 
     boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
 
-    void deleteByUserIdAndBookId(UUID uuid, UUID uuid1);
+    void deleteByUserIdAndBookId(UUID userId, UUID bookId);
 }

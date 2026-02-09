@@ -16,7 +16,7 @@ public class UpdateBookProgressUseCase {
      }
 
      public BookProgress execute(UpdateBookProgressCommand command){
-          BookProgress bookProgress = bookProgressRepository.findByUserIdAndBookId(command.bookId(), command.userId())
+          BookProgress bookProgress = bookProgressRepository.findByUserIdAndBookId(command.userId(), command.bookId())
                   .orElseThrow(BookProgressNotFoundException::new);
 
           if(!bookProgress.getReadingStatus().equals(ReadingStatus.READING)){
