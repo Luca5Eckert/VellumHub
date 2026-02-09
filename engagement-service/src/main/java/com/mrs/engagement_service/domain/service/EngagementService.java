@@ -1,16 +1,15 @@
 package com.mrs.engagement_service.domain.service;
 
 import com.mrs.engagement_service.application.dto.GetMediaStatusResponse;
-import com.mrs.engagement_service.application.dto.InteractionCreateRequest;
-import com.mrs.engagement_service.application.dto.InteractionGetResponse;
-import com.mrs.engagement_service.application.dto.filter.InteractionFilter;
-import com.mrs.engagement_service.domain.handler.CreateEngagementHandler;
+import com.mrs.engagement_service.application.dto.RatingCreateRequest;
+import com.mrs.engagement_service.application.dto.RatingGetResponse;
+import com.mrs.engagement_service.application.dto.filter.RatingFilter;
+import com.mrs.engagement_service.domain.handler.CreateRatingHandler;
 import com.mrs.engagement_service.domain.handler.GetMediaStatsHandler;
-import com.mrs.engagement_service.domain.handler.GetUserInteractionHandler;
+import com.mrs.engagement_service.domain.handler.GetUserRatingHandler;
 import com.mrs.engagement_service.domain.model.EngagementStats;
-import com.mrs.engagement_service.domain.model.Interaction;
-import com.mrs.engagement_service.domain.model.InteractionType;
-import com.mrs.engagement_service.domain.port.InteractionMapper;
+import com.mrs.engagement_service.domain.model.Rating;
+import com.mrs.engagement_service.domain.port.RatingMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -22,54 +21,56 @@ import java.util.UUID;
 @Service
 public class EngagementService {
 
-    private final CreateEngagementHandler createEngagementHandler;
-    private final GetUserInteractionHandler getUserInteractionHandler;
+    private final CreateRatingHandler createRatingHandler;
+    private final GetUserRatingHandler getUserRatingHandler;
     private final GetMediaStatsHandler getMediaStatsHandler;
 
-    private final InteractionMapper interactionMapper;
+    private final RatingMapper ratingMapper;
 
-    public EngagementService(CreateEngagementHandler createEngagementHandler, GetUserInteractionHandler getUserInteractionHandler, GetMediaStatsHandler getMediaStatsHandler, InteractionMapper interactionMapper) {
-        this.createEngagementHandler = createEngagementHandler;
-        this.getUserInteractionHandler = getUserInteractionHandler;
+    public EngagementService(CreateRatingHandler createRatingHandler, GetUserRatingHandler getUserRatingHandler, GetMediaStatsHandler getMediaStatsHandler, RatingMapper ratingMapper) {
+        this.createRatingHandler = createRatingHandler;
+        this.getUserRatingHandler = getUserRatingHandler;
         this.getMediaStatsHandler = getMediaStatsHandler;
-        this.interactionMapper = interactionMapper;
+        this.ratingMapper = ratingMapper;
     }
 
-    public void create(InteractionCreateRequest interactionCreateRequest){
-        Interaction interaction = new Interaction(
-                interactionCreateRequest.userId(),
-                interactionCreateRequest.mediaId(),
-                interactionCreateRequest.type(),
-                interactionCreateRequest.interactionValue(),
+    public void create(RatingCreateRequest ratingCreateRequest){
+        Rating rating = new Rating(
+                ratingCreateRequest.userId(),
+                ratingCreateRequest.mediaId(),
+                ratingCreateRequest.stars(),
+                ratingCreateRequest.review(),
                 LocalDateTime.now()
         );
 
-        createEngagementHandler.handler(interaction);
+        createRatingHandler.handler(rating);
     }
 
-    public List<InteractionGetResponse> findAllOfUser(
+    public List<RatingGetResponse> findAllOfUser(
             UUID userId,
-            InteractionType type,
+            Integer minStars,
+            Integer maxStars,
             OffsetDateTime from,
             OffsetDateTime to,
             int pageNumber,
             int pageSize
     ){
-        InteractionFilter interactionFilter = new InteractionFilter(
-                type,
+        RatingFilter ratingFilter = new RatingFilter(
+                minStars,
+                maxStars,
                 from,
                 to
         );
 
-        Page<Interaction> interactions = getUserInteractionHandler.execute(
-                interactionFilter,
+        Page<Rating> ratings = getUserRatingHandler.execute(
+                ratingFilter,
                 userId,
-                pageNumber,
-                pageSize
+                pageSize,
+                pageNumber
         );
 
-        return interactions.stream()
-                .map(interactionMapper::toGetResponse)
+        return ratings.stream()
+                .map(ratingMapper::toGetResponse)
                 .toList();
 
     }
@@ -77,7 +78,7 @@ public class EngagementService {
     public GetMediaStatusResponse getMediaStatus(UUID mediaId){
         EngagementStats engagementStats = getMediaStatsHandler.execute(mediaId);
 
-        return interactionMapper.toMediaStatusResponse(engagementStats, mediaId);
+        return ratingMapper.toMediaStatusResponse(engagementStats, mediaId);
     }
 
 

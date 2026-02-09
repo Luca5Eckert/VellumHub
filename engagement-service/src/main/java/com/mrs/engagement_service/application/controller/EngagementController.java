@@ -1,9 +1,8 @@
 package com.mrs.engagement_service.application.controller;
 
 import com.mrs.engagement_service.application.dto.GetMediaStatusResponse;
-import com.mrs.engagement_service.application.dto.InteractionCreateRequest;
-import com.mrs.engagement_service.application.dto.InteractionGetResponse;
-import com.mrs.engagement_service.domain.model.InteractionType;
+import com.mrs.engagement_service.application.dto.RatingCreateRequest;
+import com.mrs.engagement_service.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.domain.service.EngagementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,7 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/engagement")
-@Tag(name = "Engagement", description = "Endpoints para gerenciamento de interações de usuários com mídia")
+@Tag(name = "Engagement", description = "Endpoints para gerenciamento de ratings de usuários com mídia")
 public class EngagementController {
 
     private final EngagementService engagementService;
@@ -35,44 +34,45 @@ public class EngagementController {
     }
 
     @PostMapping
-    @Operation(summary = "Registrar interação", description = "Registra uma nova interação do usuário com uma mídia (like, view, rating)")
+    @Operation(summary = "Registrar rating", description = "Registra um novo rating do usuário com uma mídia (0-5 estrelas + review)")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Interação registrada com sucesso",
+            @ApiResponse(responseCode = "201", description = "Rating registrado com sucesso",
                     content = @Content(schema = @Schema(implementation = String.class))),
             @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content),
             @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content)
     })
-    public ResponseEntity<String> create(@RequestBody @Valid InteractionCreateRequest engagement) {
+    public ResponseEntity<String> create(@RequestBody @Valid RatingCreateRequest engagement) {
         engagementService.create(engagement);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Engagement registered with success");
+        return ResponseEntity.status(HttpStatus.CREATED).body("Rating registered with success");
     }
 
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Buscar interações do usuário", description = "Retorna todas as interações de um usuário específico com filtros opcionais")
+    @Operation(summary = "Buscar ratings do usuário", description = "Retorna todos os ratings de um usuário específico com filtros opcionais")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de interações retornada com sucesso",
-                    content = @Content(schema = @Schema(implementation = InteractionGetResponse.class))),
+            @ApiResponse(responseCode = "200", description = "Lista de ratings retornada com sucesso",
+                    content = @Content(schema = @Schema(implementation = RatingGetResponse.class))),
             @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content)
     })
-    public ResponseEntity<List<InteractionGetResponse>> findAllOfUser(
+    public ResponseEntity<List<RatingGetResponse>> findAllOfUser(
             @Parameter(description = "ID do usuário") @PathVariable UUID userId,
-            @Parameter(description = "Filtrar por tipo de interação") @RequestParam(required = false) InteractionType type,
+            @Parameter(description = "Filtrar por estrelas mínimas") @RequestParam(required = false) Integer minStars,
+            @Parameter(description = "Filtrar por estrelas máximas") @RequestParam(required = false) Integer maxStars,
             @Parameter(description = "Data inicial (ISO 8601)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @Parameter(description = "Data final (ISO 8601)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             @Parameter(description = "Número da página") @RequestParam(defaultValue = "0") int pageNumber,
             @Parameter(description = "Tamanho da página") @RequestParam(defaultValue = "10") int pageSize
     ) {
-        List<InteractionGetResponse> response = engagementService.findAllOfUser(
-                userId, type, from, to, pageNumber, pageSize
+        List<RatingGetResponse> response = engagementService.findAllOfUser(
+                userId, minStars, maxStars, from, to, pageNumber, pageSize
         );
         return ResponseEntity.ok(response);
     }
 
 
     @GetMapping("/media/{mediaId}/stats")
-    @Operation(summary = "Obter estatísticas de mídia", description = "Retorna as estatísticas de engajamento de uma mídia específica")
+    @Operation(summary = "Obter estatísticas de mídia", description = "Retorna as estatísticas de ratings de uma mídia específica")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Estatísticas retornadas com sucesso",
