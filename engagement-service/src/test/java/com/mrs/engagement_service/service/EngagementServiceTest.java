@@ -1,16 +1,15 @@
 package com.mrs.engagement_service.service;
 
 import com.mrs.engagement_service.application.dto.GetMediaStatusResponse;
-import com.mrs.engagement_service.application.dto.InteractionCreateRequest;
-import com.mrs.engagement_service.application.dto.InteractionGetResponse;
-import com.mrs.engagement_service.application.dto.filter.InteractionFilter;
-import com.mrs.engagement_service.domain.handler.CreateEngagementHandler;
+import com.mrs.engagement_service.application.dto.RatingCreateRequest;
+import com.mrs.engagement_service.application.dto.RatingGetResponse;
+import com.mrs.engagement_service.application.dto.filter.RatingFilter;
+import com.mrs.engagement_service.domain.handler.CreateRatingHandler;
 import com.mrs.engagement_service.domain.handler.GetMediaStatsHandler;
-import com.mrs.engagement_service.domain.handler.GetUserInteractionHandler;
+import com.mrs.engagement_service.domain.handler.GetUserRatingHandler;
 import com.mrs.engagement_service.domain.model.EngagementStats;
-import com.mrs.engagement_service.domain.model.Interaction;
-import com.mrs.engagement_service.domain.model.InteractionType;
-import com.mrs.engagement_service.domain.port.InteractionMapper;
+import com.mrs.engagement_service.domain.model.Rating;
+import com.mrs.engagement_service.domain.port.RatingMapper;
 import com.mrs.engagement_service.domain.service.EngagementService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -42,16 +41,16 @@ import static org.mockito.Mockito.*;
 class EngagementServiceTest {
 
     @Mock
-    private CreateEngagementHandler createEngagementHandler;
+    private CreateRatingHandler createRatingHandler;
 
     @Mock
-    private GetUserInteractionHandler getUserInteractionHandler;
+    private GetUserRatingHandler getUserRatingHandler;
 
     @Mock
     private GetMediaStatsHandler getMediaStatsHandler;
 
     @Mock
-    private InteractionMapper interactionMapper;
+    private RatingMapper ratingMapper;
 
     @InjectMocks
     private EngagementService engagementService;
@@ -61,83 +60,83 @@ class EngagementServiceTest {
     class CreateTests {
 
         @Test
-        @DisplayName("whenValidLikeInteraction_shouldCreateInteraction")
-        void whenValidLikeInteraction_shouldCreateInteraction() {
+        @DisplayName("whenValidRatingRequest_shouldCreateRating")
+        void whenValidRatingRequest_shouldCreateRating() {
             // Arrange
             UUID userId = UUID.randomUUID();
             UUID mediaId = UUID.randomUUID();
 
-            InteractionCreateRequest request = new InteractionCreateRequest(
+            RatingCreateRequest request = new RatingCreateRequest(
                     userId,
                     mediaId,
-                    InteractionType.LIKE,
-                    1.0
+                    4,
+                    "Great movie!"
             );
 
             // Act
             engagementService.create(request);
 
             // Assert
-            ArgumentCaptor<Interaction> interactionCaptor = ArgumentCaptor.forClass(Interaction.class);
-            verify(createEngagementHandler, times(1)).handler(interactionCaptor.capture());
+            ArgumentCaptor<Rating> ratingCaptor = ArgumentCaptor.forClass(Rating.class);
+            verify(createRatingHandler, times(1)).handler(ratingCaptor.capture());
 
-            Interaction capturedInteraction = interactionCaptor.getValue();
-            assertThat(capturedInteraction.getUserId()).isEqualTo(userId);
-            assertThat(capturedInteraction.getMediaId()).isEqualTo(mediaId);
-            assertThat(capturedInteraction.getType()).isEqualTo(InteractionType.LIKE);
-            assertThat(capturedInteraction.getInteractionValue()).isEqualTo(1.0);
-            assertThat(capturedInteraction.getTimestamp()).isNotNull();
+            Rating capturedRating = ratingCaptor.getValue();
+            assertThat(capturedRating.getUserId()).isEqualTo(userId);
+            assertThat(capturedRating.getMediaId()).isEqualTo(mediaId);
+            assertThat(capturedRating.getStars()).isEqualTo(4);
+            assertThat(capturedRating.getReview()).isEqualTo("Great movie!");
+            assertThat(capturedRating.getTimestamp()).isNotNull();
         }
 
         @Test
-        @DisplayName("whenValidRatingInteraction_shouldCreateInteractionWithValue")
-        void whenValidRatingInteraction_shouldCreateInteractionWithValue() {
+        @DisplayName("whenValidFiveStarRating_shouldCreateRatingWithValue")
+        void whenValidFiveStarRating_shouldCreateRatingWithValue() {
             // Arrange
             UUID userId = UUID.randomUUID();
             UUID mediaId = UUID.randomUUID();
 
-            InteractionCreateRequest request = new InteractionCreateRequest(
+            RatingCreateRequest request = new RatingCreateRequest(
                     userId,
                     mediaId,
-                    InteractionType.LIKE,
-                    4.5
+                    5,
+                    "Perfect!"
             );
 
             // Act
             engagementService.create(request);
 
             // Assert
-            ArgumentCaptor<Interaction> interactionCaptor = ArgumentCaptor.forClass(Interaction.class);
-            verify(createEngagementHandler).handler(interactionCaptor.capture());
+            ArgumentCaptor<Rating> ratingCaptor = ArgumentCaptor.forClass(Rating.class);
+            verify(createRatingHandler).handler(ratingCaptor.capture());
 
-            Interaction capturedInteraction = interactionCaptor.getValue();
-            assertThat(capturedInteraction.getType()).isEqualTo(InteractionType.LIKE);
-            assertThat(capturedInteraction.getInteractionValue()).isEqualTo(4.5);
+            Rating capturedRating = ratingCaptor.getValue();
+            assertThat(capturedRating.getStars()).isEqualTo(5);
+            assertThat(capturedRating.getReview()).isEqualTo("Perfect!");
         }
 
         @Test
-        @DisplayName("whenValidViewInteraction_shouldCreateInteraction")
-        void whenValidViewInteraction_shouldCreateInteraction() {
+        @DisplayName("whenZeroStarRating_shouldCreateRating")
+        void whenZeroStarRating_shouldCreateRating() {
             // Arrange
             UUID userId = UUID.randomUUID();
             UUID mediaId = UUID.randomUUID();
 
-            InteractionCreateRequest request = new InteractionCreateRequest(
+            RatingCreateRequest request = new RatingCreateRequest(
                     userId,
                     mediaId,
-                    InteractionType.WATCH,
-                    1.0
+                    0,
+                    "Terrible"
             );
 
             // Act
             engagementService.create(request);
 
             // Assert
-            ArgumentCaptor<Interaction> interactionCaptor = ArgumentCaptor.forClass(Interaction.class);
-            verify(createEngagementHandler).handler(interactionCaptor.capture());
+            ArgumentCaptor<Rating> ratingCaptor = ArgumentCaptor.forClass(Rating.class);
+            verify(createRatingHandler).handler(ratingCaptor.capture());
 
-            Interaction capturedInteraction = interactionCaptor.getValue();
-            assertThat(capturedInteraction.getType()).isEqualTo(InteractionType.WATCH);
+            Rating capturedRating = ratingCaptor.getValue();
+            assertThat(capturedRating.getStars()).isEqualTo(0);
         }
     }
 
@@ -146,76 +145,76 @@ class EngagementServiceTest {
     class FindAllOfUserTests {
 
         @Test
-        @DisplayName("whenUserHasInteractions_shouldReturnInteractionList")
-        void whenUserHasInteractions_shouldReturnInteractionList() {
+        @DisplayName("whenUserHasRatings_shouldReturnRatingList")
+        void whenUserHasRatings_shouldReturnRatingList() {
             // Arrange
             UUID userId = UUID.randomUUID();
             LocalDateTime now = LocalDateTime.now();
 
-            Interaction interaction1 = new Interaction(
+            Rating rating1 = new Rating(
                     userId,
                     UUID.randomUUID(),
-                    InteractionType.LIKE,
-                    1.0,
+                    4,
+                    "Good",
                     now
             );
 
-            Interaction interaction2 = new Interaction(
+            Rating rating2 = new Rating(
                     userId,
                     UUID.randomUUID(),
-                    InteractionType.WATCH,
-                    1.0,
+                    5,
+                    "Excellent",
                     now
             );
 
-            Page<Interaction> interactionsPage = new PageImpl<>(List.of(interaction1, interaction2));
+            Page<Rating> ratingsPage = new PageImpl<>(List.of(rating1, rating2));
 
-            InteractionGetResponse response1 = new InteractionGetResponse(
-                    1L, userId, interaction1.getMediaId(), InteractionType.LIKE, 1.0, now
+            RatingGetResponse response1 = new RatingGetResponse(
+                    1L, userId, rating1.getMediaId(), 4, "Good", now
             );
-            InteractionGetResponse response2 = new InteractionGetResponse(
-                    2L, userId, interaction2.getMediaId(), InteractionType.WATCH, 1.0, now
+            RatingGetResponse response2 = new RatingGetResponse(
+                    2L, userId, rating2.getMediaId(), 5, "Excellent", now
             );
 
-            when(getUserInteractionHandler.execute(any(InteractionFilter.class), eq(userId), anyInt(), anyInt()))
-                    .thenReturn(interactionsPage);
-            when(interactionMapper.toGetResponse(interaction1)).thenReturn(response1);
-            when(interactionMapper.toGetResponse(interaction2)).thenReturn(response2);
+            when(getUserRatingHandler.execute(any(RatingFilter.class), eq(userId), anyInt(), anyInt()))
+                    .thenReturn(ratingsPage);
+            when(ratingMapper.toGetResponse(rating1)).thenReturn(response1);
+            when(ratingMapper.toGetResponse(rating2)).thenReturn(response2);
 
             // Act
-            List<InteractionGetResponse> result = engagementService.findAllOfUser(
-                    userId, null, null, null, 0, 10
+            List<RatingGetResponse> result = engagementService.findAllOfUser(
+                    userId, null, null, null, null, 0, 10
             );
 
             // Assert
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).type()).isEqualTo(InteractionType.LIKE);
-            assertThat(result.get(1).type()).isEqualTo(InteractionType.WATCH);
+            assertThat(result.get(0).stars()).isEqualTo(4);
+            assertThat(result.get(1).stars()).isEqualTo(5);
 
-            verify(getUserInteractionHandler, times(1))
-                    .execute(any(InteractionFilter.class), eq(userId), eq(0), eq(10));
+            verify(getUserRatingHandler, times(1))
+                    .execute(any(RatingFilter.class), eq(userId), eq(10), eq(0));
         }
 
         @Test
-        @DisplayName("whenTypeFilterProvided_shouldCreateFilterWithType")
-        void whenTypeFilterProvided_shouldCreateFilterWithType() {
+        @DisplayName("whenMinStarsFilterProvided_shouldCreateFilterWithMinStars")
+        void whenMinStarsFilterProvided_shouldCreateFilterWithMinStars() {
             // Arrange
             UUID userId = UUID.randomUUID();
-            InteractionType typeFilter = InteractionType.LIKE;
+            Integer minStars = 3;
 
-            Page<Interaction> emptyPage = new PageImpl<>(List.of());
-            when(getUserInteractionHandler.execute(any(InteractionFilter.class), eq(userId), anyInt(), anyInt()))
+            Page<Rating> emptyPage = new PageImpl<>(List.of());
+            when(getUserRatingHandler.execute(any(RatingFilter.class), eq(userId), anyInt(), anyInt()))
                     .thenReturn(emptyPage);
 
             // Act
-            engagementService.findAllOfUser(userId, typeFilter, null, null, 0, 10);
+            engagementService.findAllOfUser(userId, minStars, null, null, null, 0, 10);
 
             // Assert
-            ArgumentCaptor<InteractionFilter> filterCaptor = ArgumentCaptor.forClass(InteractionFilter.class);
-            verify(getUserInteractionHandler).execute(filterCaptor.capture(), eq(userId), anyInt(), anyInt());
+            ArgumentCaptor<RatingFilter> filterCaptor = ArgumentCaptor.forClass(RatingFilter.class);
+            verify(getUserRatingHandler).execute(filterCaptor.capture(), eq(userId), anyInt(), anyInt());
 
-            InteractionFilter capturedFilter = filterCaptor.getValue();
-            assertThat(capturedFilter.type()).isEqualTo(InteractionType.LIKE);
+            RatingFilter capturedFilter = filterCaptor.getValue();
+            assertThat(capturedFilter.minStars()).isEqualTo(3);
         }
 
         @Test
@@ -226,40 +225,40 @@ class EngagementServiceTest {
             OffsetDateTime fromDate = OffsetDateTime.now().minusDays(7);
             OffsetDateTime toDate = OffsetDateTime.now();
 
-            Page<Interaction> emptyPage = new PageImpl<>(List.of());
-            when(getUserInteractionHandler.execute(any(InteractionFilter.class), eq(userId), anyInt(), anyInt()))
+            Page<Rating> emptyPage = new PageImpl<>(List.of());
+            when(getUserRatingHandler.execute(any(RatingFilter.class), eq(userId), anyInt(), anyInt()))
                     .thenReturn(emptyPage);
 
             // Act
-            engagementService.findAllOfUser(userId, null, fromDate, toDate, 0, 10);
+            engagementService.findAllOfUser(userId, null, null, fromDate, toDate, 0, 10);
 
             // Assert
-            ArgumentCaptor<InteractionFilter> filterCaptor = ArgumentCaptor.forClass(InteractionFilter.class);
-            verify(getUserInteractionHandler).execute(filterCaptor.capture(), eq(userId), anyInt(), anyInt());
+            ArgumentCaptor<RatingFilter> filterCaptor = ArgumentCaptor.forClass(RatingFilter.class);
+            verify(getUserRatingHandler).execute(filterCaptor.capture(), eq(userId), anyInt(), anyInt());
 
-            InteractionFilter capturedFilter = filterCaptor.getValue();
+            RatingFilter capturedFilter = filterCaptor.getValue();
             assertThat(capturedFilter.from()).isEqualTo(fromDate);
             assertThat(capturedFilter.to()).isEqualTo(toDate);
         }
 
         @Test
-        @DisplayName("whenNoInteractions_shouldReturnEmptyList")
-        void whenNoInteractions_shouldReturnEmptyList() {
+        @DisplayName("whenNoRatings_shouldReturnEmptyList")
+        void whenNoRatings_shouldReturnEmptyList() {
             // Arrange
             UUID userId = UUID.randomUUID();
-            Page<Interaction> emptyPage = new PageImpl<>(List.of());
+            Page<Rating> emptyPage = new PageImpl<>(List.of());
 
-            when(getUserInteractionHandler.execute(any(InteractionFilter.class), eq(userId), anyInt(), anyInt()))
+            when(getUserRatingHandler.execute(any(RatingFilter.class), eq(userId), anyInt(), anyInt()))
                     .thenReturn(emptyPage);
 
             // Act
-            List<InteractionGetResponse> result = engagementService.findAllOfUser(
-                    userId, null, null, null, 0, 10
+            List<RatingGetResponse> result = engagementService.findAllOfUser(
+                    userId, null, null, null, null, 0, 10
             );
 
             // Assert
             assertThat(result).isEmpty();
-            verify(interactionMapper, never()).toGetResponse(any(Interaction.class));
+            verify(ratingMapper, never()).toGetResponse(any(Rating.class));
         }
 
         @Test
@@ -270,16 +269,16 @@ class EngagementServiceTest {
             int pageNumber = 2;
             int pageSize = 25;
 
-            Page<Interaction> emptyPage = new PageImpl<>(List.of());
-            when(getUserInteractionHandler.execute(any(InteractionFilter.class), eq(userId), anyInt(), anyInt()))
+            Page<Rating> emptyPage = new PageImpl<>(List.of());
+            when(getUserRatingHandler.execute(any(RatingFilter.class), eq(userId), anyInt(), anyInt()))
                     .thenReturn(emptyPage);
 
             // Act
-            engagementService.findAllOfUser(userId, null, null, null, pageNumber, pageSize);
+            engagementService.findAllOfUser(userId, null, null, null, null, pageNumber, pageSize);
 
             // Assert
-            verify(getUserInteractionHandler)
-                    .execute(any(InteractionFilter.class), eq(userId), eq(pageNumber), eq(pageSize));
+            verify(getUserRatingHandler)
+                    .execute(any(RatingFilter.class), eq(userId), eq(pageSize), eq(pageNumber));
         }
     }
 
@@ -297,11 +296,12 @@ class EngagementServiceTest {
 
             GetMediaStatusResponse expectedResponse = new GetMediaStatusResponse(
                     mediaId,
-                    1000L, 500L, 50L, 4.5, 200L, 1750L, 85.5
+                    4.5,
+                    200L
             );
 
             when(getMediaStatsHandler.execute(mediaId)).thenReturn(engagementStats);
-            when(interactionMapper.toMediaStatusResponse(engagementStats, mediaId)).thenReturn(expectedResponse);
+            when(ratingMapper.toMediaStatusResponse(engagementStats, mediaId)).thenReturn(expectedResponse);
 
             // Act
             GetMediaStatusResponse result = engagementService.getMediaStatus(mediaId);
@@ -309,18 +309,16 @@ class EngagementServiceTest {
             // Assert
             assertThat(result).isEqualTo(expectedResponse);
             assertThat(result.mediaId()).isEqualTo(mediaId);
-            assertThat(result.totalViews()).isEqualTo(1000L);
-            assertThat(result.totalLikes()).isEqualTo(500L);
             assertThat(result.averageRating()).isEqualTo(4.5);
-            assertThat(result.popularityScore()).isEqualTo(85.5);
+            assertThat(result.totalRatings()).isEqualTo(200L);
 
             verify(getMediaStatsHandler, times(1)).execute(mediaId);
-            verify(interactionMapper, times(1)).toMediaStatusResponse(engagementStats, mediaId);
+            verify(ratingMapper, times(1)).toMediaStatusResponse(engagementStats, mediaId);
         }
 
         @Test
-        @DisplayName("whenMediaHasNoInteractions_shouldReturnZeroStats")
-        void whenMediaHasNoInteractions_shouldReturnZeroStats() {
+        @DisplayName("whenMediaHasNoRatings_shouldReturnZeroStats")
+        void whenMediaHasNoRatings_shouldReturnZeroStats() {
             // Arrange
             UUID mediaId = UUID.randomUUID();
 
@@ -328,19 +326,19 @@ class EngagementServiceTest {
 
             GetMediaStatusResponse expectedResponse = new GetMediaStatusResponse(
                     mediaId,
-                    0L, 0L, 0L, 0.0, 0L, 0L, 0.0
+                    0.0,
+                    0L
             );
 
             when(getMediaStatsHandler.execute(mediaId)).thenReturn(emptyStats);
-            when(interactionMapper.toMediaStatusResponse(emptyStats, mediaId)).thenReturn(expectedResponse);
+            when(ratingMapper.toMediaStatusResponse(emptyStats, mediaId)).thenReturn(expectedResponse);
 
             // Act
             GetMediaStatusResponse result = engagementService.getMediaStatus(mediaId);
 
             // Assert
-            assertThat(result.totalViews()).isZero();
-            assertThat(result.totalInteractions()).isZero();
-            assertThat(result.popularityScore()).isZero();
+            assertThat(result.totalRatings()).isZero();
+            assertThat(result.averageRating()).isZero();
         }
     }
 }

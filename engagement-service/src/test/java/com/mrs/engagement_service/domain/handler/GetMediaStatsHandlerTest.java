@@ -37,8 +37,8 @@ class GetMediaStatsHandlerTest {
     @DisplayName("Should return media statistics successfully")
     void shouldReturnMediaStatsSuccessfully() {
         // Arrange
-        when(mockStatus.getTotalViews()).thenReturn(1500L);
-        when(mockStatus.getPopularityScore()).thenReturn(0.85);
+        when(mockStatus.getTotalRatings()).thenReturn(150L);
+        when(mockStatus.getAverageRating()).thenReturn(4.5);
         when(engagementRepository.findStatusByMediaId(mediaId)).thenReturn(mockStatus);
 
         // Act
@@ -46,13 +46,13 @@ class GetMediaStatsHandlerTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(1500L, result.getTotalViews());
-        assertEquals(0.85, result.getPopularityScore());
+        assertEquals(150L, result.getTotalRatings());
+        assertEquals(4.5, result.getAverageRating());
         verify(engagementRepository, times(1)).findStatusByMediaId(mediaId);
     }
 
     @Test
-    @DisplayName("Should return empty status or null when no interactions found")
+    @DisplayName("Should return empty status or null when no ratings found")
     void shouldHandleEmptyResults() {
         // Arrange
         when(engagementRepository.findStatusByMediaId(mediaId)).thenReturn(null);

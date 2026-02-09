@@ -1,7 +1,7 @@
 package com.mrs.engagement_service.infrastructure.exception;
 
 import com.mrs.engagement_service.application.exception.EngagementApplicationException;
-import com.mrs.engagement_service.domain.exception.InteractionDomainException;
+import com.mrs.engagement_service.domain.exception.RatingDomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,16 +46,16 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-    @ExceptionHandler(InteractionDomainException.class)
-    public ResponseEntity<ApiResponseError> handleInteractionDomainException(
-            InteractionDomainException ex, HttpServletRequest request) {
+    @ExceptionHandler(RatingDomainException.class)
+    public ResponseEntity<ApiResponseError> handleRatingDomainException(
+            RatingDomainException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(ApiResponseError.builder()
                 .status(status.value())
-                .error("Interaction Domain Error")
+                .error("Rating Domain Error")
                 .message(ex.getMessage())
-                .details(List.of("Business rule violation in interaction domain"))
+                .details(List.of("Business rule violation in rating domain"))
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());

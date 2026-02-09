@@ -1,7 +1,7 @@
 package com.mrs.engagement_service.domain.handler;
 
-import com.mrs.engagement_service.application.dto.filter.InteractionFilter;
-import com.mrs.engagement_service.domain.model.Interaction;
+import com.mrs.engagement_service.application.dto.filter.RatingFilter;
+import com.mrs.engagement_service.domain.model.Rating;
 import com.mrs.engagement_service.domain.port.EngagementRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -10,16 +10,16 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
-public class GetUserInteractionHandler {
+public class GetUserRatingHandler {
 
     private final EngagementRepository engagementRepository;
 
-    public GetUserInteractionHandler(EngagementRepository engagementRepository) {
+    public GetUserRatingHandler(EngagementRepository engagementRepository) {
         this.engagementRepository = engagementRepository;
     }
 
-    public Page<Interaction> execute(
-            InteractionFilter interactionFilter,
+    public Page<Rating> execute(
+            RatingFilter ratingFilter,
             UUID userId,
             int pageSize,
             int pageNumber
@@ -32,7 +32,7 @@ public class GetUserInteractionHandler {
 
         return engagementRepository.findAll(
                 userId,
-                interactionFilter,
+                ratingFilter,
                 pageRequest
         );
     }

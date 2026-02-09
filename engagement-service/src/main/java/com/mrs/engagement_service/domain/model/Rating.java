@@ -1,6 +1,8 @@
 package com.mrs.engagement_service.domain.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +14,7 @@ import java.util.UUID;
 @Setter
 @Getter
 @AllArgsConstructor
-public class Interaction {
+public class Rating {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,21 +26,24 @@ public class Interaction {
     @Column(nullable = false)
     private UUID mediaId;
 
-    @Enumerated(EnumType.STRING)
-    private InteractionType type;
+    @Min(0)
+    @Max(5)
+    @Column(nullable = false)
+    private int stars;
 
-    private double interactionValue;
+    @Column(length = 1000)
+    private String review;
 
     private LocalDateTime timestamp;
 
-    public Interaction() {
+    public Rating() {
     }
 
-    public Interaction(UUID userId, UUID mediaId, InteractionType type, double interactionValue, LocalDateTime timestamp) {
+    public Rating(UUID userId, UUID mediaId, int stars, String review, LocalDateTime timestamp) {
         this.userId = userId;
         this.mediaId = mediaId;
-        this.type = type;
-        this.interactionValue = interactionValue;
+        this.stars = stars;
+        this.review = review;
         this.timestamp = timestamp;
     }
 }
