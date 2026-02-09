@@ -13,4 +13,7 @@ public interface BookProgressRepository {
 
     Optional<BookProgress> findById(UUID bookProgressId);
 
+    boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
+
+    void deleteByUserIdAndBookId(UUID uuid, UUID uuid1);
 }
