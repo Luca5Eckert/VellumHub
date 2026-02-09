@@ -3,7 +3,7 @@ package com.mrs.engagement_service.application.dto.filter;
 import java.time.OffsetDateTime;
 
 /**
- * Filtro imutável para busca de ratings.
+ * Immutable filter for rating searches.
  */
 public record RatingFilter(
         Integer minStars,
