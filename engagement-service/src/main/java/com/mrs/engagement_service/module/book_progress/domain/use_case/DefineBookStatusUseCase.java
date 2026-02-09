@@ -16,7 +16,7 @@ public class DefineBookStatusUseCase {
 
     public BookProgress execute(DefineBookStatusCommand command) {
         BookProgress bookProgress = bookProgressRepository.findByUserIdAndBookId(command.userId(), command.bookId())
-                .orElseGet(() -> new BookProgress(command.userId(), command.bookId()));
+                .orElseGet(() -> new BookProgress(command.bookId(), command.userId()));
 
         bookProgress.setReadingStatus(command.readingStatus());
 
