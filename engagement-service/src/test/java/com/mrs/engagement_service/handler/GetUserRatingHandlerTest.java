@@ -1,9 +1,8 @@
 package com.mrs.engagement_service.handler;
 
-import com.mrs.engagement_service.application.dto.filter.InteractionFilter;
-import com.mrs.engagement_service.domain.handler.GetUserInteractionHandler;
-import com.mrs.engagement_service.domain.model.Interaction;
-import com.mrs.engagement_service.domain.model.InteractionType;
+import com.mrs.engagement_service.application.dto.filter.RatingFilter;
+import com.mrs.engagement_service.domain.handler.GetUserRatingHandler;
+import com.mrs.engagement_service.domain.model.Rating;
 import com.mrs.engagement_service.domain.port.EngagementRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,35 +24,36 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class GetUserInteractionHandlerTest {
+class GetUserRatingHandlerTest {
 
     @Mock
     private EngagementRepository engagementRepository;
 
     @InjectMocks
-    private GetUserInteractionHandler getUserInteractionHandler;
+    private GetUserRatingHandler getUserRatingHandler;
 
     @Test
-    @DisplayName("Should return a page of interactions when repository execution is successful")
-    void shouldReturnInteractionsPage_WhenRepositoryFindsData() {
+    @DisplayName("Should return a page of ratings when repository execution is successful")
+    void shouldReturnRatingsPage_WhenRepositoryFindsData() {
         // Arrange
         UUID userId = UUID.randomUUID();
         int pageSize = 10;
         int pageNumber = 0;
 
-        InteractionFilter filter = new InteractionFilter(
-                InteractionType.LIKE,
+        RatingFilter filter = new RatingFilter(
+                3,
+                5,
                 OffsetDateTime.now().minusDays(1),
                 OffsetDateTime.now()
         );
 
-        Page<Interaction> expectedPage = new PageImpl<>(Collections.emptyList());
+        Page<Rating> expectedPage = new PageImpl<>(Collections.emptyList());
 
         when(engagementRepository.findAll(eq(userId), eq(filter), any(PageRequest.class)))
                 .thenReturn(expectedPage);
 
         // Act
-        Page<Interaction> result = getUserInteractionHandler.execute(filter, userId, pageSize, pageNumber);
+        Page<Rating> result = getUserRatingHandler.execute(filter, userId, pageSize, pageNumber);
 
         // Assert
         assertNotNull(result, "The result should not be null");
@@ -68,14 +68,14 @@ class GetUserInteractionHandlerTest {
     void shouldCreateCorrectPageRequest() {
         // Arrange
         UUID userId = UUID.randomUUID();
-        InteractionFilter filter = new InteractionFilter(null, null, null);
+        RatingFilter filter = new RatingFilter(null, null, null, null);
         int expectedPageSize = 20;
         int expectedPageNumber = 1;
 
         ArgumentCaptor<PageRequest> pageRequestCaptor = ArgumentCaptor.forClass(PageRequest.class);
 
         // Act
-        getUserInteractionHandler.execute(filter, userId, expectedPageSize, expectedPageNumber);
+        getUserRatingHandler.execute(filter, userId, expectedPageSize, expectedPageNumber);
 
         // Assert & Verify
         verify(engagementRepository).findAll(eq(userId), eq(filter), pageRequestCaptor.capture());
