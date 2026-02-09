@@ -1,7 +1,8 @@
 package com.mrs.engagement_service.domain.handler;
 
-import com.mrs.engagement_service.domain.model.EngagementStats;
-import com.mrs.engagement_service.domain.port.EngagementRepository;
+import com.mrs.engagement_service.module.rating.domain.handler.GetMediaStatsHandler;
+import com.mrs.engagement_service.module.rating.domain.model.EngagementStats;
+import com.mrs.engagement_service.module.rating.domain.port.EngagementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

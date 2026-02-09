@@ -1,16 +1,16 @@
 package com.mrs.engagement_service.service;
 
-import com.mrs.engagement_service.application.dto.GetMediaStatusResponse;
-import com.mrs.engagement_service.application.dto.RatingCreateRequest;
-import com.mrs.engagement_service.application.dto.RatingGetResponse;
-import com.mrs.engagement_service.application.dto.filter.RatingFilter;
-import com.mrs.engagement_service.domain.handler.CreateRatingHandler;
-import com.mrs.engagement_service.domain.handler.GetMediaStatsHandler;
-import com.mrs.engagement_service.domain.handler.GetUserRatingHandler;
-import com.mrs.engagement_service.domain.model.EngagementStats;
-import com.mrs.engagement_service.domain.model.Rating;
-import com.mrs.engagement_service.domain.port.RatingMapper;
-import com.mrs.engagement_service.domain.service.RatingService;
+import com.mrs.engagement_service.module.rating.application.dto.GetMediaStatusResponse;
+import com.mrs.engagement_service.module.rating.application.dto.RatingCreateRequest;
+import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
+import com.mrs.engagement_service.module.rating.application.dto.filter.RatingFilter;
+import com.mrs.engagement_service.module.rating.domain.handler.CreateRatingHandler;
+import com.mrs.engagement_service.module.rating.domain.handler.GetMediaStatsHandler;
+import com.mrs.engagement_service.module.rating.domain.handler.GetUserRatingHandler;
+import com.mrs.engagement_service.module.rating.domain.model.EngagementStats;
+import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
+import com.mrs.engagement_service.module.rating.domain.port.RatingMapper;
+import com.mrs.engagement_service.module.rating.domain.service.RatingService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

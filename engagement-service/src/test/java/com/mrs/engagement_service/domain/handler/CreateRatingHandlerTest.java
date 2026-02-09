@@ -1,9 +1,10 @@
 package com.mrs.engagement_service.domain.handler;
 
-import com.mrs.engagement_service.domain.event.RatingEvent;
-import com.mrs.engagement_service.domain.exception.InvalidRatingException;
-import com.mrs.engagement_service.domain.model.Rating;
-import com.mrs.engagement_service.domain.port.EngagementRepository;
+import com.mrs.engagement_service.module.rating.domain.event.RatingEvent;
+import com.mrs.engagement_service.module.rating.domain.exception.InvalidRatingException;
+import com.mrs.engagement_service.module.rating.domain.handler.CreateRatingHandler;
+import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
+import com.mrs.engagement_service.module.rating.domain.port.EngagementRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

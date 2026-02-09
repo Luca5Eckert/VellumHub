@@ -1,9 +1,9 @@
 package com.mrs.engagement_service.handler;
 
-import com.mrs.engagement_service.application.dto.filter.RatingFilter;
-import com.mrs.engagement_service.domain.handler.GetUserRatingHandler;
-import com.mrs.engagement_service.domain.model.Rating;
-import com.mrs.engagement_service.domain.port.EngagementRepository;
+import com.mrs.engagement_service.module.rating.application.dto.filter.RatingFilter;
+import com.mrs.engagement_service.module.rating.domain.handler.GetUserRatingHandler;
+import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
+import com.mrs.engagement_service.module.rating.domain.port.EngagementRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

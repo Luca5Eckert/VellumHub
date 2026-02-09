@@ -1,7 +1,7 @@
 package com.mrs.engagement_service.infrastructure.provider;
 
-import com.mrs.engagement_service.application.dto.filter.RatingFilter;
-import com.mrs.engagement_service.domain.model.Rating;
+import com.mrs.engagement_service.module.rating.application.dto.filter.RatingFilter;
+import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;

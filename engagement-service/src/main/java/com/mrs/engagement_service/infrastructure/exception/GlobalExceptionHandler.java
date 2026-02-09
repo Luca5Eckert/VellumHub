@@ -1,7 +1,7 @@
 package com.mrs.engagement_service.infrastructure.exception;
 
-import com.mrs.engagement_service.application.exception.EngagementApplicationException;
-import com.mrs.engagement_service.domain.exception.RatingDomainException;
+import com.mrs.engagement_service.module.rating.application.exception.EngagementApplicationException;
+import com.mrs.engagement_service.module.rating.domain.exception.RatingDomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
