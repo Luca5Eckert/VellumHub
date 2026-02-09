@@ -4,6 +4,7 @@ import com.mrs.engagement_service.infrastructure.service.AuthenticationService;
 import com.mrs.engagement_service.module.book_progress.application.dto.BookProgressResponse;
 import com.mrs.engagement_service.module.book_progress.application.dto.BookStatusRequest;
 import com.mrs.engagement_service.module.book_progress.application.handler.DefineBookStatusHandler;
+import com.mrs.engagement_service.module.book_progress.application.handler.DeleteBookProgressHandler;
 import com.mrs.engagement_service.module.book_progress.application.handler.UpdateBookProgressHandler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -24,12 +25,14 @@ public class BookProgressController {
 
     private final DefineBookStatusHandler defineBookStatusHandler;
     private final UpdateBookProgressHandler updateBookProgressHandler;
+    private final DeleteBookProgressHandler deleteBookProgressHandler;
 
     private final AuthenticationService authenticationService;
 
-    public BookProgressController(DefineBookStatusHandler defineBookStatusHandler, UpdateBookProgressHandler updateBookProgressHandler, AuthenticationService authenticationService) {
+    public BookProgressController(DefineBookStatusHandler defineBookStatusHandler, UpdateBookProgressHandler updateBookProgressHandler, DeleteBookProgressHandler deleteBookProgressHandler, AuthenticationService authenticationService) {
         this.defineBookStatusHandler = defineBookStatusHandler;
         this.updateBookProgressHandler = updateBookProgressHandler;
+        this.deleteBookProgressHandler = deleteBookProgressHandler;
         this.authenticationService = authenticationService;
     }
 
@@ -70,10 +73,17 @@ public class BookProgressController {
                 .body(response);
     }
 
-    @DeleteMapping("/{bookId]")
+    @DeleteMapping("/{bookId}")
     public ResponseEntity<Void> deleteBookProgress(
             @PathVariable(value = "bookId") UUID bookId
     ) {
+        UUID userId = authenticationService.getAuthenticatedUserId();
+
+        deleteBookProgressHandler.handle(
+                bookId,
+                userId
+        );
+
         return ResponseEntity.ok().build();
     }
 
