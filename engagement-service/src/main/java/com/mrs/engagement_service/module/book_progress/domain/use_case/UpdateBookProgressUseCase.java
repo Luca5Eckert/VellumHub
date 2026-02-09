@@ -15,7 +15,7 @@ public class UpdateBookProgressUseCase {
           this.bookProgressRepository = bookProgressRepository;
      }
 
-     public void execute(UpdateBookProgressCommand command){
+     public BookProgress execute(UpdateBookProgressCommand command){
           BookProgress bookProgress = bookProgressRepository.findByUserIdAndBookId(command.bookId(), command.userId())
                   .orElseThrow(BookProgressNotFoundException::new);
 
@@ -25,7 +25,7 @@ public class UpdateBookProgressUseCase {
 
           bookProgress.update(command.currentPage());
 
-          bookProgressRepository.save(bookProgress);
+          return bookProgressRepository.save(bookProgress);
      }
 
 }

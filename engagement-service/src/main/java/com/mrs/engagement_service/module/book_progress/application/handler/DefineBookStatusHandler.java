@@ -7,6 +7,7 @@ import com.mrs.engagement_service.module.book_progress.domain.command.DefineBook
 import com.mrs.engagement_service.module.book_progress.domain.use_case.DefineBookStatusUseCase;
 import com.mrs.engagement_service.module.rating.domain.model.BookProgress;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -22,6 +23,7 @@ public class DefineBookStatusHandler {
         this.bookProgressMapper = bookProgressMapper;
     }
 
+    @Transactional
     public BookProgressResponse handle(BookStatusRequest bookStatusRequest, UUID userId, UUID bookId) {
         DefineBookStatusCommand defineBookStatusCommand = new DefineBookStatusCommand(
                 bookId,
