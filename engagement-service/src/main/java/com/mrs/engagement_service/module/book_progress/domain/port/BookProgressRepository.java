@@ -10,4 +10,7 @@ public interface BookProgressRepository {
     Optional<BookProgress> findByUserIdAndBookId(UUID uuid, UUID uuid1);
 
     BookProgress save(BookProgress bookProgress);
+
+    Optional<BookProgress> findById(UUID bookProgressId);
+
 }

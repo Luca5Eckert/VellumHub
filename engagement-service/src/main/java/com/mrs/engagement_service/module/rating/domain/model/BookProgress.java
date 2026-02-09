@@ -49,4 +49,7 @@ public class BookProgress {
         this.userId = userId;
     }
 
+    public void update(int currentPage) {
+        this.setCurrentPage(currentPage);
+    }
 }
