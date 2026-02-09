@@ -4,6 +4,7 @@ import com.mrs.engagement_service.infrastructure.service.AuthenticationService;
 import com.mrs.engagement_service.module.book_progress.application.dto.BookProgressResponse;
 import com.mrs.engagement_service.module.book_progress.application.dto.BookStatusRequest;
 import com.mrs.engagement_service.module.book_progress.application.handler.DefineBookStatusHandler;
+import com.mrs.engagement_service.module.book_progress.application.handler.UpdateBookProgressHandler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,23 +23,25 @@ import java.util.UUID;
 public class BookProgressController {
 
     private final DefineBookStatusHandler defineBookStatusHandler;
+    private final UpdateBookProgressHandler updateBookProgressHandler;
 
     private final AuthenticationService authenticationService;
 
-    public BookProgressController(DefineBookStatusHandler defineBookStatusHandler, AuthenticationService authenticationService) {
+    public BookProgressController(DefineBookStatusHandler defineBookStatusHandler, UpdateBookProgressHandler updateBookProgressHandler, AuthenticationService authenticationService) {
         this.defineBookStatusHandler = defineBookStatusHandler;
+        this.updateBookProgressHandler = updateBookProgressHandler;
         this.authenticationService = authenticationService;
     }
 
 
     @PostMapping("/{bookId}/status")
     public ResponseEntity<BookProgressResponse> defineBookStatus(
-            @PathVariable(value="bookId") UUID bookId,
+            @PathVariable(value = "bookId") UUID bookId,
             @Valid BookStatusRequest request
     ) {
         UUID userId = authenticationService.getAuthenticatedUserId();
 
-        BookProgressResponse response = defineBookStatusHandler.handle(
+        var response = defineBookStatusHandler.handle(
                 request,
                 userId,
                 bookId
@@ -51,20 +54,28 @@ public class BookProgressController {
 
     @PutMapping("/{bookId}/progress")
     public ResponseEntity<BookProgressResponse> updateBookProgress(
-            @PathVariable(value="bookId") UUID bookId,
+            @PathVariable(value = "bookId") UUID bookId,
             int newCurrentPage
-    ){
-        return ResponseEntity.ok(null);
+    ) {
+        UUID userId = authenticationService.getAuthenticatedUserId();
+
+        var response = updateBookProgressHandler.handle(
+                newCurrentPage,
+                bookId,
+                userId
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @DeleteMapping("/{bookId]")
     public ResponseEntity<Void> deleteBookProgress(
-            @PathVariable(value="bookId") UUID bookId
+            @PathVariable(value = "bookId") UUID bookId
     ) {
         return ResponseEntity.ok().build();
     }
-
-
 
 
 }
