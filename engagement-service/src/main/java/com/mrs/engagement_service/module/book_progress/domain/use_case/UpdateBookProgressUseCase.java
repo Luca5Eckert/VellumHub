@@ -6,7 +6,9 @@ import com.mrs.engagement_service.module.book_progress.domain.exception.BookProg
 import com.mrs.engagement_service.module.book_progress.domain.model.ReadingStatus;
 import com.mrs.engagement_service.module.book_progress.domain.port.BookProgressRepository;
 import com.mrs.engagement_service.module.rating.domain.model.BookProgress;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UpdateBookProgressUseCase {
 
      private final BookProgressRepository bookProgressRepository;
