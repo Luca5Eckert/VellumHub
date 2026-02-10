@@ -88,7 +88,7 @@ class DefineBookStatusUseCaseTest {
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
         var existingProgress = new BookProgress(bookId, userId);
-        existingProgress.setCurrentPage(100); // Originally at page 100
+        existingProgress.setCurrentPage(100);
 
         // Command sends -1 as page
         var command = new DefineBookStatusCommand(userId, bookId, ReadingStatus.READING, -1);
