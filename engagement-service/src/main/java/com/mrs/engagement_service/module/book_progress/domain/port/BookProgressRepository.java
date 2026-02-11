@@ -1,8 +1,10 @@
 package com.mrs.engagement_service.module.book_progress.domain.port;
 
 
+import com.mrs.engagement_service.module.book_progress.domain.model.ReadingStatus;
 import com.mrs.engagement_service.module.rating.domain.model.BookProgress;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,4 +18,6 @@ public interface BookProgressRepository {
     boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
 
     void deleteByUserIdAndBookId(UUID userId, UUID bookId);
+
+    List<BookProgress> findAllByUserIdAndStatus(UUID userId, ReadingStatus readingStatus);
 }
