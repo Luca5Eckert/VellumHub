@@ -5,6 +5,7 @@ import com.mrs.engagement_service.module.book_progress.application.dto.BookProgr
 import com.mrs.engagement_service.module.book_progress.application.dto.BookStatusRequest;
 import com.mrs.engagement_service.module.book_progress.application.handler.DefineBookStatusHandler;
 import com.mrs.engagement_service.module.book_progress.application.handler.DeleteBookProgressHandler;
+import com.mrs.engagement_service.module.book_progress.application.handler.GetReadingListHandler;
 import com.mrs.engagement_service.module.book_progress.application.handler.UpdateBookProgressHandler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,13 +28,15 @@ public class BookProgressController {
     private final DefineBookStatusHandler defineBookStatusHandler;
     private final UpdateBookProgressHandler updateBookProgressHandler;
     private final DeleteBookProgressHandler deleteBookProgressHandler;
+    private final GetReadingListHandler getReadingListHandler;
 
     private final AuthenticationService authenticationService;
 
-    public BookProgressController(DefineBookStatusHandler defineBookStatusHandler, UpdateBookProgressHandler updateBookProgressHandler, DeleteBookProgressHandler deleteBookProgressHandler, AuthenticationService authenticationService) {
+    public BookProgressController(DefineBookStatusHandler defineBookStatusHandler, UpdateBookProgressHandler updateBookProgressHandler, DeleteBookProgressHandler deleteBookProgressHandler, GetReadingListHandler getReadingListHandler, AuthenticationService authenticationService) {
         this.defineBookStatusHandler = defineBookStatusHandler;
         this.updateBookProgressHandler = updateBookProgressHandler;
         this.deleteBookProgressHandler = deleteBookProgressHandler;
+        this.getReadingListHandler = getReadingListHandler;
         this.authenticationService = authenticationService;
     }
 
@@ -85,6 +89,16 @@ public class BookProgressController {
         );
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/reading-list")
+    public ResponseEntity<List<BookProgressResponse>> getReadingList() {
+        UUID userId = authenticationService.getAuthenticatedUserId();
+
+        var response = getReadingListHandler.handle(userId);
+
+        return ResponseEntity.ok(response);
+
     }
 
 
