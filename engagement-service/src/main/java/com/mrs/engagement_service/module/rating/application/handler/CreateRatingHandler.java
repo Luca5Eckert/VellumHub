@@ -4,6 +4,7 @@ import com.mrs.engagement_service.module.rating.application.dto.CreateRatingRequ
 import com.mrs.engagement_service.module.rating.domain.command.CreateRatingCommand;
 import com.mrs.engagement_service.module.rating.domain.use_case.CreateRatingUseCase;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class CreateRatingHandler {
@@ -14,6 +15,7 @@ public class CreateRatingHandler {
         this.createRatingUseCase = createRatingUseCase;
     }
 
+    @Transactional
     public void handle(CreateRatingRequest request){
         CreateRatingCommand command = new CreateRatingCommand(
                 request.userId(),

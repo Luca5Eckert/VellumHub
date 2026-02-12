@@ -1,6 +1,6 @@
 package com.mrs.engagement_service.module.rating.domain.port;
 
-import com.mrs.engagement_service.module.rating.application.dto.GetMediaStatusResponse;
+import com.mrs.engagement_service.module.rating.application.dto.GetBookStatusResponse;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.module.rating.domain.model.EngagementStats;
 import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
@@ -11,6 +11,6 @@ public interface RatingMapper {
 
     RatingGetResponse toGetResponse(Rating rating);
 
-    GetMediaStatusResponse toMediaStatusResponse(EngagementStats engagementStats, UUID mediaId);
+    GetBookStatusResponse toMediaStatusResponse(EngagementStats engagementStats, UUID bookId);
 
 }

@@ -7,11 +7,11 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
-public class GetMediaStatsHandler {
+public class GetMediaStatsUseCase {
 
     private final RatingRepository ratingRepository;
 
-    public GetMediaStatsHandler(RatingRepository ratingRepository) {
+    public GetMediaStatsUseCase(RatingRepository ratingRepository) {
         this.ratingRepository = ratingRepository;
     }
 

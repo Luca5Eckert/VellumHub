@@ -1,9 +1,10 @@
 package com.mrs.engagement_service.module.rating.application.controller;
 
 import com.mrs.engagement_service.module.rating.application.dto.CreateRatingRequest;
-import com.mrs.engagement_service.module.rating.application.dto.GetMediaStatusResponse;
+import com.mrs.engagement_service.module.rating.application.dto.GetBookStatusResponse;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.module.rating.application.handler.CreateRatingHandler;
+import com.mrs.engagement_service.module.rating.application.handler.GetMediaStatsHandler;
 import com.mrs.engagement_service.module.rating.domain.service.RatingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,10 +32,12 @@ public class RatingController {
     private final RatingService ratingService;
 
     private final CreateRatingHandler createRatingHandler;
+    private final GetMediaStatsHandler getMediaStatsHandler;
 
-    public RatingController(RatingService ratingService, CreateRatingHandler createRatingHandler) {
+    public RatingController(RatingService ratingService, CreateRatingHandler createRatingHandler, GetMediaStatsHandler getMediaStatsHandler) {
         this.ratingService = ratingService;
         this.createRatingHandler = createRatingHandler;
+        this.getMediaStatsHandler = getMediaStatsHandler;
     }
 
     @PostMapping
@@ -75,17 +78,17 @@ public class RatingController {
     }
 
 
-    @GetMapping("/media/{mediaId}/stats")
-    @Operation(summary = "Obter estatísticas de mídia", description = "Retorna as estatísticas de ratings de uma mídia específica")
+    @GetMapping("/media/{bookId}/stats")
+    @Operation(summary = "Obter estatísticas de mídia", description = "Retorna as estatísticas de ratings de um livro específico")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Estatísticas retornadas com sucesso",
-                    content = @Content(schema = @Schema(implementation = GetMediaStatusResponse.class))),
+                    content = @Content(schema = @Schema(implementation = GetBookStatusResponse.class))),
             @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content),
             @ApiResponse(responseCode = "404", description = "Mídia não encontrada", content = @Content)
     })
-    public ResponseEntity<GetMediaStatusResponse> getMediaStatus(@Parameter(description = "ID da mídia") @PathVariable UUID mediaId) {
-        GetMediaStatusResponse response = ratingService.getMediaStatus(mediaId);
+    public ResponseEntity<GetBookStatusResponse> getMediaStatus(@Parameter(description = "ID da livro") @PathVariable UUID bookId) {
+        GetBookStatusResponse response = getMediaStatsHandler.handle(bookId);
 
         return ResponseEntity.ok(response);
     }

@@ -1,6 +1,6 @@
 package com.mrs.engagement_service.domain.handler;
 
-import com.mrs.engagement_service.module.rating.domain.use_case.GetMediaStatsHandler;
+import com.mrs.engagement_service.module.rating.domain.use_case.GetMediaStatsUseCase;
 import com.mrs.engagement_service.module.rating.domain.model.EngagementStats;
 import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,13 +17,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class GetMediaStatsHandlerTest {
+class GetMediaStatsUseCaseTest {
 
     @Mock
     private RatingRepository ratingRepository;
 
     @InjectMocks
-    private GetMediaStatsHandler getMediaStatsHandler;
+    private GetMediaStatsUseCase getMediaStatsUseCase;
 
     private UUID mediaId;
     private EngagementStats mockStatus;
@@ -43,7 +43,7 @@ class GetMediaStatsHandlerTest {
         when(ratingRepository.findStatusByMediaId(mediaId)).thenReturn(mockStatus);
 
         // Act
-        EngagementStats result = getMediaStatsHandler.execute(mediaId);
+        EngagementStats result = getMediaStatsUseCase.execute(mediaId);
 
         // Assert
         assertNotNull(result);
@@ -59,7 +59,7 @@ class GetMediaStatsHandlerTest {
         when(ratingRepository.findStatusByMediaId(mediaId)).thenReturn(null);
 
         // Act
-        EngagementStats result = getMediaStatsHandler.execute(mediaId);
+        EngagementStats result = getMediaStatsUseCase.execute(mediaId);
 
         // Assert
         assertNull(result);

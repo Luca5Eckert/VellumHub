@@ -1,11 +1,11 @@
 package com.mrs.engagement_service.service;
 
-import com.mrs.engagement_service.module.rating.application.dto.GetMediaStatusResponse;
+import com.mrs.engagement_service.module.rating.application.dto.GetBookStatusResponse;
 import com.mrs.engagement_service.module.rating.application.dto.RatingCreateRequest;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.module.rating.application.dto.filter.RatingFilter;
 import com.mrs.engagement_service.module.rating.domain.use_case.CreateRatingUseCase;
-import com.mrs.engagement_service.module.rating.domain.use_case.GetMediaStatsHandler;
+import com.mrs.engagement_service.module.rating.domain.use_case.GetMediaStatsUseCase;
 import com.mrs.engagement_service.module.rating.domain.use_case.GetUserRatingHandler;
 import com.mrs.engagement_service.module.rating.domain.model.EngagementStats;
 import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
@@ -47,7 +47,7 @@ class RatingServiceTest {
     private GetUserRatingHandler getUserRatingHandler;
 
     @Mock
-    private GetMediaStatsHandler getMediaStatsHandler;
+    private GetMediaStatsUseCase getMediaStatsUseCase;
 
     @Mock
     private RatingMapper ratingMapper;
@@ -294,25 +294,25 @@ class RatingServiceTest {
 
             EngagementStats engagementStats = mock(EngagementStats.class);
 
-            GetMediaStatusResponse expectedResponse = new GetMediaStatusResponse(
+            GetBookStatusResponse expectedResponse = new GetBookStatusResponse(
                     mediaId,
                     4.5,
                     200L
             );
 
-            when(getMediaStatsHandler.execute(mediaId)).thenReturn(engagementStats);
+            when(getMediaStatsUseCase.execute(mediaId)).thenReturn(engagementStats);
             when(ratingMapper.toMediaStatusResponse(engagementStats, mediaId)).thenReturn(expectedResponse);
 
             // Act
-            GetMediaStatusResponse result = ratingService.getMediaStatus(mediaId);
+            GetBookStatusResponse result = ratingService.getMediaStatus(mediaId);
 
             // Assert
             assertThat(result).isEqualTo(expectedResponse);
-            assertThat(result.mediaId()).isEqualTo(mediaId);
+            assertThat(result.bookId()).isEqualTo(mediaId);
             assertThat(result.averageRating()).isEqualTo(4.5);
             assertThat(result.totalRatings()).isEqualTo(200L);
 
-            verify(getMediaStatsHandler, times(1)).execute(mediaId);
+            verify(getMediaStatsUseCase, times(1)).execute(mediaId);
             verify(ratingMapper, times(1)).toMediaStatusResponse(engagementStats, mediaId);
         }
 
@@ -324,17 +324,17 @@ class RatingServiceTest {
 
             EngagementStats emptyStats = mock(EngagementStats.class);
 
-            GetMediaStatusResponse expectedResponse = new GetMediaStatusResponse(
+            GetBookStatusResponse expectedResponse = new GetBookStatusResponse(
                     mediaId,
                     0.0,
                     0L
             );
 
-            when(getMediaStatsHandler.execute(mediaId)).thenReturn(emptyStats);
+            when(getMediaStatsUseCase.execute(mediaId)).thenReturn(emptyStats);
             when(ratingMapper.toMediaStatusResponse(emptyStats, mediaId)).thenReturn(expectedResponse);
 
             // Act
-            GetMediaStatusResponse result = ratingService.getMediaStatus(mediaId);
+            GetBookStatusResponse result = ratingService.getMediaStatus(mediaId);
 
             // Assert
             assertThat(result.totalRatings()).isZero();

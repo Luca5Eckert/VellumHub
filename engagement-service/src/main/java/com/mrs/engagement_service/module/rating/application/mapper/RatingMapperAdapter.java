@@ -1,6 +1,6 @@
 package com.mrs.engagement_service.module.rating.application.mapper;
 
-import com.mrs.engagement_service.module.rating.application.dto.GetMediaStatusResponse;
+import com.mrs.engagement_service.module.rating.application.dto.GetBookStatusResponse;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.module.rating.domain.model.EngagementStats;
 import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
@@ -19,7 +19,7 @@ public class RatingMapperAdapter implements RatingMapper {
         return new RatingGetResponse(
                 rating.getId(),
                 rating.getUserId(),
-                rating.getMediaId(),
+                rating.getBookId(),
                 rating.getStars(),
                 rating.getReview(),
                 rating.getTimestamp()
@@ -27,9 +27,9 @@ public class RatingMapperAdapter implements RatingMapper {
     }
 
     @Override
-    public GetMediaStatusResponse toMediaStatusResponse(EngagementStats engagementStats, UUID mediaId) {
-        return new GetMediaStatusResponse(
-                mediaId,
+    public GetBookStatusResponse toMediaStatusResponse(EngagementStats engagementStats, UUID bookId) {
+        return new GetBookStatusResponse(
+                bookId,
                 engagementStats.getAverageRating(),
                 engagementStats.getTotalRatings()
         );
