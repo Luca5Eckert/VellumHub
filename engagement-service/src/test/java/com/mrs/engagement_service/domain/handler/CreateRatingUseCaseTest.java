@@ -2,9 +2,9 @@ package com.mrs.engagement_service.domain.handler;
 
 import com.mrs.engagement_service.module.rating.domain.event.RatingEvent;
 import com.mrs.engagement_service.module.rating.domain.exception.InvalidRatingException;
-import com.mrs.engagement_service.module.rating.domain.handler.CreateRatingHandler;
+import com.mrs.engagement_service.module.rating.domain.use_case.CreateRatingUseCase;
 import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
-import com.mrs.engagement_service.module.rating.domain.port.EngagementRepository;
+import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,16 +23,16 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class CreateRatingHandlerTest {
+class CreateRatingUseCaseTest {
 
     @Mock
-    private EngagementRepository engagementRepository;
+    private RatingRepository ratingRepository;
 
     @Mock
     private KafkaTemplate<String, RatingEvent> kafka;
 
     @InjectMocks
-    private CreateRatingHandler createRatingHandler;
+    private CreateRatingUseCase createRatingUseCase;
 
     @Test
     @DisplayName("Should save rating and send event when rating is valid")
@@ -52,10 +52,10 @@ class CreateRatingHandlerTest {
         );
 
         // Act
-        createRatingHandler.handler(rating);
+        createRatingUseCase.execute(rating);
 
         // Assert
-        verify(engagementRepository, times(1)).save(rating);
+        verify(ratingRepository, times(1)).save(rating);
 
         ArgumentCaptor<RatingEvent> eventCaptor = ArgumentCaptor.forClass(RatingEvent.class);
         verify(kafka, times(1)).send(
@@ -78,11 +78,11 @@ class CreateRatingHandlerTest {
     void shouldThrowException_WhenRatingIsNull() {
         // Act & Assert
         InvalidRatingException exception = assertThrows(InvalidRatingException.class, () ->
-                createRatingHandler.handler(null)
+                createRatingUseCase.execute(null)
         );
 
         assertEquals("Rating cannot be null", exception.getMessage());
-        verifyNoInteractions(engagementRepository);
+        verifyNoInteractions(ratingRepository);
         verifyNoInteractions(kafka);
     }
 
@@ -104,10 +104,10 @@ class CreateRatingHandlerTest {
         );
 
         // Act
-        createRatingHandler.handler(rating);
+        createRatingUseCase.execute(rating);
 
         // Assert
-        verify(engagementRepository, times(1)).save(rating);
+        verify(ratingRepository, times(1)).save(rating);
 
         ArgumentCaptor<RatingEvent> eventCaptor = ArgumentCaptor.forClass(RatingEvent.class);
         verify(kafka, times(1)).send(
@@ -138,10 +138,10 @@ class CreateRatingHandlerTest {
         );
 
         // Act
-        createRatingHandler.handler(rating);
+        createRatingUseCase.execute(rating);
 
         // Assert
-        verify(engagementRepository, times(1)).save(rating);
+        verify(ratingRepository, times(1)).save(rating);
 
         ArgumentCaptor<RatingEvent> eventCaptor = ArgumentCaptor.forClass(RatingEvent.class);
         verify(kafka, times(1)).send(

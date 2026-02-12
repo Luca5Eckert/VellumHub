@@ -1,8 +1,8 @@
 package com.mrs.engagement_service.domain.handler;
 
-import com.mrs.engagement_service.module.rating.domain.handler.GetMediaStatsHandler;
+import com.mrs.engagement_service.module.rating.domain.use_case.GetMediaStatsHandler;
 import com.mrs.engagement_service.module.rating.domain.model.EngagementStats;
-import com.mrs.engagement_service.module.rating.domain.port.EngagementRepository;
+import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 class GetMediaStatsHandlerTest {
 
     @Mock
-    private EngagementRepository engagementRepository;
+    private RatingRepository ratingRepository;
 
     @InjectMocks
     private GetMediaStatsHandler getMediaStatsHandler;
@@ -40,7 +40,7 @@ class GetMediaStatsHandlerTest {
         // Arrange
         when(mockStatus.getTotalRatings()).thenReturn(150L);
         when(mockStatus.getAverageRating()).thenReturn(4.5);
-        when(engagementRepository.findStatusByMediaId(mediaId)).thenReturn(mockStatus);
+        when(ratingRepository.findStatusByMediaId(mediaId)).thenReturn(mockStatus);
 
         // Act
         EngagementStats result = getMediaStatsHandler.execute(mediaId);
@@ -49,21 +49,21 @@ class GetMediaStatsHandlerTest {
         assertNotNull(result);
         assertEquals(150L, result.getTotalRatings());
         assertEquals(4.5, result.getAverageRating());
-        verify(engagementRepository, times(1)).findStatusByMediaId(mediaId);
+        verify(ratingRepository, times(1)).findStatusByMediaId(mediaId);
     }
 
     @Test
     @DisplayName("Should return empty status or null when no ratings found")
     void shouldHandleEmptyResults() {
         // Arrange
-        when(engagementRepository.findStatusByMediaId(mediaId)).thenReturn(null);
+        when(ratingRepository.findStatusByMediaId(mediaId)).thenReturn(null);
 
         // Act
         EngagementStats result = getMediaStatsHandler.execute(mediaId);
 
         // Assert
         assertNull(result);
-        verify(engagementRepository, times(1)).findStatusByMediaId(mediaId);
+        verify(ratingRepository, times(1)).findStatusByMediaId(mediaId);
     }
     
 }

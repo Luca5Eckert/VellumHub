@@ -4,9 +4,9 @@ import com.mrs.engagement_service.module.rating.application.dto.GetMediaStatusRe
 import com.mrs.engagement_service.module.rating.application.dto.RatingCreateRequest;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.module.rating.application.dto.filter.RatingFilter;
-import com.mrs.engagement_service.module.rating.domain.handler.CreateRatingHandler;
-import com.mrs.engagement_service.module.rating.domain.handler.GetMediaStatsHandler;
-import com.mrs.engagement_service.module.rating.domain.handler.GetUserRatingHandler;
+import com.mrs.engagement_service.module.rating.domain.use_case.CreateRatingUseCase;
+import com.mrs.engagement_service.module.rating.domain.use_case.GetMediaStatsHandler;
+import com.mrs.engagement_service.module.rating.domain.use_case.GetUserRatingHandler;
 import com.mrs.engagement_service.module.rating.domain.model.EngagementStats;
 import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
 import com.mrs.engagement_service.module.rating.domain.port.RatingMapper;
@@ -21,14 +21,14 @@ import java.util.UUID;
 @Service
 public class RatingService {
 
-    private final CreateRatingHandler createRatingHandler;
+    private final CreateRatingUseCase createRatingUseCase;
     private final GetUserRatingHandler getUserRatingHandler;
     private final GetMediaStatsHandler getMediaStatsHandler;
 
     private final RatingMapper ratingMapper;
 
-    public RatingService(CreateRatingHandler createRatingHandler, GetUserRatingHandler getUserRatingHandler, GetMediaStatsHandler getMediaStatsHandler, RatingMapper ratingMapper) {
-        this.createRatingHandler = createRatingHandler;
+    public RatingService(CreateRatingUseCase createRatingUseCase, GetUserRatingHandler getUserRatingHandler, GetMediaStatsHandler getMediaStatsHandler, RatingMapper ratingMapper) {
+        this.createRatingUseCase = createRatingUseCase;
         this.getUserRatingHandler = getUserRatingHandler;
         this.getMediaStatsHandler = getMediaStatsHandler;
         this.ratingMapper = ratingMapper;
@@ -43,7 +43,7 @@ public class RatingService {
                 LocalDateTime.now()
         );
 
-        createRatingHandler.handler(rating);
+        createRatingUseCase.execute(rating);
     }
 
     public List<RatingGetResponse> findAllOfUser(

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@Builder
 @Setter
 @Getter
 @AllArgsConstructor
@@ -24,7 +26,7 @@ public class Rating {
     private UUID userId;
 
     @Column(nullable = false)
-    private UUID mediaId;
+    private UUID bookId;
 
     @Min(0)
     @Max(5)
@@ -39,9 +41,9 @@ public class Rating {
     public Rating() {
     }
 
-    public Rating(UUID userId, UUID mediaId, int stars, String review, LocalDateTime timestamp) {
+    public Rating(UUID userId, UUID bookId, int stars, String review, LocalDateTime timestamp) {
         this.userId = userId;
-        this.mediaId = mediaId;
+        this.bookId = bookId;
         this.stars = stars;
         this.review = review;
         this.timestamp = timestamp;

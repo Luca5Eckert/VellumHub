@@ -1,8 +1,9 @@
 package com.mrs.engagement_service.module.rating.application.controller;
 
+import com.mrs.engagement_service.module.rating.application.dto.CreateRatingRequest;
 import com.mrs.engagement_service.module.rating.application.dto.GetMediaStatusResponse;
-import com.mrs.engagement_service.module.rating.application.dto.RatingCreateRequest;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
+import com.mrs.engagement_service.module.rating.application.handler.CreateRatingHandler;
 import com.mrs.engagement_service.module.rating.domain.service.RatingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,8 +30,11 @@ public class RatingController {
 
     private final RatingService ratingService;
 
-    public RatingController(RatingService ratingService) {
+    private final CreateRatingHandler createRatingHandler;
+
+    public RatingController(RatingService ratingService, CreateRatingHandler createRatingHandler) {
         this.ratingService = ratingService;
+        this.createRatingHandler = createRatingHandler;
     }
 
     @PostMapping
@@ -42,8 +46,8 @@ public class RatingController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content),
             @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content)
     })
-    public ResponseEntity<String> create(@RequestBody @Valid RatingCreateRequest engagement) {
-        ratingService.create(engagement);
+    public ResponseEntity<String> create(@RequestBody @Valid CreateRatingRequest request) {
+        createRatingHandler.handle(request);
         return ResponseEntity.status(HttpStatus.CREATED).body("Rating registered with success");
     }
 

@@ -4,9 +4,9 @@ import com.mrs.engagement_service.module.rating.application.dto.GetMediaStatusRe
 import com.mrs.engagement_service.module.rating.application.dto.RatingCreateRequest;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.module.rating.application.dto.filter.RatingFilter;
-import com.mrs.engagement_service.module.rating.domain.handler.CreateRatingHandler;
-import com.mrs.engagement_service.module.rating.domain.handler.GetMediaStatsHandler;
-import com.mrs.engagement_service.module.rating.domain.handler.GetUserRatingHandler;
+import com.mrs.engagement_service.module.rating.domain.use_case.CreateRatingUseCase;
+import com.mrs.engagement_service.module.rating.domain.use_case.GetMediaStatsHandler;
+import com.mrs.engagement_service.module.rating.domain.use_case.GetUserRatingHandler;
 import com.mrs.engagement_service.module.rating.domain.model.EngagementStats;
 import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
 import com.mrs.engagement_service.module.rating.domain.port.RatingMapper;
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
 class RatingServiceTest {
 
     @Mock
-    private CreateRatingHandler createRatingHandler;
+    private CreateRatingUseCase createRatingUseCase;
 
     @Mock
     private GetUserRatingHandler getUserRatingHandler;
@@ -78,7 +78,7 @@ class RatingServiceTest {
 
             // Assert
             ArgumentCaptor<Rating> ratingCaptor = ArgumentCaptor.forClass(Rating.class);
-            verify(createRatingHandler, times(1)).handler(ratingCaptor.capture());
+            verify(createRatingUseCase, times(1)).execute(ratingCaptor.capture());
 
             Rating capturedRating = ratingCaptor.getValue();
             assertThat(capturedRating.getUserId()).isEqualTo(userId);
@@ -107,7 +107,7 @@ class RatingServiceTest {
 
             // Assert
             ArgumentCaptor<Rating> ratingCaptor = ArgumentCaptor.forClass(Rating.class);
-            verify(createRatingHandler).handler(ratingCaptor.capture());
+            verify(createRatingUseCase).execute(ratingCaptor.capture());
 
             Rating capturedRating = ratingCaptor.getValue();
             assertThat(capturedRating.getStars()).isEqualTo(5);
@@ -133,7 +133,7 @@ class RatingServiceTest {
 
             // Assert
             ArgumentCaptor<Rating> ratingCaptor = ArgumentCaptor.forClass(Rating.class);
-            verify(createRatingHandler).handler(ratingCaptor.capture());
+            verify(createRatingUseCase).execute(ratingCaptor.capture());
 
             Rating capturedRating = ratingCaptor.getValue();
             assertThat(capturedRating.getStars()).isEqualTo(0);

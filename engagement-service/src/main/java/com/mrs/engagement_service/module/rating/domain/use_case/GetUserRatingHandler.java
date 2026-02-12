@@ -1,8 +1,8 @@
-package com.mrs.engagement_service.module.rating.domain.handler;
+package com.mrs.engagement_service.module.rating.domain.use_case;
 
 import com.mrs.engagement_service.module.rating.application.dto.filter.RatingFilter;
 import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
-import com.mrs.engagement_service.module.rating.domain.port.EngagementRepository;
+import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
@@ -12,10 +12,10 @@ import java.util.UUID;
 @Component
 public class GetUserRatingHandler {
 
-    private final EngagementRepository engagementRepository;
+    private final RatingRepository ratingRepository;
 
-    public GetUserRatingHandler(EngagementRepository engagementRepository) {
-        this.engagementRepository = engagementRepository;
+    public GetUserRatingHandler(RatingRepository ratingRepository) {
+        this.ratingRepository = ratingRepository;
     }
 
     public Page<Rating> execute(
@@ -30,7 +30,7 @@ public class GetUserRatingHandler {
                 pageSize
         );
 
-        return engagementRepository.findAll(
+        return ratingRepository.findAll(
                 userId,
                 ratingFilter,
                 pageRequest

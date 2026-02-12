@@ -1,9 +1,9 @@
 package com.mrs.engagement_service.handler;
 
 import com.mrs.engagement_service.module.rating.application.dto.filter.RatingFilter;
-import com.mrs.engagement_service.module.rating.domain.handler.GetUserRatingHandler;
+import com.mrs.engagement_service.module.rating.domain.use_case.GetUserRatingHandler;
 import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
-import com.mrs.engagement_service.module.rating.domain.port.EngagementRepository;
+import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 class GetUserRatingHandlerTest {
 
     @Mock
-    private EngagementRepository engagementRepository;
+    private RatingRepository ratingRepository;
 
     @InjectMocks
     private GetUserRatingHandler getUserRatingHandler;
@@ -49,7 +49,7 @@ class GetUserRatingHandlerTest {
 
         Page<Rating> expectedPage = new PageImpl<>(Collections.emptyList());
 
-        when(engagementRepository.findAll(eq(userId), eq(filter), any(PageRequest.class)))
+        when(ratingRepository.findAll(eq(userId), eq(filter), any(PageRequest.class)))
                 .thenReturn(expectedPage);
 
         // Act
@@ -59,7 +59,7 @@ class GetUserRatingHandlerTest {
         assertNotNull(result, "The result should not be null");
         assertEquals(expectedPage, result, "The returned page should match the repository result");
 
-        verify(engagementRepository, times(1))
+        verify(ratingRepository, times(1))
                 .findAll(eq(userId), eq(filter), any(PageRequest.class));
     }
 
@@ -78,7 +78,7 @@ class GetUserRatingHandlerTest {
         getUserRatingHandler.execute(filter, userId, expectedPageSize, expectedPageNumber);
 
         // Assert & Verify
-        verify(engagementRepository).findAll(eq(userId), eq(filter), pageRequestCaptor.capture());
+        verify(ratingRepository).findAll(eq(userId), eq(filter), pageRequestCaptor.capture());
 
         PageRequest capturedRequest = pageRequestCaptor.getValue();
 
