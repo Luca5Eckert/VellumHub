@@ -1,8 +1,8 @@
 package com.mrs.engagement_service.module.rating.domain.use_case;
 
-import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
 import com.mrs.engagement_service.module.rating.domain.command.CreateRatingCommand;
 import com.mrs.engagement_service.module.rating.domain.exception.RatingAlreadyExistException;
+import com.mrs.engagement_service.module.rating.domain.model.Rating;
 import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
 import org.springframework.stereotype.Component;
 

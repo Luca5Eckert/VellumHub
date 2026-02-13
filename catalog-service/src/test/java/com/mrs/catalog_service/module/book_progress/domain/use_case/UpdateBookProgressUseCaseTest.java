@@ -1,11 +1,11 @@
-package com.mrs.engagement_service.module.book_progress.domain.use_case;
+package com.mrs.catalog_service.module.book_progress.domain.use_case;
 
-import com.mrs.engagement_service.module.book_progress.domain.command.UpdateBookProgressCommand;
-import com.mrs.engagement_service.module.book_progress.domain.exception.BookIsNotBeingReadException;
-import com.mrs.engagement_service.module.book_progress.domain.exception.BookProgressNotFoundException;
-import com.mrs.engagement_service.module.book_progress.domain.model.ReadingStatus;
-import com.mrs.engagement_service.module.book_progress.domain.port.BookProgressRepository;
-import com.mrs.engagement_service.module.book_progress.domain.model.BookProgress;
+import com.mrs.catalog_service.module.book_progress.domain.command.UpdateBookProgressCommand;
+import com.mrs.catalog_service.module.book_progress.domain.exception.BookIsNotBeingReadException;
+import com.mrs.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
+import com.mrs.catalog_service.module.book_progress.domain.model.ReadingStatus;
+import com.mrs.catalog_service.module.book_progress.domain.port.BookProgressRepository;
+import com.mrs.catalog_service.module.book_progress.domain.model.BookProgress;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

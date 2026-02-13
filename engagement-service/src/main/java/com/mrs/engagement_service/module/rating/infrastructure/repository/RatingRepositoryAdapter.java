@@ -1,10 +1,9 @@
 package com.mrs.engagement_service.module.rating.infrastructure.repository;
 
-import com.mrs.engagement_service.module.rating.application.dto.filter.RatingFilter;
-import com.mrs.engagement_service.module.book_progress.domain.model.EngagementStats;
 import com.mrs.engagement_service.infrastructure.provider.RatingFilterProvider;
+import com.mrs.engagement_service.module.rating.domain.filter.RatingFilter;
 import com.mrs.engagement_service.module.rating.domain.model.Rating;
-import com.mrs.engagement_service.module.rating.domain.port.EngagementRepository;
+import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,19 +12,19 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
-public class EngagementRepositoryAdapter implements EngagementRepository {
+public class RatingRepositoryAdapter implements RatingRepository {
 
-    public final EngagementRepositoryJpa engagementRepositoryJpa;
+    public final RatingRepositoryJpa ratingRepositoryJpa;
     public final RatingFilterProvider ratingFilterProvider;
 
-    public EngagementRepositoryAdapter(EngagementRepositoryJpa engagementRepositoryJpa, RatingFilterProvider ratingFilterProvider) {
-        this.engagementRepositoryJpa = engagementRepositoryJpa;
+    public RatingRepositoryAdapter(RatingRepositoryJpa ratingRepositoryJpa, RatingFilterProvider ratingFilterProvider) {
+        this.ratingRepositoryJpa = ratingRepositoryJpa;
         this.ratingFilterProvider = ratingFilterProvider;
     }
 
     @Override
     public void save(Rating rating) {
-        engagementRepositoryJpa.save(rating);
+        ratingRepositoryJpa.save(rating);
     }
 
     @Override
@@ -35,12 +34,13 @@ public class EngagementRepositoryAdapter implements EngagementRepository {
                 userId
         );
 
-        return engagementRepositoryJpa.findAll(ratingSpecification, pageRequest);
+        return ratingRepositoryJpa.findAll(ratingSpecification, pageRequest);
     }
 
     @Override
-    public EngagementStats findStatusByMediaId(UUID mediaId) {
-        return engagementRepositoryJpa.findStatusByMediaId(mediaId);
+    public boolean existsByUserIdAndBookId(UUID userId, UUID bookId) {
+        return ratingRepositoryJpa.existsByUserIdAndBookId(userId, bookId);
     }
+
 
 }

@@ -1,8 +1,8 @@
-package com.mrs.engagement_service.module.book_progress.domain.use_case;
+package com.mrs.catalog_service.module.book_progress.domain.use_case;
 
-import com.mrs.engagement_service.module.book_progress.domain.command.DeleteBookProgressCommand;
-import com.mrs.engagement_service.module.book_progress.domain.exception.BookProgressNotFoundException;
-import com.mrs.engagement_service.module.book_progress.domain.port.BookProgressRepository;
+import com.mrs.catalog_service.module.book_progress.domain.command.DeleteBookProgressCommand;
+import com.mrs.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
+import com.mrs.catalog_service.module.book_progress.domain.port.BookProgressRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

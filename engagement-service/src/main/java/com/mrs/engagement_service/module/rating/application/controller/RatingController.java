@@ -4,7 +4,6 @@ import com.mrs.engagement_service.module.rating.application.dto.CreateRatingRequ
 import com.mrs.engagement_service.module.rating.application.dto.GetBookStatusResponse;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.module.rating.application.handler.CreateRatingHandler;
-import com.mrs.engagement_service.module.rating.application.handler.GetBookStatsHandler;
 import com.mrs.engagement_service.module.rating.application.handler.GetUserRatingHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,14 +29,13 @@ import java.util.UUID;
 public class RatingController {
 
     private final CreateRatingHandler createRatingHandler;
-    private final GetBookStatsHandler getBookStatsHandler;
     private final GetUserRatingHandler getUserRatingHandler;
 
-    public RatingController(CreateRatingHandler createRatingHandler,
-                            GetBookStatsHandler getBookStatsHandler,
-                            GetUserRatingHandler getUserRatingHandler) {
+    public RatingController(
+            CreateRatingHandler createRatingHandler,
+            GetUserRatingHandler getUserRatingHandler
+    ) {
         this.createRatingHandler = createRatingHandler;
-        this.getBookStatsHandler = getBookStatsHandler;
         this.getUserRatingHandler = getUserRatingHandler;
     }
 
@@ -77,18 +75,5 @@ public class RatingController {
         );
         return ResponseEntity.ok(response);
     }
-
-    @GetMapping("/media/{bookId}/stats")
-    @Operation(summary = "Get media statistics", description = "Returns rating statistics for a specific book")
-    @SecurityRequirement(name = "bearerAuth")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = GetBookStatusResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Media not found", content = @Content)
-    })
-    public ResponseEntity<GetBookStatusResponse> getMediaStatus(@Parameter(description = "Book ID") @PathVariable UUID bookId) {
-        GetBookStatusResponse response = getBookStatsHandler.handle(bookId);
-        return ResponseEntity.ok(response);
-    }
+    
 }
