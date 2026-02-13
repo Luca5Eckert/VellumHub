@@ -1,7 +1,7 @@
 package com.mrs.engagement_service.module.rating.infrastructure.repository;
 
-import com.mrs.engagement_service.module.rating.domain.model.EngagementStats;
-import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
+import com.mrs.engagement_service.module.book_progress.domain.model.EngagementStats;
+import com.mrs.engagement_service.module.rating.domain.model.Rating;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -21,4 +21,5 @@ public interface EngagementRepositoryJpa extends JpaRepository<Rating, Long>, Jp
     """)
     EngagementStats findStatusByMediaId(UUID mediaId);
 
+    boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
 }

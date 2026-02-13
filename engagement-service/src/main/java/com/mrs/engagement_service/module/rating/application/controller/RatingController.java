@@ -4,8 +4,8 @@ import com.mrs.engagement_service.module.rating.application.dto.CreateRatingRequ
 import com.mrs.engagement_service.module.rating.application.dto.GetBookStatusResponse;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.module.rating.application.handler.CreateRatingHandler;
-import com.mrs.engagement_service.module.rating.application.handler.GetMediaStatsHandler;
-import com.mrs.engagement_service.module.rating.domain.service.RatingService;
+import com.mrs.engagement_service.module.rating.application.handler.GetBookStatsHandler;
+import com.mrs.engagement_service.module.rating.application.handler.GetUserRatingHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,71 +26,69 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/rating")
-@Tag(name = "Rating", description = "Endpoints para gerenciamento de ratings de usuários de livros")
+@Tag(name = "Rating", description = "Endpoints for managing user ratings of media")
 public class RatingController {
 
-    private final RatingService ratingService;
-
     private final CreateRatingHandler createRatingHandler;
-    private final GetMediaStatsHandler getMediaStatsHandler;
+    private final GetBookStatsHandler getBookStatsHandler;
+    private final GetUserRatingHandler getUserRatingHandler;
 
-    public RatingController(RatingService ratingService, CreateRatingHandler createRatingHandler, GetMediaStatsHandler getMediaStatsHandler) {
-        this.ratingService = ratingService;
+    public RatingController(CreateRatingHandler createRatingHandler,
+                            GetBookStatsHandler getBookStatsHandler,
+                            GetUserRatingHandler getUserRatingHandler) {
         this.createRatingHandler = createRatingHandler;
-        this.getMediaStatsHandler = getMediaStatsHandler;
+        this.getBookStatsHandler = getBookStatsHandler;
+        this.getUserRatingHandler = getUserRatingHandler;
     }
 
     @PostMapping
-    @Operation(summary = "Registrar rating", description = "Registra um novo rating do usuário com uma mídia (0-5 estrelas + review)")
+    @Operation(summary = "Register rating", description = "Registers a new user rating for a media (0-5 stars + review)")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Rating registrado com sucesso",
+            @ApiResponse(responseCode = "201", description = "Rating registered successfully",
                     content = @Content(schema = @Schema(implementation = String.class))),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid data", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     })
     public ResponseEntity<String> create(@RequestBody @Valid CreateRatingRequest request) {
         createRatingHandler.handle(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Rating registered with success");
+        return ResponseEntity.status(HttpStatus.CREATED).body("Rating registered successfully");
     }
 
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Buscar ratings do usuário", description = "Retorna todos os ratings de um usuário específico com filtros opcionais")
+    @Operation(summary = "Get user ratings", description = "Returns all ratings from a specific user with optional filters")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de ratings retornada com sucesso",
+            @ApiResponse(responseCode = "200", description = "List of ratings retrieved successfully",
                     content = @Content(schema = @Schema(implementation = RatingGetResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content)
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     })
     public ResponseEntity<List<RatingGetResponse>> findAllOfUser(
-            @Parameter(description = "ID do usuário") @PathVariable UUID userId,
-            @Parameter(description = "Filtrar por estrelas mínimas") @RequestParam(required = false) Integer minStars,
-            @Parameter(description = "Filtrar por estrelas máximas") @RequestParam(required = false) Integer maxStars,
-            @Parameter(description = "Data inicial (ISO 8601)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @Parameter(description = "Data final (ISO 8601)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
-            @Parameter(description = "Número da página") @RequestParam(defaultValue = "0") int pageNumber,
-            @Parameter(description = "Tamanho da página") @RequestParam(defaultValue = "10") int pageSize
+            @Parameter(description = "User ID") @PathVariable UUID userId,
+            @Parameter(description = "Filter by minimum stars") @RequestParam(required = false) Integer minStars,
+            @Parameter(description = "Filter by maximum stars") @RequestParam(required = false) Integer maxStars,
+            @Parameter(description = "Start date (ISO 8601)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+            @Parameter(description = "End date (ISO 8601)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize
     ) {
-        List<RatingGetResponse> response = ratingService.findAllOfUser(
+        List<RatingGetResponse> response = getUserRatingHandler.handle(
                 userId, minStars, maxStars, from, to, pageNumber, pageSize
         );
         return ResponseEntity.ok(response);
     }
 
-
     @GetMapping("/media/{bookId}/stats")
-    @Operation(summary = "Obter estatísticas de mídia", description = "Retorna as estatísticas de ratings de um livro específico")
+    @Operation(summary = "Get media statistics", description = "Returns rating statistics for a specific book")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Estatísticas retornadas com sucesso",
+            @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully",
                     content = @Content(schema = @Schema(implementation = GetBookStatusResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Mídia não encontrada", content = @Content)
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Media not found", content = @Content)
     })
-    public ResponseEntity<GetBookStatusResponse> getMediaStatus(@Parameter(description = "ID da livro") @PathVariable UUID bookId) {
-        GetBookStatusResponse response = getMediaStatsHandler.handle(bookId);
-
+    public ResponseEntity<GetBookStatusResponse> getMediaStatus(@Parameter(description = "Book ID") @PathVariable UUID bookId) {
+        GetBookStatusResponse response = getBookStatsHandler.handle(bookId);
         return ResponseEntity.ok(response);
     }
-
 }

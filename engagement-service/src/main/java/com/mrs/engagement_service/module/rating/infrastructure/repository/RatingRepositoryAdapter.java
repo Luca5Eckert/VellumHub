@@ -1,10 +1,10 @@
 package com.mrs.engagement_service.module.rating.infrastructure.repository;
 
 import com.mrs.engagement_service.module.rating.application.dto.filter.RatingFilter;
-import com.mrs.engagement_service.module.rating.domain.model.EngagementStats;
+import com.mrs.engagement_service.module.book_progress.domain.model.EngagementStats;
 import com.mrs.engagement_service.infrastructure.provider.RatingFilterProvider;
-import com.mrs.engagement_service.module.book_progress.domain.model.Rating;
-import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
+import com.mrs.engagement_service.module.rating.domain.model.Rating;
+import com.mrs.engagement_service.module.rating.domain.port.EngagementRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,12 +13,12 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
-public class RatingRepositoryAdapter implements RatingRepository {
+public class EngagementRepositoryAdapter implements EngagementRepository {
 
     public final EngagementRepositoryJpa engagementRepositoryJpa;
     public final RatingFilterProvider ratingFilterProvider;
 
-    public RatingRepositoryAdapter(EngagementRepositoryJpa engagementRepositoryJpa, RatingFilterProvider ratingFilterProvider) {
+    public EngagementRepositoryAdapter(EngagementRepositoryJpa engagementRepositoryJpa, RatingFilterProvider ratingFilterProvider) {
         this.engagementRepositoryJpa = engagementRepositoryJpa;
         this.ratingFilterProvider = ratingFilterProvider;
     }

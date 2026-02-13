@@ -4,6 +4,8 @@ import com.mrs.catalog_service.module.book_request.domain.BookRequest;
 import com.mrs.catalog_service.module.book_request.domain.port.BookRequestRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public class BookRequestRepositoryAdapter implements BookRequestRepository {
 
@@ -21,5 +23,15 @@ public class BookRequestRepositoryAdapter implements BookRequestRepository {
     @Override
     public boolean existByTitleAndAuthor(String title, String author) {
         return bookRequestRepositoryJpa.existsByTitleAndAuthor(title, author);
+    }
+
+    @Override
+    public Optional<BookRequest> findById(long requestId) {
+        return bookRequestRepositoryJpa.findById(requestId);
+    }
+
+    @Override
+    public void deleteById(long requestId) {
+        bookRequestRepositoryJpa.deleteById(requestId);
     }
 }

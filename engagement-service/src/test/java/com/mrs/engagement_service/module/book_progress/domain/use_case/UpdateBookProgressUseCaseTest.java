@@ -5,7 +5,7 @@ import com.mrs.engagement_service.module.book_progress.domain.exception.BookIsNo
 import com.mrs.engagement_service.module.book_progress.domain.exception.BookProgressNotFoundException;
 import com.mrs.engagement_service.module.book_progress.domain.model.ReadingStatus;
 import com.mrs.engagement_service.module.book_progress.domain.port.BookProgressRepository;
-import com.mrs.engagement_service.module.rating.domain.model.BookProgress;
+import com.mrs.engagement_service.module.book_progress.domain.model.BookProgress;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
