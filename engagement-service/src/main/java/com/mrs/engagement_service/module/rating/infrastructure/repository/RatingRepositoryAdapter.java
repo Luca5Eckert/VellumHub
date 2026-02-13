@@ -23,8 +23,8 @@ public class RatingRepositoryAdapter implements RatingRepository {
     }
 
     @Override
-    public void save(Rating rating) {
-        ratingRepositoryJpa.save(rating);
+    public Rating save(Rating rating) {
+        return ratingRepositoryJpa.save(rating);
     }
 
     @Override

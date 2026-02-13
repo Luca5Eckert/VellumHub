@@ -15,7 +15,7 @@ public class CreateRatingUseCase {
         this.ratingRepository = ratingRepository;
     }
 
-    public void execute(CreateRatingCommand command) {
+    public Rating execute(CreateRatingCommand command) {
         if (ratingRepository.existsByUserIdAndBookId(command.userId(), command.bookId())) {
             throw new RatingAlreadyExistException();
         }
@@ -27,7 +27,7 @@ public class CreateRatingUseCase {
                 .review(command.review())
                 .build();
 
-        ratingRepository.save(rating);
+        return ratingRepository.save(rating);
     }
 
 }
