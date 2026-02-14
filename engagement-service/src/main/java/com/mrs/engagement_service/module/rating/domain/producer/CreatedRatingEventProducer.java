@@ -20,7 +20,7 @@ public class CreatedRatingEventProducer {
         );
 
         eventProducer.send(
-                "created-rating-event",
+                "created-rating",
                 event.userId().toString(),
                 event
         );
