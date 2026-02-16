@@ -1,5 +1,6 @@
 package com.mrs.user_service.share.security.token;
 
+import com.mrs.user_service.module.auth.infrastructure.security.token.JwtTokenProvider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -35,7 +36,7 @@ class JwtTokenProviderTest {
                 new SimpleGrantedAuthority("ROLE_ADMIN")
         );
 
-        String token = tokenProvider.createToken(email, userId, authorities);
+        String token = tokenProvider.createToken(email, userId, authorities.stream().map(SimpleGrantedAuthority::getAuthority).toList());
 
         assertThat(token).isNotBlank();
 

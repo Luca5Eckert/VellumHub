@@ -1,15 +1,14 @@
-package com.mrs.user_service.share.security.token;
+package com.mrs.user_service.module.auth.infrastructure.security.token;
 
+import com.mrs.user_service.module.auth.domain.port.TokenProvider;
 import io. jsonwebtoken.Jwts;
 import io.jsonwebtoken. SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security. Keys;
 import org.springframework. beans.factory.annotation.Value;
-import org.springframework.security. core.GrantedAuthority;
 import org.springframework.stereotype. Component;
 
 import java.security. Key;
-import java.util. Collection;
 import java.util. Date;
 import java.util. List;
 import java.util.UUID;
@@ -18,6 +17,7 @@ import java.util.UUID;
 public class JwtTokenProvider implements TokenProvider {
 
     private final Key key;
+
     private final long validityInMilliseconds;
 
     public JwtTokenProvider(
@@ -30,21 +30,18 @@ public class JwtTokenProvider implements TokenProvider {
     }
 
     @Override
-    public String createToken(String email, UUID userId, Collection<? extends GrantedAuthority> grantedAuthorities) {  // ADICIONAR userId AQUI
+    public String createToken(String email, UUID userId, List<String> roles) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds);
 
-        List<String> roles = grantedAuthorities.stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
-
         return Jwts.builder()
                 .setSubject(email)
-                .claim("user_id", userId.toString())
+                .claim("user_id", userId)
                 .claim("roles", roles)
                 .setIssuedAt(now)
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
+
 }

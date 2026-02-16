@@ -1,4 +1,4 @@
-package com.mrs.user_service.share.security.user;
+package com.mrs.user_service.module.auth.infrastructure.security.user;
 
 import com.mrs.user_service.module.user.domain.RoleUser;
 import org.jspecify.annotations.Nullable;

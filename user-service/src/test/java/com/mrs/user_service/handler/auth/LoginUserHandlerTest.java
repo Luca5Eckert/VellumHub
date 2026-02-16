@@ -1,9 +1,9 @@
 package com.mrs.user_service.handler.auth;
 
 import com.mrs.user_service.module.auth.domain.handler.LoginUserHandler;
+import com.mrs.user_service.module.auth.domain.port.TokenProvider;
 import com.mrs.user_service.module.user.domain.RoleUser;
-import com.mrs.user_service.share.security.token.TokenProvider;
-import com.mrs.user_service.share.security.user.UserDetailImpl;
+import com.mrs.user_service.module.auth.infrastructure.security.user.UserDetailImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

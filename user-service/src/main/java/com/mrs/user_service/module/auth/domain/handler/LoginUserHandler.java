@@ -1,34 +1,31 @@
 package com.mrs.user_service.module.auth.domain.handler;
 
-import com.mrs.user_service.share.security.token.TokenProvider;
-import com.mrs.user_service.share.security.user.UserDetailImpl;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import com.mrs.user_service.module.auth.domain.model.AuthenticatedUser;
+import com.mrs.user_service.module.auth.domain.port.AuthenticatorPort;
+import com.mrs.user_service.module.auth.domain.port.TokenProvider;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LoginUserHandler {
 
-    private final AuthenticationManager authenticationManager;
+    private final AuthenticatorPort authenticatorPort;
     private final TokenProvider tokenProvider;
 
-    public LoginUserHandler(AuthenticationManager authenticationManager, TokenProvider tokenProvider) {
-        this.authenticationManager = authenticationManager;
+    public LoginUserHandler(AuthenticatorPort authenticatorPort, TokenProvider tokenProvider) {
+        this.authenticatorPort = authenticatorPort;
         this.tokenProvider = tokenProvider;
     }
 
     public String execute(String email, String password) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
+        AuthenticatedUser user = authenticatorPort.authenticate(
+                email,
+                password
         );
 
-        UserDetailImpl userDetails = (UserDetailImpl) authentication.getPrincipal();
-
         return tokenProvider.createToken(
-                userDetails.getUsername(),
-                userDetails.getUserId(),
-                userDetails.getAuthorities()
+                user.email(),
+                user.id(),
+                user.roles()
         );
     }
 

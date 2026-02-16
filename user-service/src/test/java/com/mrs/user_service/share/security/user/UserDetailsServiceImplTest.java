@@ -1,5 +1,6 @@
 package com.mrs.user_service.share.security.user;
 
+import com.mrs.user_service.module.auth.infrastructure.security.user.UserDetailsServiceImpl;
 import com.mrs.user_service.module.user.domain.RoleUser;
 import com.mrs.user_service.module.user.domain.UserEntity;
 import com.mrs.user_service.module.user.domain.port.UserRepository;
