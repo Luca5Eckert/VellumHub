@@ -22,11 +22,11 @@ public class GetRecommendationsHandler {
         this.recommendationMapper = recommendationMapper;
     }
 
-    public List<RecommendationResponse> handle(GetRecommendationsRequest request, UUID userId){
+    public List<RecommendationResponse> handle(UUID userId, int limit, int offset) {
         GetRecommendationsCommand command = new GetRecommendationsCommand(
                 userId,
-                request.limit(),
-                request.offset()
+                limit,
+                offset
         );
 
         List<Recommendation> recommendations = getRecommendationsUseCase.execute(command);
