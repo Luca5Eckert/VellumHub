@@ -17,5 +17,5 @@ public interface BookProgressRepositoryJpa extends JpaRepository<BookProgress, L
 
     void deleteByUserIdAndBookId(UUID userId, UUID bookId);
 
-    List<BookProgress> findAllByUserIdAndStatus(UUID userId, ReadingStatus readingStatus);
+    List<BookProgress> findAllByUserIdAndReadingStatus(UUID userId, ReadingStatus status);
 }

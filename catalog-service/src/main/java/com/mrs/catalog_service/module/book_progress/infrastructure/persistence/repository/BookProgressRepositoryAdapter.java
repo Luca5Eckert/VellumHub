@@ -45,7 +45,8 @@ public class BookProgressRepositoryAdapter implements BookProgressRepository {
     }
 
     @Override
-    public List<BookProgress> findAllByUserIdAndStatus(UUID userId, ReadingStatus readingStatus) {
-        return bookProgressRepositoryJpa.findAllByUserIdAndStatus(userId, readingStatus);
+    public List<BookProgress> findAllByUserIdAndReadingStatus(UUID userId, ReadingStatus status){
+        return bookProgressRepositoryJpa.findAllByUserIdAndReadingStatus(userId, status);
+
     }
 }

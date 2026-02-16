@@ -18,7 +18,7 @@ public class GetReadingListUseCase {
     }
 
     public List<BookProgress> execute(UUID userId) {
-        return bookProgressRepository.findAllByUserIdAndStatus(userId, ReadingStatus.READING);
+        return bookProgressRepository.findAllByUserIdAndReadingStatus(userId, ReadingStatus.READING);
     }
 
 }
