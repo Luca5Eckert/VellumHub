@@ -2,7 +2,7 @@ package com.mrs.recommendation_service.module.book_feature.application.consumer;
 
 import com.mrs.recommendation_service.module.book_feature.application.event.CreateBookEvent;
 import com.mrs.recommendation_service.module.book_feature.application.mapper.MediaFeatureMapper;
-import com.mrs.recommendation_service.module.book_feature.domain.handler.book_feature.CreateBookFeatureHandler;
+import com.mrs.recommendation_service.module.book_feature.domain.use_case.CreateBookFeatureUseCase;
 import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class CreateBookConsumerEvent {
 
-    private final CreateBookFeatureHandler createBookFeatureHandler;
+    private final CreateBookFeatureUseCase createBookFeatureUseCase;
     private final MediaFeatureMapper mapper;
 
-    public CreateBookConsumerEvent(CreateBookFeatureHandler createBookFeatureHandler, MediaFeatureMapper mapper) {
-        this.createBookFeatureHandler = createBookFeatureHandler;
+    public CreateBookConsumerEvent(CreateBookFeatureUseCase createBookFeatureUseCase, MediaFeatureMapper mapper) {
+        this.createBookFeatureUseCase = createBookFeatureUseCase;
         this.mapper = mapper;
     }
 
@@ -31,7 +31,7 @@ public class CreateBookConsumerEvent {
                 genresVector
         );
 
-        createBookFeatureHandler.execute(bookFeature);
+        createBookFeatureUseCase.execute(bookFeature);
     }
 
 }

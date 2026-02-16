@@ -2,14 +2,14 @@ package com.mrs.recommendation_service.module.book_feature.application.consumer;
 
 import com.mrs.recommendation_service.module.book_feature.application.event.UpdateBookEvent;
 import com.mrs.recommendation_service.module.book_feature.domain.command.UpdateBookFeatureCommand;
-import com.mrs.recommendation_service.module.book_feature.domain.handler.book_feature.UpdateMediaFeatureHandler;
+import com.mrs.recommendation_service.module.book_feature.domain.use_case.UpdateMediaFeatureUseCase;
 import org.springframework.kafka.annotation.KafkaListener;
 
 public class UpdateBookConsumerEvent {
 
-    private final UpdateMediaFeatureHandler mediaFeatureHandler;
+    private final UpdateMediaFeatureUseCase mediaFeatureHandler;
 
-    public UpdateBookConsumerEvent(UpdateMediaFeatureHandler mediaFeatureHandler) {
+    public UpdateBookConsumerEvent(UpdateMediaFeatureUseCase mediaFeatureHandler) {
         this.mediaFeatureHandler = mediaFeatureHandler;
     }
 

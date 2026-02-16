@@ -1,17 +1,17 @@
-package com.mrs.recommendation_service.module.book_feature.domain.handler.book_feature;
+package com.mrs.recommendation_service.module.book_feature.domain.use_case;
 
 import com.mrs.recommendation_service.module.book_feature.domain.command.UpdateBookFeatureCommand;
-import com.mrs.recommendation_service.module.book_feature.domain.exception.book_feature.BookFeatureNotFoundException;
+import com.mrs.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
 import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UpdateMediaFeatureHandler {
+public class UpdateMediaFeatureUseCase {
 
     private final BookFeatureRepository bookFeatureRepository;
 
-    public UpdateMediaFeatureHandler(BookFeatureRepository bookFeatureRepository) {
+    public UpdateMediaFeatureUseCase(BookFeatureRepository bookFeatureRepository) {
         this.bookFeatureRepository = bookFeatureRepository;
     }
 

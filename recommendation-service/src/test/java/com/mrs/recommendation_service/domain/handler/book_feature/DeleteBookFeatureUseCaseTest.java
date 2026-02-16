@@ -1,6 +1,6 @@
 package com.mrs.recommendation_service.domain.handler.book_feature;
 
-import com.mrs.recommendation_service.module.book_feature.domain.handler.book_feature.DeleteBookFeatureHandler;
+import com.mrs.recommendation_service.module.book_feature.domain.use_case.DeleteBookFeatureUseCase;
 import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,13 +14,13 @@ import java.util.UUID;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class DeleteBookFeatureHandlerTest {
+class DeleteBookFeatureUseCaseTest {
 
     @Mock
     private BookFeatureRepository bookFeatureRepository;
 
     @InjectMocks
-    private DeleteBookFeatureHandler deleteMediaFeatureHandler;
+    private DeleteBookFeatureUseCase deleteMediaFeatureHandler;
 
     @Test
     @DisplayName("Should delete media feature by ID")

@@ -1,7 +1,7 @@
 package com.mrs.recommendation_service.share.exception;
 
 import com.mrs.recommendation_service.module.book_feature.domain.exception.book_feature.BookFeatureDomainException;
-import com.mrs.recommendation_service.module.book_feature.domain.exception.book_feature.BookFeatureNotFoundException;
+import com.mrs.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
 import com.mrs.recommendation_service.module.user_profile.domain.exception.user_profile.UserProfileDomainException;
 import com.mrs.recommendation_service.module.user_profile.domain.exception.user_profile.UserProfileNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;

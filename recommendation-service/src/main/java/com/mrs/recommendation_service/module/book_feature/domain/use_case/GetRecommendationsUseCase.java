@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.book_feature.domain.handler.book_feature;
+package com.mrs.recommendation_service.module.book_feature.domain.use_case;
 
 import com.mrs.recommendation_service.module.book_feature.application.dto.BookFeatureResponse;
 import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
@@ -9,13 +9,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-public class GetRecommendationsHandler {
+public class GetRecommendationsUseCase {
 
     private final BookFeatureRepository bookFeatureRepository;
 
     private final CatalogClient client;
 
-    public GetRecommendationsHandler(BookFeatureRepository bookFeatureRepository, CatalogClient client) {
+    public GetRecommendationsUseCase(BookFeatureRepository bookFeatureRepository, CatalogClient client) {
         this.bookFeatureRepository = bookFeatureRepository;
         this.client = client;
     }

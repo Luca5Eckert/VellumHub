@@ -1,6 +1,6 @@
 package com.mrs.recommendation_service.module.user_profile.domain.handler.user_profile;
 
-import com.mrs.recommendation_service.module.book_feature.domain.exception.book_feature.BookFeatureNotFoundException;
+import com.mrs.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
 import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.mrs.recommendation_service.module.user_profile.domain.command.UpdateUserProfileCommand;
