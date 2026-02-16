@@ -1,7 +1,7 @@
 package com.mrs.recommendation_service.module.book_feature.infrastructure.client;
 
-import com.mrs.recommendation_service.module.book_feature.application.dto.BookFeatureResponse;
 import com.mrs.recommendation_service.module.book_feature.domain.port.CatalogClient;
+import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +13,6 @@ import java.util.UUID;
 public interface CatalogClientAdapter extends CatalogClient {
 
     @PostMapping("/api/book/bulk")
-    List<BookFeatureResponse> fetchRecommendationsBatch(@RequestBody List<UUID> ids);
+    List<Recommendation> fetchRecommendationsBatch(@RequestBody List<UUID> ids);
 
 }
