@@ -1,7 +1,7 @@
 package com.mrs.recommendation_service.module.book_feature.infrastructure.repository;
 
 import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
-import feign.Param;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -44,9 +44,11 @@ public interface JpaBookFeatureRepository extends JpaRepository<BookFeature, UUI
     @Query(value = """
             SELECT b.book_id
             FROM book_features b
-            ORDER BY b.popularity_score
+            ORDER BY b.popularity_score DESC
             LIMIT :limit OFFSET :offset
-            """)
-    List<UUID> findMostPopularMedias(int limit, int offset);
-
+            """, nativeQuery = true)
+    List<UUID> findMostPopularMedias(
+            @Param("limit") int limit,
+            @Param("offset") int offset
+    );
 }

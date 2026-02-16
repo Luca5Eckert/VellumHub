@@ -63,7 +63,7 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-    @ExceptionHandler(UserProfileNotFoundException.class)
+    @ExceptionHandler(BookFeatureNotFoundException.class)
     public ResponseEntity<ApiResponseError> handleMediaFeatureNotFoundException(
             BookFeatureNotFoundException ex, HttpServletRequest request) {
 
