@@ -8,7 +8,7 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class MediaFeatureMapper {
+public class BookFeatureMapper {
 
     public float[] mapToFeatureVector(List<Genre> genres){
         float[] vector = new float[Genre.total()];

@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.book_feature.application.client;
+package com.mrs.recommendation_service.module.book_feature.infrastructure.client;
 
 import com.mrs.recommendation_service.module.book_feature.application.dto.BookFeatureResponse;
 import com.mrs.recommendation_service.module.book_feature.domain.port.CatalogClient;
@@ -12,7 +12,7 @@ import java.util.UUID;
 @FeignClient(name = "catalog-service")
 public interface CatalogClientAdapter extends CatalogClient {
 
-    @PostMapping("/api/media/bulk")
+    @PostMapping("/api/book/bulk")
     List<BookFeatureResponse> fetchMediaBatch(@RequestBody List<UUID> ids);
 
 }
