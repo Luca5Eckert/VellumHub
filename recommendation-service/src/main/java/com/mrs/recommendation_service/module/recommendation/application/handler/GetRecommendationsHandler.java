@@ -1,6 +1,5 @@
 package com.mrs.recommendation_service.module.recommendation.application.handler;
 
-import com.mrs.recommendation_service.module.recommendation.application.dto.GetRecommendationsRequest;
 import com.mrs.recommendation_service.module.recommendation.application.dto.RecommendationResponse;
 import com.mrs.recommendation_service.module.recommendation.application.mapper.RecommendationMapper;
 import com.mrs.recommendation_service.module.recommendation.domain.command.GetRecommendationsCommand;

@@ -5,7 +5,7 @@ public enum InteractionType {
     DISLIKE(-2),
     WATCH(0.75);
 
-    double weightInteraction;
+    final double weightInteraction;
 
     InteractionType(double weightInteraction){
         this.weightInteraction = weightInteraction;
