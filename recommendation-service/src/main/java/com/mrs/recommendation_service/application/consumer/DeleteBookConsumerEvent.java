@@ -1,17 +1,17 @@
 package com.mrs.recommendation_service.application.consumer;
 
 import com.mrs.recommendation_service.application.event.DeleteBookEvent;
-import com.mrs.recommendation_service.domain.handler.media_feature.DeleteMediaFeatureHandler;
+import com.mrs.recommendation_service.domain.handler.book_feature.DeleteBookFeatureHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DeleteBookConsumerEvent {
 
-    private final DeleteMediaFeatureHandler deleteMediaFeatureHandler;
+    private final DeleteBookFeatureHandler deleteBookFeatureHandler;
 
-    public DeleteBookConsumerEvent(DeleteMediaFeatureHandler deleteMediaFeatureHandler) {
-        this.deleteMediaFeatureHandler = deleteMediaFeatureHandler;
+    public DeleteBookConsumerEvent(DeleteBookFeatureHandler deleteBookFeatureHandler) {
+        this.deleteBookFeatureHandler = deleteBookFeatureHandler;
     }
 
 
@@ -20,7 +20,7 @@ public class DeleteBookConsumerEvent {
             groupId = "recommendation-service"
     )
     public void listen(DeleteBookEvent deleteBookEvent){
-        deleteMediaFeatureHandler.execute(deleteBookEvent.bookId());
+        deleteBookFeatureHandler.execute(deleteBookEvent.bookId());
     }
 
 }

@@ -1,8 +1,8 @@
 package com.mrs.recommendation_service.infrastructure.exception;
 
 import com.mrs.recommendation_service.application.exception.RecommendationApplicationException;
-import com.mrs.recommendation_service.domain.exception.media_feature.MediaFeatureDomainException;
-import com.mrs.recommendation_service.domain.exception.media_feature.MediaFeatureNotFoundException;
+import com.mrs.recommendation_service.domain.exception.book_feature.BookFeatureDomainException;
+import com.mrs.recommendation_service.domain.exception.book_feature.BookFeatureNotFoundException;
 import com.mrs.recommendation_service.domain.exception.recommendation.RecommendationDomainException;
 import com.mrs.recommendation_service.domain.exception.user_profile.UserProfileDomainException;
 import com.mrs.recommendation_service.domain.exception.user_profile.UserProfileNotFoundException;
@@ -80,9 +80,9 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-    @ExceptionHandler(MediaFeatureNotFoundException.class)
+    @ExceptionHandler(BookFeatureNotFoundException.class)
     public ResponseEntity<ApiResponseError> handleMediaFeatureNotFoundException(
-            MediaFeatureNotFoundException ex, HttpServletRequest request) {
+            BookFeatureNotFoundException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.NOT_FOUND;
         return ResponseEntity.status(status).body(ApiResponseError.builder()
@@ -110,9 +110,9 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-    @ExceptionHandler(MediaFeatureDomainException.class)
+    @ExceptionHandler(BookFeatureDomainException.class)
     public ResponseEntity<ApiResponseError> handleMediaFeatureDomainException(
-            MediaFeatureDomainException ex, HttpServletRequest request) {
+            BookFeatureDomainException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(ApiResponseError.builder()

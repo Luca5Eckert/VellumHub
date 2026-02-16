@@ -1,29 +1,29 @@
 package com.mrs.recommendation_service.domain.handler.user_profile;
 
 import com.mrs.recommendation_service.domain.command.UpdateUserProfileCommand;
-import com.mrs.recommendation_service.domain.exception.media_feature.MediaFeatureNotFoundException;
-import com.mrs.recommendation_service.domain.model.MediaFeature;
+import com.mrs.recommendation_service.domain.exception.book_feature.BookFeatureNotFoundException;
+import com.mrs.recommendation_service.domain.model.BookFeature;
 import com.mrs.recommendation_service.domain.model.UserProfile;
-import com.mrs.recommendation_service.domain.port.MediaFeatureRepository;
+import com.mrs.recommendation_service.domain.port.BookFeatureRepository;
 import com.mrs.recommendation_service.domain.port.UserProfileRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
-public class UpdateUserProfileHandler {
+public class UpdateUserProfileUseCase {
 
-    private final MediaFeatureRepository mediaFeatureRepository;
+    private final BookFeatureRepository bookFeatureRepository;
     private final UserProfileRepository userProfileRepository;
 
-    public UpdateUserProfileHandler(MediaFeatureRepository mediaFeatureRepository, UserProfileRepository userProfileRepository) {
-        this.mediaFeatureRepository = mediaFeatureRepository;
+    public UpdateUserProfileUseCase(BookFeatureRepository bookFeatureRepository, UserProfileRepository userProfileRepository) {
+        this.bookFeatureRepository = bookFeatureRepository;
         this.userProfileRepository = userProfileRepository;
     }
 
     @Transactional
     public void execute(UpdateUserProfileCommand updateUserProfileCommand){
-        MediaFeature mediaInteraction = mediaFeatureRepository.findById(updateUserProfileCommand.mediaId())
-                .orElseThrow(() -> new MediaFeatureNotFoundException(updateUserProfileCommand.mediaId().toString()));
+        BookFeature mediaInteraction = bookFeatureRepository.findById(updateUserProfileCommand.mediaId())
+                .orElseThrow(() -> new BookFeatureNotFoundException(updateUserProfileCommand.mediaId().toString()));
 
         UserProfile userProfile = userProfileRepository.findById(updateUserProfileCommand.userId())
                 .orElse(new UserProfile(updateUserProfileCommand.userId()));

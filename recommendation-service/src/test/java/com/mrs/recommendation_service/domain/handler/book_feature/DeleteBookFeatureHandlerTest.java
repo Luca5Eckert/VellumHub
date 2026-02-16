@@ -1,6 +1,6 @@
-package com.mrs.recommendation_service.domain.handler.media_feature;
+package com.mrs.recommendation_service.domain.handler.book_feature;
 
-import com.mrs.recommendation_service.domain.port.MediaFeatureRepository;
+import com.mrs.recommendation_service.domain.port.BookFeatureRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,13 +13,13 @@ import java.util.UUID;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class DeleteMediaFeatureHandlerTest {
+class DeleteBookFeatureHandlerTest {
 
     @Mock
-    private MediaFeatureRepository mediaFeatureRepository;
+    private BookFeatureRepository bookFeatureRepository;
 
     @InjectMocks
-    private DeleteMediaFeatureHandler deleteMediaFeatureHandler;
+    private DeleteBookFeatureHandler deleteMediaFeatureHandler;
 
     @Test
     @DisplayName("Should delete media feature by ID")
@@ -31,7 +31,7 @@ class DeleteMediaFeatureHandlerTest {
         deleteMediaFeatureHandler.execute(mediaId);
 
         // Assert
-        verify(mediaFeatureRepository, times(1)).deleteById(mediaId);
+        verify(bookFeatureRepository, times(1)).deleteById(mediaId);
     }
 
     @Test
@@ -44,6 +44,6 @@ class DeleteMediaFeatureHandlerTest {
         deleteMediaFeatureHandler.execute(nonExistentMediaId);
 
         // Assert
-        verify(mediaFeatureRepository, times(1)).deleteById(nonExistentMediaId);
+        verify(bookFeatureRepository, times(1)).deleteById(nonExistentMediaId);
     }
 }

@@ -5,7 +5,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,14 +16,14 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "media_features")
+@Table(name = "book_features")
 @Getter
 @Setter
 @NoArgsConstructor
-public class MediaFeature {
+public class BookFeature {
 
     @Id
-    private UUID mediaId;
+    private UUID bookId;
 
     @JdbcTypeCode(SqlTypes.VECTOR)
     @Column(name = "embedding")
@@ -36,8 +35,8 @@ public class MediaFeature {
     @Column(name = "last_updated", nullable = false)
     private Instant lastUpdated;
 
-    public MediaFeature(UUID uuid, float[] genresVector) {
-        this.mediaId = uuid;
+    public BookFeature(UUID bookId, float[] genresVector) {
+        this.bookId = bookId;
         this.embedding = genresVector;
     }
 

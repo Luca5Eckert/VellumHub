@@ -1,6 +1,6 @@
 package com.mrs.recommendation_service.application.client;
 
-import com.mrs.recommendation_service.application.dto.MediaFeatureResponse;
+import com.mrs.recommendation_service.application.dto.BookFeatureResponse;
 import com.mrs.recommendation_service.domain.port.CatalogClient;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +13,6 @@ import java.util.UUID;
 public interface CatalogClientAdapter extends CatalogClient {
 
     @PostMapping("/api/media/bulk")
-    List<MediaFeatureResponse> fetchMediaBatch(@RequestBody List<UUID> ids);
+    List<BookFeatureResponse> fetchMediaBatch(@RequestBody List<UUID> ids);
 
 }

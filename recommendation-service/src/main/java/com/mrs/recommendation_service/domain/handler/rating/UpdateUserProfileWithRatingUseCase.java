@@ -1,4 +1,4 @@
 package com.mrs.recommendation_service.domain.handler.rating;
 
-public class UpdateUserProfileWithRatingHandler {
+public class UpdateUserProfileWithRatingUseCase {
 }

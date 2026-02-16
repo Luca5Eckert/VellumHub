@@ -49,7 +49,7 @@ public class UserProfile {
         this.lastUpdated = Instant.now();
     }
 
-    public void processInteraction(MediaFeature media, InteractionType type, double interactionValue) {
+    public void processInteraction(BookFeature media, InteractionType type, double interactionValue) {
         float[] mediaVector = media.getEmbedding();
         double weight = type.getWeightInteraction();
 
@@ -57,7 +57,7 @@ public class UserProfile {
             this.profileVector[i] += (float) (mediaVector[i] * weight * (1 + interactionValue));
         }
 
-        this.interactedMediaIds.add(media.getMediaId());
+        this.interactedMediaIds.add(media.getBookId());
         this.lastUpdated = Instant.now();
     }
 

@@ -1,7 +1,6 @@
 package com.mrs.recommendation_service.application.controller;
 
-import com.mrs.recommendation_service.application.dto.MediaFeatureResponse;
-import com.mrs.recommendation_service.domain.model.Recommendation;
+import com.mrs.recommendation_service.application.dto.BookFeatureResponse;
 import com.mrs.recommendation_service.infrastructure.provider.UserAuthenticationProvider;
 import com.mrs.recommendation_service.domain.service.RecommendationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,10 +43,10 @@ public class RecommendationController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Recomendações retornadas com sucesso",
-                    content = @Content(schema = @Schema(implementation = Recommendation.class))),
+                    content = @Content(schema = @Schema(implementation = BookFeatureResponse.class))),
             @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content)
     })
-    public ResponseEntity<List<MediaFeatureResponse>> getRecommendations(int limit, int offset) {
+    public ResponseEntity<List<BookFeatureResponse>> getRecommendations(int limit, int offset) {
         var userId = userAuthenticationProvider.getUserId();
 
         var recommendations = recommendationService.get(userId, limit, offset);

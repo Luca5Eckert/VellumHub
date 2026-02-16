@@ -2,8 +2,7 @@ package com.mrs.recommendation_service.application.consumer;
 
 import com.mrs.recommendation_service.application.event.CreatedRatingEvent;
 import com.mrs.recommendation_service.domain.command.CreateRatingCommand;
-import com.mrs.recommendation_service.domain.handler.rating.UpdateUserProfileWithRatingHandler;
-import com.mrs.recommendation_service.domain.handler.user_profile.UpdateUserProfileHandler;
+import com.mrs.recommendation_service.domain.handler.rating.UpdateUserProfileWithRatingUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -13,10 +12,10 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class CreatedRatingConsumerEvent {
 
-    private final UpdateUserProfileWithRatingHandler updateUserProfileWithRatingHandler;
+    private final UpdateUserProfileWithRatingUseCase updateUserProfileWithRatingUseCase;
 
-    public CreatedRatingConsumerEvent(UpdateUserProfileWithRatingHandler updateUserProfileWithRatingHandler) {
-        this.updateUserProfileWithRatingHandler = updateUserProfileWithRatingHandler;
+    public CreatedRatingConsumerEvent(UpdateUserProfileWithRatingUseCase updateUserProfileWithRatingUseCase) {
+        this.updateUserProfileWithRatingUseCase = updateUserProfileWithRatingUseCase;
     }
 
 

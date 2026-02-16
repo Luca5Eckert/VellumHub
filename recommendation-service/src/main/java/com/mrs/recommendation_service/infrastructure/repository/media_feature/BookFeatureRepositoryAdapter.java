@@ -1,9 +1,7 @@
 package com.mrs.recommendation_service.infrastructure.repository.media_feature;
 
-import com.mrs.recommendation_service.application.dto.MediaFeatureResponse;
-import com.mrs.recommendation_service.domain.model.MediaFeature;
-import com.mrs.recommendation_service.domain.model.UserProfile;
-import com.mrs.recommendation_service.domain.port.MediaFeatureRepository;
+import com.mrs.recommendation_service.domain.model.BookFeature;
+import com.mrs.recommendation_service.domain.port.BookFeatureRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,17 +9,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public class MediaFeatureRepositoryAdapter implements MediaFeatureRepository {
+public class BookFeatureRepositoryAdapter implements BookFeatureRepository {
 
-    private final JpaMediaFeatureRepository mediaFeatureRepositoryJpa;
+    private final JpaBookFeatureRepository mediaFeatureRepositoryJpa;
 
-    public MediaFeatureRepositoryAdapter(JpaMediaFeatureRepository mediaFeatureRepositoryJpa) {
+    public BookFeatureRepositoryAdapter(JpaBookFeatureRepository mediaFeatureRepositoryJpa) {
         this.mediaFeatureRepositoryJpa = mediaFeatureRepositoryJpa;
     }
 
     @Override
-    public void save(MediaFeature mediaFeature) {
-        mediaFeatureRepositoryJpa.save(mediaFeature);
+    public void save(BookFeature bookFeature) {
+        mediaFeatureRepositoryJpa.save(bookFeature);
     }
 
     @Override
@@ -35,7 +33,7 @@ public class MediaFeatureRepositoryAdapter implements MediaFeatureRepository {
     }
 
     @Override
-    public Optional<MediaFeature> findById(UUID uuid) {
+    public Optional<BookFeature> findById(UUID uuid) {
         return mediaFeatureRepositoryJpa.findById(uuid);
     }
 

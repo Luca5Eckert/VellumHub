@@ -6,7 +6,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record MediaFeatureResponse(
+public record BookFeatureResponse(
         UUID id,
         String title,
         String description,

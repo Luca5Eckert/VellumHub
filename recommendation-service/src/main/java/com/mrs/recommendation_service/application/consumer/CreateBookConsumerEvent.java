@@ -2,19 +2,19 @@ package com.mrs.recommendation_service.application.consumer;
 
 import com.mrs.recommendation_service.application.event.CreateBookEvent;
 import com.mrs.recommendation_service.application.mapper.MediaFeatureMapper;
-import com.mrs.recommendation_service.domain.handler.media_feature.CreateMediaFeatureHandler;
-import com.mrs.recommendation_service.domain.model.MediaFeature;
+import com.mrs.recommendation_service.domain.handler.book_feature.CreateBookFeatureHandler;
+import com.mrs.recommendation_service.domain.model.BookFeature;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CreateBookConsumerEvent {
 
-    private final CreateMediaFeatureHandler createMediaFeatureHandler;
+    private final CreateBookFeatureHandler createBookFeatureHandler;
     private final MediaFeatureMapper mapper;
 
-    public CreateBookConsumerEvent(CreateMediaFeatureHandler createMediaFeatureHandler, MediaFeatureMapper mapper) {
-        this.createMediaFeatureHandler = createMediaFeatureHandler;
+    public CreateBookConsumerEvent(CreateBookFeatureHandler createBookFeatureHandler, MediaFeatureMapper mapper) {
+        this.createBookFeatureHandler = createBookFeatureHandler;
         this.mapper = mapper;
     }
 
@@ -26,12 +26,12 @@ public class CreateBookConsumerEvent {
     public void listen(CreateBookEvent createBookEvent){
         float[] genresVector = mapper.mapToFeatureVector(createBookEvent.genres());
 
-        MediaFeature mediaFeature = new MediaFeature(
+        BookFeature bookFeature = new BookFeature(
                 createBookEvent.bookId(),
                 genresVector
         );
 
-        createMediaFeatureHandler.execute(mediaFeature);
+        createBookFeatureHandler.execute(bookFeature);
     }
 
 }
