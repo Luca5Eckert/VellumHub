@@ -1,12 +1,12 @@
-package com.mrs.catalog_service.module.book.application.dto;
+package com.mrs.recommendation_service.module.recommendation.domain.model;
 
-import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.mrs.recommendation_service.module.book_feature.domain.model.Genre;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record BookFeatureResponse(
+public record Recommendation(
         UUID id,
         String title,
         String description,

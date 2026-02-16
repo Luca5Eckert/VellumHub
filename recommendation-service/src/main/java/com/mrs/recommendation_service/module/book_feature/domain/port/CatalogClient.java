@@ -1,6 +1,6 @@
 package com.mrs.recommendation_service.module.book_feature.domain.port;
 
-import com.mrs.recommendation_service.module.book_feature.application.dto.BookFeatureResponse;
+import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
@@ -8,6 +8,6 @@ import java.util.UUID;
 
 public interface CatalogClient {
 
-    List<BookFeatureResponse> fetchMediaBatch(@RequestBody List<UUID> ids);
+    List<Recommendation> fetchRecommendationsBatch(@RequestBody List<UUID> ids);
 
 }

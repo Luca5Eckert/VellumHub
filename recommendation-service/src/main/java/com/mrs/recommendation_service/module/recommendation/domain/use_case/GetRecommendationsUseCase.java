@@ -1,8 +1,9 @@
-package com.mrs.recommendation_service.module.book_feature.domain.use_case;
+package com.mrs.recommendation_service.module.recommendation.domain.use_case;
 
-import com.mrs.recommendation_service.module.book_feature.application.dto.BookFeatureResponse;
 import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.mrs.recommendation_service.module.book_feature.domain.port.CatalogClient;
+import com.mrs.recommendation_service.module.recommendation.domain.command.GetRecommendationsCommand;
+import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,14 +22,18 @@ public class GetRecommendationsUseCase {
     }
 
 
-    public List<BookFeatureResponse> execute(UUID userId, int limit, int offset) {
-        List<UUID> mediasIds = bookFeatureRepository.findAllByUserId(userId, limit, offset);
+    public List<Recommendation> execute(GetRecommendationsCommand command) {
+        List<UUID> mediasIds = bookFeatureRepository.findAllByUserId(
+                command.userId(),
+                command.limit(),
+                command.offset()
+        );
 
         if(mediasIds == null || mediasIds.isEmpty()){
-            mediasIds = bookFeatureRepository.findMostPopularMedias(limit, offset);
+            mediasIds = bookFeatureRepository.findMostPopularMedias(command.limit(), command.offset());
         }
 
-        return client.fetchMediaBatch(mediasIds);
+        return client.fetchRecommendationsBatch(mediasIds);
     }
 
 }

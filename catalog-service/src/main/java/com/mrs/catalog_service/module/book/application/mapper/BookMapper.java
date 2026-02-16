@@ -1,7 +1,7 @@
 package com.mrs.catalog_service.module.book.application.mapper;
 
 import com.mrs.catalog_service.module.book.application.dto.GetBookResponse;
-import com.mrs.catalog_service.module.book.application.dto.BookFeatureResponse;
+import com.mrs.catalog_service.module.book.application.dto.Recommendation;
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import org.springframework.stereotype.Component;
 
@@ -26,8 +26,8 @@ public class BookMapper {
 
     }
 
-    public BookFeatureResponse toFeatureResponse(Book book) {
-        return new BookFeatureResponse(
+    public Recommendation toFeatureResponse(Book book) {
+        return new Recommendation(
                 book.getId(),
                 book.getTitle(),
                 book.getDescription(),

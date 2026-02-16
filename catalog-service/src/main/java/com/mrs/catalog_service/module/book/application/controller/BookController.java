@@ -2,7 +2,7 @@ package com.mrs.catalog_service.module.book.application.controller;
 
 import com.mrs.catalog_service.module.book.application.dto.CreateBookRequest;
 import com.mrs.catalog_service.module.book.application.dto.GetBookResponse;
-import com.mrs.catalog_service.module.book.application.dto.BookFeatureResponse;
+import com.mrs.catalog_service.module.book.application.dto.Recommendation;
 import com.mrs.catalog_service.module.book.application.dto.UpdateBookRequest; // Import adicionado
 import com.mrs.catalog_service.module.book.domain.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -118,10 +118,10 @@ public class BookController {
     }
 
     @PostMapping("/bulk")
-    public ResponseEntity<List<BookFeatureResponse>> getByIds(List<UUID> bookIds) {
-        List<BookFeatureResponse> bookFeatures = bookService.getByIds(bookIds);
+    public ResponseEntity<List<Recommendation>> getByIds(List<UUID> bookIds) {
+        List<Recommendation> recommendations = bookService.getByIds(bookIds);
 
-        return ResponseEntity.ok(bookFeatures);
+        return ResponseEntity.ok(recommendations);
     }
 
 

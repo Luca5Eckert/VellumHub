@@ -70,7 +70,7 @@ public class BookService {
     }
 
 
-    public List<BookFeatureResponse> getByIds(List<UUID> bookIds) {
+    public List<Recommendation> getByIds(List<UUID> bookIds) {
         List<Book> bookList = getBooksByIdsHandler.execute(bookIds);
 
         return bookList.stream().map(bookMapper::toFeatureResponse).toList();

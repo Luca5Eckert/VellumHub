@@ -13,6 +13,6 @@ import java.util.UUID;
 public interface CatalogClientAdapter extends CatalogClient {
 
     @PostMapping("/api/book/bulk")
-    List<BookFeatureResponse> fetchMediaBatch(@RequestBody List<UUID> ids);
+    List<BookFeatureResponse> fetchRecommendationsBatch(@RequestBody List<UUID> ids);
 
 }

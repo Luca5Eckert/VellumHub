@@ -1,7 +1,8 @@
-package com.mrs.recommendation_service.module.book_feature.application.controller;
+package com.mrs.recommendation_service.module.recommendation.application.controller;
 
-import com.mrs.recommendation_service.share.provider.UserAuthenticationProvider;
 import com.mrs.recommendation_service.module.book_feature.application.dto.BookFeatureResponse;
+import com.mrs.recommendation_service.share.provider.UserAuthenticationProvider;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
