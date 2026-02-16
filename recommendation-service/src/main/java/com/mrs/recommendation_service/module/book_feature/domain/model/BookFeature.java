@@ -26,7 +26,7 @@ public class BookFeature {
     private UUID bookId;
 
     @JdbcTypeCode(SqlTypes.VECTOR)
-    @Column(name = "embedding")
+    @Column(name = "embedding", columnDefinition = "vector(15)")
     private float[] embedding;
 
     @Column(name = "popularity_score")
