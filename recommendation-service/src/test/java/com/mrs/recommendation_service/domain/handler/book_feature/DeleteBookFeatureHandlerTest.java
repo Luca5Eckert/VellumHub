@@ -1,6 +1,7 @@
 package com.mrs.recommendation_service.domain.handler.book_feature;
 
-import com.mrs.recommendation_service.domain.port.BookFeatureRepository;
+import com.mrs.recommendation_service.module.book_feature.domain.handler.book_feature.DeleteBookFeatureHandler;
+import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
