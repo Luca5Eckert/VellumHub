@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.user_profile.domain.exception.user_profile;
+package com.mrs.recommendation_service.module.user_profile.domain.exception;
 
 public class UserProfileNotFoundException extends UserProfileDomainException {
     public UserProfileNotFoundException() {

@@ -2,7 +2,7 @@ package com.mrs.recommendation_service.module.user_profile.application.consumer;
 
 import com.mrs.recommendation_service.module.user_profile.application.event.CreatedRatingEvent;
 import com.mrs.recommendation_service.module.user_profile.domain.command.CreateRatingCommand;
-import com.mrs.recommendation_service.module.user_profile.domain.handler.rating.UpdateUserProfileWithRatingUseCase;
+import com.mrs.recommendation_service.module.user_profile.domain.use_case.UpdateUserProfileWithRatingUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
