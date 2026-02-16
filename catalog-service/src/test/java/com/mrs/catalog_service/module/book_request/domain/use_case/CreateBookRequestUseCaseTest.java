@@ -99,7 +99,7 @@ class CreateBookRequestUseCaseTest {
                 "Trama",
                 List.of(
                         Genre.ROMANCE,
-                        Genre.ACTION
+                        Genre.HORROR
                 )
         );
     }

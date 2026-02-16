@@ -1,6 +1,5 @@
 package com.mrs.recommendation_service.module.user_profile.domain.model;
 
-import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.mrs.recommendation_service.module.user_profile.domain.command.UpdateUserProfileWithRatingCommand;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,7 +7,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -26,8 +24,8 @@ public class UserProfile {
     @Id
     private UUID userId;
 
-    @Column(columnDefinition = "vector(5)")
-    private float[] profileVector = new float[5];
+    @Column(columnDefinition = "vector(15)")
+    private float[] profileVector = new float[15];
 
     @Column(name = "interacted_book_ids", columnDefinition = "uuid[]")
     @JdbcTypeCode(SqlTypes.ARRAY)
@@ -65,19 +63,14 @@ public class UserProfile {
         this.interactedBookIds.add(command.mediaId());
     }
 
+    public void applyVectorAdjustment(float[] bookEmbedding, int adjustment) {
+        float learningRate = 0.1f;
 
-    public void processInteraction(BookFeature book, InteractionType type, double interactionValue) {
-        float[] mediaVector = book.getEmbedding();
-        double weight = type.getWeightInteraction();
+        for (int i = 0; i < this.profileVector.length; i++) {
+            this.profileVector[i] += (bookEmbedding[i] * adjustment * learningRate);
 
-        int length = Math.min(profileVector.length, mediaVector.length);
-        for (int i = 0; i < length; i++) {
-            this.profileVector[i] += (float) (mediaVector[i] * weight * (1 + interactionValue));
+            if (this.profileVector[i] < 0) this.profileVector[i] = 0;
         }
-
-        this.totalEngagementScore += (weight * (1 + interactionValue));
-        this.interactedBookIds.add(book.getBookId());
-        this.lastUpdated = Instant.now();
     }
 
 }

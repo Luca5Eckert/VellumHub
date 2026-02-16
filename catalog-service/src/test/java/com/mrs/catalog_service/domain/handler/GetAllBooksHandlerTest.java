@@ -43,12 +43,12 @@ class GetAllBooksHandlerTest {
                 Book.builder()
                         .id(UUID.randomUUID())
                         .title("Movie 1")
-                        .genres(List.of(Genre.ACTION))
+                        .genres(List.of(Genre.FANTASY))
                         .build(),
                 Book.builder()
                         .id(UUID.randomUUID())
                         .title("Series 1")
-                        .genres(List.of(Genre.COMEDY))
+                        .genres(List.of(Genre.SCI_FI))
                         .build()
         );
 

@@ -38,7 +38,7 @@ class GetBookHandlerTest {
                 .title("Test Movie")
                 .description("A test movie")
                 .releaseYear(2024)
-                .genres(List.of(Genre.ACTION, Genre.COMEDY))
+                .genres(List.of(Genre.FANTASY, Genre.SCI_FI))
                 .build();
 
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(expectedMedia));

@@ -39,7 +39,7 @@ class CreateBookHandlerTest {
     void shouldSaveMediaAndSendEvent_WhenMediaIsValid() {
         // Arrange
         UUID bookId = UUID.randomUUID();
-        List<Genre> genres = List.of(Genre.ACTION, Genre.COMEDY);
+        List<Genre> genres = List.of(Genre.FANTASY, Genre.SCI_FI);
 
         Book book = Book.builder()
                 .id(bookId)

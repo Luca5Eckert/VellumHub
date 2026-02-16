@@ -1,26 +1,37 @@
 package com.mrs.recommendation_service.module.user_profile.domain.use_case;
 
+import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
+import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.mrs.recommendation_service.module.user_profile.domain.command.UpdateUserProfileWithRatingCommand;
 import com.mrs.recommendation_service.module.user_profile.domain.model.UserProfile;
 import com.mrs.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+@Component
 public class UpdateUserProfileWithRatingUseCase {
 
-    private final UserProfileRepository repository;
+    private final UserProfileRepository userProfileRepository;
+    private final BookFeatureRepository bookFeatureRepository;
+
+    public UpdateUserProfileWithRatingUseCase(UserProfileRepository userProfileRepository, BookFeatureRepository bookFeatureRepository) {
+        this.userProfileRepository = userProfileRepository;
+        this.bookFeatureRepository = bookFeatureRepository;
+    }
 
     @Transactional
     public void execute(UpdateUserProfileWithRatingCommand command) {
-        UserProfile profile = repository.findById(command.userId())
+        UserProfile profile = userProfileRepository.findById(command.userId())
                 .orElseGet(() -> new UserProfile(command.userId()));
+
+        BookFeature book = bookFeatureRepository.findById(command.mediaId())
+                .orElseThrow(() -> new RuntimeException("Book features not found"));
 
         profile.updateScoreByRating(command);
 
-        repository.save(profile);
+        profile.applyVectorAdjustment(book.getEmbedding(), command.getWeightAdjustment());
+
+        userProfileRepository.save(profile);
     }
 
 }

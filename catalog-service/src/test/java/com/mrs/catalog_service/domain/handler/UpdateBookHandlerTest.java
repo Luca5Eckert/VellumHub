@@ -41,7 +41,7 @@ class UpdateBookHandlerTest {
     void shouldUpdateMediaAndSendEvent_WhenGenresArePresent() {
         // Arrange
         UUID bookId = UUID.randomUUID();
-        List<Genre> newGenres = List.of(Genre.COMEDY, Genre.ACTION);
+        List<Genre> newGenres = List.of(Genre.FANTASY, Genre.SCI_FI);
 
         UpdateBookRequest request = new UpdateBookRequest(
                 "New Title",
@@ -59,7 +59,7 @@ class UpdateBookHandlerTest {
         Book existingMedia = Book.builder()
                 .id(bookId)
                 .title("Old Title")
-                .genres(List.of(Genre.COMEDY))
+                .genres(List.of(Genre.SCI_FI))
                 .build();
 
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(existingMedia));
@@ -103,7 +103,7 @@ class UpdateBookHandlerTest {
         Book existingMedia = Book.builder()
                 .id(bookId)
                 .title("Old Title")
-                .genres(List.of(Genre.COMEDY))
+                .genres(List.of(Genre.SCI_FI))
                 .build();
 
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(existingMedia));
@@ -122,7 +122,7 @@ class UpdateBookHandlerTest {
     void shouldThrowException_WhenMediaNotFound() {
         // Arrange
         UUID bookId = UUID.randomUUID();
-        UpdateBookRequest request = new UpdateBookRequest("T", "D", 2022, "U", "A", "978-0-7653-0000-0", 300, "P", List.of(Genre.COMEDY));
+        UpdateBookRequest request = new UpdateBookRequest("T", "D", 2022, "U", "A", "978-0-7653-0000-0", 300, "P", List.of(Genre.THRILLER_MYSTERY));
 
         when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
 

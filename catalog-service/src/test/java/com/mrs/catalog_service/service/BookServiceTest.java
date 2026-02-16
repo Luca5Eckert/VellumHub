@@ -74,7 +74,7 @@ class BookServiceTest {
                     "978-0-7653-0000-0",
                     300,
                     "Warner Bros",
-                    List.of(Genre.ACTION, Genre.THRILLER)
+                    List.of(Genre.FANTASY, Genre.THRILLER_MYSTERY)
             );
 
             // Act
@@ -92,7 +92,7 @@ class BookServiceTest {
             assertThat(capturedMedia.getIsbn()).isEqualTo("978-0-7653-0000-0");
             assertThat(capturedMedia.getPageCount()).isEqualTo(300);
             assertThat(capturedMedia.getPublisher()).isEqualTo("Warner Bros");
-            assertThat(capturedMedia.getGenres()).containsExactlyInAnyOrder(Genre.ACTION, Genre.THRILLER);
+            assertThat(capturedMedia.getGenres()).containsExactlyInAnyOrder(Genre.FANTASY, Genre.THRILLER_MYSTERY);
         }
 
         @Test
@@ -108,7 +108,7 @@ class BookServiceTest {
                     "978-0-7653-1111-1",
                     250,
                     "AMC Books",
-                    List.of(Genre.THRILLER, Genre.ACTION)
+                    List.of(Genre.FANTASY, Genre.THRILLER_MYSTERY)
             );
 
             // Act
@@ -163,7 +163,7 @@ class BookServiceTest {
                     .pageCount(300)
                     .publisher("Warner Bros")
                     .coverUrl("https://example.com/matrix.jpg")
-                    .genres(List.of(Genre.ACTION, Genre.THRILLER))
+                    .genres(List.of(Genre.FANTASY, Genre.THRILLER_MYSTERY))
                     .build();
 
             GetBookResponse expectedResponse = new GetBookResponse(
@@ -176,7 +176,7 @@ class BookServiceTest {
                     "978-0-7653-0000-0",
                     300,
                     "Warner Bros",
-                    List.of(Genre.ACTION, Genre.THRILLER),
+                    List.of(Genre.FANTASY, Genre.THRILLER_MYSTERY),
                     now,
                     now
             );
@@ -219,7 +219,7 @@ class BookServiceTest {
                     .isbn("978-0-7653-0000-0")
                     .pageCount(300)
                     .publisher("Warner Bros")
-                    .genres(List.of(Genre.ACTION))
+                    .genres(List.of(Genre.FANTASY))
                     .build();
 
             Book media2 = Book.builder()
@@ -235,7 +235,7 @@ class BookServiceTest {
             Page<Book> bookPage = new PageImpl<>(List.of(media1, media2));
 
             GetBookResponse response1 = new GetBookResponse(mediaId1, "The Matrix", "Desc 1",
-                    1999, "url1", "Wachowski Sisters", "978-0-7653-0000-0", 300, "Warner Bros", List.of(Genre.ACTION), now, now);
+                    1999, "url1", "Wachowski Sisters", "978-0-7653-0000-0", 300, "Warner Bros", List.of(Genre.THRILLER_MYSTERY), now, now);
             GetBookResponse response2 = new GetBookResponse(mediaId2, "Breaking Bad", "Desc 2",
                     2008, "url2", "Vince Gilligan", "978-0-7653-1111-1", 250, "AMC Books", List.of(Genre.HORROR), now, now);
 
@@ -297,7 +297,7 @@ class BookServiceTest {
                     "978-0-7653-9999-9",
                     350,
                     "Updated Publisher",
-                    List.of(Genre.COMEDY, Genre.HORROR)
+                    List.of(Genre.FANTASY, Genre.HORROR)
             );
 
             // Act
