@@ -1,6 +1,7 @@
 package com.mrs.recommendation_service.module.user_profile.domain.model;
 
 import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
+import com.mrs.recommendation_service.module.user_profile.domain.command.UpdateUserProfileWithRatingCommand;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -18,27 +19,19 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "user_profiles")
-@Getter @Setter @NoArgsConstructor
+@Getter
+@NoArgsConstructor
 public class UserProfile {
 
     @Id
     private UUID userId;
 
     @Column(columnDefinition = "vector(5)")
-    private float[] profileVector = new float[10];
+    private float[] profileVector = new float[5];
 
-    @Column(name = "interacted_media_ids", columnDefinition = "uuid[]")
+    @Column(name = "interacted_book_ids", columnDefinition = "uuid[]")
     @JdbcTypeCode(SqlTypes.ARRAY)
-    private Set<UUID> interactedMediaIds = new HashSet<>();
-
-    @Column(name = "total_likes")
-    private long totalLikes;
-
-    @Column(name = "total_dislikes")
-    private long totalDislikes;
-
-    @Column(name = "total_watches")
-    private long totalWatches;
+    private Set<UUID> interactedBookIds = new HashSet<>();
 
     @Column(name = "total_engagement_score")
     private double totalEngagementScore;
@@ -51,34 +44,40 @@ public class UserProfile {
 
     public UserProfile(UUID userId) {
         this.userId = userId;
+        this.totalEngagementScore = 0.0;
         this.createdAt = Instant.now();
         this.lastUpdated = Instant.now();
     }
+
+    /**
+     * Aplica a lógica de transição de faixas de avaliação (estrelas).
+     */
+    public void updateScoreByRating(UpdateUserProfileWithRatingCommand command) {
+        if (!command.hasCategoryChanged()) {
+            return;
+        }
+
+        int adjustment = command.getWeightAdjustment();
+
+        this.totalEngagementScore += adjustment;
+        this.lastUpdated = Instant.now();
+
+        this.interactedBookIds.add(command.mediaId());
+    }
+
 
     public void processInteraction(BookFeature book, InteractionType type, double interactionValue) {
         float[] mediaVector = book.getEmbedding();
         double weight = type.getWeightInteraction();
 
-        for (int i = 0; i < profileVector.length; i++) {
+        int length = Math.min(profileVector.length, mediaVector.length);
+        for (int i = 0; i < length; i++) {
             this.profileVector[i] += (float) (mediaVector[i] * weight * (1 + interactionValue));
         }
 
-        this.interactedMediaIds.add(book.getBookId());
+        this.totalEngagementScore += (weight * (1 + interactionValue));
+        this.interactedBookIds.add(book.getBookId());
         this.lastUpdated = Instant.now();
-    }
-
-    private void updateCounters(InteractionType type) {
-        switch (type) {
-            case LIKE -> this.totalLikes++;
-            case DISLIKE -> this.totalDislikes++;
-            case WATCH -> this.totalWatches++;
-        }
-    }
-
-    private void updateEngagementScore(InteractionType type, double interactionValue) {
-        double weight = type.getWeightInteraction();
-        double scoreIncrement = weight * (1 + interactionValue);
-        this.totalEngagementScore += scoreIncrement;
     }
 
 }
