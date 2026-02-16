@@ -33,12 +33,9 @@ public class UserEntity {
     private UUID id;
 
     @NotBlank(message = "O nome é obrigatório")
-    @Size(max = 100, message = "O nome deve ter no máximo 100 caracteres")
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Email(message = "O email deve ser válido")
-    @NotBlank(message = "O email é obrigatório")
     @Column(unique = true, nullable = false)
     private String email;
 
