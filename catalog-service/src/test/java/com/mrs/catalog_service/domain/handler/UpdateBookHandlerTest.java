@@ -76,7 +76,7 @@ class UpdateBookHandlerTest {
 
         ArgumentCaptor<UpdateBookEvent> eventCaptor = ArgumentCaptor.forClass(UpdateBookEvent.class);
         verify(bookEventProducer, times(1))
-                .send(eq("update-book"), eq(bookId.toString()), eventCaptor.capture());
+                .send(eq("updated-book"), eq(bookId.toString()), eventCaptor.capture());
 
         assertEquals(bookId, eventCaptor.getValue().bookId());
         assertEquals(newGenres, eventCaptor.getValue().genres());

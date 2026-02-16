@@ -57,7 +57,7 @@ class CreateBookHandlerTest {
 
         ArgumentCaptor<CreateBookEvent> eventCaptor = ArgumentCaptor.forClass(CreateBookEvent.class);
         verify(bookEventProducer, times(1)).send(
-                eq("create-book"),
+                eq("created-book"),
                 eq(bookId.toString()),
                 eventCaptor.capture()
         );
@@ -102,7 +102,7 @@ class CreateBookHandlerTest {
 
         ArgumentCaptor<CreateBookEvent> eventCaptor = ArgumentCaptor.forClass(CreateBookEvent.class);
         verify(bookEventProducer, times(1)).send(
-                eq("create-book"),
+                eq("created-book"),
                 eq(bookId.toString()),
                 eventCaptor.capture()
         );

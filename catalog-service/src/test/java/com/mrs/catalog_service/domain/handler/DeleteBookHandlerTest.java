@@ -46,7 +46,7 @@ class DeleteBookHandlerTest {
 
         ArgumentCaptor<DeleteBookEvent> eventCaptor = ArgumentCaptor.forClass(DeleteBookEvent.class);
         verify(bookEventProducer, times(1)).send(
-                eq("delete-book"),
+                eq("deleted-book"),
                 eq(bookId.toString()),
                 eventCaptor.capture()
         );
