@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.infrastructure.exception;
+package com.mrs.catalog_service.share.exception;
 
 import com.mrs.catalog_service.module.book.application.exception.BookApplicationException;
 import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;

@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.infrastructure.security;
+package com.mrs.catalog_service.share.security;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.infrastructure.service;
+package com.mrs.catalog_service.share.service;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;

@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.infrastructure.exception;
+package com.mrs.catalog_service.share.exception;
 
 import lombok.Builder;
 

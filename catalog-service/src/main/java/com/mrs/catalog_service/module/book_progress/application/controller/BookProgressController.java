@@ -1,6 +1,6 @@
 package com.mrs.catalog_service.module.book_progress.application.controller;
 
-import com.mrs.catalog_service.infrastructure.service.AuthenticationService;
+import com.mrs.catalog_service.share.service.AuthenticationService;
 import com.mrs.catalog_service.module.book_progress.application.dto.BookProgressResponse;
 import com.mrs.catalog_service.module.book_progress.application.dto.BookStatusRequest;
 import com.mrs.catalog_service.module.book_progress.application.handler.DefineBookStatusHandler;
@@ -10,7 +10,6 @@ import com.mrs.catalog_service.module.book_progress.application.handler.UpdateBo
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
