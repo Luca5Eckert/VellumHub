@@ -62,6 +62,9 @@ services:
     container_name: postgres-recommendation
     restart: always
     env_file: .env
+    command: >
+      postgres 
+      -c shared_preload_libraries=vector
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
