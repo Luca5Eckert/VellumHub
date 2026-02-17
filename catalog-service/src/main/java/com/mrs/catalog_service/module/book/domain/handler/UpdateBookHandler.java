@@ -46,12 +46,12 @@ public class UpdateBookHandler {
 
         if(request.genres() == null) return;
 
-        UpdateBookEvent updateMediaEvent = new UpdateBookEvent(
+        UpdateBookEvent updateBookEvent = new UpdateBookEvent(
                 book.getId(),
                 request.genres()
         );
 
-        bookEventProducer.send("updated-book", book.getId().toString(), updateMediaEvent);
+        bookEventProducer.send("updated-book", book.getId().toString(), updateBookEvent);
 
     }
 

@@ -2,19 +2,19 @@ package com.mrs.user_service.share.security.config;
 
 import com.mrs.user_service.module.auth.infrastructure.security.user.UserDetailsServiceImpl;
 import com.mrs.user_service.module.user.domain.port.UserRepository;
+import io.jsonwebtoken.io.Decoders;
 import org. springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework. security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security. config.annotation.authentication.configuration. AuthenticationConfiguration;
 import org. springframework.security.config.annotation. web.builders.HttpSecurity;
 import org.springframework.security. config.annotation.web.configuration. EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto. bcrypt.BCryptPasswordEncoder;
 import org.springframework.security. crypto.password.PasswordEncoder;
-import org.springframework.security. oauth2.jose.jws. MacAlgorithm;
+import org.springframework.security. oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security. oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -69,7 +69,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        byte[] keyBytes = io.jsonwebtoken.io.Decoders.BASE64.decode(jwtSecret);
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
 
         return NimbusJwtDecoder.withSecretKey(secretKey)

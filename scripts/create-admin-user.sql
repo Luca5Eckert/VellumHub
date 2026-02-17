@@ -20,7 +20,7 @@ VALUES (
     gen_random_uuid(),
     'Admin Master',
     'admin@mrs.com',
-    '$2a$10$WU6Ey/xv/zsTFDyBsPv/GOpSWUqaC7xO4V5wkz1QAaTp7stDVbaFC', -- Lucas#113
+    '$2a$10$ArVoaRe2ih4.VVwrbrKUqORa2Kh7IfRa3I0Z5RBQGGJaNrkCjQBXG', -- Lucas#113
     'ADMIN',
     true,
     1,

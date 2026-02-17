@@ -1,5 +1,6 @@
 package com.mrs.engagement_service.infrastructure.security.config;
 
+import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -66,43 +67,24 @@ public class SecurityConfig {
                 .build();
     }
 
-    /**
-     * Cria o decodificador de JWT responsável por validar a integridade do token.
-     * <p>
-     * Utiliza a chave secreta (Simétrica) e o algoritmo HMAC-SHA256 (HS256).
-     * Se a assinatura do token não bater com esta chave, a requisição é rejeitada (401).
-     * </p>
-     *
-     * @return Uma instância de {@link JwtDecoder} configurada com a chave secreta.
-     */
-    @Bean
-    public JwtDecoder jwtDecoder() {
-        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(), "HmacSHA256");
-        return NimbusJwtDecoder.withSecretKey(secretKeySpec)
-                .macAlgorithm(MacAlgorithm.HS256)
-                .build();
-    }
-
-    /**
-     * Configura o conversor que extrai as permissões (roles) de dentro do token JWT.
-     * <p>
-     * O Spring Security, por padrão, procura por "scope" ou "scp". Aqui nós customizamos
-     * para procurar pela claim "roles" e adicionar o prefixo "ROLE_" para compatibilidade
-     * com o método {@code .hasRole()}.
-     * </p>
-     *
-     * @return O conversor configurado.
-     */
     private JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-
         grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
-
         grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
         return jwtAuthenticationConverter;
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+
+        return NimbusJwtDecoder.withSecretKey(secretKey)
+                .macAlgorithm(MacAlgorithm.HS256)
+                .build();
     }
 
 }
