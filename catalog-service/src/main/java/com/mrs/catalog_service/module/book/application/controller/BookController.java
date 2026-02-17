@@ -110,9 +110,9 @@ public class BookController {
     })
     public ResponseEntity<Void> update(
             @Parameter(description = "ID do livro") @PathVariable UUID id,
-            @RequestBody @Valid UpdateBookRequest updateMediaRequest
+            @RequestBody @Valid UpdateBookRequest updateBookRequest
     ) {
-        bookService.update(id, updateMediaRequest);
+        bookService.update(id, updateBookRequest);
 
         return ResponseEntity.ok().build();
     }
