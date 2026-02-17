@@ -43,7 +43,7 @@ public class BookProgressController {
     @PostMapping("/{bookId}/status")
     public ResponseEntity<BookProgressResponse> defineBookStatus(
             @PathVariable(value = "bookId") UUID bookId,
-            @Valid BookStatusRequest request
+            @Valid @RequestBody BookStatusRequest request
     ) {
         UUID userId = authenticationService.getAuthenticatedUserId();
 
@@ -61,7 +61,7 @@ public class BookProgressController {
     @PutMapping("/{bookId}/progress")
     public ResponseEntity<BookProgressResponse> updateBookProgress(
             @PathVariable(value = "bookId") UUID bookId,
-            int newCurrentPage
+            @RequestBody int newCurrentPage
     ) {
         UUID userId = authenticationService.getAuthenticatedUserId();
 
