@@ -1,5 +1,6 @@
 package com.mrs.user_service.share.exception;
 
+import com.mrs.user_service.module.auth.domain.exception.AuthDomainException;
 import com.mrs.user_service.module.user.application.exception.UserApplicationException;
 import com.mrs.user_service.module.user.domain.exception.UserDomainException;
 import com.mrs.user_service.module.user_preference.domain.exception.UserPreferenceDomainException;
@@ -55,6 +56,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(ApiResponseError.builder()
                 .status(status.value())
                 .error("User Domain Error")
+                .message(ex.getMessage())
+                .details(List.of("Business rule violation in user domain"))
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build());
+    }
+
+    @ExceptionHandler(AuthDomainException.class)
+    public ResponseEntity<ApiResponseError> handleAuthDomainException(
+            UserDomainException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value())
+                .error("Auth Domain Error")
                 .message(ex.getMessage())
                 .details(List.of("Business rule violation in user domain"))
                 .path(request.getRequestURI())

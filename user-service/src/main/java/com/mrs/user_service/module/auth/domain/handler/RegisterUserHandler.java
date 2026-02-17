@@ -1,5 +1,6 @@
 package com.mrs.user_service.module.auth.domain.handler;
 
+import com.mrs.user_service.module.auth.domain.exception.AuthDomainException;
 import com.mrs.user_service.module.user.domain.UserEntity;
 import com.mrs.user_service.module.user.domain.port.UserRepository;
 import org.passay.PasswordData;
@@ -24,10 +25,10 @@ public class RegisterUserHandler {
 
     @Transactional
     public void execute(UserEntity userEntity) {
-        if (userEntity == null) throw new IllegalArgumentException("User can't be null");
+        if (userEntity == null) throw new AuthDomainException("User can't be null");
 
         if (userRepository.existsByEmail(userEntity.getEmail())) {
-            throw new IllegalArgumentException("Email already in use");
+            throw new AuthDomainException("Email already in use");
         }
 
         String rawPassword = userEntity.getPassword();
@@ -47,7 +48,7 @@ public class RegisterUserHandler {
                     .reduce((m1, m2) -> m1 + ", " + m2)
                     .orElse("Invalid password");
 
-            throw new IllegalArgumentException("Password invalid: " + messages);
+            throw new AuthDomainException("Password invalid: " + messages);
         }
     }
 
