@@ -79,10 +79,11 @@ services:
       - "5434:5432"
     volumes:
       - postgres_user_data:/var/lib/postgresql/data
+      - ./scripts/create-admin-user.sql:/docker-entrypoint-initdb.d/init-admin.sql
     networks:
       - mrs-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d user_db"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d user_db" ]
       interval: 5s
       timeout: 5s
       retries: 10

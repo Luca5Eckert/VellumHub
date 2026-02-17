@@ -11,6 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -63,9 +64,9 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-    @ExceptionHandler(AuthDomainException.class)
+    @ExceptionHandler({AuthDomainException.class, BadCredentialsException.class})
     public ResponseEntity<ApiResponseError> handleAuthDomainException(
-            UserDomainException ex, HttpServletRequest request) {
+            RuntimeException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(ApiResponseError.builder()
@@ -77,6 +78,7 @@ public class GlobalExceptionHandler {
                 .timestamp(Instant.now())
                 .build());
     }
+
 
     @ExceptionHandler(UserApplicationException.class)
     public ResponseEntity<ApiResponseError> handleUserApplicationException(

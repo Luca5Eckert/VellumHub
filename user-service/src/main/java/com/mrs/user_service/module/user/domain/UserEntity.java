@@ -43,6 +43,7 @@ public class UserEntity {
     private String password;
 
     @Column(name = "role", nullable = false)
+    @Enumerated(EnumType.STRING)
     private RoleUser role;
 
     @Builder.Default
