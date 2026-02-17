@@ -18,7 +18,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "tb_users")
-@SQLDelete(sql = "UPDATE tb_users SET deleted_at = CURRENT_TIMESTAMP, active = false WHERE id = ?")
+@SQLDelete(sql = "UPDATE tb_users SET deleted_at = CURRENT_TIMESTAMP, active = false WHERE id = ? AND version = ?")
 @SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
