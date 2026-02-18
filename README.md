@@ -310,7 +310,80 @@ docker-compose --version
 | PostgreSQL (User) | 5434 | `localhost:5434` | — |
 | PostgreSQL (Recommendation) | 5435 | `localhost:5435` | — |
 | Apache Kafka | 9092 | `localhost:9092` | — |
+| Kafka UI | 8090 | `http://localhost:8090` | Web-based monitoring |
 | Zookeeper | 2181 | `localhost:2181` | — |
+
+---
+
+## Monitoring
+
+VellumHub includes comprehensive monitoring tools for Kafka and the microservices.
+
+### Kafka Monitoring
+
+**Kafka UI** - Web-based monitoring dashboard  
+🔗 **Access:** http://localhost:8090
+
+Features:
+- Real-time broker status and metrics
+- Topic management and message browsing
+- Consumer group monitoring with lag metrics
+- JMX metrics visualization
+- Message publishing for testing
+
+### Service Health Checks
+
+All services expose Spring Boot Actuator endpoints:
+
+```bash
+# Check service health (includes Kafka connectivity)
+curl http://localhost:8081/actuator/health  # Catalog Service
+curl http://localhost:8083/actuator/health  # Engagement Service  
+curl http://localhost:8084/actuator/health  # User Service
+curl http://localhost:8085/actuator/health  # Recommendation Service
+
+# View detailed metrics
+curl http://localhost:8081/actuator/metrics
+```
+
+### Kafka Health Check Script
+
+Run the included health check script:
+
+```bash
+./scripts/kafka-health-check.sh
+```
+
+This verifies:
+- Kafka container status
+- Broker connectivity
+- Available topics
+- Consumer group status
+
+### Monitoring Best Practices
+
+1. **Monitor Consumer Lag**: Check Kafka UI → Consumer Groups for lag metrics
+2. **Check Service Health**: Regularly verify `/actuator/health` endpoints
+3. **Review Logs**: Monitor service logs for Kafka events
+   ```bash
+   docker logs engagement-service | grep "Event sent successfully"
+   ```
+
+For detailed monitoring documentation, see [docs/KAFKA_MONITORING.md](docs/KAFKA_MONITORING.md)
+
+### Service Communication
+
+The system uses two communication patterns:
+- **Synchronous REST**: Recommendation Service → Catalog Service (Feign Client)
+- **Asynchronous Events**: Services communicate via Kafka topics
+
+**Verify Communication:**
+```bash
+# Run comprehensive communication test
+./scripts/test-service-communication.sh
+```
+
+For detailed communication verification, see [docs/SERVICE_COMMUNICATION.md](docs/SERVICE_COMMUNICATION.md)
 
 ---
 
@@ -643,7 +716,6 @@ User profiles are updated in real-time through Kafka event consumption.
 - [ ] Frontend applications (React / Next.js)
 - [ ] CI/CD pipelines
 - [ ] Kubernetes orchestration
-- [ ] Monitoring stack
 
 ---
 
