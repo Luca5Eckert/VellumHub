@@ -26,14 +26,14 @@ public class CreateBookConsumerEvent {
             groupId = "recommendation-service"
     )
     public void listen(CreateBookEvent createBookEvent){
-        log.info("Evento recebido: Criação de livro. BookId={}, Genres={}",
+        log.info("Event received: Book creation. BookId={}, Genres={}",
                 createBookEvent.bookId(),
                 createBookEvent.genres());
 
         try {
             float[] genresVector = mapper.mapToFeatureVector(createBookEvent.genres());
 
-            log.debug("Vetor de características criado. BookId={}, VectorLength={}",
+            log.debug("Feature vector created. BookId={}, VectorLength={}",
                     createBookEvent.bookId(),
                     genresVector.length);
 
@@ -44,11 +44,11 @@ public class CreateBookConsumerEvent {
 
             createBookFeatureUseCase.execute(bookFeature);
 
-            log.info("Evento de criação de livro processado com sucesso. BookId={}",
+            log.info("Book creation event processed successfully. BookId={}",
                     createBookEvent.bookId());
 
         } catch (Exception e) {
-            log.error("Erro ao processar evento de criação de livro. BookId={}, Genres={}",
+            log.error("Error processing book creation event. BookId={}, Genres={}",
                     createBookEvent.bookId(),
                     createBookEvent.genres(),
                     e);

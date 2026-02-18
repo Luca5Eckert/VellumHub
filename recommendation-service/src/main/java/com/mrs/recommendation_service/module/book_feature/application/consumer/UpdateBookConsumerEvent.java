@@ -22,7 +22,7 @@ public class UpdateBookConsumerEvent {
             groupId = "recommendation-service"
     )
     public void execute(UpdateBookEvent updateBookEvent){
-        log.info("Evento recebido: Atualização de livro. BookId={}, Genres={}",
+        log.info("Event received: Book update. BookId={}, Genres={}",
                 updateBookEvent.bookId(),
                 updateBookEvent.genres());
 
@@ -34,11 +34,11 @@ public class UpdateBookConsumerEvent {
 
             mediaFeatureHandler.execute(mediaFeatureCommand);
 
-            log.info("Evento de atualização de livro processado com sucesso. BookId={}",
+            log.info("Book update event processed successfully. BookId={}",
                     updateBookEvent.bookId());
 
         } catch (Exception e) {
-            log.error("Erro ao processar evento de atualização de livro. BookId={}, Genres={}",
+            log.error("Error processing book update event. BookId={}, Genres={}",
                     updateBookEvent.bookId(),
                     updateBookEvent.genres(),
                     e);

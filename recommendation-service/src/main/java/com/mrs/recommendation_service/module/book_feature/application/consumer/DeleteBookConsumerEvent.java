@@ -22,17 +22,17 @@ public class DeleteBookConsumerEvent {
             groupId = "recommendation-service"
     )
     public void listen(DeleteBookEvent deleteBookEvent){
-        log.info("Evento recebido: Exclusão de livro. BookId={}",
+        log.info("Event received: Book deletion. BookId={}",
                 deleteBookEvent.bookId());
 
         try {
             deleteBookFeatureUseCase.execute(deleteBookEvent.bookId());
 
-            log.info("Evento de exclusão de livro processado com sucesso. BookId={}",
+            log.info("Book deletion event processed successfully. BookId={}",
                     deleteBookEvent.bookId());
 
         } catch (Exception e) {
-            log.error("Erro ao processar evento de exclusão de livro. BookId={}",
+            log.error("Error processing book deletion event. BookId={}",
                     deleteBookEvent.bookId(),
                     e);
             throw e;
