@@ -26,8 +26,8 @@ public class DefineBookStatusHandler {
     @Transactional
     public BookProgressResponse handle(BookStatusRequest bookStatusRequest, UUID userId, UUID bookId) {
         DefineBookStatusCommand defineBookStatusCommand = new DefineBookStatusCommand(
-                bookId,
                 userId,
+                bookId,
                 bookStatusRequest.status(),
                 bookStatusRequest.currentPage()
         );
