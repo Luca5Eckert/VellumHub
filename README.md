@@ -702,7 +702,6 @@ User profiles are updated in real-time through Kafka event consumption.
 - [ ] Frontend applications (React / Next.js)
 - [ ] CI/CD pipelines
 - [ ] Kubernetes orchestration
-- [ ] Monitoring stack
 
 ---
 
