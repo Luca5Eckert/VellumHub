@@ -164,25 +164,24 @@ sequenceDiagram
 
 ## Architecture Evolution
 
-VellumHub has undergone significant architectural transformation, evolving from a tightly-coupled system with performance bottlenecks to a modern, scalable microservices platform. This evolution demonstrates the project's maturity and commitment to engineering excellence.
+VellumHub has evolved from a tightly-coupled system with performance bottlenecks to a modern, scalable microservices platform. This transformation demonstrates our commitment to engineering excellence and continuous improvement.
 
-### Evolution Timeline
+### From ML Service to pgvector
 
 ```mermaid
 graph LR
-    V1[v1.0<br/>General Media<br/>ML Service]
-    V2[v2.0<br/>pgvector<br/>Optimization]
-    V3[v3.0<br/>Book Platform<br/>Current]
+    V1[v1.0<br/>With ML Service<br/>Performance Issues]
+    V2[v2.0<br/>Current Architecture<br/>pgvector + Books]
     
-    V1 -->|Performance Issues<br/>Tight Coupling| V2
-    V2 -->|Domain Focus<br/>Feature Enhancement| V3
+    V1 -->|Eliminated ML Service<br/>60-75% Latency Reduction<br/>Domain Focus| V2
     
     style V1 fill:#ff6b6b,stroke:#c92a2a,stroke-width:2px,color:#fff
-    style V2 fill:#ffd43b,stroke:#f59f00,stroke-width:2px,color:#000
-    style V3 fill:#51cf66,stroke:#2f9e44,stroke-width:2px,color:#fff
+    style V2 fill:#51cf66,stroke:#2f9e44,stroke-width:2px,color:#fff
 ```
 
-### Version 1.0: General Media Platform with ML Service
+### Version 1.0: Architecture with ML Service
+
+The original architecture relied on an external Python Flask ML Service for recommendations, which created critical performance and operational challenges.
 
 **Architecture:**
 ```
@@ -191,67 +190,21 @@ graph LR
 └──────────┘               │    Service      │               │  (Flask)   │
                            └─────────────────┘               └────────────┘
                                     │                               │
-                                    │                               │
                                     └───────── Shared DB ───────────┘
 ```
 
-**Characteristics:**
-- **Content Type:** Movies, TV shows, Music
-- **Services:** 5 (including Python Flask ML Service)
-- **Interactions:** LIKE, DISLIKE, WATCH
-- **Recommendation Engine:** External ML Service with REST API
+**Key Problems:**
 
-**Critical Problems Identified:**
+| Problem | Impact |
+|---------|--------|
+| **Excessive Latency** | 3+ network hops per request (~300-500ms) |
+| **Tight Coupling** | ML Service failure brought down recommendations |
+| **Redundant Computation** | Full recalculation on every request |
+| **Poor API Design** | Client had to orchestrate multiple service calls |
 
-| Problem | Impact | Root Cause |
-|---------|--------|------------|
-| **Excessive Latency** | 3+ network hops per request | ML Service processed recommendations synchronously, adding unavoidable network latency |
-| **Tight Coupling** | ML Service failure brought down recommendations | Shared database between Java and Python services |
-| **Redundant Computation** | Full recalculation on every request | No caching, profile recomputed per request |
-| **Poor API Design** | Client had to orchestrate multiple calls | Recommendations returned IDs only, required separate metadata fetch |
+### Version 2.0: Current Architecture (pgvector + Book Platform)
 
-### Version 2.0: pgvector Integration & Performance Optimization
-
-**Key Innovation:** Eliminated external ML Service and integrated vector similarity search directly into PostgreSQL using pgvector extension.
-
-**Architecture:**
-```
-┌──────────┐                 ┌─────────────────┐
-│  Client  │ ──────────────> │ Recommendation  │
-└──────────┘     REST        │    Service      │
-                             └─────────────────┘
-                                      │
-                          ┌───────────┴───────────┐
-                          │   recommendation_db   │
-                          │   (pgvector enabled)  │
-                          │   Cosine similarity   │
-                          └───────────────────────┘
-                                      │
-                          Bulk fetch  │  enrichment
-                                      ↓
-                             ┌─────────────────┐
-                             │ Catalog Service │
-                             └─────────────────┘
-```
-
-**Improvements:**
-
-| Problem Solved | v1 Approach | v2 Solution |
-|----------------|-------------|-------------|
-| **Latency** | 3+ network hops | Single DB query + 1 bulk fetch |
-| **Coupling** | Java ↔ Python ↔ Shared DB | Pure Java stack, pgvector native queries |
-| **Computation** | Per-request calculation | Real-time Kafka profile updates, instant lookup |
-| **API Design** | Client orchestration | Server-side aggregation with enriched response |
-
-**Technical Achievements:**
-- ✅ **60-75% latency reduction** (from ~300-500ms to ~80-120ms) through ML Service elimination
-- ✅ **Pure Java stack** - removed Python dependency and operational complexity
-- ✅ **Event-driven profiles** - Kafka consumers update user vectors in real-time
-- ✅ **Native vector queries** - PostgreSQL `<=>` operator with HNSW indexing
-
-### Version 3.0: Book-Focused Platform (Current)
-
-**Strategic Pivot:** Transitioned from general media to specialized book recommendation platform with curated catalog and enhanced user engagement.
+The current architecture eliminates the ML Service entirely, integrating vector similarity search directly into PostgreSQL with pgvector while focusing on book recommendations.
 
 **Architecture:**
 ```
@@ -269,36 +222,33 @@ graph LR
       └────────────────────> │  Recommendation      │
                              │  Service (pgvector)  │
                              └──────────────────────┘
+                                       │
+                           ┌───────────┴───────────┐
+                           │   recommendation_db   │
+                           │   (pgvector enabled)  │
+                           └───────────────────────┘
 ```
 
-**Evolution Highlights:**
+**Key Improvements:**
 
-| Aspect | v1 (Original) | v2 (Optimized) | v3 (Current) |
-|--------|---------------|----------------|--------------|
-| **Domain** | General Media | General Media | Books Only |
-| **Services** | 5 (incl. Flask ML) | 4 (pure Java) | 4 (book-focused) |
-| **Content** | Movies, TV, Music | Movies, TV, Music | Books + Authors |
-| **Interactions** | LIKE, DISLIKE, WATCH | LIKE, DISLIKE, WATCH | ⭐ Star Ratings (0–5)<br/>📖 Reading Status |
-| **Catalog** | Open creation | Open creation | 🛡️ Admin Approval Required |
-| **Recommendation** | ML Service (REST) | pgvector (SQL) | pgvector + Reading Patterns |
-| **Latency** | ~300-500ms | ~80-120ms | ~80-120ms |
-| **Profile Updates** | On-demand | Real-time (Kafka) | Real-time (Kafka) |
-| **Enrichment** | Client-side | Server-side | Server-side |
+| Aspect | v1.0 (With ML Service) | v2.0 (Current) |
+|--------|------------------------|----------------|
+| **Architecture** | 5 services (incl. Flask ML) | 4 services (pure Java) |
+| **Domain** | General media | Books only |
+| **Latency** | ~300-500ms | ~80-120ms |
+| **Recommendation Engine** | External ML Service (REST) | Native pgvector (SQL) |
+| **Profile Updates** | On-demand recalculation | Real-time via Kafka events |
+| **API Design** | Client orchestration | Server-side aggregation |
+| **Interactions** | LIKE, DISLIKE, WATCH | ⭐ Star Ratings (0–5)<br/>📖 Reading Status |
+| **Catalog** | Open creation | 🛡️ Admin approval required |
 
-**v3.0 Enhancements:**
-- 📚 **Book-Specific Entities:** Author, ISBN, page count, genres, publication year
-- ✋ **Approval Workflow:** User submissions require admin review before catalog addition
-- ⭐ **Star Rating System:** 0-5 star ratings replace binary like/dislike
-- 📖 **Reading Progress:** TO_READ, READING (with page tracking), COMPLETED statuses
-- 🎯 **Enhanced Recommendations:** Incorporates reading patterns and rating history
-
-### Development Philosophy
-
-The architectural evolution of VellumHub reflects three core engineering principles:
-
-1. **Performance Through Simplicity** - Each evolution removed complexity while improving performance
-2. **Domain-Driven Design** - v3.0 pivot aligned technical architecture with business domain (books)
-3. **Operational Excellence** - Event-driven architecture enables real-time updates without synchronous dependencies
+**Technical Achievements:**
+- ✅ **60-75% latency reduction** (300-500ms → 80-120ms)
+- ✅ **Pure Java stack** - eliminated Python dependency
+- ✅ **Event-driven architecture** - Kafka for real-time profile updates
+- ✅ **Vector similarity search** - PostgreSQL pgvector with HNSW indexing
+- ✅ **Domain specialization** - Book-focused features (ISBN, authors, page tracking)
+- ✅ **Enhanced user engagement** - Star ratings and reading progress tracking
 
 ---
 
