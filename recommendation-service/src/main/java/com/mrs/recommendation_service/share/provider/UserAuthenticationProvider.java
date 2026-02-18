@@ -12,7 +12,7 @@ public class UserAuthenticationProvider {
 
     public UUID getUserId() {
         Jwt jwt = getJwt();
-        String userId = jwt.getClaim("userId");
+        String userId = jwt.getClaim("user_id");
         return UUID. fromString(userId);
     }
 
