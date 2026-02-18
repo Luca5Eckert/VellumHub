@@ -14,13 +14,14 @@ CREATE TABLE IF NOT EXISTS tb_users (
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
--- Insere o Admin Master com password: Admin123
+-- Insere o Admin Master com hash bcrypt
+-- NOTE: Default password should be changed on first login
 INSERT INTO tb_users (id, name, email, password, role, active, version, created_at, updated_at)
 VALUES (
     gen_random_uuid(),
     'Admin Master',
     'admin@mrs.com',
-    '$2a$10$8.Vqhas32IdzIyay6jJFhuz99bshH6z7Xf.9A9V0YpPzK.FvMbaW6', -- Hash de 'Admin123'
+    '$2a$10$8.Vqhas32IdzIyay6jJFhuz99bshH6z7Xf.9A9V0YpPzK.FvMbaW6',
     'ADMIN',
     true,
     1,
