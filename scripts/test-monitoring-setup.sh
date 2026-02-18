@@ -2,6 +2,9 @@
 
 # Test Script for Kafka Monitoring Setup
 # This script validates that the monitoring infrastructure is correctly configured
+# 
+# Requirements: Docker Compose V2 (docker compose command)
+# For Docker Compose V1 users, replace 'docker compose' with 'docker-compose'
 
 set -e
 
@@ -13,13 +16,47 @@ echo "Kafka Monitoring Setup Test"
 echo "========================================="
 echo ""
 
+# Check Docker Compose version
+if command -v docker &> /dev/null; then
+    if docker compose version &> /dev/null; then
+        echo "✓ Docker Compose V2 detected"
+        COMPOSE_CMD="docker compose"
+    elif docker-compose version &> /dev/null; then
+        echo "✓ Docker Compose V1 detected"
+        COMPOSE_CMD="docker-compose"
+    else
+        echo "✗ Docker Compose not found"
+        exit 1
+    fi
+else
+    echo "✗ Docker not found"
+    exit 1
+fi
+
+echo ""
+
 # Test 1: Check docker-compose configuration
 echo "Test 1: Validating docker-compose configuration..."
 cd "$PROJECT_ROOT"
-if docker compose config --quiet 2>/dev/null; then
+
+# Create temporary .env if it doesn't exist
+TEMP_ENV_CREATED=false
+if [ ! -f .env ]; then
+    echo "⚠ .env file not found, creating temporary one for testing..."
+    cat > .env << 'ENVEOF'
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=test_password
+JWT_KEY=test-jwt-secret-key-for-development-only-minimum-256-bits
+JWT_EXPIRATION=86400000
+ENVEOF
+    TEMP_ENV_CREATED=true
+fi
+
+if $COMPOSE_CMD config --quiet 2>/dev/null; then
     echo "✓ Docker Compose configuration is valid"
 else
     echo "✗ Docker Compose configuration has errors"
+    [ "$TEMP_ENV_CREATED" = true ] && rm -f .env
     exit 1
 fi
 
@@ -27,7 +64,7 @@ echo ""
 
 # Test 2: Check Kafka service is defined
 echo "Test 2: Checking Kafka service definition..."
-if docker compose config | grep -q "kafka:"; then
+if $COMPOSE_CMD config | grep -q "kafka:"; then
     echo "✓ Kafka service is defined"
 else
     echo "✗ Kafka service not found"
@@ -38,11 +75,11 @@ echo ""
 
 # Test 3: Check Kafka UI service is defined
 echo "Test 3: Checking Kafka UI service definition..."
-if docker compose config | grep -q "kafka-ui:"; then
+if $COMPOSE_CMD config | grep -q "kafka-ui:"; then
     echo "✓ Kafka UI service is defined"
     
     # Check port mapping (in the expanded format)
-    if docker compose config | grep -A 10 "kafka-ui:" | grep -q "target: 8080"; then
+    if $COMPOSE_CMD config | grep -A 10 "kafka-ui:" | grep -q "target: 8080"; then
         echo "✓ Kafka UI port mapping is configured"
     else
         echo "✗ Kafka UI port mapping not found"
@@ -57,7 +94,7 @@ echo ""
 
 # Test 4: Check JMX port is exposed
 echo "Test 4: Checking Kafka JMX configuration..."
-if docker compose config | grep -q "KAFKA_JMX_PORT"; then
+if $COMPOSE_CMD config | grep -q "KAFKA_JMX_PORT"; then
     echo "✓ Kafka JMX port is configured"
 else
     echo "✗ Kafka JMX port not configured"
@@ -157,7 +194,12 @@ echo ""
 echo "Monitoring setup is correctly configured."
 echo ""
 echo "Next steps:"
-echo "1. Start the services: docker compose up -d"
+echo "1. Start the services: $COMPOSE_CMD up -d"
 echo "2. Access Kafka UI: http://localhost:8090"
 echo "3. Check service health: curl http://localhost:8081/actuator/health"
 echo "4. Run health check: ./scripts/kafka-health-check.sh"
+
+# Clean up temporary .env if created
+if [ "$TEMP_ENV_CREATED" = true ]; then
+    rm -f "$PROJECT_ROOT/.env"
+fi
