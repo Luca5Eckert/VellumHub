@@ -1,6 +1,5 @@
 package com.mrs.user_service.module.auth.infrastructure.security.user;
 
-
 import com.mrs.user_service.module.user.domain.UserEntity;
 import com.mrs.user_service.module.user.domain.port.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
