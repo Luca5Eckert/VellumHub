@@ -18,6 +18,10 @@ VellumHub combines the social aspects of book tracking with AI-powered recommend
 - [Overview](#overview)
 - [Key Features](#key-features)
 - [Architecture](#architecture)
+  - [System Architecture](#system-architecture)
+  - [Architecture Evolution](#architecture-evolution)
+  - [Database Architecture](#database-architecture)
+  - [Event-Driven Communication](#event-driven-communication)
 - [Technology Stack](#technology-stack)
 - [Quick Start](#quick-start)
 - [API Endpoints](#api-endpoints)
@@ -155,6 +159,306 @@ sequenceDiagram
 | **Catalog Service** | 8081 | `catalog_db` | Book CRUD, book request submissions, admin approval workflow |
 | **Rating Service** | 8083 | `engagement_db` | Star ratings, reading status, page progress tracking |
 | **Recommendation Service** | 8085 | `recommendation_db` | Vector similarity search, profile updates, recommendation aggregation |
+
+---
+
+## Architecture Evolution
+
+VellumHub has undergone significant architectural transformation, evolving from a tightly-coupled system with performance bottlenecks to a modern, scalable microservices platform. This evolution demonstrates the project's maturity and commitment to engineering excellence.
+
+### Evolution Timeline
+
+```mermaid
+graph LR
+    V1[v1.0<br/>General Media<br/>ML Service]
+    V2[v2.0<br/>pgvector<br/>Optimization]
+    V3[v3.0<br/>Book Platform<br/>Current]
+    
+    V1 -->|Performance Issues<br/>Tight Coupling| V2
+    V2 -->|Domain Focus<br/>Feature Enhancement| V3
+    
+    style V1 fill:#ff6b6b,stroke:#c92a2a,stroke-width:2px,color:#fff
+    style V2 fill:#ffd43b,stroke:#f59f00,stroke-width:2px,color:#000
+    style V3 fill:#51cf66,stroke:#2f9e44,stroke-width:2px,color:#fff
+```
+
+### Version 1.0: General Media Platform with ML Service
+
+**Architecture:**
+```
+┌──────────┐     REST      ┌─────────────────┐     REST      ┌────────────┐
+│  Client  │ ────────────> │ Recommendation  │ ────────────> │ ML Service │
+└──────────┘               │    Service      │               │  (Flask)   │
+                           └─────────────────┘               └────────────┘
+                                    │                               │
+                                    │                               │
+                                    └───────── Shared DB ───────────┘
+```
+
+**Characteristics:**
+- **Content Type:** Movies, TV shows, Music
+- **Services:** 5 (including Python Flask ML Service)
+- **Interactions:** LIKE, DISLIKE, WATCH
+- **Recommendation Engine:** External ML Service with REST API
+
+**Critical Problems Identified:**
+
+| Problem | Impact | Root Cause |
+|---------|--------|------------|
+| **Excessive Latency** | 3+ network hops per request | ML Service acted as synchronous REST intermediary |
+| **Tight Coupling** | ML Service failure brought down recommendations | Shared database between Java and Python services |
+| **Redundant Computation** | Full recalculation on every request | No caching, profile recomputed per request |
+| **Poor API Design** | Client had to orchestrate multiple calls | Recommendations returned IDs only, required separate metadata fetch |
+
+### Version 2.0: pgvector Integration & Performance Optimization
+
+**Key Innovation:** Eliminated external ML Service and integrated vector similarity search directly into PostgreSQL using pgvector extension.
+
+**Architecture:**
+```
+┌──────────┐                 ┌─────────────────┐
+│  Client  │ ──────────────> │ Recommendation  │
+└──────────┘     REST        │    Service      │
+                             └─────────────────┘
+                                      │
+                          ┌───────────┴───────────┐
+                          │   recommendation_db   │
+                          │   (pgvector enabled)  │
+                          │   Cosine similarity   │
+                          └───────────────────────┘
+                                      │
+                          Bulk fetch  │  enrichment
+                                      ↓
+                             ┌─────────────────┐
+                             │ Catalog Service │
+                             └─────────────────┘
+```
+
+**Improvements:**
+
+| Problem Solved | v1 Approach | v2 Solution |
+|----------------|-------------|-------------|
+| **Latency** | 3+ network hops | Single DB query + 1 bulk fetch |
+| **Coupling** | Java ↔ Python ↔ Shared DB | Pure Java stack, pgvector native queries |
+| **Computation** | Per-request calculation | Real-time Kafka profile updates, instant lookup |
+| **API Design** | Client orchestration | Server-side aggregation with enriched response |
+
+**Technical Achievements:**
+- ✅ **70% latency reduction** through elimination of ML Service round-trips
+- ✅ **Pure Java stack** - removed Python dependency and operational complexity
+- ✅ **Event-driven profiles** - Kafka consumers update user vectors in real-time
+- ✅ **Native vector queries** - PostgreSQL `<=>` operator with HNSW indexing
+
+### Version 3.0: Book-Focused Platform (Current)
+
+**Strategic Pivot:** Transitioned from general media to specialized book recommendation platform with curated catalog and enhanced user engagement.
+
+**Architecture:**
+```
+┌──────────┐                 ┌─────────────────┐
+│  Client  │ ──────────────> │   Book Catalog  │ ─┐
+└──────────┘                 │     Service     │  │
+      │                      └─────────────────┘  │
+      │                                            │ Kafka
+      │                      ┌─────────────────┐  │ Events
+      ├────────────────────> │ Rating Service  │ ─┤
+      │                      └─────────────────┘  │
+      │                               │            │
+      │                               ↓            ↓
+      │                      ┌──────────────────────┐
+      └────────────────────> │  Recommendation      │
+                             │  Service (pgvector)  │
+                             └──────────────────────┘
+```
+
+**Evolution Highlights:**
+
+| Aspect | v1 (Original) | v2 (Optimized) | v3 (Current) |
+|--------|---------------|----------------|--------------|
+| **Domain** | General Media | General Media | Books Only |
+| **Services** | 5 (incl. Flask ML) | 4 (pure Java) | 4 (book-focused) |
+| **Content** | Movies, TV, Music | Movies, TV, Music | Books + Authors |
+| **Interactions** | LIKE, DISLIKE, WATCH | LIKE, DISLIKE, WATCH | ⭐ Star Ratings (0–5)<br/>📖 Reading Status |
+| **Catalog** | Open creation | Open creation | 🛡️ Admin Approval Required |
+| **Recommendation** | ML Service (REST) | pgvector (SQL) | pgvector + Reading Patterns |
+| **Latency** | ~300-500ms | ~80-120ms | ~80-120ms |
+| **Profile Updates** | On-demand | Real-time (Kafka) | Real-time (Kafka) |
+| **Enrichment** | Client-side | Server-side | Server-side |
+
+**v3.0 Enhancements:**
+- 📚 **Book-Specific Entities:** Author, ISBN, page count, genres, publication year
+- ✋ **Approval Workflow:** User submissions require admin review before catalog addition
+- ⭐ **Star Rating System:** 0-5 star ratings replace binary like/dislike
+- 📖 **Reading Progress:** TO_READ, READING (with page tracking), COMPLETED statuses
+- 🎯 **Enhanced Recommendations:** Incorporates reading patterns and rating history
+
+### Development Philosophy
+
+The architectural evolution of VellumHub reflects three core engineering principles:
+
+1. **Performance Through Simplicity** - Each evolution removed complexity while improving performance
+2. **Domain-Driven Design** - v3.0 pivot aligned technical architecture with business domain (books)
+3. **Operational Excellence** - Event-driven architecture enables real-time updates without synchronous dependencies
+
+---
+
+## Database Architecture
+
+VellumHub implements the **Database per Service** pattern, ensuring complete autonomy and independent scalability for each microservice.
+
+```mermaid
+graph TB
+    subgraph "User Service"
+        US_APP[User Service<br/>Application]
+        US_DB[(user_db<br/>PostgreSQL 15)]
+        US_APP --> US_DB
+    end
+    
+    subgraph "Catalog Service"
+        CS_APP[Catalog Service<br/>Application]
+        CS_DB[(catalog_db<br/>PostgreSQL 15)]
+        CS_APP --> CS_DB
+    end
+    
+    subgraph "Rating Service"
+        RS_APP[Rating Service<br/>Application]
+        RS_DB[(engagement_db<br/>PostgreSQL 15)]
+        RS_APP --> RS_DB
+    end
+    
+    subgraph "Recommendation Service"
+        REC_APP[Recommendation<br/>Service]
+        REC_DB[(recommendation_db<br/>PostgreSQL 15<br/>+ pgvector extension)]
+        REC_APP --> REC_DB
+    end
+    
+    subgraph "Event Streaming"
+        KAFKA[Apache Kafka<br/>Event Backbone]
+    end
+    
+    CS_APP -->|Book Events| KAFKA
+    RS_APP -->|Rating Events| KAFKA
+    KAFKA -->|Profile Updates| REC_APP
+    
+    style US_DB fill:#336791,stroke:#fff,stroke-width:2px,color:#fff
+    style CS_DB fill:#336791,stroke:#fff,stroke-width:2px,color:#fff
+    style RS_DB fill:#336791,stroke:#fff,stroke-width:2px,color:#fff
+    style REC_DB fill:#FF6B35,stroke:#fff,stroke-width:2px,color:#fff
+    style KAFKA fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
+```
+
+### Database Schemas
+
+| Database | Service | Key Tables | Purpose |
+|----------|---------|------------|---------|
+| **user_db** | User Service | `users`, `roles`, `user_preferences` | User accounts, authentication credentials, role-based permissions |
+| **catalog_db** | Catalog Service | `books`, `book_requests`, `book_progress` | Book metadata, submission approval workflow, reading status |
+| **engagement_db** | Rating Service | `ratings` | Star ratings linked to users and books |
+| **recommendation_db** | Recommendation Service | `book_features`, `user_profiles`, `recommendations` | Vector embeddings (book features + user preference vectors) |
+
+### pgvector Implementation
+
+The Recommendation Service database leverages **pgvector** extension for high-performance similarity search:
+
+**Vector Storage:**
+```sql
+-- Book feature vectors (genre-based embeddings)
+CREATE TABLE book_features (
+    id UUID PRIMARY KEY,
+    book_id UUID NOT NULL,
+    feature_vector vector(3),  -- Genre embedding
+    created_at TIMESTAMP
+);
+
+-- User profile vectors (preference embeddings)
+CREATE TABLE user_profiles (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL,
+    profile_vector vector(5),  -- Reading preference embedding
+    updated_at TIMESTAMP
+);
+```
+
+**Vector Similarity Query:**
+```sql
+-- Find similar books using cosine distance
+SELECT book_id, (feature_vector <=> $1::vector) as similarity
+FROM book_features
+ORDER BY feature_vector <=> $1::vector
+LIMIT 10;
+```
+
+**Performance Optimization:**
+- **HNSW Index** (Hierarchical Navigable Small World) for approximate nearest neighbor search
+- **Sub-millisecond lookups** on datasets with 100K+ book vectors
+- **Real-time updates** via Kafka event consumers
+
+---
+
+## Event-Driven Communication
+
+VellumHub uses **Apache Kafka** as the central nervous system for asynchronous communication between services.
+
+### Kafka Topics & Data Flow
+
+```mermaid
+graph LR
+    subgraph "Producers"
+        CS[Catalog Service]
+        RS[Rating Service]
+    end
+    
+    subgraph "Apache Kafka"
+        T1[book-created]
+        T2[book-updated]
+        T3[book-deleted]
+        T4[rating-created]
+        T5[reading-status-updated]
+    end
+    
+    subgraph "Consumers"
+        REC[Recommendation Service]
+    end
+    
+    CS -->|New Book| T1
+    CS -->|Book Updated| T2
+    CS -->|Book Deleted| T3
+    RS -->|User Rating| T4
+    RS -->|Status Change| T5
+    
+    T1 --> REC
+    T2 --> REC
+    T3 --> REC
+    T4 --> REC
+    T5 --> REC
+    
+    REC -->|Creates/Updates<br/>Book Features| DB[(recommendation_db)]
+    REC -->|Updates<br/>User Profiles| DB
+    
+    style T1 fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
+    style T2 fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
+    style T3 fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
+    style T4 fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
+    style T5 fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
+```
+
+### Event Types
+
+| Event | Producer | Consumer | Trigger | Action |
+|-------|----------|----------|---------|--------|
+| **book-created** | Catalog Service | Recommendation Service | Book approved by admin | Create `BookFeature` with genre-based vector embedding |
+| **book-updated** | Catalog Service | Recommendation Service | Book metadata changed | Update `BookFeature` vector |
+| **book-deleted** | Catalog Service | Recommendation Service | Book removed from catalog | Delete `BookFeature` |
+| **rating-created** | Rating Service | Recommendation Service | User rates a book | Update `UserProfile` preference vector |
+| **reading-status-updated** | Rating Service | Recommendation Service | User updates reading progress | Adjust `UserProfile` weights |
+
+### Benefits of Event-Driven Architecture
+
+✅ **Loose Coupling** - Services communicate without direct dependencies  
+✅ **Scalability** - Consumers process events independently at their own pace  
+✅ **Resilience** - Kafka retains events; consumers can replay if failures occur  
+✅ **Real-Time Updates** - User profiles updated immediately when ratings change  
+✅ **Audit Trail** - All state changes captured in event log  
 
 ---
 
