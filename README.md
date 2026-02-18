@@ -244,7 +244,7 @@ graph LR
 | **API Design** | Client orchestration | Server-side aggregation with enriched response |
 
 **Technical Achievements:**
-- ✅ **70% latency reduction** through elimination of ML Service round-trips
+- ✅ **60-75% latency reduction** through elimination of ML Service round-trips
 - ✅ **Pure Java stack** - removed Python dependency and operational complexity
 - ✅ **Event-driven profiles** - Kafka consumers update user vectors in real-time
 - ✅ **Native vector queries** - PostgreSQL `<=>` operator with HNSW indexing
@@ -366,7 +366,7 @@ The Recommendation Service database leverages **pgvector** extension for high-pe
 CREATE TABLE book_features (
     id UUID PRIMARY KEY,
     book_id UUID NOT NULL,
-    feature_vector vector(3),  -- Genre embedding
+    feature_vector vector(128),  -- Book embedding (genres, metadata)
     created_at TIMESTAMP
 );
 
@@ -374,7 +374,7 @@ CREATE TABLE book_features (
 CREATE TABLE user_profiles (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
-    profile_vector vector(5),  -- Reading preference embedding
+    profile_vector vector(128),  -- User preference embedding
     updated_at TIMESTAMP
 );
 ```
