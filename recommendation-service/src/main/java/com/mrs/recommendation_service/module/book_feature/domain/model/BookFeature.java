@@ -38,6 +38,7 @@ public class BookFeature {
     public BookFeature(UUID bookId, float[] genresVector) {
         this.bookId = bookId;
         this.embedding = genresVector;
+        this.lastUpdated = Instant.now();
     }
 
     public void update(List<Genre> genres) {
