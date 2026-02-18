@@ -1,5 +1,6 @@
 package com.mrs.engagement_service.infrastructure.service;
 
+import com.mrs.engagement_service.infrastructure.exception.UserNotAuthenticatedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class AuthenticationService {
             return UUID.fromString(userId);
         }
 
-        throw new RuntimeException("User not authenticated or invalid token");
+        throw new UserNotAuthenticatedException("User not authenticated or invalid token");
     }
 
 }
