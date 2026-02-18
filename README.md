@@ -205,7 +205,7 @@ graph LR
 
 | Problem | Impact | Root Cause |
 |---------|--------|------------|
-| **Excessive Latency** | 3+ network hops per request | ML Service acted as synchronous REST proxy between services |
+| **Excessive Latency** | 3+ network hops per request | ML Service processed recommendations synchronously, adding unavoidable network latency |
 | **Tight Coupling** | ML Service failure brought down recommendations | Shared database between Java and Python services |
 | **Redundant Computation** | Full recalculation on every request | No caching, profile recomputed per request |
 | **Poor API Design** | Client had to orchestrate multiple calls | Recommendations returned IDs only, required separate metadata fetch |
@@ -392,7 +392,7 @@ LIMIT 10;
 
 **Performance Optimization:**
 - **HNSW Index** (Hierarchical Navigable Small World) for approximate nearest neighbor search
-- **Sub-millisecond lookups** on datasets with 100K+ book vectors
+- **Fast lookups** on datasets with 100K+ book vectors (typically under 100ms)
 - **Real-time updates** via Kafka event consumers
 
 ---
