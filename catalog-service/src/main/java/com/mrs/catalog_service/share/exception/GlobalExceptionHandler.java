@@ -4,6 +4,7 @@ import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;
 import com.mrs.catalog_service.module.book.domain.exception.BookNotExistException;
 import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.mrs.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
+import com.mrs.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,23 +64,23 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-    @ExceptionHandler(BookNotExistException.class)
-    public ResponseEntity<ApiResponseError> handleMediaNotExistException(
-            BookNotExistException ex, HttpServletRequest request) {
+    @ExceptionHandler(BookRequestDomainException.class)
+    public ResponseEntity<ApiResponseError> handleBookRequestDomainException(
+            BookRequestDomainException ex, HttpServletRequest request) {
 
-        HttpStatus status = HttpStatus.NOT_FOUND;
+        HttpStatus status = HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(ApiResponseError.builder()
                 .status(status.value())
-                .error("Book Not Found")
+                .error("Book Request Error")
                 .message(ex.getMessage())
-                .details(List.of("The requested book resource does not exist"))
+                .details(List.of("Business rule violation in book domain"))
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
     }
 
     @ExceptionHandler(BookDomainException.class)
-    public ResponseEntity<ApiResponseError> handleMediaDomainException(
+    public ResponseEntity<ApiResponseError> handleBookDomainException(
             BookDomainException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.BAD_REQUEST;
@@ -94,7 +95,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BookProgressDomainException.class)
-    public ResponseEntity<ApiResponseError> handleMediaApplicationException(
+    public ResponseEntity<ApiResponseError> handleBookProgressDomainException(
             BookProgressDomainException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.BAD_REQUEST;
