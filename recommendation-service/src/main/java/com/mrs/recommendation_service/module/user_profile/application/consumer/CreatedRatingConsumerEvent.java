@@ -30,7 +30,27 @@ public class CreatedRatingConsumerEvent {
                 createdRatingEvent.bookId(),
                 createdRatingEvent.stars());
 
-        createdRatingConsumerHandler.handle(createdRatingEvent);
+        try {
+            log.debug("Iniciando processamento do evento de rating. UserId={}, BookId={}, Stars={}",
+                    createdRatingEvent.userId(),
+                    createdRatingEvent.bookId(),
+                    createdRatingEvent.stars());
+
+            createdRatingConsumerHandler.handle(createdRatingEvent);
+
+            log.info("Evento de rating processado com sucesso. UserId={}, BookId={}",
+                    createdRatingEvent.userId(),
+                    createdRatingEvent.bookId());
+
+        } catch (Exception e) {
+            log.error("Erro ao processar evento de rating. UserId={}, BookId={}, Stars={}, Erro: {}",
+                    createdRatingEvent.userId(),
+                    createdRatingEvent.bookId(),
+                    createdRatingEvent.stars(),
+                    e.getMessage(),
+                    e);
+            throw e;
+        }
 
     }
 
