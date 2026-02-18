@@ -146,6 +146,7 @@ services:
         condition: service_healthy
     ports:
       - "9092:9092"
+      - "9101:9101"
     volumes:
       - kafka_data:/var/lib/kafka/data
     networks:
@@ -159,6 +160,8 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_HEAP_OPTS: "-Xmx512M -Xms512M"
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
     healthcheck:
       test: nc -z localhost 9092 || exit 1
       interval: 10s
@@ -168,6 +171,30 @@ services:
       resources:
         limits:
           memory: 1G
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    networks:
+      - mrs-network
+    environment:
+      KAFKA_CLUSTERS_0_NAME: vellumhub-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      KAFKA_CLUSTERS_0_JMXPORT: 9101
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # ==========================================
   # MICROSERVICES LAYER
