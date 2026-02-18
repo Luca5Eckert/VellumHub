@@ -25,12 +25,26 @@ public class CreatedRatingConsumerEvent {
     public void consume(
             @Payload CreatedRatingEvent createdRatingEvent
     ) {
-        log.info("Evento recebido:  User={}, Media={}, Stars={}",
+        log.info("Event received: Rating created. UserId={}, BookId={}, Stars={}",
                 createdRatingEvent.userId(),
                 createdRatingEvent.bookId(),
                 createdRatingEvent.stars());
 
-        createdRatingConsumerHandler.handle(createdRatingEvent);
+        try {
+            createdRatingConsumerHandler.handle(createdRatingEvent);
+
+            log.info("Rating event processed successfully. UserId={}, BookId={}",
+                    createdRatingEvent.userId(),
+                    createdRatingEvent.bookId());
+
+        } catch (Exception e) {
+            log.error("Error processing rating event. UserId={}, BookId={}, Stars={}",
+                    createdRatingEvent.userId(),
+                    createdRatingEvent.bookId(),
+                    createdRatingEvent.stars(),
+                    e);
+            throw e;
+        }
 
     }
 
