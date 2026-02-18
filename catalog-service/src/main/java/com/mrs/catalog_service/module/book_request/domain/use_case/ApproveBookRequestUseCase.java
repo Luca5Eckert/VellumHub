@@ -5,6 +5,7 @@ import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
 import com.mrs.catalog_service.module.book_request.domain.BookRequest;
+import com.mrs.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import com.mrs.catalog_service.module.book_request.domain.port.BookRequestRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Component;
@@ -26,7 +27,7 @@ public class ApproveBookRequestUseCase {
     @Transactional
     public void execute(long requestId) {
         BookRequest bookRequest = bookRequestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Book request not found"));
+                .orElseThrow(() -> new BookRequestDomainException("Book request not found"));
 
         Book book = Book.builder()
                 .title(bookRequest.getTitle())
