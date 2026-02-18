@@ -1,5 +1,6 @@
 package com.mrs.catalog_service.module.book_progress.application.controller;
 
+import com.mrs.catalog_service.module.book_progress.application.dto.UpdateBookProgressRequest;
 import com.mrs.catalog_service.share.service.AuthenticationService;
 import com.mrs.catalog_service.module.book_progress.application.dto.BookProgressResponse;
 import com.mrs.catalog_service.module.book_progress.application.dto.BookStatusRequest;
@@ -61,12 +62,12 @@ public class BookProgressController {
     @PutMapping("/{bookId}/progress")
     public ResponseEntity<BookProgressResponse> updateBookProgress(
             @PathVariable(value = "bookId") UUID bookId,
-            @RequestBody int newCurrentPage
+            @RequestBody UpdateBookProgressRequest request
     ) {
         UUID userId = authenticationService.getAuthenticatedUserId();
 
         var response = updateBookProgressHandler.handle(
-                newCurrentPage,
+                request.newCurrentPage(),
                 bookId,
                 userId
         );

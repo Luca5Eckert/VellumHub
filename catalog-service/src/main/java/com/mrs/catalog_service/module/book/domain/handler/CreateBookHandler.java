@@ -24,12 +24,12 @@ public class CreateBookHandler {
 
         bookRepository.save(book);
 
-        CreateBookEvent createMediaEvent = new CreateBookEvent(
+        CreateBookEvent createBookEvent = new CreateBookEvent(
                 book.getId(),
                 book.getGenres()
         );
 
-        bookEventProducer.send("created-book", createMediaEvent.bookId().toString(), createMediaEvent);
+        bookEventProducer.send("created-book", createBookEvent.bookId().toString(), createBookEvent);
     }
 
 }

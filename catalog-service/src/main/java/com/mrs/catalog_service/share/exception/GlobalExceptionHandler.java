@@ -1,9 +1,9 @@
 package com.mrs.catalog_service.share.exception;
 
-import com.mrs.catalog_service.module.book.application.exception.BookApplicationException;
 import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;
 import com.mrs.catalog_service.module.book.domain.exception.BookNotExistException;
 import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
+import com.mrs.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,16 +93,16 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-    @ExceptionHandler(BookApplicationException.class)
+    @ExceptionHandler(BookProgressDomainException.class)
     public ResponseEntity<ApiResponseError> handleMediaApplicationException(
-            BookApplicationException ex, HttpServletRequest request) {
+            BookProgressDomainException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(ApiResponseError.builder()
                 .status(status.value())
-                .error("Book Application Error")
+                .error("Book Progress Error")
                 .message(ex.getMessage())
-                .details(List.of("Error during application service orchestration"))
+                .details(List.of("Business rule violation in book domain"))
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
