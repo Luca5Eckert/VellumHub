@@ -32,10 +32,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    deploy:
-      resources:
-        limits:
-          memory: 1G
 
   postgres-engagement:
     image: postgres:15-alpine
@@ -59,10 +55,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    deploy:
-      resources:
-        limits:
-          memory: 1G
 
   postgres-user:
     image: postgres:15-alpine
@@ -87,10 +79,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    deploy:
-      resources:
-        limits:
-          memory: 1G
 
   postgres-recommendation:
     image: pgvector/pgvector:pg15
@@ -113,10 +101,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    deploy:
-      resources:
-        limits:
-          memory: 1G
 
   # ==========================================
   # MESSAGING LAYER
@@ -167,10 +151,6 @@ services:
       interval: 10s
       retries: 15
       start_period: 20s
-    deploy:
-      resources:
-        limits:
-          memory: 1G
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -189,12 +169,6 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:8080 || curl -f http://localhost:8080 || exit 1
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
 
   # ==========================================
   # MICROSERVICES LAYER
@@ -208,6 +182,7 @@ services:
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
       JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-catalog:5432/catalog_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
@@ -221,11 +196,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
 
   engagement-service:
     build: ./engagement-service
@@ -236,6 +212,7 @@ services:
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
       JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-engagement:5432/engagement_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
@@ -249,11 +226,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
 
   user-service:
     build: ./user-service
@@ -264,6 +242,7 @@ services:
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
       JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/user_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
@@ -278,11 +257,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
 
   recommendation-service:
     build: ./recommendation-service
@@ -293,6 +273,8 @@ services:
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+      SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
       JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-recommendation:5432/recommendation_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
@@ -306,11 +288,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
 
 volumes:
   postgres_catalog_data:
