@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +34,7 @@ public class AuthController {
             @ApiResponse(responseCode = "201", description = "Usuário registrado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos ou email já em uso", content = @Content)
     })
-    public ResponseEntity<Void> register(@RequestBody RegisterUserRequest request) {
+    public ResponseEntity<Void> register(@Valid @RequestBody RegisterUserRequest request) {
         authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -45,7 +46,7 @@ public class AuthController {
                     content = @Content(schema = @Schema(implementation = String.class))),
             @ApiResponse(responseCode = "401", description = "Credenciais inválidas", content = @Content)
     })
-    public ResponseEntity<String> login(@RequestBody LoginUserRequest request) {
+    public ResponseEntity<String> login(@Valid @RequestBody LoginUserRequest request) {
         String token = authService.login(request);
         return ResponseEntity.ok(token);
     }

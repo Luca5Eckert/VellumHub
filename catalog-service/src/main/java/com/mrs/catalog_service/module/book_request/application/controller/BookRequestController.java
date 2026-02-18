@@ -4,6 +4,7 @@ import com.mrs.catalog_service.module.book_request.application.dto.BookRequestRe
 import com.mrs.catalog_service.module.book_request.application.dto.CreateBookRequestDto;
 import com.mrs.catalog_service.module.book_request.application.service.BookRequestApplicationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,7 +23,7 @@ public class BookRequestController {
 
     @PostMapping
     public ResponseEntity<BookRequestResponse> create(
-            @RequestBody CreateBookRequestDto request
+            @Valid @RequestBody CreateBookRequestDto request
     ) {
         BookRequestResponse response = bookRequestApplicationService.create(request);
         return ResponseEntity.ok(response);

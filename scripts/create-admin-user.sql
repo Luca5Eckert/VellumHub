@@ -14,20 +14,7 @@ CREATE TABLE IF NOT EXISTS tb_users (
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
--- Insere o Admin
-INSERT INTO tb_users (id, name, email, password, role, active, version, created_at, updated_at)
-VALUES (
-    gen_random_uuid(),
-    'Admin Master',
-    'admin@mrs.com',
-    '$2a$10$ArVoaRe2ih4.VVwrbrKUqORa2Kh7IfRa3I0Z5RBQGGJaNrkCjQBXG', -- Lucas#113
-    'ADMIN',
-    true,
-    1,
-    NOW(),
-    NOW()
-) ON CONFLICT (email) DO NOTHING;
-
+-- Insere o Admin Master com password: Admin123
 INSERT INTO tb_users (id, name, email, password, role, active, version, created_at, updated_at)
 VALUES (
     gen_random_uuid(),
@@ -39,4 +26,4 @@ VALUES (
     1,
     NOW(),
     NOW()
-) ON CONFLICT (email) DO UPDATE SET role = 'ADMIN';
+) ON CONFLICT (email) DO UPDATE SET role = 'ADMIN', active = true;
