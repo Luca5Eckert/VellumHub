@@ -19,8 +19,8 @@ public class DeleteBookProgressHandler {
     @Transactional
     public void handle(UUID bookId, UUID userId) {
         DeleteBookProgressCommand command = new DeleteBookProgressCommand(
-                bookId,
-                userId
+                userId,
+                bookId
         );
 
         deleteBookProgressUseCase.execute(command);
