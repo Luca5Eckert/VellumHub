@@ -48,10 +48,9 @@ public class CreateBookConsumerEvent {
                     createBookEvent.bookId());
 
         } catch (Exception e) {
-            log.error("Erro ao processar evento de criação de livro. BookId={}, Genres={}, Erro: {}",
+            log.error("Erro ao processar evento de criação de livro. BookId={}, Genres={}",
                     createBookEvent.bookId(),
                     createBookEvent.genres(),
-                    e.getMessage(),
                     e);
             throw e;
         }

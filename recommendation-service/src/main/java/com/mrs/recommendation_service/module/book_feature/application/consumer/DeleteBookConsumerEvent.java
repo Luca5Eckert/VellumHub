@@ -32,9 +32,8 @@ public class DeleteBookConsumerEvent {
                     deleteBookEvent.bookId());
 
         } catch (Exception e) {
-            log.error("Erro ao processar evento de exclusão de livro. BookId={}, Erro: {}",
+            log.error("Erro ao processar evento de exclusão de livro. BookId={}",
                     deleteBookEvent.bookId(),
-                    e.getMessage(),
                     e);
             throw e;
         }

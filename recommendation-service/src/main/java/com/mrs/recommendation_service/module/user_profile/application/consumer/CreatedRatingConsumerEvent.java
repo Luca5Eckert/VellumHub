@@ -38,11 +38,10 @@ public class CreatedRatingConsumerEvent {
                     createdRatingEvent.bookId());
 
         } catch (Exception e) {
-            log.error("Erro ao processar evento de rating. UserId={}, BookId={}, Stars={}, Erro: {}",
+            log.error("Erro ao processar evento de rating. UserId={}, BookId={}, Stars={}",
                     createdRatingEvent.userId(),
                     createdRatingEvent.bookId(),
                     createdRatingEvent.stars(),
-                    e.getMessage(),
                     e);
             throw e;
         }

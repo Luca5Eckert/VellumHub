@@ -38,10 +38,9 @@ public class UpdateBookConsumerEvent {
                     updateBookEvent.bookId());
 
         } catch (Exception e) {
-            log.error("Erro ao processar evento de atualização de livro. BookId={}, Genres={}, Erro: {}",
+            log.error("Erro ao processar evento de atualização de livro. BookId={}, Genres={}",
                     updateBookEvent.bookId(),
                     updateBookEvent.genres(),
-                    e.getMessage(),
                     e);
             throw e;
         }
