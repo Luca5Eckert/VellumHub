@@ -118,7 +118,7 @@ public class BookController {
     }
 
     @PostMapping("/bulk")
-    public ResponseEntity<List<Recommendation>> getByIds(List<UUID> bookIds) {
+    public ResponseEntity<List<Recommendation>> getByIds(@RequestBody List<UUID> bookIds) {
         List<Recommendation> recommendations = bookService.getByIds(bookIds);
 
         return ResponseEntity.ok(recommendations);
