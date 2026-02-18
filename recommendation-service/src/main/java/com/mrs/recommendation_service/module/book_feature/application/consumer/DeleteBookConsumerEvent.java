@@ -26,9 +26,6 @@ public class DeleteBookConsumerEvent {
                 deleteBookEvent.bookId());
 
         try {
-            log.debug("Iniciando processamento do evento de exclusão de livro. BookId={}",
-                    deleteBookEvent.bookId());
-
             deleteBookFeatureUseCase.execute(deleteBookEvent.bookId());
 
             log.info("Evento de exclusão de livro processado com sucesso. BookId={}",

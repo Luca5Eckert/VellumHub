@@ -31,10 +31,6 @@ public class CreateBookConsumerEvent {
                 createBookEvent.genres());
 
         try {
-            log.debug("Iniciando processamento do evento de criação de livro. BookId={}, Genres={}",
-                    createBookEvent.bookId(),
-                    createBookEvent.genres());
-
             float[] genresVector = mapper.mapToFeatureVector(createBookEvent.genres());
 
             log.debug("Vetor de características criado. BookId={}, VectorLength={}",

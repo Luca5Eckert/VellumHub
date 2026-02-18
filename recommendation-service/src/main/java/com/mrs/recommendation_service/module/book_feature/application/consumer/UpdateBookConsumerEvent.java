@@ -27,10 +27,6 @@ public class UpdateBookConsumerEvent {
                 updateBookEvent.genres());
 
         try {
-            log.debug("Iniciando processamento do evento de atualização de livro. BookId={}, Genres={}",
-                    updateBookEvent.bookId(),
-                    updateBookEvent.genres());
-
             UpdateBookFeatureCommand mediaFeatureCommand = new UpdateBookFeatureCommand(
                     updateBookEvent.bookId(),
                     updateBookEvent.genres()

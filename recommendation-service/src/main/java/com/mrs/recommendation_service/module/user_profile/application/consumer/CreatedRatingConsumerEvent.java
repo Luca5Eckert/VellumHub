@@ -31,11 +31,6 @@ public class CreatedRatingConsumerEvent {
                 createdRatingEvent.stars());
 
         try {
-            log.debug("Iniciando processamento do evento de rating. UserId={}, BookId={}, Stars={}",
-                    createdRatingEvent.userId(),
-                    createdRatingEvent.bookId(),
-                    createdRatingEvent.stars());
-
             createdRatingConsumerHandler.handle(createdRatingEvent);
 
             log.info("Evento de rating processado com sucesso. UserId={}, BookId={}",
