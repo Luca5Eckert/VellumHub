@@ -13,7 +13,7 @@ import java.util.UUID;
 public interface JpaBookFeatureRepository extends JpaRepository<BookFeature, UUID> {
 
     @Query(value = """
-    WITH current_user AS (
+    WITH user_profile_data AS (
         SELECT profile_vector, interacted_book_ids 
         FROM user_profiles 
         WHERE user_id = :userId
@@ -24,7 +24,7 @@ public interface JpaBookFeatureRepository extends JpaRepository<BookFeature, UUI
             b.popularity_score,
             (b.embedding <=> u.profile_vector) as vector_dist
         FROM book_features b
-        CROSS JOIN current_user u
+        CROSS JOIN user_profile_data u
         WHERE NOT (b.book_id = ANY(COALESCE(u.interacted_book_ids, ARRAY[]::uuid[])))
         ORDER BY b.embedding <=> u.profile_vector ASC
         LIMIT 200 
@@ -40,6 +40,7 @@ public interface JpaBookFeatureRepository extends JpaRepository<BookFeature, UUI
             @Param("limit") int limit,
             @Param("offset") int offset
     );
+
 
     @Query(value = """
             SELECT b.book_id

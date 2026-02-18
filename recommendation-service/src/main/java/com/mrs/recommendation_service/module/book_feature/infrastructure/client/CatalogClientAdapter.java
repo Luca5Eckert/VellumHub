@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "catalog-service")
+@FeignClient(name = "catalog-service", url = "${catalog-service.url}")
 public interface CatalogClientAdapter extends CatalogClient {
 
     @PostMapping("/api/book/bulk")
