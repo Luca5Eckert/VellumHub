@@ -205,7 +205,7 @@ graph LR
 
 | Problem | Impact | Root Cause |
 |---------|--------|------------|
-| **Excessive Latency** | 3+ network hops per request | ML Service acted as synchronous REST intermediary |
+| **Excessive Latency** | 3+ network hops per request | ML Service acted as synchronous REST proxy between services |
 | **Tight Coupling** | ML Service failure brought down recommendations | Shared database between Java and Python services |
 | **Redundant Computation** | Full recalculation on every request | No caching, profile recomputed per request |
 | **Poor API Design** | Client had to orchestrate multiple calls | Recommendations returned IDs only, required separate metadata fetch |
@@ -244,7 +244,7 @@ graph LR
 | **API Design** | Client orchestration | Server-side aggregation with enriched response |
 
 **Technical Achievements:**
-- ✅ **60-75% latency reduction** through elimination of ML Service round-trips
+- ✅ **60-75% latency reduction** (from ~300-500ms to ~80-120ms) through ML Service elimination
 - ✅ **Pure Java stack** - removed Python dependency and operational complexity
 - ✅ **Event-driven profiles** - Kafka consumers update user vectors in real-time
 - ✅ **Native vector queries** - PostgreSQL `<=>` operator with HNSW indexing
@@ -363,6 +363,7 @@ The Recommendation Service database leverages **pgvector** extension for high-pe
 **Vector Storage:**
 ```sql
 -- Book feature vectors (genre-based embeddings)
+-- 128 dimensions: optimized balance between embedding richness and query performance
 CREATE TABLE book_features (
     id UUID PRIMARY KEY,
     book_id UUID NOT NULL,
@@ -371,6 +372,7 @@ CREATE TABLE book_features (
 );
 
 -- User profile vectors (preference embeddings)
+-- 128 dimensions: matches book vectors for direct cosine similarity computation
 CREATE TABLE user_profiles (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
