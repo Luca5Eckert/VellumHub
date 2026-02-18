@@ -371,6 +371,20 @@ This verifies:
 
 For detailed monitoring documentation, see [docs/KAFKA_MONITORING.md](docs/KAFKA_MONITORING.md)
 
+### Service Communication
+
+The system uses two communication patterns:
+- **Synchronous REST**: Recommendation Service → Catalog Service (Feign Client)
+- **Asynchronous Events**: Services communicate via Kafka topics
+
+**Verify Communication:**
+```bash
+# Run comprehensive communication test
+./scripts/test-service-communication.sh
+```
+
+For detailed communication verification, see [docs/SERVICE_COMMUNICATION.md](docs/SERVICE_COMMUNICATION.md)
+
 ---
 
 ## API Reference
