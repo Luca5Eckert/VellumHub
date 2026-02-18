@@ -3,7 +3,8 @@
 # Service Communication Verification Script
 # This script tests all communication pathways between VellumHub microservices
 
-set -e
+# Note: We don't use 'set -e' here because we want to test all services
+# and report results even if some tests fail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"

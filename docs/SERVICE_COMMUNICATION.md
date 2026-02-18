@@ -281,8 +281,14 @@ Access Kafka UI at http://localhost:8090 to visually monitor:
 **Solutions:**
 1. Check Kafka container is running: `docker ps | grep kafka`
 2. Verify Kafka bootstrap servers configuration
-3. Check network connectivity: `docker exec SERVICE_NAME nc -z kafka 29092`
+3. Check network connectivity:
+   ```bash
+   # Services communicate with Kafka using internal port 29092
+   docker exec catalog-service nc -z kafka 29092
+   ```
 4. Review Kafka logs: `docker logs kafka`
+
+**Note:** Within Docker network, services use `kafka:29092` (PLAINTEXT_INTERNAL). Host uses `localhost:9092` (PLAINTEXT).
 
 ### Issue: Consumer Group Not Consuming
 

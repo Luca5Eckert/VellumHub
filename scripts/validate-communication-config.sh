@@ -106,7 +106,7 @@ if [ -f "$consumer_props" ]; then
         print_result "Consumer Config" "PASS" "Kafka consumer configured"
         
         if grep -q "spring.kafka.consumer.group-id" "$consumer_props"; then
-            group_id=$(grep "spring.kafka.consumer.group-id" "$consumer_props" | cut -d'=' -f2)
+            group_id=$(grep "spring.kafka.consumer.group-id" "$consumer_props" | cut -d'=' -f2-)
             print_result "Consumer Group ID" "PASS" "Group ID: $group_id"
         fi
     else
