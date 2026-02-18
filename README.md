@@ -78,10 +78,6 @@ graph TB
         CLIENT[Client Applications]
     end
     
-    subgraph "API Gateway Layer"
-        GATEWAY[API Gateway<br/>Port TBD]
-    end
-    
     subgraph "Microservices"
         US[User Service<br/>:8084<br/>Authentication & Users]
         CS[Catalog Service<br/>:8081<br/>Books & Requests]
