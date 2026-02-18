@@ -313,32 +313,38 @@ The Recommendation Service database leverages **pgvector** extension for high-pe
 **Vector Storage:**
 ```sql
 -- Book feature vectors (genre-based embeddings)
--- 128 dimensions: optimized balance between embedding richness and query performance
+-- 15 dimensions: one per genre (one-hot encoding for 15 book genres)
 CREATE TABLE book_features (
-    id UUID PRIMARY KEY,
-    book_id UUID NOT NULL,
-    feature_vector vector(128),  -- Book embedding (genres, metadata)
-    created_at TIMESTAMP
+    book_id UUID PRIMARY KEY,
+    embedding vector(15),  -- Genre-based embedding
+    popularity_score DOUBLE PRECISION,
+    last_updated TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 -- User profile vectors (preference embeddings)
--- 128 dimensions: matches book vectors for direct cosine similarity computation
+-- 15 dimensions: matches book vectors for direct cosine similarity computation
 CREATE TABLE user_profiles (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL,
-    profile_vector vector(128),  -- User preference embedding
-    updated_at TIMESTAMP
+    user_id UUID PRIMARY KEY,
+    profile_vector vector(15),  -- User genre preferences
+    total_engagement_score DOUBLE PRECISION,
+    last_updated TIMESTAMP WITH TIME ZONE NOT NULL
 );
 ```
 
 **Vector Similarity Query:**
 ```sql
 -- Find similar books using cosine distance
-SELECT book_id, (feature_vector <=> $1::vector) as similarity
+SELECT book_id, (embedding <=> $1::vector) as similarity
 FROM book_features
-ORDER BY feature_vector <=> $1::vector
+ORDER BY embedding <=> $1::vector
 LIMIT 10;
 ```
+
+**How It Works:**
+- **Genre Encoding**: Each of the 15 dimensions represents one book genre (Fantasy, Sci-Fi, Horror, Romance, etc.)
+- **Book Vectors**: One-hot encoding where dimension = 1.0 if book belongs to that genre, 0.0 otherwise
+- **User Vectors**: Weighted preferences updated based on ratings (higher weights for genres user enjoys)
+- **Similarity Search**: PostgreSQL pgvector computes cosine distance between user preferences and book genres
 
 **Performance Optimization:**
 - **HNSW Index** (Hierarchical Navigable Small World) for approximate nearest neighbor search
