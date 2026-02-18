@@ -33,12 +33,11 @@ public class BookFeature {
     private double popularityScore;
 
     @Column(name = "last_updated", nullable = false)
-    private Instant lastUpdated;
+    private Instant lastUpdated = Instant.now();
 
     public BookFeature(UUID bookId, float[] genresVector) {
         this.bookId = bookId;
         this.embedding = genresVector;
-        this.lastUpdated = Instant.now();
     }
 
     public void update(List<Genre> genres) {
