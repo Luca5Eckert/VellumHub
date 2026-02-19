@@ -6,6 +6,8 @@ import com.mrs.engagement_service.module.rating.domain.model.Rating;
 import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 public class CreateRatingUseCase {
 
@@ -25,6 +27,7 @@ public class CreateRatingUseCase {
                 .bookId(command.bookId())
                 .stars(command.stars())
                 .review(command.review())
+                .timestamp(LocalDateTime.now())
                 .build();
 
         return ratingRepository.save(rating);
