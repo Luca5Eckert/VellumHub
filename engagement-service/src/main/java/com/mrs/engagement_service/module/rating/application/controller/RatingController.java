@@ -83,5 +83,23 @@ public class RatingController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<List<RatingGetResponse>> findAllOfUserAuthenticated(
+            @Parameter(description = "Filter by minimum stars") @RequestParam(required = false) Integer minStars,
+            @Parameter(description = "Filter by maximum stars") @RequestParam(required = false) Integer maxStars,
+            @Parameter(description = "Start date (ISO 8601)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+            @Parameter(description = "End date (ISO 8601)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize
+    ){
+      var userId = authenticationService.getAuthenticatedUserId();
+
+        List<RatingGetResponse> response = getUserRatingHandler.handle(
+                userId, minStars, maxStars, from, to, pageNumber, pageSize
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
     
 }
