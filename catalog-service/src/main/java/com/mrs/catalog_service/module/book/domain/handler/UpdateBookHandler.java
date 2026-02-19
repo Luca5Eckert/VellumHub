@@ -26,8 +26,6 @@ public class UpdateBookHandler {
 
     @Transactional
     public void execute(UUID bookId, UpdateBookRequest request) {
-        Objects.requireNonNull(request, "UpdateBookRequest must not be null");
-
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(BookNotFoundException::new);
 
@@ -59,15 +57,12 @@ public class UpdateBookHandler {
     }
 
     private void verifyIfBookAlreadyExists(Book book, UpdateBookRequest request) {
-        if(request.title() == null || request.title().equals(book.getTitle())) return;
+        boolean titleChanged = request.title() != null && !request.title().equals(book.getTitle());
+        boolean isbnChanged = request.isbn() != null && !request.isbn().equals(book.getIsbn());
 
-        if(request.isbn() == null || book.getIsbn().equals(request.isbn())) return;
+        if (!titleChanged && !isbnChanged) return;
 
-        if(bookRepository.existByTitleAndAuthorAndIsbn(
-                request.title(),
-                request.author(),
-                request.isbn()
-        )) {
+        if (bookRepository.existByTitleAndAuthorAndIsbn(request.title(), request.author(), request.isbn())) {
             throw new InvalidBookException("Book with the same title, author and ISBN already exists.");
         }
     }
