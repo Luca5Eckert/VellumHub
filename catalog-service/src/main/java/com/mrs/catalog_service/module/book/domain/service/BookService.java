@@ -42,6 +42,7 @@ public class BookService {
                 .pageCount( createBookRequest.pageCount() )
                 .publisher( createBookRequest.publisher() )
                 .genres( createBookRequest.genres() )
+                .coverUrl(createBookRequest.coverUrl())
                 .build();
 
         createBookHandler.handler(book);
