@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.infrastructure.exception;
+package com.mrs.engagement_service.share.exception;
 
 import com.mrs.engagement_service.module.rating.application.exception.EngagementApplicationException;
 import com.mrs.engagement_service.module.rating.domain.exception.RatingDomainException;

@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.infrastructure.provider;
+package com.mrs.engagement_service.share.provider;
 
 import com.mrs.engagement_service.module.rating.domain.filter.RatingFilter;
 import com.mrs.engagement_service.module.rating.domain.model.Rating;

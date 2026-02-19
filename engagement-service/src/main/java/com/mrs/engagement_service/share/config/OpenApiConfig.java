@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.infrastructure.config;
+package com.mrs.engagement_service.share.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

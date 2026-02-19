@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record CreateRatingRequest(
-        @NotNull UUID userId,
         @NotNull UUID bookId,
         @NotNull @Min(0) @Max(5) Integer stars,
         String review

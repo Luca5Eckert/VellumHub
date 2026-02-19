@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.infrastructure.security.config;
+package com.mrs.engagement_service.share.security.config;
 
 import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;

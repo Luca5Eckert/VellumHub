@@ -5,6 +5,7 @@ import com.mrs.engagement_service.module.rating.application.dto.GetBookStatusRes
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.module.rating.application.handler.CreateRatingHandler;
 import com.mrs.engagement_service.module.rating.application.handler.GetUserRatingHandler;
+import com.mrs.engagement_service.share.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -31,12 +32,15 @@ public class RatingController {
     private final CreateRatingHandler createRatingHandler;
     private final GetUserRatingHandler getUserRatingHandler;
 
+    private final AuthenticationService authenticationService;
+
     public RatingController(
             CreateRatingHandler createRatingHandler,
-            GetUserRatingHandler getUserRatingHandler
+            GetUserRatingHandler getUserRatingHandler, AuthenticationService authenticationService
     ) {
         this.createRatingHandler = createRatingHandler;
         this.getUserRatingHandler = getUserRatingHandler;
+        this.authenticationService = authenticationService;
     }
 
     @PostMapping
@@ -49,7 +53,10 @@ public class RatingController {
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     })
     public ResponseEntity<String> create(@RequestBody @Valid CreateRatingRequest request) {
-        createRatingHandler.handle(request);
+        var userId = authenticationService.getAuthenticatedUserId();
+
+        createRatingHandler.handle(request, userId);
+
         return ResponseEntity.status(HttpStatus.CREATED).body("Rating registered successfully");
     }
 

@@ -1,6 +1,6 @@
 package com.mrs.engagement_service.module.rating.infrastructure.repository;
 
-import com.mrs.engagement_service.infrastructure.provider.RatingFilterProvider;
+import com.mrs.engagement_service.share.provider.RatingFilterProvider;
 import com.mrs.engagement_service.module.rating.domain.filter.RatingFilter;
 import com.mrs.engagement_service.module.rating.domain.model.Rating;
 import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;

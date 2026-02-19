@@ -8,6 +8,8 @@ import com.mrs.engagement_service.module.rating.domain.use_case.CreateRatingUseC
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Component
 public class CreateRatingHandler {
 
@@ -20,9 +22,9 @@ public class CreateRatingHandler {
     }
 
     @Transactional
-    public void handle(CreateRatingRequest request){
+    public void handle(CreateRatingRequest request, UUID userId){
         CreateRatingCommand command = new CreateRatingCommand(
-                request.userId(),
+                userId,
                 request.bookId(),
                 request.stars(),
                 request.review()

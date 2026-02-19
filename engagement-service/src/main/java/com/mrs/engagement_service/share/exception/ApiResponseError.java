@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.infrastructure.exception;
+package com.mrs.engagement_service.share.exception;
 
 import lombok.Builder;
 

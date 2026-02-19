@@ -1,6 +1,6 @@
-package com.mrs.engagement_service.infrastructure.service;
+package com.mrs.engagement_service.share.service;
 
-import com.mrs.engagement_service.infrastructure.exception.UserNotAuthenticatedException;
+import com.mrs.engagement_service.share.exception.UserNotAuthenticatedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
