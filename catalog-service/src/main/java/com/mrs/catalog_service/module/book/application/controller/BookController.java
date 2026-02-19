@@ -3,7 +3,7 @@ package com.mrs.catalog_service.module.book.application.controller;
 import com.mrs.catalog_service.module.book.application.dto.CreateBookRequest;
 import com.mrs.catalog_service.module.book.application.dto.GetBookResponse;
 import com.mrs.catalog_service.module.book.application.dto.Recommendation;
-import com.mrs.catalog_service.module.book.application.dto.UpdateBookRequest; // Import adicionado
+import com.mrs.catalog_service.module.book.application.dto.UpdateBookRequest; // Import added
 import com.mrs.catalog_service.module.book.domain.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/books")
-@Tag(name = "Book", description = "Endpoints para gerenciamento de catálogo de livros")
+@Tag(name = "Book", description = "Endpoints for book catalog management")
 public class BookController {
 
     private final BookService bookService;
@@ -35,81 +35,81 @@ public class BookController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Criar novo livro", description = "Cria um novo livro no catálogo. Requer role ADMIN.")
+    @Operation(summary = "Create new book", description = "Creates a new book in the catalog. Requires ADMIN role.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Livro criado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Sem permissão de administrador", content = @Content)
+            @ApiResponse(responseCode = "201", description = "Book created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid data", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin permission required", content = @Content)
     })
-    public ResponseEntity<Void> create(@RequestBody @Valid CreateBookRequest createMediaRequest){
-        bookService.create(createMediaRequest);
+    public ResponseEntity<Void> create(@RequestBody @Valid CreateBookRequest createBookRequest){
+        bookService.create(createBookRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Deletar mídia", description = "Remove um livro do catálogo. Requer role ADMIN.")
+    @Operation(summary = "Delete book", description = "Removes a book from the catalog. Requires ADMIN role.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Livro deletado com sucesso"),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Sem permissão de administrador", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Livro não encontrado", content = @Content)
+            @ApiResponse(responseCode = "204", description = "Book deleted successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin permission required", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
     })
-    public ResponseEntity<Void> delete(@Parameter(description = "ID do livro") @PathVariable UUID id){
+    public ResponseEntity<Void> delete(@Parameter(description = "Book ID") @PathVariable UUID id){
         bookService.delete(id);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Buscar mídia por ID", description = "Retorna os detalhes de um livro específico")
+    @Operation(summary = "Find book by ID", description = "Returns the details of a specific book")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Livro encontrado", 
+            @ApiResponse(responseCode = "200", description = "Book found",
                     content = @Content(schema = @Schema(implementation = GetBookResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Livro não encontrado", content = @Content)
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
     })
-    public ResponseEntity<GetBookResponse> getById(@Parameter(description = "ID do livro") @PathVariable UUID id) {
+    public ResponseEntity<GetBookResponse> getById(@Parameter(description = "Book ID") @PathVariable UUID id) {
         GetBookResponse bookResponse = bookService.get(id);
 
         return ResponseEntity.ok(bookResponse);
     }
 
     @GetMapping
-    @Operation(summary = "Listar todas as mídias", description = "Retorna uma lista paginada de todos os livros no catálogo")
+    @Operation(summary = "List all books", description = "Returns a paginated list of all books in the catalog")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de livros retornada com sucesso",
+            @ApiResponse(responseCode = "200", description = "List of books returned successfully",
                     content = @Content(schema = @Schema(implementation = GetBookResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content)
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     })
     public ResponseEntity<List<GetBookResponse>> getAll(
-            @Parameter(description = "Número da página") @RequestParam(defaultValue = "0") int pageNumber,
-            @Parameter(description = "Tamanho da página") @RequestParam(defaultValue = "10") int pageSize
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize
     ) {
-        List<GetBookResponse> mediaResponseList = bookService.getAll(pageNumber, pageSize);
+        List<GetBookResponse> bookResponseList = bookService.getAll(pageNumber, pageSize);
 
-        return ResponseEntity.ok(mediaResponseList);
+        return ResponseEntity.ok(bookResponseList);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Atualizar mídia", description = "Atualiza os dados de um livro existente. Requer role ADMIN.")
+    @Operation(summary = "Update book", description = "Updates the data of an existing book. Requires ADMIN role.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Livro atualizado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Sem permissão de administrador", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Livro não encontrado", content = @Content)
+            @ApiResponse(responseCode = "200", description = "Book updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid data", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin permission required", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
     })
     public ResponseEntity<Void> update(
-            @Parameter(description = "ID do livro") @PathVariable UUID id,
+            @Parameter(description = "Book ID") @PathVariable UUID id,
             @RequestBody @Valid UpdateBookRequest updateBookRequest
     ) {
         bookService.update(id, updateBookRequest);
@@ -118,11 +118,10 @@ public class BookController {
     }
 
     @PostMapping("/bulk")
+    @Operation(summary = "Get multiple books by IDs", description = "Returns recommendations based on a list of book IDs")
     public ResponseEntity<List<Recommendation>> getByIds(@RequestBody List<UUID> bookIds) {
         List<Recommendation> recommendations = bookService.getByIds(bookIds);
 
         return ResponseEntity.ok(recommendations);
     }
-
-
 }
