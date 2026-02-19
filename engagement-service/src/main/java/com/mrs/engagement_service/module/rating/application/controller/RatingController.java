@@ -60,7 +60,7 @@ public class RatingController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Rating registered successfully");
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/{userId}")
     @Operation(summary = "Get user ratings", description = "Returns all ratings from a specific user with optional filters")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
@@ -82,5 +82,6 @@ public class RatingController {
         );
         return ResponseEntity.ok(response);
     }
+
     
 }
