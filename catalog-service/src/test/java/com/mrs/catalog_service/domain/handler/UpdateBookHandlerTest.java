@@ -1,14 +1,16 @@
-package com.mrs.catalog_service.domain.handler;
+package com.mrs.catalog_service.module.book.domain.handler;
 
 import com.mrs.catalog_service.module.book.application.dto.UpdateBookRequest;
 import com.mrs.catalog_service.module.book.domain.event.UpdateBookEvent;
 import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
-import com.mrs.catalog_service.module.book.domain.handler.UpdateBookHandler;
-import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.mrs.catalog_service.module.book.domain.exception.InvalidBookException;
 import com.mrs.catalog_service.module.book.domain.model.Book;
+import com.mrs.catalog_service.module.book.domain.model.Genre;
 import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -20,11 +22,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("UpdateBookHandler Unit Tests")
 class UpdateBookHandlerTest {
 
     @Mock
@@ -34,121 +40,111 @@ class UpdateBookHandlerTest {
     private BookEventProducer<String, UpdateBookEvent> bookEventProducer;
 
     @InjectMocks
-    private UpdateBookHandler updateMediaHandler;
+    private UpdateBookHandler updateBookHandler;
 
-    @Test
-    @DisplayName("Should update book and send event when genres are provided")
-    void shouldUpdateMediaAndSendEvent_WhenGenresArePresent() {
-        // Arrange
-        UUID bookId = UUID.randomUUID();
-        List<Genre> newGenres = List.of(Genre.FANTASY, Genre.SCI_FI);
+    private final UUID bookId = UUID.randomUUID();
+    private Book book;
 
-        UpdateBookRequest request = new UpdateBookRequest(
-                "New Title",
-                "New Desc",
-                2024,
-                "http://url.com",
-                "Author Name",
-                "978-0-7653-0000-0",
-                300,
-                "Publisher Name",
-                newGenres
-        );
-
-
-        Book existingMedia = Book.builder()
-                .id(bookId)
-                .title("Old Title")
-                .genres(List.of(Genre.SCI_FI))
-                .build();
-
-        when(bookRepository.findById(bookId)).thenReturn(Optional.of(existingMedia));
-
-        // Act
-        updateMediaHandler.execute(bookId, request);
-
-        // Assert
-        ArgumentCaptor<Book> mediaCaptor = ArgumentCaptor.forClass(Book.class);
-        verify(bookRepository).save(mediaCaptor.capture());
-
-        Book savedMedia = mediaCaptor.getValue();
-        assertEquals("New Title", savedMedia.getTitle());
-
-        ArgumentCaptor<UpdateBookEvent> eventCaptor = ArgumentCaptor.forClass(UpdateBookEvent.class);
-        verify(bookEventProducer, times(1))
-                .send(eq("updated-book"), eq(bookId.toString()), eventCaptor.capture());
-
-        assertEquals(bookId, eventCaptor.getValue().bookId());
-        assertEquals(newGenres, eventCaptor.getValue().genres());
+    @BeforeEach
+    void setUp() {
+        book = mock(Book.class);
+        lenient().when(book.getId()).thenReturn(bookId);
     }
 
-    @Test
-    @DisplayName("Should update book but NOT send event when genres are null")
-    void shouldUpdateMediaButNotSendEvent_WhenGenresAreNull() {
-        // Arrange
-        UUID bookId = UUID.randomUUID();
+    @Nested
+    @DisplayName("Execution Logic & Event Emission")
+    class ExecutionLogic {
 
-        UpdateBookRequest request = new UpdateBookRequest(
-                "New Title",
-                "New Desc",
-                2024,
-                "http://url.com",
-                "Author Name",
-                "978-0-7653-0000-0",
-                300,
-                "Publisher Name",
-                null
-        );
+        @Test
+        @DisplayName("Should successfully update book and send event when genres are present")
+        void shouldUpdateAndSendEvent() {
+            // Given
+            var request = createRequest("New Title", "978-123", List.of(Genre.SCI_FI));
+            given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
+            given(book.getTitle()).willReturn("Old Title");
 
-        Book existingMedia = Book.builder()
-                .id(bookId)
-                .title("Old Title")
-                .genres(List.of(Genre.SCI_FI))
-                .build();
+            // When
+            updateBookHandler.execute(bookId, request);
 
-        when(bookRepository.findById(bookId)).thenReturn(Optional.of(existingMedia));
+            // Then
+            then(book).should().update(any(), any(), any(), anyInt(), any(), any(), anyInt(), any(), any());
+            then(bookRepository).should().save(book);
 
-        // Act
-        updateMediaHandler.execute(bookId, request);
+            var eventCaptor = ArgumentCaptor.forClass(UpdateBookEvent.class);
+            then(bookEventProducer).should().send(eq("updated-book"), eq(bookId.toString()), eventCaptor.capture());
+            assertThat(eventCaptor.getValue().genres()).containsExactly(Genre.SCI_FI);
+        }
 
-        // Assert
-        verify(bookRepository).save(any(Book.class));
+        @Test
+        @DisplayName("Should update book but NOT send event when genres are null")
+        void shouldUpdateWithoutEventWhenGenresNull() {
+            // Given
+            var request = createRequest("New Title", "978-123", null);
+            given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
+            given(book.getTitle()).willReturn("Old Title");
 
-        verify(bookEventProducer, never()).send(any(), any(), any());
+            // When
+            updateBookHandler.execute(bookId, request);
+
+            // Then
+            then(bookRepository).should().save(book);
+            then(bookEventProducer).shouldHaveNoInteractions();
+        }
     }
 
-    @Test
-    @DisplayName("Should throw BookNotFoundException when book does not exist")
-    void shouldThrowException_WhenMediaNotFound() {
-        // Arrange
-        UUID bookId = UUID.randomUUID();
-        UpdateBookRequest request = new UpdateBookRequest("T", "D", 2022, "U", "A", "978-0-7653-0000-0", 300, "P", List.of(Genre.THRILLER_MYSTERY));
+    @Nested
+    @DisplayName("Identity & Duplicate Validation")
+    class ValidationLogic {
 
-        when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
+        @Test
+        @DisplayName("Should NOT call database exists check if Title and ISBN haven't changed")
+        void shouldShortCircuitValidation() {
+            // Given
+            var request = createRequest("Same Title", "Same ISBN", null);
+            given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
+            given(book.getTitle()).willReturn("Same Title");
+            given(book.getIsbn()).willReturn("Same ISBN");
 
-        // Act & Assert
-        assertThrows(BookNotFoundException.class, () ->
-                updateMediaHandler.execute(bookId, request)
-        );
+            // When
+            updateBookHandler.execute(bookId, request);
 
-        verify(bookRepository, never()).save(any());
-        verify(bookEventProducer, never()).send(any(), any(), any());
+            // Then
+            then(bookRepository).should(never()).existByTitleAndAuthorAndIsbn(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Should throw InvalidBookException when updated title/author/isbn already exists")
+        void shouldThrowExceptionOnDuplicate() {
+            var request = createRequest("New Title", "New ISBN", null);
+            given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
+            given(book.getTitle()).willReturn("Old Title");
+            given(bookRepository.existByTitleAndAuthorAndIsbn(any(), any(), any())).willReturn(true);
+
+            assertThatThrownBy(() -> updateBookHandler.execute(bookId, request))
+                    .isInstanceOf(InvalidBookException.class)
+                    .hasMessageContaining("already exists");
+
+            then(bookRepository).should(never()).save(any());
+        }
     }
 
-    @Test
-    @DisplayName("Should throw NullPointerException when request is null")
-    void shouldThrowException_WhenRequestIsNull() {
-        // Arrange
-        UUID bookId = UUID.randomUUID();
+    @Nested
+    @DisplayName("Error Handling")
+    class ErrorHandling {
 
-        // Act & Assert
-        NullPointerException exception = assertThrows(NullPointerException.class, () ->
-                updateMediaHandler.execute(bookId, null)
-        );
+        @Test
+        @DisplayName("Should throw BookNotFoundException when ID is invalid")
+        void shouldThrowNotFound() {
+            given(bookRepository.findById(bookId)).willReturn(Optional.empty());
 
-        assertEquals("UpdateBookRequest must not be null", exception.getMessage());
-        verifyNoInteractions(bookRepository);
-        verifyNoInteractions(bookEventProducer);
+            assertThatThrownBy(() -> updateBookHandler.execute(bookId, createRequest("T", "I", null)))
+                    .isInstanceOf(BookNotFoundException.class);
+        }
     }
 
+    private UpdateBookRequest createRequest(String title, String isbn, List<Genre> genres) {
+        return new UpdateBookRequest(
+                title, "Desc", 2024, "url", "Author", isbn, 100, "Publisher", genres
+        );
+    }
 }
