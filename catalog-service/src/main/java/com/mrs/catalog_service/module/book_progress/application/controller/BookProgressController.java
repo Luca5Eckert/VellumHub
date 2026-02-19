@@ -73,7 +73,7 @@ public class BookProgressController {
         );
 
         return ResponseEntity
-                .status(HttpStatus.CREATED)
+                .status(HttpStatus.OK)
                 .body(response);
     }
 
