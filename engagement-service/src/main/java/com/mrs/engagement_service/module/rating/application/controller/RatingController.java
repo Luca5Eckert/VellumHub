@@ -3,8 +3,11 @@ package com.mrs.engagement_service.module.rating.application.controller;
 import com.mrs.engagement_service.module.rating.application.dto.CreateRatingRequest;
 import com.mrs.engagement_service.module.rating.application.dto.GetBookStatusResponse;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
+import com.mrs.engagement_service.module.rating.application.dto.UpdateRatingRequest;
 import com.mrs.engagement_service.module.rating.application.handler.CreateRatingHandler;
 import com.mrs.engagement_service.module.rating.application.handler.GetUserRatingHandler;
+import com.mrs.engagement_service.module.rating.application.handler.UpdateRatingHandler;
+import com.mrs.engagement_service.module.rating.domain.use_case.UpdateRatingUseCase;
 import com.mrs.engagement_service.share.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,15 +34,17 @@ public class RatingController {
 
     private final CreateRatingHandler createRatingHandler;
     private final GetUserRatingHandler getUserRatingHandler;
+    private final UpdateRatingHandler updateRatingHandler;
 
     private final AuthenticationService authenticationService;
 
     public RatingController(
             CreateRatingHandler createRatingHandler,
-            GetUserRatingHandler getUserRatingHandler, AuthenticationService authenticationService
+            GetUserRatingHandler getUserRatingHandler, UpdateRatingHandler updateRatingHandler, AuthenticationService authenticationService
     ) {
         this.createRatingHandler = createRatingHandler;
         this.getUserRatingHandler = getUserRatingHandler;
+        this.updateRatingHandler = updateRatingHandler;
         this.authenticationService = authenticationService;
     }
 
@@ -97,6 +102,26 @@ public class RatingController {
         List<RatingGetResponse> response = getUserRatingHandler.handle(
                 userId, minStars, maxStars, from, to, pageNumber, pageSize
         );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{ratingId}")
+    @Operation(summary = "Update rating", description = "Updates an existing user rating for a media (0-5 stars + review)")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    content = @Content(schema = @Schema(implementation = RatingGetResponse.class))
+            )
+    })
+    public ResponseEntity<RatingGetResponse> update(
+            @Parameter(description = "Rating ID") @PathVariable Long ratingId,
+            @RequestBody UpdateRatingRequest request
+    ) {
+        var userId = authenticationService.getAuthenticatedUserId();
+
+        var response = updateRatingHandler.handle(ratingId, request);
 
         return ResponseEntity.ok(response);
     }

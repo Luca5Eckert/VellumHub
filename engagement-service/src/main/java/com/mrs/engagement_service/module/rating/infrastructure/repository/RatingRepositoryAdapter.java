@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -40,6 +41,11 @@ public class RatingRepositoryAdapter implements RatingRepository {
     @Override
     public boolean existsByUserIdAndBookId(UUID userId, UUID bookId) {
         return ratingRepositoryJpa.existsByUserIdAndBookId(userId, bookId);
+    }
+
+    @Override
+    public Optional<Rating> findById(long id) {
+        return ratingRepositoryJpa.findById(id);
     }
 
 

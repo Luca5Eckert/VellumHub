@@ -1,5 +1,6 @@
 package com.mrs.engagement_service.module.rating.domain.model;
 
+import com.mrs.engagement_service.module.rating.domain.exception.InvalidRatingException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -48,4 +49,18 @@ public class Rating {
         this.review = review;
         this.timestamp = timestamp;
     }
+
+    public void update(Integer stars, String review) {
+        if(stars != null && (stars < 0 || stars > 5)) {
+            throw new InvalidRatingException("Stars must be between 0 and 5");
+        }
+        if(review != null) {
+            this.review = review;
+        }
+        if(stars != null) {
+            this.stars = stars;
+        }
+        this.timestamp = LocalDateTime.now();
+    }
+
 }
