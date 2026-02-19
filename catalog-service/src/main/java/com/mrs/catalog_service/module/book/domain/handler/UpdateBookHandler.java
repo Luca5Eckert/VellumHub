@@ -3,6 +3,7 @@ package com.mrs.catalog_service.module.book.domain.handler;
 import com.mrs.catalog_service.module.book.application.dto.UpdateBookRequest;
 import com.mrs.catalog_service.module.book.domain.event.UpdateBookEvent;
 import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
+import com.mrs.catalog_service.module.book.domain.exception.InvalidBookException;
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
@@ -30,6 +31,8 @@ public class UpdateBookHandler {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(BookNotFoundException::new);
 
+        verifyIfBookAlreadyExists(book, request);
+
         book.update(
                 request.title(),
                 request.description(),
@@ -53,6 +56,20 @@ public class UpdateBookHandler {
 
         bookEventProducer.send("updated-book", book.getId().toString(), updateBookEvent);
 
+    }
+
+    private void verifyIfBookAlreadyExists(Book book, UpdateBookRequest request) {
+        if(request.title() == null || request.title().equals(book.getTitle())) return;
+
+        if(request.isbn() == null || book.getIsbn().equals(request.isbn())) return;
+
+        if(bookRepository.existByTitleAndAuthorAndIsbn(
+                request.title(),
+                request.author(),
+                request.isbn()
+        )) {
+            throw new InvalidBookException("Book with the same title, author and ISBN already exists.");
+        }
     }
 
 

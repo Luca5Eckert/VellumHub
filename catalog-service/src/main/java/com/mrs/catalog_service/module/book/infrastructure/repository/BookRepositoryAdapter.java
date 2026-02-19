@@ -54,4 +54,13 @@ public class BookRepositoryAdapter implements BookRepository {
         return bookRepository.existsByTitleAndAuthor(title, author);
     }
 
+    @Override
+    public boolean existByTitleAndAuthorAndIsbn(String title, String author, String isbn) {
+        return bookRepository.existByTitleAndAuthorAndIsbn(
+                title,
+                author,
+                isbn
+        );
+    }
+
 }

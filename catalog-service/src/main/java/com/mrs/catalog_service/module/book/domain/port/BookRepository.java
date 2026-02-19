@@ -22,4 +22,6 @@ public interface BookRepository {
     List<Book> findAllById(List<UUID> uuids);
 
     boolean existByTitleAndAuthor(String title, String author);
+
+    boolean existByTitleAndAuthorAndIsbn(String title, String author, String isbn);
 }

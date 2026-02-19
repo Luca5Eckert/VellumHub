@@ -22,6 +22,12 @@ public class CreateBookHandler {
     public void handler(Book book){
         if(book == null) throw new InvalidBookException();
 
+        if(bookRepository.existByTitleAndAuthorAndIsbn(
+                book.getTitle(),
+                book.getAuthor(),
+                book.getIsbn()
+        )) throw new InvalidBookException("Book with the same title, author and ISBN already exists.");
+
         bookRepository.save(book);
 
         CreateBookEvent createBookEvent = new CreateBookEvent(
