@@ -114,7 +114,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "Find user authenticated", description = "Returns details of a authenticated user")
+    @Operation(summary = "Get authenticated user profile", description = "Returns the profile details of the currently authenticated user")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found successfully",
