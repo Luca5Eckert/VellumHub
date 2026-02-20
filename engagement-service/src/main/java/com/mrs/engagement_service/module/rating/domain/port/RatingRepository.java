@@ -16,4 +16,8 @@ public interface RatingRepository {
     boolean existsByUserIdAndBookId(UUID uuid, UUID uuid1);
 
     Optional<Rating> findById(long id);
+
+    boolean existsbyId(Long ratingId);
+
+    void deleteById(Long ratingId);
 }

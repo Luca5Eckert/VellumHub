@@ -48,5 +48,15 @@ public class RatingRepositoryAdapter implements RatingRepository {
         return ratingRepositoryJpa.findById(id);
     }
 
+    @Override
+    public boolean existsbyId(Long ratingId) {
+        return ratingRepositoryJpa.existsById(ratingId);
+    }
+
+    @Override
+    public void deleteById(Long ratingId) {
+        ratingRepositoryJpa.deleteById(ratingId);
+    }
+
 
 }

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/media-recommendation-system.iml" filepath="$PROJECT_DIR$/.idea/media-recommendation-system.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/VellumHub.iml" filepath="$PROJECT_DIR$/.idea/VellumHub.iml" />
     </modules>
   </component>
 </project>

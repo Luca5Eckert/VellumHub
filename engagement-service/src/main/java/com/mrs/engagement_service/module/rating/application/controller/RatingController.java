@@ -1,13 +1,12 @@
 package com.mrs.engagement_service.module.rating.application.controller;
 
 import com.mrs.engagement_service.module.rating.application.dto.CreateRatingRequest;
-import com.mrs.engagement_service.module.rating.application.dto.GetBookStatusResponse;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.module.rating.application.dto.UpdateRatingRequest;
 import com.mrs.engagement_service.module.rating.application.handler.CreateRatingHandler;
+import com.mrs.engagement_service.module.rating.application.handler.DeleteRatingHandler;
 import com.mrs.engagement_service.module.rating.application.handler.GetUserRatingHandler;
 import com.mrs.engagement_service.module.rating.application.handler.UpdateRatingHandler;
-import com.mrs.engagement_service.module.rating.domain.use_case.UpdateRatingUseCase;
 import com.mrs.engagement_service.share.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,16 +34,18 @@ public class RatingController {
     private final CreateRatingHandler createRatingHandler;
     private final GetUserRatingHandler getUserRatingHandler;
     private final UpdateRatingHandler updateRatingHandler;
+    private final DeleteRatingHandler deleteRatingHandler;
 
     private final AuthenticationService authenticationService;
 
     public RatingController(
             CreateRatingHandler createRatingHandler,
-            GetUserRatingHandler getUserRatingHandler, UpdateRatingHandler updateRatingHandler, AuthenticationService authenticationService
+            GetUserRatingHandler getUserRatingHandler, UpdateRatingHandler updateRatingHandler, DeleteRatingHandler deleteRatingHandler, AuthenticationService authenticationService
     ) {
         this.createRatingHandler = createRatingHandler;
         this.getUserRatingHandler = getUserRatingHandler;
         this.updateRatingHandler = updateRatingHandler;
+        this.deleteRatingHandler = deleteRatingHandler;
         this.authenticationService = authenticationService;
     }
 
@@ -133,5 +134,23 @@ public class RatingController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{ratingId}")
+    @Operation(summary = "Delete rating", description = "Deletes an existing book rating")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Rating deleted successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    })
+    public ResponseEntity<Void> delete(
+            @Parameter(description = "Rating ID") @PathVariable Long ratingId
+    ) {
+        var userId = authenticationService.getAuthenticatedUserId();
+
+        deleteRatingHandler.handle(ratingId, userId);
+
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
+    }
     
 }
