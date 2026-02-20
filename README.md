@@ -84,8 +84,8 @@ graph TB
     
     subgraph "Microservices"
         US[User Service<br/>:8084<br/>Authentication & Users]
-        CS[Catalog Service<br/>:8081<br/>Books & Requests]
-        RS[Rating Service<br/>:8083<br/>Ratings & Progress]
+        CS[Catalog Service<br/>:8081<br/>Books, Requests & Progress]
+        RS[Engagement Service<br/>:8083<br/>Ratings]
         RCS[Recommendation Service<br/>:8085<br/>AI Suggestions]
     end
     
@@ -132,18 +132,18 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant User
-    participant RS as Rating Service
+    participant RS as Engagement Service
     participant Kafka
     participant RCS as Recommendation Service
     participant DB as recommendation_db<br/>(pgvector)
     participant CS as Catalog Service
     
     User->>RS: Rate book (4.5 stars)
-    RS->>Kafka: Publish rating event
+    RS->>Kafka: Publish rating event (created-rating)
     Kafka->>RCS: Consume rating event
     RCS->>DB: Update user profile vector
     
-    User->>RCS: GET /recommendations?userId=X
+    User->>RCS: GET /api/recommendations
     RCS->>DB: Query similar books<br/>(pgvector cosine similarity)
     DB-->>RCS: Return book IDs + scores
     RCS->>CS: POST /books/bulk<br/>(fetch metadata)
@@ -156,8 +156,8 @@ sequenceDiagram
 | Service | Port | Database | Responsibilities |
 |---------|------|----------|------------------|
 | **User Service** | 8084 | `user_db` | User registration, authentication (JWT), user management |
-| **Catalog Service** | 8081 | `catalog_db` | Book CRUD, book request submissions, admin approval workflow |
-| **Rating Service** | 8083 | `engagement_db` | Star ratings, reading status, page progress tracking |
+| **Catalog Service** | 8081 | `catalog_db` | Book CRUD, book request submissions, admin approval workflow, reading progress & status tracking |
+| **Engagement Service** | 8083 | `engagement_db` | Star ratings (create, update, query with filters) |
 | **Recommendation Service** | 8085 | `recommendation_db` | Vector similarity search, profile updates, recommendation aggregation |
 
 ---
@@ -214,7 +214,8 @@ The current architecture eliminates the ML Service entirely, integrating vector 
       │                      └─────────────────┘  │
       │                                            │ Kafka
       │                      ┌─────────────────┐  │ Events
-      ├────────────────────> │ Rating Service  │ ─┤
+      ├────────────────────> │ Engagement      │ ─┤
+      │                      │    Service      │  │
       │                      └─────────────────┘  │
       │                               │            │
       │                               ↓            ↓
@@ -270,8 +271,8 @@ graph TB
         CS_APP --> CS_DB
     end
     
-    subgraph "Rating Service"
-        RS_APP[Rating Service<br/>Application]
+    subgraph "Engagement Service"
+        RS_APP[Engagement Service<br/>Application]
         RS_DB[(engagement_db<br/>PostgreSQL 15)]
         RS_APP --> RS_DB
     end
@@ -303,7 +304,7 @@ graph TB
 |----------|---------|------------|---------|
 | **user_db** | User Service | `users`, `roles`, `user_preferences` | User accounts, authentication credentials, role-based permissions |
 | **catalog_db** | Catalog Service | `books`, `book_requests`, `book_progress` | Book metadata, submission approval workflow, reading status |
-| **engagement_db** | Rating Service | `ratings` | Star ratings linked to users and books |
+| **engagement_db** | Engagement Service | `ratings` | Star ratings linked to users and books |
 | **recommendation_db** | Recommendation Service | `book_features`, `user_profiles`, `recommendations` | Vector embeddings (book features + user preference vectors) |
 
 ### pgvector Implementation
@@ -363,15 +364,14 @@ VellumHub uses **Apache Kafka** as the central nervous system for asynchronous c
 graph LR
     subgraph "Producers"
         CS[Catalog Service]
-        RS[Rating Service]
+        ES[Engagement Service]
     end
     
     subgraph "Apache Kafka"
-        T1[book-created]
-        T2[book-updated]
-        T3[book-deleted]
-        T4[rating-created]
-        T5[reading-status-updated]
+        T1[created-book]
+        T2[updated-book]
+        T3[deleted-book]
+        T4[created-rating]
     end
     
     subgraph "Consumers"
@@ -381,14 +381,12 @@ graph LR
     CS -->|New Book| T1
     CS -->|Book Updated| T2
     CS -->|Book Deleted| T3
-    RS -->|User Rating| T4
-    RS -->|Status Change| T5
+    ES -->|User Rating| T4
     
     T1 --> REC
     T2 --> REC
     T3 --> REC
     T4 --> REC
-    T5 --> REC
     
     REC -->|Creates/Updates<br/>Book Features| DB[(recommendation_db)]
     REC -->|Updates<br/>User Profiles| DB
@@ -397,18 +395,16 @@ graph LR
     style T2 fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
     style T3 fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
     style T4 fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
-    style T5 fill:#231F20,stroke:#fff,stroke-width:2px,color:#fff
 ```
 
 ### Event Types
 
 | Event | Producer | Consumer | Trigger | Action |
 |-------|----------|----------|---------|--------|
-| **book-created** | Catalog Service | Recommendation Service | Book approved by admin | Create `BookFeature` with genre-based vector embedding |
-| **book-updated** | Catalog Service | Recommendation Service | Book metadata changed | Update `BookFeature` vector |
-| **book-deleted** | Catalog Service | Recommendation Service | Book removed from catalog | Delete `BookFeature` |
-| **rating-created** | Rating Service | Recommendation Service | User rates a book | Update `UserProfile` preference vector |
-| **reading-status-updated** | Rating Service | Recommendation Service | User updates reading progress | Adjust `UserProfile` weights |
+| **created-book** | Catalog Service | Recommendation Service | Book approved by admin | Create `BookFeature` with genre-based vector embedding |
+| **updated-book** | Catalog Service | Recommendation Service | Book metadata changed | Update `BookFeature` vector |
+| **deleted-book** | Catalog Service | Recommendation Service | Book removed from catalog | Delete `BookFeature` |
+| **created-rating** | Engagement Service | Recommendation Service | User rates a book | Update `UserProfile` preference vector |
 
 ### Benefits of Event-Driven Architecture
 
@@ -516,8 +512,8 @@ docker-compose --version
    | Service | URL | Purpose |
    |---------|-----|---------|
    | User Service | http://localhost:8084 | Registration & authentication |
-   | Catalog Service | http://localhost:8081 | Book management |
-   | Rating Service | http://localhost:8083 | Ratings & progress |
+   | Catalog Service | http://localhost:8081 | Book management & reading progress |
+   | Engagement Service | http://localhost:8083 | Ratings |
    | Recommendation Service | http://localhost:8085 | Get recommendations |
    | Kafka UI | http://localhost:8090 | Monitor Kafka topics |
 
@@ -560,9 +556,11 @@ POST /auth/login
 #### User Management
 
 ```http
-GET    /users          # List users (paginated, ADMIN only)
+POST   /users          # Create user (ADMIN only)
+GET    /users          # List all users (paginated)
 GET    /users/{id}     # Get user by ID
-PUT    /users/{id}     # Update user
+GET    /users/me       # Get authenticated user's own profile
+PUT    /users/{id}     # Update user (ADMIN only)
 DELETE /users/{id}     # Delete user (ADMIN only)
 ```
 
@@ -573,31 +571,44 @@ DELETE /users/{id}     # Delete user (ADMIN only)
 ```http
 GET    /books              # List all approved books (paginated)
 GET    /books/{id}         # Get book details
-POST   /books              # Create book (ADMIN only - for now)
+POST   /books              # Create book (ADMIN only)
 PUT    /books/{id}         # Update book (ADMIN only)
 DELETE /books/{id}         # Delete book (ADMIN only)
-POST   /books/bulk         # Get multiple books by IDs
+POST   /books/bulk         # Get multiple books by IDs (internal use)
 ```
 
 #### Book Requests
 
 ```http
-POST   /book-requests                  # Submit book for approval
-POST   /book-requests/{id}/approve     # Approve book (ADMIN only)
+POST   /book-requests                    # Submit book for approval
+POST   /book-requests/{id}/approve       # Approve book request (ADMIN only)
 ```
 
-### Rating Service (Port 8083)
+#### Book Progress
 
 ```http
-POST   /rating             # Submit a rating
-GET    /rating/user/{id}   # Get user's ratings
+POST   /book-progress/{bookId}/status    # Set reading status (TO_READ, READING, COMPLETED)
+PUT    /book-progress/{bookId}/progress  # Update current page number
+DELETE /book-progress/{bookId}           # Remove book from reading list
+GET    /book-progress/reading-list       # Get authenticated user's reading list
+```
+
+### Engagement Service (Port 8083)
+
+```http
+POST   /rating              # Submit a rating (0–5 stars)
+GET    /rating/{userId}     # Get ratings by user ID (filters: minStars, maxStars, from, to; paginated)
+GET    /rating/me           # Get authenticated user's own ratings (same filters)
+PUT    /rating/{ratingId}   # Update an existing rating
 ```
 
 ### Recommendation Service (Port 8085)
 
 ```http
-GET    /api/recommendations?userId={uuid}&limit={n}
+GET    /api/recommendations?limit={n}&offset={n}
 ```
+
+> Authentication is required (JWT). The user ID is extracted from the token — no `userId` query parameter is needed.
 
 Returns personalized book recommendations based on:
 - User's rating history
@@ -632,22 +643,21 @@ VellumHub is in **active development** with core features implemented and functi
 
 - No API Gateway (services exposed directly)
 - Limited error handling in some endpoints
-- No comprehensive test coverage yet
+- Unit tests exist across all services; integration and end-to-end tests are still pending
 - Recommendation algorithm is basic (genre-based vectors)
-- No frontend application
+- Frontend application is under active development — see [VellumHubFront](https://github.com/Luca5Eckert/VellumHubFront)
 - No CI/CD pipeline
 
 ### Roadmap
 
 #### Short Term
 - [ ] Implement comprehensive API Gateway
-- [ ] Add unit and integration tests
+- [ ] Add integration and end-to-end tests
 - [ ] Enhance recommendation algorithm
-- [ ] Add OpenAPI/Swagger documentation
 - [ ] Improve error handling and validation
 
 #### Long Term
-- [ ] Build React/Next.js frontend
+- [ ] Complete React/Next.js frontend (in progress at [VellumHubFront](https://github.com/Luca5Eckert/VellumHubFront))
 - [ ] Add social features (followers, reviews)
 - [ ] Implement reading groups
 - [ ] ISBN API integration for metadata
@@ -723,7 +733,7 @@ All services expose Spring Boot Actuator endpoints:
 
 ```bash
 curl http://localhost:8081/actuator/health  # Catalog Service
-curl http://localhost:8083/actuator/health  # Rating Service
+curl http://localhost:8083/actuator/health  # Engagement Service
 curl http://localhost:8084/actuator/health  # User Service
 curl http://localhost:8085/actuator/health  # Recommendation Service
 ```
