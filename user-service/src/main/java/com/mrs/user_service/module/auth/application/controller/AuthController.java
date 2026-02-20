@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "Authentication", description = "Endpoints para autenticação e registro de usuários")
+@Tag(name = "Authentication", description = "Endpoints for user authentication and registration")
 public class AuthController {
 
     private final AuthService authService;
@@ -29,10 +29,10 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Registrar novo usuário", description = "Registra um novo usuário no sistema")
+    @Operation(summary = "Register new user", description = "Creates a new user account in the system with the provided credentials")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Usuário registrado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos ou email já em uso", content = @Content)
+            @ApiResponse(responseCode = "201", description = "User registered successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid data or email already in use", content = @Content)
     })
     public ResponseEntity<Void> register(@Valid @RequestBody RegisterUserRequest request) {
         authService.register(request);
@@ -40,11 +40,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Autenticar usuário", description = "Autentica um usuário e retorna um token JWT")
+    @Operation(summary = "Authenticate user", description = "Authenticates a user with email and password, returning a JWT token for subsequent API requests")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Login realizado com sucesso. Retorna token JWT",
+            @ApiResponse(responseCode = "200", description = "Login successful. Returns JWT token",
                     content = @Content(schema = @Schema(implementation = String.class))),
-            @ApiResponse(responseCode = "401", description = "Credenciais inválidas", content = @Content)
+            @ApiResponse(responseCode = "401", description = "Invalid credentials", content = @Content)
     })
     public ResponseEntity<String> login(@Valid @RequestBody LoginUserRequest request) {
         String token = authService.login(request);

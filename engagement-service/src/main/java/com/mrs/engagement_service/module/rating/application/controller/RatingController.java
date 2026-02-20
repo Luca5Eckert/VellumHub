@@ -29,7 +29,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/rating")
-@Tag(name = "Rating", description = "Endpoints for managing user ratings of media")
+@Tag(name = "Ratings", description = "Endpoints for managing user book ratings and reviews")
 public class RatingController {
 
     private final CreateRatingHandler createRatingHandler;
@@ -49,7 +49,7 @@ public class RatingController {
     }
 
     @PostMapping
-    @Operation(summary = "Register rating", description = "Registers a new user rating for a media (0-5 stars + review)")
+    @Operation(summary = "Submit book rating", description = "Creates a new rating for a book (0-5 stars with optional text review)")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Rating registered successfully",
@@ -89,6 +89,13 @@ public class RatingController {
     }
 
     @GetMapping("/me")
+    @Operation(summary = "Get authenticated user's ratings", description = "Returns all ratings from the currently authenticated user with optional filters")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of ratings retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = RatingGetResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    })
     public ResponseEntity<List<RatingGetResponse>> findAllOfUserAuthenticated(
             @Parameter(description = "Filter by minimum stars") @RequestParam(required = false) Integer minStars,
             @Parameter(description = "Filter by maximum stars") @RequestParam(required = false) Integer maxStars,
@@ -107,7 +114,7 @@ public class RatingController {
     }
 
     @PutMapping("/{ratingId}")
-    @Operation(summary = "Update rating", description = "Updates an existing user rating for a media (0-5 stars + review)")
+    @Operation(summary = "Update rating", description = "Updates an existing book rating (0-5 stars with optional text review)")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(

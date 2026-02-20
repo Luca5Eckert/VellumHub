@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/books")
-@Tag(name = "Book", description = "Endpoints for book catalog management")
+@Tag(name = "Books", description = "Endpoints for book catalog management and CRUD operations")
 public class BookController {
 
     private final BookService bookService;
@@ -118,7 +118,12 @@ public class BookController {
     }
 
     @PostMapping("/bulk")
-    @Operation(summary = "Get multiple books by IDs", description = "Returns recommendations based on a list of book IDs")
+    @Operation(summary = "Get multiple books by IDs", description = "Retrieves book details for multiple books in a single request. Used internally by the Recommendation Service for enrichment.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Books retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = Recommendation.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request body", content = @Content)
+    })
     public ResponseEntity<List<Recommendation>> getByIds(@RequestBody List<UUID> bookIds) {
         List<Recommendation> recommendations = bookService.getByIds(bookIds);
 

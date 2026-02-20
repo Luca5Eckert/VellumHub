@@ -114,12 +114,13 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "Find user authenticated", description = "Returns details of a authenticated user")
+    @Operation(summary = "Get authenticated user profile", description = "Returns the profile details of the currently authenticated user")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found successfully",
-                    content = @Content(schema = @Schema(implementation = UserGetResponse.class)))
-    )
+                    content = @Content(schema = @Schema(implementation = UserGetResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    })
     public ResponseEntity<UserGetResponse> getAuthenticated() {
         var userId = authenticationService.getAuthenticatedUserId();
 

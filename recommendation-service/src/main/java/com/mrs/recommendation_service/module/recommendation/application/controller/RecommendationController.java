@@ -5,6 +5,7 @@ import com.mrs.recommendation_service.module.recommendation.application.handler.
 import com.mrs.recommendation_service.share.provider.UserAuthenticationProvider;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -21,7 +22,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/recommendations")
-@Tag(name = "Recommendations", description = "Endpoints for obtaining personalized media recommendations")
+@Tag(name = "Recommendations", description = "Endpoints for obtaining personalized book recommendations")
 public class RecommendationController {
 
     private final UserAuthenticationProvider userAuthenticationProvider;
@@ -41,7 +42,7 @@ public class RecommendationController {
      * @return List of user recommendations
      */
     @GetMapping
-    @Operation(summary = "Get recommendations", description = "Returns personalized recommendations for the authenticated user")
+    @Operation(summary = "Get book recommendations", description = "Returns personalized book recommendations for the authenticated user based on their rating history and reading preferences")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Recommendations successfully retrieved",
@@ -49,8 +50,8 @@ public class RecommendationController {
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     })
     public ResponseEntity<List<RecommendationResponse>> getRecommendations(
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(defaultValue = "0") int offset
+            @Parameter(description = "Maximum number of recommendations to return") @RequestParam(defaultValue = "10") int limit,
+            @Parameter(description = "Number of recommendations to skip for pagination") @RequestParam(defaultValue = "0") int offset
     ) {
 
         var userId = userAuthenticationProvider.getUserId();
