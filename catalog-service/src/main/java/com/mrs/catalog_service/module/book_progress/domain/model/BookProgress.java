@@ -53,4 +53,11 @@ public class BookProgress {
     public void update(int currentPage) {
         this.setCurrentPage(currentPage);
     }
+
+    public void defineProgress(ReadingStatus readingStatus, int currentPage) {
+        this.setCurrentPage(currentPage);
+
+        this.readingStatus = readingStatus;
+    }
+
 }
