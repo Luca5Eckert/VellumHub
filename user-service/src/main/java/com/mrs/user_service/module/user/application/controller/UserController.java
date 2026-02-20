@@ -118,8 +118,9 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found successfully",
-                    content = @Content(schema = @Schema(implementation = UserGetResponse.class)))
-    )
+                    content = @Content(schema = @Schema(implementation = UserGetResponse.class))
+            )
+    })
     public ResponseEntity<UserGetResponse> getAuthenticated() {
         var userId = authenticationService.getAuthenticatedUserId();
 
