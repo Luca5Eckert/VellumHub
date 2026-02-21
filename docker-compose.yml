@@ -250,6 +250,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_KEY: ${JWT_KEY}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     networks:
       - mrs-network
     depends_on:
