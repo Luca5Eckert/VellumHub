@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 
+import com.mrs.user_service.module.user.application.exception.UserNotFoundException;
 import com.mrs.user_service.module.user.domain.port.UserRepository;
 import com.mrs.user_service.module.user_preference.domain.UserPreference;
 import com.mrs.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
@@ -67,10 +68,9 @@ class CreateUserPreferenceHandlerTest {
         when(userRepository.existsById(userId)).thenReturn(false);
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        assertThrows(UserNotFoundException.class,
                 () -> handler.execute(validPreference));
 
-        assertEquals("User not found", exception.getMessage());
         verify(userPreferenceRepository, never()).save(any());
     }
 

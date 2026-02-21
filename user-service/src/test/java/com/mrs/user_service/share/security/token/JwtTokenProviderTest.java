@@ -43,7 +43,7 @@ class JwtTokenProviderTest {
         Claims claims = parseToken(token);
 
         assertThat(claims.getSubject()).isEqualTo(email);
-        assertThat(claims.get("userId", String.class))
+        assertThat(claims.get("user_id", String.class))
                 .isEqualTo(userId.toString());
         assertThat(claims.get("roles", List.class))
                 .containsExactlyInAnyOrder("ROLE_USER", "ROLE_ADMIN");

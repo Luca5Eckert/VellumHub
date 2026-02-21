@@ -233,14 +233,9 @@ class UserServiceTest {
             ArgumentCaptor<PageUser> pageCaptor = ArgumentCaptor.forClass(PageUser.class);
             verify(getAllUserHandler, times(1)).execute(pageCaptor.capture());
 
-            // NOTE: There is a known bug in UserService where pageNumber and pageSize are passed
-            // in the wrong order to PageUser constructor (PageUser expects pageSize first).
-            // This test documents the current behavior. TODO: Fix UserService to pass parameters correctly.
-            // Input: pageNumber=0, pageSize=10 -> PageUser(pageSize=0, pageNumber=10) 
-            // After normalization: pageSize=10 (default because 0 is invalid), pageNumber=10
             PageUser capturedPage = pageCaptor.getValue();
-            assertThat(capturedPage.pageSize()).isEqualTo(10);  // normalized from 0 to default
-            assertThat(capturedPage.pageNumber()).isEqualTo(10); // pageSize value passed here
+            assertThat(capturedPage.pageSize()).isEqualTo(pageSize);
+            assertThat(capturedPage.pageNumber()).isEqualTo(pageNumber);
         }
 
         @Test
@@ -280,13 +275,9 @@ class UserServiceTest {
             ArgumentCaptor<PageUser> pageCaptor = ArgumentCaptor.forClass(PageUser.class);
             verify(getAllUserHandler).execute(pageCaptor.capture());
 
-            // NOTE: There is a known bug in UserService where pageNumber and pageSize are passed
-            // in the wrong order to PageUser constructor. TODO: Fix UserService to pass parameters correctly.
-            // Input: pageNumber=2, pageSize=25 -> PageUser(pageSize=2, pageNumber=25)
-            // After normalization: pageSize=2 (valid), pageNumber=25
             PageUser capturedPage = pageCaptor.getValue();
-            assertThat(capturedPage.pageSize()).isEqualTo(2);   // pageNumber value
-            assertThat(capturedPage.pageNumber()).isEqualTo(25); // pageSize value
+            assertThat(capturedPage.pageSize()).isEqualTo(pageSize);
+            assertThat(capturedPage.pageNumber()).isEqualTo(pageNumber);
         }
     }
 }

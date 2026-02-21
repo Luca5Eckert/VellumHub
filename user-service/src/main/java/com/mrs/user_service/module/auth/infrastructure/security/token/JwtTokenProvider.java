@@ -1,16 +1,16 @@
 package com.mrs.user_service.module.auth.infrastructure.security.token;
 
 import com.mrs.user_service.module.auth.domain.port.TokenProvider;
-import io. jsonwebtoken.Jwts;
-import io.jsonwebtoken. SignatureAlgorithm;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security. Keys;
-import org.springframework. beans.factory.annotation.Value;
-import org.springframework.stereotype. Component;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-import java.security. Key;
-import java.util. Date;
-import java.util. List;
+import java.security.Key;
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Component

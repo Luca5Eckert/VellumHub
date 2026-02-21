@@ -8,6 +8,7 @@ import com.mrs.user_service.module.user.application.dto.UserGetResponse;
 import com.mrs.user_service.module.user.application.exception.UserNotFoundException;
 import com.mrs.user_service.module.user.domain.RoleUser;
 import com.mrs.user_service.module.user.domain.service.UserService;
+import com.mrs.user_service.share.service.AuthenticationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,9 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private AuthenticationService authenticationService;
 
     @Nested
     @DisplayName("POST /users - Create User")
