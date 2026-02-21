@@ -1,5 +1,6 @@
 package com.mrs.user_service.module.auth.application.controller;
 
+import com.mrs.user_service.module.auth.application.dto.LoginExternalRequest;
 import com.mrs.user_service.module.auth.application.dto.LoginUserRequest;
 import com.mrs.user_service.module.auth.application.dto.RegisterUserRequest;
 import com.mrs.user_service.module.auth.domain.service.AuthService;
@@ -47,6 +48,14 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid credentials", content = @Content)
     })
     public ResponseEntity<String> login(@Valid @RequestBody LoginUserRequest request) {
+        String token = authService.login(request);
+        return ResponseEntity.ok(token);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<String> login(
+            @Valid @RequestBody LoginExternalRequest request
+    ) {
         String token = authService.login(request);
         return ResponseEntity.ok(token);
     }
