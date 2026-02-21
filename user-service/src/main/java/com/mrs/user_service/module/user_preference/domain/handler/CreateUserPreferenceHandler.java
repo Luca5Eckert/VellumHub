@@ -4,6 +4,7 @@ import com.mrs.user_service.module.user_preference.domain.UserPreference;
 import com.mrs.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
 import com.mrs.user_service.module.user_preference.domain.exception.UserPreferenceAlreadyExistDomainException;
 import com.mrs.user_service.module.user_preference.domain.port.UserPreferenceRepository;
+import com.mrs.user_service.module.user.application.exception.UserNotFoundException;
 import com.mrs.user_service.module.user.domain.port.UserRepository;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,7 @@ public class CreateUserPreferenceHandler {
 
     @Transactional
     public void execute(UserPreference userPreference){
-        if(!userRepository.existsById(userPreference.getUserId())) throw new IllegalArgumentException("User not found");
+        if(!userRepository.existsById(userPreference.getUserId())) throw new UserNotFoundException();
 
         // Race condition //
         if(userPreferenceRepository.existsByUserId(userPreference.getUserId())) throw new UserPreferenceAlreadyExistDomainException("User already have a preference");

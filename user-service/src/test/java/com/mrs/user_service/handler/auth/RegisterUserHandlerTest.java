@@ -1,5 +1,6 @@
 package com.mrs.user_service.handler.auth;
 
+import com.mrs.user_service.module.auth.domain.exception.AuthDomainException;
 import com.mrs.user_service.module.auth.domain.handler.RegisterUserHandler;
 import com.mrs.user_service.module.user.domain.RoleUser;
 import com.mrs.user_service.module.user.domain.UserEntity;
@@ -68,7 +69,7 @@ class RegisterUserHandlerTest {
     @DisplayName("Should throw exception when user is null")
     void shouldThrowException_WhenUserIsNull() {
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        AuthDomainException exception = assertThrows(AuthDomainException.class, () ->
                 registerUserHandler.execute(null)
         );
 
@@ -88,7 +89,7 @@ class RegisterUserHandlerTest {
         when(userRepository.existsByEmail(user.getEmail())).thenReturn(true);
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        AuthDomainException exception = assertThrows(AuthDomainException.class, () ->
                 registerUserHandler.execute(user)
         );
 
@@ -112,7 +113,7 @@ class RegisterUserHandlerTest {
         when(passwordValidator.getMessages(invalidResult)).thenReturn(java.util.List.of("Password must be at least 8 characters"));
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        AuthDomainException exception = assertThrows(AuthDomainException.class, () ->
                 registerUserHandler.execute(user)
         );
 

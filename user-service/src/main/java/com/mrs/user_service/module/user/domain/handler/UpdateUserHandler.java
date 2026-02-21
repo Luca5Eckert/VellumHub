@@ -46,7 +46,7 @@ public class UpdateUserHandler {
         }
 
         if (userRepository.existsByEmail(newEmail)) {
-            throw new EmailAlreadyInUseException(newEmail);
+            throw new EmailAlreadyInUseException();
         }
 
         user.setEmail(newEmail);

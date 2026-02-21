@@ -1,37 +1,31 @@
 package com.mrs.user_service.handler.auth;
 
 import com.mrs.user_service.module.auth.domain.handler.LoginUserHandler;
+import com.mrs.user_service.module.auth.domain.model.AuthenticatedUser;
+import com.mrs.user_service.module.auth.domain.port.AuthenticatorPort;
 import com.mrs.user_service.module.auth.domain.port.TokenProvider;
-import com.mrs.user_service.module.user.domain.RoleUser;
-import com.mrs.user_service.module.auth.infrastructure.security.user.UserDetailImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class LoginUserHandlerTest {
 
     @Mock
-    private AuthenticationManager authenticationManager;
+    private AuthenticatorPort authenticatorPort;
 
     @Mock
     private TokenProvider tokenProvider;
-
-    @Mock
-    private Authentication authentication;
 
     @InjectMocks
     private LoginUserHandler loginUserHandler;
@@ -45,12 +39,10 @@ class LoginUserHandlerTest {
         UUID userId = UUID.randomUUID();
         String expectedToken = "jwt-token-here";
 
-        UserDetailImpl userDetails = new UserDetailImpl(userId, email, password, RoleUser.USER);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser(userId, email, List.of("USER"));
 
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(tokenProvider.createToken(eq(email), eq(userId), any())).thenReturn(expectedToken);
+        when(authenticatorPort.authenticate(email, password)).thenReturn(authenticatedUser);
+        when(tokenProvider.createToken(email, userId, List.of("USER"))).thenReturn(expectedToken);
 
         // Act
         String result = loginUserHandler.execute(email, password);
@@ -59,8 +51,8 @@ class LoginUserHandlerTest {
         assertNotNull(result);
         assertEquals(expectedToken, result);
 
-        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(tokenProvider, times(1)).createToken(eq(email), eq(userId), any());
+        verify(authenticatorPort, times(1)).authenticate(email, password);
+        verify(tokenProvider, times(1)).createToken(email, userId, List.of("USER"));
     }
 
     @Test
@@ -70,7 +62,7 @@ class LoginUserHandlerTest {
         String email = "test@example.com";
         String wrongPassword = "wrongPassword";
 
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+        when(authenticatorPort.authenticate(email, wrongPassword))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
         // Act & Assert
@@ -78,7 +70,7 @@ class LoginUserHandlerTest {
                 loginUserHandler.execute(email, wrongPassword)
         );
 
-        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(authenticatorPort, times(1)).authenticate(email, wrongPassword);
         verifyNoInteractions(tokenProvider);
     }
 
@@ -91,12 +83,10 @@ class LoginUserHandlerTest {
         UUID userId = UUID.randomUUID();
         String expectedToken = "admin-jwt-token";
 
-        UserDetailImpl adminUser = new UserDetailImpl(userId, email, password, RoleUser.ADMIN);
+        AuthenticatedUser adminUser = new AuthenticatedUser(userId, email, List.of("ADMIN"));
 
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(adminUser);
-        when(tokenProvider.createToken(eq(email), eq(userId), any())).thenReturn(expectedToken);
+        when(authenticatorPort.authenticate(email, password)).thenReturn(adminUser);
+        when(tokenProvider.createToken(email, userId, List.of("ADMIN"))).thenReturn(expectedToken);
 
         // Act
         String result = loginUserHandler.execute(email, password);
