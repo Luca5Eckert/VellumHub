@@ -47,9 +47,9 @@ public class OpenApiConfig {
                                 
                                 ## Event Consumption
                                 This service consumes events from:
-                                - `book-created`: Create book feature vectors
-                                - `book-updated`: Update book feature vectors
-                                - `book-deleted`: Remove book feature vectors
+                                - `created-book`: Create book feature vectors
+                                - `updated-book`: Update book feature vectors
+                                - `deleted-book`: Remove book feature vectors
                                 - `rating-created`: Update user profile vectors
                                 - `reading-status-updated`: Adjust user preference weights
                                 """)
