@@ -65,8 +65,8 @@ public class BookRequest {
 
     @ElementCollection
     @CollectionTable(
-            name = "tb_media_genre",
-            joinColumns = @JoinColumn(name = "media_id")
+            name = "tb_book_request_genre",
+            joinColumns = @JoinColumn(name = "book_request_id")
     )
     @Enumerated(EnumType.STRING)
     @Column(name = "genre_name")
