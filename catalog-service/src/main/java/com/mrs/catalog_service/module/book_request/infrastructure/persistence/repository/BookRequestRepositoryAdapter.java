@@ -2,6 +2,8 @@ package com.mrs.catalog_service.module.book_request.infrastructure.persistence.r
 
 import com.mrs.catalog_service.module.book_request.domain.BookRequest;
 import com.mrs.catalog_service.module.book_request.domain.port.BookRequestRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -34,4 +36,12 @@ public class BookRequestRepositoryAdapter implements BookRequestRepository {
     public void deleteById(long requestId) {
         bookRequestRepositoryJpa.deleteById(requestId);
     }
+
+    @Override
+    public Page<BookRequest> findAll(int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+
+        return bookRequestRepositoryJpa.findAll(pageRequest);
+    }
+
 }
