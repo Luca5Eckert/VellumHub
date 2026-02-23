@@ -22,7 +22,7 @@ public class UpdateBookCoverHandler {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new BookNotFoundException(bookId.toString()));
 
-        book.update(null, null, coverUrl, null, null, null, null, null, null);
+        book.updateCoverUrl(coverUrl);
 
         bookRepository.save(book);
     }

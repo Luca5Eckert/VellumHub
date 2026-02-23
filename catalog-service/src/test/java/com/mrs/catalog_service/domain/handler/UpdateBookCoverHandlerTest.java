@@ -40,7 +40,7 @@ class UpdateBookCoverHandlerTest {
 
         updateBookCoverHandler.execute(bookId, coverUrl);
 
-        then(book).should().update(null, null, coverUrl, null, null, null, null, null, null);
+        then(book).should().updateCoverUrl(coverUrl);
         then(bookRepository).should().save(book);
     }
 
