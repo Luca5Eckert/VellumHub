@@ -302,7 +302,7 @@ graph TB
 
 | Database | Service | Key Tables | Purpose |
 |----------|---------|------------|---------|
-| **user_db** | User Service | `users`, `roles`, `user_preferences` | User accounts, authentication credentials, role-based permissions |
+| **user_db** | User Service | `tb_users`, `user_preferences` | User accounts, authentication credentials, role-based permissions |
 | **catalog_db** | Catalog Service | `books`, `book_requests`, `book_progress` | Book metadata, submission approval workflow, reading status |
 | **engagement_db** | Engagement Service | `ratings` | Star ratings linked to users and books |
 | **recommendation_db** | Recommendation Service | `book_features`, `user_profiles`, `recommendations` | Vector embeddings (book features + user preference vectors) |
@@ -405,6 +405,7 @@ graph LR
 | **updated-book** | Catalog Service | Recommendation Service | Book metadata changed | Update `BookFeature` vector |
 | **deleted-book** | Catalog Service | Recommendation Service | Book removed from catalog | Delete `BookFeature` |
 | **created-rating** | Engagement Service | Recommendation Service | User rates a book | Update `UserProfile` preference vector |
+| **create_user_preference** | User Service | *(no consumer yet — in progress)* | User preference created | *(future: seed initial recommendation profile)* |
 
 ### Benefits of Event-Driven Architecture
 
@@ -483,6 +484,9 @@ docker-compose --version
    # JWT Configuration
    JWT_KEY=your-256-bit-secret-key-here
    JWT_EXPIRATION=86400000
+
+   # Google OAuth (required for /auth/google endpoint)
+   GOOGLE_CLIENT_ID=your-google-client-id
    ```
 
    > ⚠️ **Security**: Use strong, randomly generated values in production
@@ -551,6 +555,7 @@ curl -X POST http://localhost:8084/auth/login \
 ```http
 POST /auth/register
 POST /auth/login
+POST /auth/google     # Login via Google OAuth (requires Google ID token in request body)
 ```
 
 #### User Management
@@ -647,6 +652,8 @@ VellumHub is in **active development** with core features implemented and functi
 - Recommendation algorithm is basic (genre-based vectors)
 - Frontend application is under active development — see [VellumHubFront](https://github.com/Luca5Eckert/VellumHubFront)
 - No CI/CD pipeline
+- User preferences feature is partially implemented: the domain model, Kafka producer (`create_user_preference` topic), and database table (`user_preferences`) exist in the User Service, but there is no exposed REST endpoint yet
+- The `create_user_preference` Kafka event has no consumer — the downstream profile seeding logic is not yet implemented
 
 ### Roadmap
 
@@ -678,6 +685,8 @@ VellumHub/
 │   ├── create-admin-user.sql      # Admin user initialization
 │   ├── create-vector-in-recommendation-db.sql  # pgvector setup
 │   ├── kafka-health-check.sh      # Kafka monitoring script
+│   ├── test-monitoring-setup.sh   # Monitoring validation script
+│   ├── validate-communication-config.sh        # Config validation script
 │   └── test-service-communication.sh           # Communication tests
 │
 ├── catalog-service/               # Book Catalog Microservice
