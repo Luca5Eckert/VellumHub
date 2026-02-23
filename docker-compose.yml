@@ -189,6 +189,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_KEY: ${JWT_KEY}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     networks:
       - mrs-network
     depends_on:
@@ -219,6 +220,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_KEY: ${JWT_KEY}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     networks:
       - mrs-network
     depends_on:
@@ -251,6 +253,7 @@ services:
       JWT_KEY: ${JWT_KEY}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     networks:
       - mrs-network
     depends_on:
@@ -282,6 +285,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_KEY: ${JWT_KEY}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     networks:
       - mrs-network
     depends_on:
