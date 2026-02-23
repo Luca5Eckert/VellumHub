@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/book-requests")
 @Tag(name = "Book Requests", description = "Endpoints for managing book submission requests and approval workflow")
@@ -59,6 +61,23 @@ public class BookRequestController {
     ) {
         bookRequestApplicationService.approve(requestId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get all book requests", description = "Retrieves a list of all book submission requests. Requires ADMIN role.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of book requests retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = BookRequestResponse.class)))
+    })
+    public ResponseEntity<List<BookRequestResponse>> getAll(
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize
+    ) {
+        var responses = bookRequestApplicationService.getAll(pageNumber, pageSize);
+
+        return ResponseEntity.ok(responses);
     }
 
 }

@@ -14,7 +14,7 @@ public class GetAllBookRequestUseCase {
         this.bookRequestRepository = bookRequestRepository;
     }
 
-    public Page<BookRequest> getAll(
+    public Page<BookRequest> execute(
             int page,
             int size
     ){
