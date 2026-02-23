@@ -302,10 +302,10 @@ graph TB
 
 | Database | Service | Key Tables | Purpose |
 |----------|---------|------------|---------|
-| **user_db** | User Service | `users`, `roles`, `user_preferences` | User accounts, authentication credentials, role-based permissions |
+| **user_db** | User Service | `tb_users`, `user_preferences`, `tb_user_genre` | User accounts, authentication credentials, role-based access control, genre preferences |
 | **catalog_db** | Catalog Service | `books`, `book_requests`, `book_progress` | Book metadata, submission approval workflow, reading status |
 | **engagement_db** | Engagement Service | `ratings` | Star ratings linked to users and books |
-| **recommendation_db** | Recommendation Service | `book_features`, `user_profiles`, `recommendations` | Vector embeddings (book features + user preference vectors) |
+| **recommendation_db** | Recommendation Service | `book_features`, `user_profiles` | Vector embeddings (book features + user preference vectors) |
 
 ### pgvector Implementation
 
@@ -551,6 +551,7 @@ curl -X POST http://localhost:8084/auth/login \
 ```http
 POST /auth/register
 POST /auth/login
+POST /auth/google    # Login via Google OAuth (requires Google ID token)
 ```
 
 #### User Management
@@ -694,8 +695,9 @@ VellumHub/
 │   ├── pom.xml
 │   └── src/main/java/com/mrs/user_service/
 │       └── module/
-│           ├── auth/              # Authentication & JWT
-│           └── user/              # User management
+│           ├── auth/              # Authentication & JWT (email/password + Google OAuth)
+│           ├── user/              # User management
+│           └── user_preference/   # User genre preferences
 │
 ├── engagement-service/            # Rating Microservice
 │   ├── Dockerfile
