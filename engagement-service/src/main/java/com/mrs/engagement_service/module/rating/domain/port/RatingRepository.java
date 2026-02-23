@@ -21,5 +21,5 @@ public interface RatingRepository {
 
     void deleteById(Long ratingId);
 
-    Page<Rating> findAllByBookId(int bookId, int page, int size);
+    Page<Rating> findAllByBookId(UUID bookId, int page, int size);
 }

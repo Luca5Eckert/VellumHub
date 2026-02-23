@@ -14,5 +14,5 @@ public interface RatingRepositoryJpa extends JpaRepository<Rating, Long>, JpaSpe
 
     boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
 
-    Page<Rating> findAllByBookId(int bookId, PageRequest pageRequest);
+    Page<Rating> findAllByBookId(UUID bookId, PageRequest pageRequest);
 }

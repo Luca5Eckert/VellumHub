@@ -59,7 +59,7 @@ public class RatingRepositoryAdapter implements RatingRepository {
     }
 
     @Override
-    public Page<Rating> findAllByBookId(int bookId, int page, int size) {
+    public Page<Rating> findAllByBookId(UUID bookId, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
 
         return ratingRepositoryJpa.findAllByBookId(bookId, pageRequest);

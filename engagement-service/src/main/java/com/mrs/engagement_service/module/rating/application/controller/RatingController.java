@@ -3,10 +3,7 @@ package com.mrs.engagement_service.module.rating.application.controller;
 import com.mrs.engagement_service.module.rating.application.dto.CreateRatingRequest;
 import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
 import com.mrs.engagement_service.module.rating.application.dto.UpdateRatingRequest;
-import com.mrs.engagement_service.module.rating.application.handler.CreateRatingHandler;
-import com.mrs.engagement_service.module.rating.application.handler.DeleteRatingHandler;
-import com.mrs.engagement_service.module.rating.application.handler.GetUserRatingHandler;
-import com.mrs.engagement_service.module.rating.application.handler.UpdateRatingHandler;
+import com.mrs.engagement_service.module.rating.application.handler.*;
 import com.mrs.engagement_service.share.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,17 +32,19 @@ public class RatingController {
     private final GetUserRatingHandler getUserRatingHandler;
     private final UpdateRatingHandler updateRatingHandler;
     private final DeleteRatingHandler deleteRatingHandler;
+    private final GetAllRatingByBookIdHandler getAllRatingByBookIdHandler;
 
     private final AuthenticationService authenticationService;
 
     public RatingController(
             CreateRatingHandler createRatingHandler,
-            GetUserRatingHandler getUserRatingHandler, UpdateRatingHandler updateRatingHandler, DeleteRatingHandler deleteRatingHandler, AuthenticationService authenticationService
+            GetUserRatingHandler getUserRatingHandler, UpdateRatingHandler updateRatingHandler, DeleteRatingHandler deleteRatingHandler, GetAllRatingByBookIdHandler getAllRatingByBookIdHandler, AuthenticationService authenticationService
     ) {
         this.createRatingHandler = createRatingHandler;
         this.getUserRatingHandler = getUserRatingHandler;
         this.updateRatingHandler = updateRatingHandler;
         this.deleteRatingHandler = deleteRatingHandler;
+        this.getAllRatingByBookIdHandler = getAllRatingByBookIdHandler;
         this.authenticationService = authenticationService;
     }
 
@@ -152,5 +151,23 @@ public class RatingController {
                 .status(HttpStatus.NO_CONTENT)
                 .build();
     }
+
+    @GetMapping("/{bookId}")
+    @Operation(summary = "Get book ratings", description = "Returns all ratings for a specific book")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<List<RatingGetResponse>> getAll(
+            @PathVariable(value = "bookId") UUID bookId,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize
+    ) {
+        var response = getAllRatingByBookIdHandler.handle(
+                bookId,
+                pageNumber,
+                pageSize
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
     
 }
