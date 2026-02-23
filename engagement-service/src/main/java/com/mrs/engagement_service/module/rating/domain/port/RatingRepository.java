@@ -20,4 +20,6 @@ public interface RatingRepository {
     boolean existsbyId(Long ratingId);
 
     void deleteById(Long ratingId);
+
+    Page<Rating> findAllByBookId(int bookId, int page, int size);
 }
