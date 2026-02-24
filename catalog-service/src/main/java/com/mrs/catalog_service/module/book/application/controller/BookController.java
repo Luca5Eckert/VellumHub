@@ -1,5 +1,6 @@
 package com.mrs.catalog_service.module.book.application.controller;
 
+import com.mrs.catalog_service.module.book.application.dto.BookCoverResponse;
 import com.mrs.catalog_service.module.book.application.dto.CreateBookRequest;
 import com.mrs.catalog_service.module.book.application.dto.GetBookResponse;
 import com.mrs.catalog_service.module.book.application.dto.Recommendation;
@@ -177,5 +178,19 @@ public class BookController {
                 .contentType(contentType)
                 .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic())
                 .body(coverImage);
+    }
+
+    @PostMapping("/covers/bulk")
+    @Operation(summary = "Get multiple book covers", description = "Retrieves cover images for multiple books in a single request. Returns Base64 encoded image data. Solves N+1 problem when fetching covers for recommendations.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Covers retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = BookCoverResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request body", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    })
+    public ResponseEntity<List<BookCoverResponse>> getBookCoversBulk(@RequestBody List<UUID> bookIds) {
+        List<BookCoverResponse> covers = bookService.getBookCoversBulk(bookIds);
+        return ResponseEntity.ok(covers);
     }
 }

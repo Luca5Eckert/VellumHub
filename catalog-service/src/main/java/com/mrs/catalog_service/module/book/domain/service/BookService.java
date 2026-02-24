@@ -25,10 +25,11 @@ public class BookService {
     private final GetBooksByIdsHandler getBooksByIdsHandler;
     private final UploadBookCoverHandler uploadBookCoverHandler;
     private final GetBookCoverHandler getBookCoverHandler;
+    private final GetBookCoversBulkHandler getBookCoversBulkHandler;
 
     private final BookMapper bookMapper;
 
-    public BookService(CreateBookHandler createBookHandler, DeleteBookHandler deleteBookHandler, GetBookHandler getBookHandler, GetAllBooksHandler getAllBooksHandler, UpdateBookHandler updateBookHandler, GetBooksByIdsHandler getBooksByIdsHandler, UploadBookCoverHandler uploadBookCoverHandler, GetBookCoverHandler getBookCoverHandler, BookMapper bookMapper) {
+    public BookService(CreateBookHandler createBookHandler, DeleteBookHandler deleteBookHandler, GetBookHandler getBookHandler, GetAllBooksHandler getAllBooksHandler, UpdateBookHandler updateBookHandler, GetBooksByIdsHandler getBooksByIdsHandler, UploadBookCoverHandler uploadBookCoverHandler, GetBookCoverHandler getBookCoverHandler, GetBookCoversBulkHandler getBookCoversBulkHandler, BookMapper bookMapper) {
         this.createBookHandler = createBookHandler;
         this.deleteBookHandler = deleteBookHandler;
         this.getBookHandler = getBookHandler;
@@ -37,6 +38,7 @@ public class BookService {
         this.getBooksByIdsHandler = getBooksByIdsHandler;
         this.uploadBookCoverHandler = uploadBookCoverHandler;
         this.getBookCoverHandler = getBookCoverHandler;
+        this.getBookCoversBulkHandler = getBookCoversBulkHandler;
         this.bookMapper = bookMapper;
     }
 
@@ -110,6 +112,17 @@ public class BookService {
      */
     public Resource getBookCover(UUID bookId) {
         return getBookCoverHandler.execute(bookId);
+    }
+
+    /**
+     * Retrieves cover images for multiple books in a single operation.
+     * Solves N+1 problem when fetching covers for recommendations.
+     *
+     * @param bookIds list of book IDs to retrieve covers for
+     * @return list of BookCoverResponse with Base64 encoded cover data
+     */
+    public List<BookCoverResponse> getBookCoversBulk(List<UUID> bookIds) {
+        return getBookCoversBulkHandler.execute(bookIds);
     }
 
 }
