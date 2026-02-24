@@ -15,11 +15,14 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -128,5 +131,24 @@ public class BookController {
         List<Recommendation> recommendations = bookService.getByIds(bookIds);
 
         return ResponseEntity.ok(recommendations);
+    }
+
+    @PostMapping(value = "/{id}/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Upload book cover", description = "Uploads a cover image for the specified book. Requires ADMIN role.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cover uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin permission required", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
+    })
+    public ResponseEntity<Map<String, String>> uploadCover(
+            @Parameter(description = "Book ID") @PathVariable UUID id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        String coverUrl = bookService.uploadCover(id, file);
+        return ResponseEntity.ok(Map.of("coverUrl", coverUrl));
     }
 }
