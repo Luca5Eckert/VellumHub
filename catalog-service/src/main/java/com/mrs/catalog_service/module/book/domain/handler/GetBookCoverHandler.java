@@ -17,6 +17,8 @@ import java.util.UUID;
 @Component
 public class GetBookCoverHandler {
 
+    private static final String COVER_URL_PREFIX = "/files/books/";
+
     private final BookRepository bookRepository;
     private final BookCoverStorage bookCoverStorage;
 
@@ -53,8 +55,8 @@ public class GetBookCoverHandler {
      * The URL format is expected to be: /files/books/{filename}
      */
     private String extractFilename(String coverUrl) {
-        if (coverUrl.startsWith("/files/books/")) {
-            return coverUrl.substring("/files/books/".length());
+        if (coverUrl.startsWith(COVER_URL_PREFIX)) {
+            return coverUrl.substring(COVER_URL_PREFIX.length());
         }
         return coverUrl;
     }
