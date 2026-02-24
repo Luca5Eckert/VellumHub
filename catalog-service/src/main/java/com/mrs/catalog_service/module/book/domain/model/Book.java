@@ -126,13 +126,4 @@ public class Book {
         }
     }
 
-    /**
-     * Domain method to update only the cover URL.
-     */
-    public void updateCoverUrl(String coverUrl) {
-        if (coverUrl != null && !coverUrl.isBlank()) {
-            this.coverUrl = coverUrl;
-        }
-    }
-
 }

@@ -2,14 +2,11 @@ package com.mrs.catalog_service.module.book.domain.service;
 
 import com.mrs.catalog_service.module.book.application.dto.*;
 import com.mrs.catalog_service.module.book.application.mapper.BookMapper;
-import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;
 import com.mrs.catalog_service.module.book.domain.handler.*;
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,18 +19,16 @@ public class BookService {
     private final GetAllBooksHandler getAllBooksHandler;
     private final UpdateBookHandler updateBookHandler;
     private final GetBooksByIdsHandler getBooksByIdsHandler;
-    private final UploadBookCoverHandler uploadBookCoverHandler;
 
     private final BookMapper bookMapper;
 
-    public BookService(CreateBookHandler createBookHandler, DeleteBookHandler deleteBookHandler, GetBookHandler getBookHandler, GetAllBooksHandler getAllBooksHandler, UpdateBookHandler updateBookHandler, GetBooksByIdsHandler getBooksByIdsHandler, UploadBookCoverHandler uploadBookCoverHandler, BookMapper bookMapper) {
+    public BookService(CreateBookHandler createBookHandler, DeleteBookHandler deleteBookHandler, GetBookHandler getBookHandler, GetAllBooksHandler getAllBooksHandler, UpdateBookHandler updateBookHandler, GetBooksByIdsHandler getBooksByIdsHandler, BookMapper bookMapper) {
         this.createBookHandler = createBookHandler;
         this.deleteBookHandler = deleteBookHandler;
         this.getBookHandler = getBookHandler;
         this.getAllBooksHandler = getAllBooksHandler;
         this.updateBookHandler = updateBookHandler;
         this.getBooksByIdsHandler = getBooksByIdsHandler;
-        this.uploadBookCoverHandler = uploadBookCoverHandler;
         this.bookMapper = bookMapper;
     }
 
@@ -80,23 +75,6 @@ public class BookService {
         List<Book> bookList = getBooksByIdsHandler.execute(bookIds);
 
         return bookList.stream().map(bookMapper::toFeatureResponse).toList();
-    }
-
-    public String uploadCover(UUID bookId, MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new BookDomainException("File must not be empty");
-        }
-
-        try {
-            return uploadBookCoverHandler.execute(
-                    bookId,
-                    file.getInputStream(),
-                    file.getOriginalFilename(),
-                    file.getContentType()
-            );
-        } catch (IOException e) {
-            throw new BookDomainException("Failed to read uploaded file: " + e.getMessage());
-        }
     }
 
 }
