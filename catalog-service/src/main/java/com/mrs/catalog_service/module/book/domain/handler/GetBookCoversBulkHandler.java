@@ -4,6 +4,8 @@ import com.mrs.catalog_service.module.book.application.dto.BookCoverResponse;
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book.domain.port.BookCoverStorage;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
@@ -22,6 +24,7 @@ import java.util.UUID;
 @Component
 public class GetBookCoversBulkHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GetBookCoversBulkHandler.class);
     private static final String COVER_URL_PREFIX = "/files/books/";
 
     private final BookRepository bookRepository;
@@ -73,6 +76,7 @@ public class GetBookCoversBulkHandler {
 
             return new BookCoverResponse(bookId, base64Data, contentType);
         } catch (IOException e) {
+            log.warn("Failed to load cover for book {}: {}", bookId, e.getMessage());
             return BookCoverResponse.empty(bookId);
         }
     }

@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -189,7 +190,9 @@ public class BookController {
             @ApiResponse(responseCode = "400", description = "Invalid request body", content = @Content),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     })
-    public ResponseEntity<List<BookCoverResponse>> getBookCoversBulk(@RequestBody List<UUID> bookIds) {
+    public ResponseEntity<List<BookCoverResponse>> getBookCoversBulk(
+            @RequestBody @Valid @NotEmpty(message = "Book IDs list must not be empty") List<UUID> bookIds
+    ) {
         List<BookCoverResponse> covers = bookService.getBookCoversBulk(bookIds);
         return ResponseEntity.ok(covers);
     }
