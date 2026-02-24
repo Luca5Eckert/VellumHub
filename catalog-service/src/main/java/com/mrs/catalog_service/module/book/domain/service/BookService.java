@@ -5,6 +5,7 @@ import com.mrs.catalog_service.module.book.application.mapper.BookMapper;
 import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;
 import com.mrs.catalog_service.module.book.domain.handler.*;
 import com.mrs.catalog_service.module.book.domain.model.Book;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,10 +24,11 @@ public class BookService {
     private final UpdateBookHandler updateBookHandler;
     private final GetBooksByIdsHandler getBooksByIdsHandler;
     private final UploadBookCoverHandler uploadBookCoverHandler;
+    private final GetBookCoverHandler getBookCoverHandler;
 
     private final BookMapper bookMapper;
 
-    public BookService(CreateBookHandler createBookHandler, DeleteBookHandler deleteBookHandler, GetBookHandler getBookHandler, GetAllBooksHandler getAllBooksHandler, UpdateBookHandler updateBookHandler, GetBooksByIdsHandler getBooksByIdsHandler, UploadBookCoverHandler uploadBookCoverHandler, BookMapper bookMapper) {
+    public BookService(CreateBookHandler createBookHandler, DeleteBookHandler deleteBookHandler, GetBookHandler getBookHandler, GetAllBooksHandler getAllBooksHandler, UpdateBookHandler updateBookHandler, GetBooksByIdsHandler getBooksByIdsHandler, UploadBookCoverHandler uploadBookCoverHandler, GetBookCoverHandler getBookCoverHandler, BookMapper bookMapper) {
         this.createBookHandler = createBookHandler;
         this.deleteBookHandler = deleteBookHandler;
         this.getBookHandler = getBookHandler;
@@ -34,6 +36,7 @@ public class BookService {
         this.updateBookHandler = updateBookHandler;
         this.getBooksByIdsHandler = getBooksByIdsHandler;
         this.uploadBookCoverHandler = uploadBookCoverHandler;
+        this.getBookCoverHandler = getBookCoverHandler;
         this.bookMapper = bookMapper;
     }
 
@@ -97,6 +100,16 @@ public class BookService {
         } catch (IOException e) {
             throw new BookDomainException("Failed to read uploaded file: " + e.getMessage());
         }
+    }
+
+    /**
+     * Retrieves the cover image for a book by its ID.
+     *
+     * @param bookId the ID of the book
+     * @return the cover image as a Resource
+     */
+    public Resource getBookCover(UUID bookId) {
+        return getBookCoverHandler.execute(bookId);
     }
 
 }
