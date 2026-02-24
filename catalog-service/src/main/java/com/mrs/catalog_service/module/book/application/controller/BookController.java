@@ -1,9 +1,10 @@
 package com.mrs.catalog_service.module.book.application.controller;
 
+import com.mrs.catalog_service.module.book.application.dto.BookCoverResponse;
 import com.mrs.catalog_service.module.book.application.dto.CreateBookRequest;
 import com.mrs.catalog_service.module.book.application.dto.GetBookResponse;
 import com.mrs.catalog_service.module.book.application.dto.Recommendation;
-import com.mrs.catalog_service.module.book.application.dto.UpdateBookRequest; // Import added
+import com.mrs.catalog_service.module.book.application.dto.UpdateBookRequest;
 import com.mrs.catalog_service.module.book.domain.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,8 +15,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import org.springframework.core.io.Resource;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/books")
@@ -150,5 +156,44 @@ public class BookController {
     ) {
         String coverUrl = bookService.uploadCover(id, file);
         return ResponseEntity.ok(Map.of("coverUrl", coverUrl));
+    }
+
+    @GetMapping(value = "/{id}/cover")
+    @Operation(summary = "Get book cover image", description = "Retrieves the cover image for the specified book by its ID")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cover image retrieved successfully"),
+            @ApiResponse(responseCode = "400", description = "Book has no cover image", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Book not found or cover file not found", content = @Content)
+    })
+    public ResponseEntity<Resource> getBookCover(
+            @Parameter(description = "Book ID") @PathVariable UUID id
+    ) {
+        Resource coverImage = bookService.getBookCover(id);
+        String filename = coverImage.getFilename() != null ? coverImage.getFilename() : "";
+        MediaType contentType = MediaTypeFactory.getMediaType(filename)
+                .orElse(MediaType.APPLICATION_OCTET_STREAM);
+
+        return ResponseEntity.ok()
+                .contentType(contentType)
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic())
+                .body(coverImage);
+    }
+
+    @PostMapping("/covers/bulk")
+    @Operation(summary = "Get multiple book covers", description = "Retrieves cover images for multiple books in a single request. Returns Base64 encoded image data. Solves N+1 problem when fetching covers for recommendations.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Covers retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = BookCoverResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request body", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    })
+    public ResponseEntity<List<BookCoverResponse>> getBookCoversBulk(
+            @RequestBody @Valid @NotEmpty(message = "Book IDs list must not be empty") List<UUID> bookIds
+    ) {
+        List<BookCoverResponse> covers = bookService.getBookCoversBulk(bookIds);
+        return ResponseEntity.ok(covers);
     }
 }
