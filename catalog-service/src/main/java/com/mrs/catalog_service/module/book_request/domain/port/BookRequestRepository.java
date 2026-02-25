@@ -16,4 +16,6 @@ public interface BookRequestRepository {
     void deleteById(long requestId);
 
     Page<BookRequest> findAll(int page, int size);
+
+    boolean existsById(Long bookRequestId);
 }

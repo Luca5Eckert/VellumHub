@@ -44,4 +44,9 @@ public class BookRequestRepositoryAdapter implements BookRequestRepository {
         return bookRequestRepositoryJpa.findAll(pageRequest);
     }
 
+    @Override
+    public boolean existsById(Long bookRequestId) {
+        return bookRequestRepositoryJpa.existsById(bookRequestId);
+    }
+
 }
