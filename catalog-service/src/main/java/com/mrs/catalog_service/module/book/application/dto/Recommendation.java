@@ -13,7 +13,7 @@ public record Recommendation(
         int releaseYear,
         String coverUrl,
         List<Genre> genres,
-        Instant createAt,
-        Instant updateAt
+        Instant createdAt,
+        Instant updatedAt
 ) {
 }

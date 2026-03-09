@@ -6,6 +6,7 @@ import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
 import com.mrs.catalog_service.module.book.domain.event.CreateBookEvent;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class CreateBookHandler {
@@ -19,7 +20,8 @@ public class CreateBookHandler {
         this.bookEventProducer = bookEventProducer;
     }
 
-    public void handler(Book book){
+    @Transactional
+    public void execute(Book book){
         if(book == null) throw new InvalidBookException();
 
         if(bookRepository.existByTitleAndAuthorAndIsbn(

@@ -17,7 +17,7 @@ public record GetBookResponse(
         int pageCount,
         String publisher,
         List<Genre> genres,
-        Instant createAt,
-        Instant updateAt
+        Instant createdAt,
+        Instant updatedAt
 ) {
 }

@@ -60,7 +60,7 @@ class CreateBookHandlerTest {
             given(bookRepository.existByTitleAndAuthorAndIsbn(any(), any(), any())).willReturn(false);
 
             // When
-            createBookHandler.handler(book);
+            createBookHandler.execute(book);
 
             // Then
             then(bookRepository).should().save(book);
@@ -86,7 +86,7 @@ class CreateBookHandlerTest {
         @Test
         @DisplayName("Should throw InvalidBookException when book is null")
         void shouldThrowExceptionWhenBookIsNull() {
-            assertThatThrownBy(() -> createBookHandler.handler(null))
+            assertThatThrownBy(() -> createBookHandler.execute(null))
                     .isInstanceOf(InvalidBookException.class);
 
             then(bookRepository).shouldHaveNoInteractions();
@@ -106,7 +106,7 @@ class CreateBookHandlerTest {
                     .willReturn(true);
 
             // When / Then
-            assertThatThrownBy(() -> createBookHandler.handler(book))
+            assertThatThrownBy(() -> createBookHandler.execute(book))
                     .isInstanceOf(InvalidBookException.class)
                     .hasMessageContaining("already exists");
 

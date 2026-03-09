@@ -78,8 +78,8 @@ class BookMapperTest {
             assertThat(response.pageCount()).isEqualTo(310);
             assertThat(response.publisher()).isEqualTo("George Allen & Unwin");
             assertThat(response.genres()).containsExactly(Genre.FANTASY, Genre.ROMANCE);
-            assertThat(response.createAt()).isEqualTo(now);
-            assertThat(response.updateAt()).isEqualTo(now);
+            assertThat(response.createdAt()).isEqualTo(now);
+            assertThat(response.updatedAt()).isEqualTo(now);
         }
 
         @Test
@@ -160,8 +160,8 @@ class BookMapperTest {
             assertThat(recommendation.releaseYear()).isEqualTo(1949);
             assertThat(recommendation.coverUrl()).isEqualTo("https://example.com/1984.jpg");
             assertThat(recommendation.genres()).containsExactly(Genre.SCI_FI, Genre.THRILLER_MYSTERY);
-            assertThat(recommendation.createAt()).isEqualTo(now);
-            assertThat(recommendation.updateAt()).isEqualTo(now);
+            assertThat(recommendation.createdAt()).isEqualTo(now);
+            assertThat(recommendation.updatedAt()).isEqualTo(now);
         }
 
         @Test

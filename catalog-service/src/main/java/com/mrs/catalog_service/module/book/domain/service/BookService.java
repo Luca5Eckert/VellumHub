@@ -55,7 +55,7 @@ public class BookService {
                 .coverUrl(createBookRequest.coverUrl())
                 .build();
 
-        createBookHandler.handler(book);
+        createBookHandler.execute(book);
     }
 
     public void delete(UUID bookId){
