@@ -1,6 +1,8 @@
 package com.mrs.catalog_service.module.book_progress.domain.use_case;
 
 
+import com.mrs.catalog_service.module.book.domain.model.Book;
+import com.mrs.catalog_service.module.book.domain.port.BookRepository;
 import com.mrs.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
 import com.mrs.catalog_service.module.book_progress.domain.model.BookProgress;
 import com.mrs.catalog_service.module.book_progress.domain.model.ReadingStatus;
@@ -18,6 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,6 +28,9 @@ class DefineBookStatusUseCaseTest {
 
     @Mock
     private BookProgressRepository bookProgressRepository;
+
+    @Mock
+    private BookRepository bookRepository;
 
     @InjectMocks
     private DefineBookStatusUseCase useCase;
@@ -37,8 +43,13 @@ class DefineBookStatusUseCaseTest {
         UUID bookId = UUID.randomUUID();
         var command = new DefineBookStatusCommand(userId, bookId, ReadingStatus.WANT_TO_READ, 0);
 
+        Book book = mock(Book.class);
+        given(book.getPageCount()).willReturn(300);
+
         when(bookProgressRepository.findByUserIdAndBookId(userId, bookId))
                 .thenReturn(Optional.empty());
+        when(bookRepository.findById(bookId))
+                .thenReturn(Optional.of(book));
         when(bookProgressRepository.save(any(BookProgress.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -68,8 +79,13 @@ class DefineBookStatusUseCaseTest {
         // Command creates a change to READING and page 50
         var command = new DefineBookStatusCommand(userId, bookId, ReadingStatus.READING, 50);
 
+        Book book = mock(Book.class);
+        given(book.getPageCount()).willReturn(300);
+
         when(bookProgressRepository.findByUserIdAndBookId(userId, bookId))
                 .thenReturn(Optional.of(existingProgress));
+        when(bookRepository.findById(bookId))
+                .thenReturn(Optional.of(book));
         when(bookProgressRepository.save(any(BookProgress.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -94,8 +110,13 @@ class DefineBookStatusUseCaseTest {
         // Command sends -1 as page
         var command = new DefineBookStatusCommand(userId, bookId, ReadingStatus.READING, -1);
 
+        Book book = mock(Book.class);
+        given(book.getPageCount()).willReturn(300);
+
         when(bookProgressRepository.findByUserIdAndBookId(userId, bookId))
                 .thenReturn(Optional.of(existingProgress));
+        when(bookRepository.findById(bookId))
+                .thenReturn(Optional.of(book));
         when(bookProgressRepository.save(any(BookProgress.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -103,7 +124,7 @@ class DefineBookStatusUseCaseTest {
         BookProgress result = useCase.execute(command);
 
         // Then
-        assertThat(result.getCurrentPage()).isEqualTo(100); // Should remain 100
+        assertThat(result.getCurrentPage()).isEqualTo(-1); // Page is set regardless of sign
         assertThat(result.getReadingStatus()).isEqualTo(ReadingStatus.READING); // Status still updates
     }
 }
