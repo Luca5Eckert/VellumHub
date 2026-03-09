@@ -99,15 +99,15 @@ class DefineBookStatusUseCaseTest {
     }
 
     @Test
-    @DisplayName("Should ignore page update if page number is negative")
-    void shouldIgnorePageUpdate_WhenPageIsNegative() {
+    @DisplayName("Should accept negative page number (validation not enforced at domain level)")
+    void shouldAcceptNegativePageNumber() {
         // Given
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
         var existingProgress = new BookProgress(bookId, userId);
         existingProgress.setCurrentPage(100);
 
-        // Command sends -1 as page
+        // Command sends -1 as page (edge case - domain model doesn't validate this)
         var command = new DefineBookStatusCommand(userId, bookId, ReadingStatus.READING, -1);
 
         Book book = mock(Book.class);
@@ -123,8 +123,8 @@ class DefineBookStatusUseCaseTest {
         // When
         BookProgress result = useCase.execute(command);
 
-        // Then
-        assertThat(result.getCurrentPage()).isEqualTo(-1); // Page is set regardless of sign
-        assertThat(result.getReadingStatus()).isEqualTo(ReadingStatus.READING); // Status still updates
+        // Then - Note: Negative page validation should be added to DTO or domain model
+        assertThat(result.getCurrentPage()).isEqualTo(-1);
+        assertThat(result.getReadingStatus()).isEqualTo(ReadingStatus.READING);
     }
 }
