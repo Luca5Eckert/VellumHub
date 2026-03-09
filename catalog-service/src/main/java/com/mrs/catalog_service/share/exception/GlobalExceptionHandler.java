@@ -64,6 +64,21 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
+    @ExceptionHandler(BookNotExistException.class)
+    public ResponseEntity<ApiResponseError> handleBookNotExistException(
+            BookNotExistException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value())
+                .error("Book Not Found")
+                .message(ex.getMessage())
+                .details(List.of("The requested book does not exist"))
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build());
+    }
+
     @ExceptionHandler(BookRequestDomainException.class)
     public ResponseEntity<ApiResponseError> handleBookRequestDomainException(
             BookRequestDomainException ex, HttpServletRequest request) {

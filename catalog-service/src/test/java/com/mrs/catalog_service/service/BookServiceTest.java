@@ -82,7 +82,7 @@ class BookServiceTest {
 
             // Assert
             ArgumentCaptor<Book> mediaCaptor = ArgumentCaptor.forClass(Book.class);
-            verify(createMediaHandler, times(1)).handler(mediaCaptor.capture());
+            verify(createMediaHandler, times(1)).execute(mediaCaptor.capture());
 
             Book capturedMedia = mediaCaptor.getValue();
             assertThat(capturedMedia.getTitle()).isEqualTo("The Matrix");
@@ -116,7 +116,7 @@ class BookServiceTest {
 
             // Assert
             ArgumentCaptor<Book> mediaCaptor = ArgumentCaptor.forClass(Book.class);
-            verify(createMediaHandler).handler(mediaCaptor.capture());
+            verify(createMediaHandler).execute(mediaCaptor.capture());
 
             Book capturedMedia = mediaCaptor.getValue();
             assertThat(capturedMedia.getAuthor()).isEqualTo("Vince Gilligan");
