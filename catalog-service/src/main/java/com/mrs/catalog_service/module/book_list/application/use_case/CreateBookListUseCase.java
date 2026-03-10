@@ -1,13 +1,19 @@
 package com.mrs.catalog_service.module.book_list.application.use_case;
 
+import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
 import com.mrs.catalog_service.module.book_list.application.command.CreateBookListCommand;
 import com.mrs.catalog_service.module.book_list.domain.exception.BookListDomainException;
 import com.mrs.catalog_service.module.book_list.domain.model.BookList;
 import com.mrs.catalog_service.module.book_list.domain.port.BookListRepository;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Component
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+@Service
 public class CreateBookListUseCase {
 
     private final BookListRepository bookListRepository;
@@ -18,17 +24,33 @@ public class CreateBookListUseCase {
         this.bookRepository = bookRepository;
     }
 
-    public BookList execute(CreateBookListCommand command){
-        var books = bookRepository.findAllById(command.books());
+    @Transactional
+    public BookList execute(CreateBookListCommand command) {
+        var books = getBooks(command.booksId());
 
-        if(command.books().size() != books.size()) throw new BookListDomainException("Not found all books");
-
-        BookList bookList = BookList.builder()
-                .books(books)
-                .userOwner(command.userId())
-                .build();
+        var bookList = BookList.create(
+                command.title(),
+                command.description(),
+                command.type(),
+                command.userId(),
+                books
+        );
 
         return bookListRepository.save(bookList);
     }
+
+    private List<Book> getBooks(List<UUID> bookIds) {
+        if(bookIds == null || bookIds.isEmpty()) return List.of();
+
+        var uniqueIds = Set.copyOf(bookIds);
+        var books = bookRepository.findAllById(uniqueIds);
+
+        if (books.size() != uniqueIds.size()) {
+            throw new BookListDomainException("One or more books don't exists");
+        }
+
+        return books;
+    }
+
 
 }

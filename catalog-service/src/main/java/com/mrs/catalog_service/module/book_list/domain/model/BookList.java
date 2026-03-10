@@ -10,6 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +26,12 @@ public class BookList {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false)
+    private String description;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "book_list_books",
@@ -34,28 +41,44 @@ public class BookList {
     private List<Book> books;
 
     @Enumerated(EnumType.STRING)
-    private TypeBookList typeBookList;
+    @Column(nullable = false)
+    private TypeBookList type;
 
     @OneToMany(mappedBy = "bookList", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<BookListMembership> memberships;
+    @Builder.Default
+    private List<BookListMembership> memberships = new ArrayList<>();
 
+    @Column(
+            nullable = false,
+            name = "user_owner"
+    )
     private UUID userOwner;
 
     @CreationTimestamp
+    @Column(
+            name = "created_at",
+            nullable = false
+    )
     private Instant createdAt;
 
     @UpdateTimestamp
+    @Column(
+            name = "updated_at",
+            nullable = false
+    )
     private Instant updatedAt;
 
     public BookList() {
     }
 
-    public static BookList create(List<Book> books, UUID userOwner, TypeBookList typeBookList) {
+    public static BookList create(String title, String description, TypeBookList type, UUID userOwner, List<Book> books) {
         BookList bookList = BookList.builder()
-                .typeBookList(typeBookList)
+                .title(title)
+                .description(description)
+                .type(type)
                 .userOwner(userOwner)
                 .books(books)
-                .memberships(List.of())
+                .memberships(new ArrayList<>())
                 .build();
 
         bookList.addMember(userOwner, MembershipRole.OWNER, false);
@@ -64,8 +87,11 @@ public class BookList {
     }
 
     public void addMember(UUID userId, MembershipRole membershipRole, boolean isFavorite) {
-        BookListMembership membership = BookListMembership.create(this, userId, membershipRole, isFavorite);
+        if (this.memberships == null) {
+            this.memberships = new ArrayList<>();
+        }
 
+        BookListMembership membership = BookListMembership.create(this, userId, membershipRole, isFavorite);
         this.memberships.add(membership);
     }
 

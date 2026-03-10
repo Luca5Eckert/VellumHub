@@ -35,8 +35,13 @@ public class BookListController {
     ) {
         var userId = authenticationService.getAuthenticatedUserId();
 
-        var command = CreateBookListCommand.of(request.booksId(), userId);
-
+        var command = CreateBookListCommand.of(
+                request.title(),
+                request.description(),
+                request.type(),
+                request.booksId(),
+                userId
+        );
         var bookList = createBookListUseCase.execute(command);
 
         return ResponseEntity

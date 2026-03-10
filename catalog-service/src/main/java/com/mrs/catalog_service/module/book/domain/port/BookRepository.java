@@ -4,9 +4,7 @@ import com.mrs.catalog_service.module.book.domain.model.Book;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public interface BookRepository {
     void save(Book book);
@@ -19,7 +17,7 @@ public interface BookRepository {
 
     void deleteById(UUID bookId);
 
-    List<Book> findAllById(List<UUID> uuids);
+    List<Book> findAllById(Collection<UUID> uuids);
 
     boolean existByTitleAndAuthor(String title, String author);
 

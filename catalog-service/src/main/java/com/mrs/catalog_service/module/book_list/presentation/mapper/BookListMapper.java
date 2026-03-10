@@ -1,6 +1,5 @@
 package com.mrs.catalog_service.module.book_list.presentation.mapper;
 
-import com.mrs.catalog_service.module.book.application.dto.GetBookResponse;
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book_list.domain.model.BookList;
 import com.mrs.catalog_service.module.book_list.presentation.dto.BookListResponse;
