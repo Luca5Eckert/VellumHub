@@ -2,6 +2,8 @@ package com.mrs.catalog_service.module.book_list.domain.model;
 
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,8 +15,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "book_lists")
+@AllArgsConstructor
 @Getter
 @Setter
+@Builder
 public class BookList {
 
     @Id

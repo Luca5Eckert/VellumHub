@@ -24,4 +24,5 @@ public interface BookRepository {
     boolean existByTitleAndAuthor(String title, String author);
 
     boolean existByTitleAndAuthorAndIsbn(String title, String author, String isbn);
+
 }
