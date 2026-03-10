@@ -1,10 +1,7 @@
 package com.mrs.catalog_service.module.book_list.domain.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -17,6 +14,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class BookListMembership {
 
     @Id
@@ -39,5 +37,14 @@ public class BookListMembership {
 
     @UpdateTimestamp
     private Instant updatedAt;
+
+    public static BookListMembership create(BookList bookList, UUID userId, MembershipRole role, boolean isFavorite) {
+        return BookListMembership.builder()
+                .bookList(bookList)
+                .userId(userId)
+                .role(role)
+                .isFavorite(isFavorite)
+                .build();
+    }
 
 }

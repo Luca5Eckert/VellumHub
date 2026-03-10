@@ -33,6 +33,9 @@ public class BookList {
     )
     private List<Book> books;
 
+    @Enumerated(EnumType.STRING)
+    private TypeBookList typeBookList;
+
     @OneToMany(mappedBy = "bookList", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookListMembership> memberships;
 
@@ -45,6 +48,25 @@ public class BookList {
     private Instant updatedAt;
 
     public BookList() {
+    }
+
+    public static BookList create(List<Book> books, UUID userOwner, TypeBookList typeBookList) {
+        BookList bookList = BookList.builder()
+                .typeBookList(typeBookList)
+                .userOwner(userOwner)
+                .books(books)
+                .memberships(List.of())
+                .build();
+
+        bookList.addMember(userOwner, MembershipRole.OWNER, false);
+
+        return bookList;
+    }
+
+    public void addMember(UUID userId, MembershipRole membershipRole, boolean isFavorite) {
+        BookListMembership membership = BookListMembership.create(this, userId, membershipRole, isFavorite);
+
+        this.memberships.add(membership);
     }
 
 }
