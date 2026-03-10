@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public record BookListResponse(
         UUID id,
-        List<UUID> books, // change to book response
+        List<BookResponse> books,
         UUID userOwner
 ) {
 }

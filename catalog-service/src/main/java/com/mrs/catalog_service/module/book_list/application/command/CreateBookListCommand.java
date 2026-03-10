@@ -9,7 +9,7 @@ public record CreateBookListCommand(
         UUID userId,
         List<UUID> books
 ) {
-    public static Object of(@NotEmpty List<UUID> books, UUID userId) {
+    public static CreateBookListCommand of(@NotEmpty List<UUID> books, UUID userId) {
         return new CreateBookListCommand(userId, books);
     }
 }
