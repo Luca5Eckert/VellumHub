@@ -81,19 +81,30 @@ public class BookList {
                 .memberships(new ArrayList<>())
                 .build();
 
-        bookList.addMember(userOwner, MembershipRole.OWNER, false);
+        bookList.addMember(userOwner, MembershipRole.OWNER);
 
         return bookList;
     }
 
-    public void addMember(UUID userId, MembershipRole membershipRole, boolean isFavorite) {
+    public void addMember(UUID userId, MembershipRole membershipRole) {
         if (this.memberships == null) {
             this.memberships = new ArrayList<>();
         }
 
-        BookListMembership membership = BookListMembership.create(this, userId, membershipRole, isFavorite);
+        BookListMembership membership = BookListMembership.create(this, userId, membershipRole);
         this.memberships.add(membership);
     }
 
+    public void update(String name, String description, TypeBookList typeBookList) {
+        if(name != null) {
+            this.title = name;
+        }
+        if(description != null) {
+            this.description = description;
+        }
+        if(typeBookList != null){
+            this.type = typeBookList;
+        }
+    }
 }
 

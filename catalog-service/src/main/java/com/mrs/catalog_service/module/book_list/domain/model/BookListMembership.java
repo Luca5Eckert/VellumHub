@@ -34,12 +34,6 @@ public class BookListMembership {
     @Enumerated(EnumType.STRING)
     private MembershipRole role;
 
-    @Column(
-            name = "is_favorite",
-            nullable = false
-    )
-    private boolean isFavorite;
-
     @CreationTimestamp
     @Column(
             name = "created_at",
@@ -54,12 +48,11 @@ public class BookListMembership {
     )
     private Instant updatedAt;
 
-    public static BookListMembership create(BookList bookList, UUID userId, MembershipRole role, boolean isFavorite) {
+    public static BookListMembership create(BookList bookList, UUID userId, MembershipRole role) {
         return BookListMembership.builder()
                 .bookList(bookList)
                 .userId(userId)
                 .role(role)
-                .isFavorite(isFavorite)
                 .build();
     }
 
