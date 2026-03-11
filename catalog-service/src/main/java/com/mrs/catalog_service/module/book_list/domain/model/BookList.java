@@ -95,28 +95,30 @@ public class BookList {
         this.memberships.add(membership);
     }
 
-    public void update(String name, String description, TypeBookList typeBookList) {
-        if(name != null) {
-            this.title = name;
-        }
-        if(description != null) {
-            this.description = description;
-        }
-        if(typeBookList != null){
-            this.type = typeBookList;
-        }
+    public void update(String title, String description, TypeBookList typeBookList) {
+        if (title != null) this.title = title;
+        if (description != null) this.description = description;
+        if (typeBookList != null) this.type = typeBookList;
     }
 
     public boolean canUpdate(UUID userId) {
-        if(userId == userOwner) return true;
+        if (userOwner.equals(userId)) return true;
 
         return memberships.stream()
-                .filter(membership -> membership.getUserId().equals(userId))
-                .anyMatch(membership -> membership.getRole() == MembershipRole.ADMIN);
+                .anyMatch(m -> m.getUserId().equals(userId) && m.getRole() == MembershipRole.ADMIN);
     }
 
-    public boolean canDelete(UUID userId) {
-        return userId == userOwner;
+    public boolean canRead(UUID userId) {
+        if (type == TypeBookList.PUBLIC) return true;
+        if (userId == null) return false;
+
+        return userOwner.equals(userId) || isMember(userId);
     }
+
+    public boolean isMember(UUID userId) {
+        return memberships.stream()
+                .anyMatch(m -> m.getUserId().equals(userId));
+    }
+
 }
 
