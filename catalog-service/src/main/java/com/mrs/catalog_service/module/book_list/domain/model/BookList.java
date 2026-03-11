@@ -120,5 +120,8 @@ public class BookList {
                 .anyMatch(m -> m.getUserId().equals(userId));
     }
 
+    public boolean canDelete(UUID userId) {
+        return userOwner.equals(userId);
+    }
 }
 
