@@ -1,8 +1,7 @@
-package com.mrs.catalog_service.module.book_list.presentation.dto;
+package com.mrs.catalog_service.module.book_list.presentation.dto.request;
 
 import com.mrs.catalog_service.module.book_list.domain.model.TypeBookList;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 

@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_list.presentation.dto;
+package com.mrs.catalog_service.module.book_list.presentation.dto.response;
 
 import com.mrs.catalog_service.module.book.domain.model.Genre;
 
