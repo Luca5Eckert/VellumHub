@@ -81,7 +81,7 @@ public class BookList {
                 .memberships(new ArrayList<>())
                 .build();
 
-        bookList.addMember(userOwner, MembershipRole.OWNER);
+        bookList.addMember(userOwner, MembershipRole.ADMIN);
 
         return bookList;
     }
@@ -106,5 +106,14 @@ public class BookList {
             this.type = typeBookList;
         }
     }
+
+    public boolean canUpdate(UUID userId) {
+        if(userId == userOwner) return true;
+
+        return memberships.stream()
+                .filter(membership -> membership.getUserId().equals(userId))
+                .anyMatch(membership -> membership.getRole() == MembershipRole.ADMIN);
+    }
+
 }
 
