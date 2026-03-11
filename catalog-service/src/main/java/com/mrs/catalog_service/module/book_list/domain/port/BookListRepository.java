@@ -12,4 +12,6 @@ public interface BookListRepository {
     BookList save(BookList bookList);
 
     void deleteById(UUID uuid);
+
+    Optional<BookList> findByIdFull(UUID uuid);
 }
