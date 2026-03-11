@@ -4,9 +4,10 @@ import com.mrs.catalog_service.module.book_list.application.command.UpdateBookLi
 import com.mrs.catalog_service.module.book_list.domain.exception.BookListDomainException;
 import com.mrs.catalog_service.module.book_list.domain.model.BookList;
 import com.mrs.catalog_service.module.book_list.domain.port.BookListRepository;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@Service
 public class UpdateBookListUseCase {
 
     private final BookListRepository bookListRepository;
@@ -15,6 +16,7 @@ public class UpdateBookListUseCase {
         this.bookListRepository = bookListRepository;
     }
 
+    @Transactional
     public BookList execute(UpdateBookListCommand command) {
         var bookList = bookListRepository.findById(command.bookListId())
                 .orElseThrow(() -> new RuntimeException("Book list not found"));

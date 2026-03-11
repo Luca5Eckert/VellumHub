@@ -115,5 +115,8 @@ public class BookList {
                 .anyMatch(membership -> membership.getRole() == MembershipRole.ADMIN);
     }
 
+    public boolean canDelete(UUID userId) {
+        return userId == userOwner;
+    }
 }
 
