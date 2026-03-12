@@ -133,7 +133,7 @@ public class RatingController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{ratingId}")
+    @DeleteMapping("/{ratingId}")
     @Operation(summary = "Delete rating", description = "Deletes an existing book rating")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
