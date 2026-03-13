@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.book_feature.application.event;
+package com.mrs.recommendation_service.share.event;
 
 import java.util.UUID;
 

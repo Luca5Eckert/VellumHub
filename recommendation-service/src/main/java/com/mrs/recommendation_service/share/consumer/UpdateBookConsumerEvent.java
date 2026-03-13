@@ -1,8 +1,8 @@
-package com.mrs.recommendation_service.module.book_feature.application.consumer;
+package com.mrs.recommendation_service.share.consumer;
 
-import com.mrs.recommendation_service.module.book_feature.application.event.UpdateBookEvent;
+import com.mrs.recommendation_service.share.event.UpdateBookEvent;
 import com.mrs.recommendation_service.module.book_feature.domain.command.UpdateBookFeatureCommand;
-import com.mrs.recommendation_service.module.book_feature.domain.use_case.UpdateMediaFeatureUseCase;
+import com.mrs.recommendation_service.module.book_feature.application.use_case.UpdateMediaFeatureUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
