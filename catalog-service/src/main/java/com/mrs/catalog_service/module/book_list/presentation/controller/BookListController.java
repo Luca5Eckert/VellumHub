@@ -111,8 +111,8 @@ public class BookListController {
 
     @GetMapping("/{bookListId}")
     @Operation(
-            summary = "Get the book by id",
-            description = "Get the book list by id provide by user"
+            summary = "Retrieve a specific book list",
+            description = "Fetches the details of a book list using the unique identifier provided by the user."
     )
     public ResponseEntity<BookListResponse> getById(
             @PathVariable(name = "bookListId") UUID bookListId
