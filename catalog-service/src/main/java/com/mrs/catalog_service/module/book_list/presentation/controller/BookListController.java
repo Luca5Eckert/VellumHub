@@ -8,6 +8,7 @@ import com.mrs.catalog_service.module.book_list.application.query.GetAllBookList
 import com.mrs.catalog_service.module.book_list.application.query.GetBookListByIdQuery;
 import com.mrs.catalog_service.module.book_list.application.use_case.*;
 import com.mrs.catalog_service.module.book_list.domain.model.TypeBookList;
+import com.mrs.catalog_service.module.book_list.presentation.dto.response.BookListGetAllResponse;
 import com.mrs.catalog_service.module.book_list.presentation.dto.response.BookListResponse;
 import com.mrs.catalog_service.module.book_list.presentation.dto.request.CreatedBookListRequest;
 import com.mrs.catalog_service.module.book_list.presentation.dto.request.UpdateBookListRequest;
@@ -130,7 +131,7 @@ public class BookListController {
             summary = "Get all books by filters",
             description = "Get the existing book lists who matched with filters"
     )
-    public ResponseEntity<List<BookListResponse>> getAll(
+    public ResponseEntity<List<BookListGetAllResponse>> getAll(
             @RequestParam(name = "Title", required = false) String title,
             @RequestParam(name = "Description", required = false) String description,
             @RequestParam(name = "Owner's id of book list", required = false) UUID userOwnerList,
@@ -158,7 +159,7 @@ public class BookListController {
         var bookLists = getAllBookListUseCase.execute(query);
 
         var response = bookLists.stream()
-                .map(bookListMapper::toResponse)
+                .map(bookListMapper::toGetAllResponse)
                 .toList();
 
         return ResponseEntity
