@@ -1,7 +1,6 @@
 package com.mrs.catalog_service.module.book.domain.model;
 
 import lombok.Getter;
-
 @Getter
 public enum Genre {
     FANTASY(0),

@@ -49,7 +49,13 @@ public class UpdateBookHandler {
 
         UpdateBookEvent updateBookEvent = new UpdateBookEvent(
                 book.getId(),
-                request.genres()
+                book.getTitle(),
+                book.getDescription(),
+                book.getReleaseYear(),
+                book.getCoverUrl(),
+                book.getAuthor(),
+                book.getGenres()
+
         );
 
         bookEventProducer.send("updated-book", book.getId().toString(), updateBookEvent);
