@@ -5,7 +5,7 @@ import com.mrs.recommendation_service.module.recommendation.application.dto.Reco
 import com.mrs.recommendation_service.module.recommendation.application.mapper.RecommendationMapper;
 import com.mrs.recommendation_service.module.recommendation.domain.command.GetRecommendationsCommand;
 import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
-import com.mrs.recommendation_service.module.recommendation.domain.use_case.GetRecommendationsUseCase;
+import com.mrs.recommendation_service.module.recommendation.application.use_case.GetRecommendationsUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

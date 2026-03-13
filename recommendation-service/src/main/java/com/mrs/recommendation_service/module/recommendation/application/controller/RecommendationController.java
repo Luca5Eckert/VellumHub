@@ -1,7 +1,9 @@
 package com.mrs.recommendation_service.module.recommendation.application.controller;
 
 import com.mrs.recommendation_service.module.recommendation.application.dto.RecommendationResponse;
-import com.mrs.recommendation_service.module.recommendation.application.handler.GetRecommendationsHandler;
+import com.mrs.recommendation_service.module.recommendation.application.mapper.RecommendationMapper;
+import com.mrs.recommendation_service.module.recommendation.application.use_case.GetRecommendationsUseCase;
+import com.mrs.recommendation_service.module.recommendation.domain.command.GetRecommendationsCommand;
 import com.mrs.recommendation_service.share.provider.UserAuthenticationProvider;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,14 +28,15 @@ import java.util.List;
 public class RecommendationController {
 
     private final UserAuthenticationProvider userAuthenticationProvider;
+    private final RecommendationMapper mapper;
 
-    private final GetRecommendationsHandler getRecommendationsHandler;
+    private final GetRecommendationsUseCase getRecommendationsUseCase;
 
-    public RecommendationController(UserAuthenticationProvider userAuthenticationProvider, GetRecommendationsHandler getRecommendationsHandler) {
+    public RecommendationController(UserAuthenticationProvider userAuthenticationProvider, RecommendationMapper mapper, GetRecommendationsUseCase getRecommendationsUseCase) {
         this.userAuthenticationProvider = userAuthenticationProvider;
-        this.getRecommendationsHandler = getRecommendationsHandler;
+        this.mapper = mapper;
+        this.getRecommendationsUseCase = getRecommendationsUseCase;
     }
-
     /**
      * Returns recommendations for the authenticated user.
      *
@@ -56,12 +59,17 @@ public class RecommendationController {
 
         var userId = userAuthenticationProvider.getUserId();
 
-        var recommendations = getRecommendationsHandler.handle(
+        GetRecommendationsCommand command = new GetRecommendationsCommand(
                 userId,
                 limit,
                 offset
         );
 
-        return ResponseEntity.ok(recommendations);
+        var recommendations = getRecommendationsUseCase.execute(command);
+        var response = recommendations.stream()
+                .map(mapper::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }
