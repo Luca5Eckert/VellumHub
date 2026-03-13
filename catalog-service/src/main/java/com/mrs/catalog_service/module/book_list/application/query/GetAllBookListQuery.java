@@ -17,4 +17,27 @@ public record GetAllBookListQuery(
         int pageNumber,
         int pageSize
 ) {
+    public static GetAllBookListQuery of(
+            String title,
+            String description,
+            UUID userOwnerList,
+            Set<Genre> genres,
+            Set<UUID> booksId,
+            TypeBookList typeBookList,
+            UUID userAuthenticated,
+            int pageNumber,
+            int pageSize
+    ) {
+        return new GetAllBookListQuery(
+                title,
+                description,
+                userOwnerList,
+                genres,
+                booksId,
+                typeBookList,
+                userAuthenticated,
+                pageNumber,
+                pageSize
+        );
+    }
 }
