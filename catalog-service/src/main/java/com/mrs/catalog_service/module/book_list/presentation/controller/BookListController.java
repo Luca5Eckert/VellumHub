@@ -3,9 +3,9 @@ package com.mrs.catalog_service.module.book_list.presentation.controller;
 import com.mrs.catalog_service.module.book_list.application.command.CreateBookListCommand;
 import com.mrs.catalog_service.module.book_list.application.command.DeleteBookListCommand;
 import com.mrs.catalog_service.module.book_list.application.command.UpdateBookListCommand;
-import com.mrs.catalog_service.module.book_list.application.use_case.CreateBookListUseCase;
-import com.mrs.catalog_service.module.book_list.application.use_case.DeleteBookListUseCase;
-import com.mrs.catalog_service.module.book_list.application.use_case.UpdateBookListUseCase;
+import com.mrs.catalog_service.module.book_list.application.query.GetAllBookListQuery;
+import com.mrs.catalog_service.module.book_list.application.query.GetBookListByIdQuery;
+import com.mrs.catalog_service.module.book_list.application.use_case.*;
 import com.mrs.catalog_service.module.book_list.presentation.dto.response.BookListResponse;
 import com.mrs.catalog_service.module.book_list.presentation.dto.request.CreatedBookListRequest;
 import com.mrs.catalog_service.module.book_list.presentation.dto.request.UpdateBookListRequest;
@@ -29,13 +29,17 @@ public class BookListController {
     private final CreateBookListUseCase createBookListUseCase;
     private final UpdateBookListUseCase updateBookListUseCase;
     private final DeleteBookListUseCase deleteBookListUseCase;
+    private final GetBookListByIdUseCase getBookListByIdUseCase;
+    private final GetAllBookListUseCase getAllBookListUseCase;
 
-    public BookListController(AuthenticationService authenticationService, BookListMapper bookListMapper, CreateBookListUseCase createBookListUseCase, UpdateBookListUseCase updateBookListUseCase, DeleteBookListUseCase deleteBookListUseCase) {
+    public BookListController(AuthenticationService authenticationService, BookListMapper bookListMapper, CreateBookListUseCase createBookListUseCase, UpdateBookListUseCase updateBookListUseCase, DeleteBookListUseCase deleteBookListUseCase, GetBookListByIdUseCase getBookListByIdUseCase, GetAllBookListUseCase getAllBookListUseCase) {
         this.authenticationService = authenticationService;
         this.bookListMapper = bookListMapper;
         this.createBookListUseCase = createBookListUseCase;
         this.updateBookListUseCase = updateBookListUseCase;
         this.deleteBookListUseCase = deleteBookListUseCase;
+        this.getBookListByIdUseCase = getBookListByIdUseCase;
+        this.getAllBookListUseCase = getAllBookListUseCase;
     }
 
     @Operation(summary = "Create a new book list")
@@ -97,5 +101,23 @@ public class BookListController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{bookListId}")
+    @Operation(
+            summary = "Get the book by id",
+            description = "Get the book list by id provide by user"
+    )
+    public ResponseEntity<BookListResponse> getById(
+            @PathVariable(name = "bookListId") UUID bookListId
+    ) {
+        var userId = authenticationService.getAuthenticatedUserId();
+
+        var query = GetBookListByIdQuery.of(userId, bookListId);
+        var bookList = getBookListByIdUseCase.execute(query);
+
+        return ResponseEntity
+                .ok(bookListMapper.toResponse(bookList));
+    }
+
 
 }
