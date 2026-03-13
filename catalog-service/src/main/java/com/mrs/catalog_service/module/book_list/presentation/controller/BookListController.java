@@ -131,16 +131,17 @@ public class BookListController {
             description = "Get the existing book lists who matched with filters"
     )
     public ResponseEntity<List<BookListResponse>> getAll(
-            @Parameter(name = "Title") String title,
-            @Parameter(name = "Description") String description,
-            @Parameter(name = "Owner's id of book list") UUID userOwnerList,
-            @Parameter(name = "Genres of books in list") Set<Genre> genres,
-            @Parameter(name = "Books id") Set<UUID> booksId,
-            @Parameter(name = "Type of book list") TypeBookList typeBookList,
-            @Parameter(name = "Number of page") int numberPage,
-            @Parameter(name = "Size of page") int sizePage
+            @RequestParam(name = "Title", required = false) String title,
+            @RequestParam(name = "Description", required = false) String description,
+            @RequestParam(name = "Owner's id of book list", required = false) UUID userOwnerList,
+            @RequestParam(name = "Genres of books in list", required = false) Set<Genre> genres,
+            @RequestParam(name = "Books id", required = false) Set<UUID> booksId,
+            @RequestParam(name = "Type of book list", required = false) TypeBookList typeBookList,
+            @RequestParam(name = "Number of page", required = false) int numberPage,
+            @RequestParam(name = "Size of page", required = false) int sizePage
     ) {
         var userId = authenticationService.getAuthenticatedUserId();
+
 
         var query = GetAllBookListQuery.of(
                 title,
