@@ -37,6 +37,7 @@ public class BookListSpecificationProvider {
             applyGenresFilter(filter, root, cb, predicates);
             applyBooksIdFilter(filter, root, cb, predicates);
             applyVisibilityAndTypeFilter(filter, root, query, cb, predicates);
+            applyUserOwnerFilter(filter, root, cb, predicates);
 
             if (query != null) {
                 query.distinct(true);
@@ -45,6 +46,9 @@ public class BookListSpecificationProvider {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
+
+
+
 
     /**
      * Applies case-insensitive partial match predicates for {@code title} and
@@ -174,6 +178,26 @@ public class BookListSpecificationProvider {
                 );
 
         return cb.exists(sub);
+    }
+
+    /**
+     * Applies an {@code IN} predicate on the {@code userOwner} field when
+     * {@link BookListFilter#userOwnerList()} is provided.
+     *
+     * <p>This predicate is combined with other filters (including visibility rules)
+     * using {@code AND} semantics.</p>
+     *
+     * @param filter     the source filter
+     * @param root       the query root
+     * @param cb         the criteria builder
+     * @param predicates the predicate list to append to
+     */
+    private void applyUserOwnerFilter(BookListFilter filter, Root<BookList> root,
+                                      CriteriaBuilder cb, List<Predicate> predicates) {
+        if (filter.userOwnerList() == null) {
+            return;
+        }
+        predicates.add(cb.equal(root.get("userOwner"), filter.userOwnerList()));
     }
 
     /**
