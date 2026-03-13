@@ -15,11 +15,9 @@ import com.mrs.catalog_service.module.book_list.presentation.dto.request.UpdateB
 import com.mrs.catalog_service.module.book_list.presentation.mapper.BookListMapper;
 import com.mrs.catalog_service.share.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
