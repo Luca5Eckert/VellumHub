@@ -34,6 +34,11 @@ public class CreateBookHandler {
 
         CreateBookEvent createBookEvent = new CreateBookEvent(
                 book.getId(),
+                book.getTitle(),
+                book.getDescription(),
+                book.getReleaseYear(),
+                book.getCoverUrl(),
+                book.getAuthor(),
                 book.getGenres()
         );
 
