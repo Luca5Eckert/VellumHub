@@ -1,5 +1,6 @@
 package com.mrs.recommendation_service.module.book_feature.domain.use_case;
 
+import com.mrs.recommendation_service.module.book_feature.application.use_case.UpdateMediaFeatureUseCase;
 import com.mrs.recommendation_service.module.book_feature.domain.command.UpdateBookFeatureCommand;
 import com.mrs.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
 import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
