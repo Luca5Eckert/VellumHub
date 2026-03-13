@@ -3,6 +3,7 @@ package com.mrs.catalog_service.module.book_list.domain.port;
 import com.mrs.catalog_service.module.book_list.domain.filter.BookListFilter;
 import com.mrs.catalog_service.module.book_list.domain.filter.BookListPage;
 import com.mrs.catalog_service.module.book_list.domain.model.BookList;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.data.domain.Page;
 
 import java.util.Optional;

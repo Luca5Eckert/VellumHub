@@ -6,15 +6,14 @@ public record BookListPage(
 ) {
 
     public BookListPage {
-        if(pageNumber > 10 || pageNumber < 0) pageNumber = 0;
-        if(pageSize > 20 || pageSize < 1) pageSize = 1;
-
+        if(pageNumber < 0) pageNumber = 0;
+        if(pageSize < 1) pageSize = 1;
+        if(pageSize > 100) pageSize = 100;
     }
 
     public static BookListPage of(int pageNumber, int pageSize){
         return new BookListPage(
                 pageNumber, pageSize
         );
-
     }
 }
