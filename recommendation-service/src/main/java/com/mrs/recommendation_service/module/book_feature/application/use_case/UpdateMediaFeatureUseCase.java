@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.book_feature.domain.use_case;
+package com.mrs.recommendation_service.module.book_feature.application.use_case;
 
 import com.mrs.recommendation_service.module.book_feature.domain.command.UpdateBookFeatureCommand;
 import com.mrs.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
