@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.recommendation.domain.use_case;
+package com.mrs.recommendation_service.module.recommendation.application.use_case;
 
 import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.mrs.recommendation_service.module.book_feature.domain.port.CatalogClient;
