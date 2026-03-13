@@ -1,6 +1,6 @@
 package com.mrs.recommendation_service.domain.handler.book_feature;
 
-import com.mrs.recommendation_service.module.book_feature.domain.use_case.DeleteBookFeatureUseCase;
+import com.mrs.recommendation_service.module.book_feature.application.use_case.DeleteBookFeatureUseCase;
 import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
