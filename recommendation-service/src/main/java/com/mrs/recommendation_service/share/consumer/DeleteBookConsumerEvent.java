@@ -1,7 +1,7 @@
-package com.mrs.recommendation_service.module.book_feature.application.consumer;
+package com.mrs.recommendation_service.share.consumer;
 
-import com.mrs.recommendation_service.module.book_feature.application.event.DeleteBookEvent;
-import com.mrs.recommendation_service.module.book_feature.domain.use_case.DeleteBookFeatureUseCase;
+import com.mrs.recommendation_service.share.event.DeleteBookEvent;
+import com.mrs.recommendation_service.module.book_feature.application.use_case.DeleteBookFeatureUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
