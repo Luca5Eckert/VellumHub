@@ -1,22 +1,28 @@
 package com.mrs.catalog_service.module.book_list.presentation.controller;
 
+import com.mrs.catalog_service.module.book.domain.model.Genre;
 import com.mrs.catalog_service.module.book_list.application.command.CreateBookListCommand;
 import com.mrs.catalog_service.module.book_list.application.command.DeleteBookListCommand;
 import com.mrs.catalog_service.module.book_list.application.command.UpdateBookListCommand;
 import com.mrs.catalog_service.module.book_list.application.query.GetAllBookListQuery;
 import com.mrs.catalog_service.module.book_list.application.query.GetBookListByIdQuery;
 import com.mrs.catalog_service.module.book_list.application.use_case.*;
+import com.mrs.catalog_service.module.book_list.domain.model.TypeBookList;
 import com.mrs.catalog_service.module.book_list.presentation.dto.response.BookListResponse;
 import com.mrs.catalog_service.module.book_list.presentation.dto.request.CreatedBookListRequest;
 import com.mrs.catalog_service.module.book_list.presentation.dto.request.UpdateBookListRequest;
 import com.mrs.catalog_service.module.book_list.presentation.mapper.BookListMapper;
 import com.mrs.catalog_service.share.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -117,6 +123,45 @@ public class BookListController {
 
         return ResponseEntity
                 .ok(bookListMapper.toResponse(bookList));
+    }
+
+    @GetMapping
+    @Operation(
+            summary = "Get all books by filters",
+            description = "Get the existing book lists who matched with filters"
+    )
+    public ResponseEntity<List<BookListResponse>> getAll(
+            @Parameter(name = "Title") String title,
+            @Parameter(name = "Description") String description,
+            @Parameter(name = "Owner's id of book list") UUID userOwnerList,
+            @Parameter(name = "Genres of books in list") Set<Genre> genres,
+            @Parameter(name = "Books id") Set<UUID> booksId,
+            @Parameter(name = "Type of book list") TypeBookList typeBookList,
+            @Parameter(name = "Number of page") int numberPage,
+            @Parameter(name = "Size of page") int sizePage
+    ) {
+        var userId = authenticationService.getAuthenticatedUserId();
+
+        var query = GetAllBookListQuery.of(
+                title,
+                description,
+                userOwnerList,
+                genres,
+                booksId,
+                typeBookList,
+                userId,
+                numberPage,
+                sizePage
+        );
+
+        var bookLists = getAllBookListUseCase.execute(query);
+
+        var response = bookLists.stream()
+                .map(bookListMapper::toResponse)
+                .toList();
+
+        return ResponseEntity
+                .ok(response);
     }
 
 
