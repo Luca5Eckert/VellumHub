@@ -11,12 +11,12 @@ public class RecommendationMapper {
             Recommendation recommendation
     ){
         return new RecommendationResponse(
-                recommendation.id(),
-                recommendation.title(),
-                recommendation.description(),
-                recommendation.releaseYear(),
-                recommendation.coverUrl(),
-                recommendation.genres()
+                recommendation.getBookId(),
+                recommendation.getTitle(),
+                recommendation.getDescription(),
+                recommendation.getReleaseYear(),
+                recommendation.getCoverUrl(),
+                recommendation.getGenres()
         );
     }
 
