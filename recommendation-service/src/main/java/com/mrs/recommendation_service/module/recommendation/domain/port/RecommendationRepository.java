@@ -8,5 +8,7 @@ import java.util.UUID;
 public interface RecommendationRepository {
     void save(Recommendation recommendation);
 
-    Optional<Recommendation> findById(UUID uuid);
+    Optional<Recommendation> findById(UUID id);
+
+    void deleteById(UUID id);
 }
