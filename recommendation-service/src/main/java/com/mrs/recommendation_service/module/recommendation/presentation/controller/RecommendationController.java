@@ -1,9 +1,9 @@
-package com.mrs.recommendation_service.module.recommendation.application.controller;
+package com.mrs.recommendation_service.module.recommendation.presentation.controller;
 
-import com.mrs.recommendation_service.module.recommendation.application.dto.RecommendationResponse;
-import com.mrs.recommendation_service.module.recommendation.application.mapper.RecommendationMapper;
+import com.mrs.recommendation_service.module.recommendation.presentation.dto.RecommendationResponse;
+import com.mrs.recommendation_service.module.recommendation.presentation.mapper.RecommendationMapper;
 import com.mrs.recommendation_service.module.recommendation.application.use_case.GetRecommendationsUseCase;
-import com.mrs.recommendation_service.module.recommendation.domain.command.GetRecommendationsCommand;
+import com.mrs.recommendation_service.module.recommendation.application.command.GetRecommendationsCommand;
 import com.mrs.recommendation_service.share.provider.UserAuthenticationProvider;
 
 import io.swagger.v3.oas.annotations.Operation;
