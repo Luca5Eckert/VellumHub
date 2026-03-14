@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book.domain.event;
+package com.mrs.recommendation_service.share.event;
 
-import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.mrs.recommendation_service.module.book_feature.domain.model.Genre;
 
 import java.util.List;
 import java.util.UUID;

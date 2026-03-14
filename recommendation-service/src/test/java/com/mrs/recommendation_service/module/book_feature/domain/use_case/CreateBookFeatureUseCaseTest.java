@@ -1,5 +1,6 @@
 package com.mrs.recommendation_service.module.book_feature.domain.use_case;
 
+import com.mrs.recommendation_service.module.book_feature.application.use_case.CreateBookFeatureUseCase;
 import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import org.junit.jupiter.api.DisplayName;
