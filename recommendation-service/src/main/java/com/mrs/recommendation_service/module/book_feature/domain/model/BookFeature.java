@@ -47,7 +47,6 @@ public class BookFeature {
     }
 
     public void update(List<Genre> genres) {
-
         this.embedding = defineVector(genres);
         this.lastUpdated = Instant.now();
     }
