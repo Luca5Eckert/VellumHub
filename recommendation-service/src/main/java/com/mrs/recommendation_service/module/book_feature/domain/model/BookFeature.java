@@ -40,18 +40,33 @@ public class BookFeature {
         this.embedding = genresVector;
     }
 
-    public void update(List<Genre> genres) {
-        float[] newEmbedding = new float[Genre.total()];
-
-        if (genres != null) {
-            for (Genre genre : genres) {
-                newEmbedding[genre.index] = 1.0f;
-        }
-
+    public static BookFeature of(List<Genre> genres) {
+        BookFeature bookFeature = new BookFeature();
+        bookFeature.update(genres);
+        return bookFeature;
     }
 
-        this.embedding =newEmbedding;
-        this.lastUpdated =Instant.now();
-}
+    public void update(List<Genre> genres) {
+
+        this.embedding = defineVector(genres);
+        this.lastUpdated = Instant.now();
+    }
+
+
+    public float[] defineVector(List<Genre> genres) {
+        float[] vector = new float[Genre.total()];
+
+        if (genres == null || genres.isEmpty()) {
+            return vector;
+        }
+
+        for (Genre genre : genres) {
+            if (genre.index < vector.length) {
+                vector[genre.index] = 1.0f;
+            }
+        }
+
+        return vector;
+    }
 
 }
