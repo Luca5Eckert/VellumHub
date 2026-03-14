@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.recommendation.domain.command;
+package com.mrs.recommendation_service.module.recommendation.application.command;
 
 import java.util.UUID;
 

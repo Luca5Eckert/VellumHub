@@ -27,7 +27,8 @@ public class UpdateBookConsumerEvent {
                 event.genres());
 
         try {
-            updateMediaFeatureUseCase.execute(event);
+            UpdateBookFeatureCommand mediaFeatureCommand = UpdateBookFeatureCommand.of(event.bookId(), event.genres());
+            updateMediaFeatureUseCase.execute(mediaFeatureCommand);
 
             log.info("Book update event processed successfully. BookId={}",
                     event.bookId());
