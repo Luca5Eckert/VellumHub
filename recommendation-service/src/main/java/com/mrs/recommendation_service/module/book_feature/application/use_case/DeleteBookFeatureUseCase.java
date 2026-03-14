@@ -14,8 +14,8 @@ public class DeleteBookFeatureUseCase {
         this.bookFeatureRepository = bookFeatureRepository;
     }
 
-    public void execute(UUID mediaId){
-        bookFeatureRepository.deleteById(mediaId);
+    public void execute(UUID bookId){
+        bookFeatureRepository.deleteById(bookId);
     }
 
 }

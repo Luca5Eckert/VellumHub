@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 public record UpdateBookFeatureCommand(
-        UUID mediaId,
+        UUID bookId,
         List<Genre> genres
 ) {
 }

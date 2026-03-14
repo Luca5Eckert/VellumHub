@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 public class CreateBookConsumerEvent {
 
     private final CreateBookFeatureUseCase createBookFeatureUseCase;
-    private final BookFeatureMapper mapper;
 
     public CreateBookConsumerEvent(CreateBookFeatureUseCase createBookFeatureUseCase, BookFeatureMapper mapper) {
         this.createBookFeatureUseCase = createBookFeatureUseCase;
@@ -31,18 +30,7 @@ public class CreateBookConsumerEvent {
                 createBookEvent.genres());
 
         try {
-            float[] genresVector = mapper.mapToFeatureVector(createBookEvent.genres());
-
-            log.debug("Feature vector created. BookId={}, VectorLength={}",
-                    createBookEvent.bookId(),
-                    genresVector.length);
-
-            BookFeature bookFeature = new BookFeature(
-                    createBookEvent.bookId(),
-                    genresVector
-            );
-
-            createBookFeatureUseCase.execute(bookFeature);
+            createBookFeatureUseCase.execute(createBookEvent);
 
             log.info("Book creation event processed successfully. BookId={}",
                     createBookEvent.bookId());
