@@ -1,5 +1,7 @@
 package com.mrs.recommendation_service.share.consumer;
 
+import com.mrs.recommendation_service.module.recommendation.application.command.DeleteRecommendationCommand;
+import com.mrs.recommendation_service.module.recommendation.application.use_case.DeleteRecommendationUseCase;
 import com.mrs.recommendation_service.share.event.DeleteBookEvent;
 import com.mrs.recommendation_service.module.book_feature.application.use_case.DeleteBookFeatureUseCase;
 import lombok.extern.slf4j.Slf4j;
@@ -11,9 +13,11 @@ import org.springframework.stereotype.Component;
 public class DeleteBookConsumerEvent {
 
     private final DeleteBookFeatureUseCase deleteBookFeatureUseCase;
+    private final DeleteRecommendationUseCase deleteRecommendationUseCase;
 
-    public DeleteBookConsumerEvent(DeleteBookFeatureUseCase deleteBookFeatureUseCase) {
+    public DeleteBookConsumerEvent(DeleteBookFeatureUseCase deleteBookFeatureUseCase, DeleteRecommendationUseCase deleteRecommendationUseCase) {
         this.deleteBookFeatureUseCase = deleteBookFeatureUseCase;
+        this.deleteRecommendationUseCase = deleteRecommendationUseCase;
     }
 
 
@@ -26,7 +30,11 @@ public class DeleteBookConsumerEvent {
                 deleteBookEvent.bookId());
 
         try {
+
             deleteBookFeatureUseCase.execute(deleteBookEvent.bookId());
+
+            var command = DeleteRecommendationCommand.of(deleteBookEvent.bookId());
+            deleteRecommendationUseCase.execute(command);
 
             log.info("Book deletion event processed successfully. BookId={}",
                     deleteBookEvent.bookId());
