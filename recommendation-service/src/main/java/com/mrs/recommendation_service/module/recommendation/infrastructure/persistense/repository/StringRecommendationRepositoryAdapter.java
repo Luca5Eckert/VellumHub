@@ -24,4 +24,9 @@ public class StringRecommendationRepositoryAdapter implements RecommendationRepo
         return recommendationRepositoryJpa.findById(id);
     }
 
+    @Override
+    public void deleteById(UUID id) {
+        recommendationRepositoryJpa.deleteById(id);
+    }
+
 }
