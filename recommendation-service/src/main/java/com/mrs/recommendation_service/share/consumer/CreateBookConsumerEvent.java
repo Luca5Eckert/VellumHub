@@ -1,5 +1,7 @@
 package com.mrs.recommendation_service.share.consumer;
 
+import com.mrs.recommendation_service.module.recommendation.application.command.CreateRecommendationCommand;
+import com.mrs.recommendation_service.module.recommendation.application.use_case.CreateRecommendationUseCase;
 import com.mrs.recommendation_service.share.event.CreateBookEvent;
 import com.mrs.recommendation_service.module.book_feature.application.use_case.CreateBookFeatureUseCase;
 import lombok.extern.slf4j.Slf4j;
@@ -11,10 +13,11 @@ import org.springframework.stereotype.Component;
 public class CreateBookConsumerEvent {
 
     private final CreateBookFeatureUseCase createBookFeatureUseCase;
+    private final CreateRecommendationUseCase createRecommendationUseCase;
 
-    public CreateBookConsumerEvent(CreateBookFeatureUseCase createBookFeatureUseCase) {
+    public CreateBookConsumerEvent(CreateBookFeatureUseCase createBookFeatureUseCase, CreateRecommendationUseCase createRecommendationUseCase) {
         this.createBookFeatureUseCase = createBookFeatureUseCase;
-
+        this.createRecommendationUseCase = createRecommendationUseCase;
     }
 
 
@@ -22,21 +25,32 @@ public class CreateBookConsumerEvent {
             topics = "created-book",
             groupId = "recommendation-service"
     )
-    public void listen(CreateBookEvent createBookEvent){
+    public void listen(CreateBookEvent event){
         log.info("Event received: Book creation. BookId={}, Genres={}",
-                createBookEvent.bookId(),
-                createBookEvent.genres());
+                event.bookId(),
+                event.genres());
 
         try {
-            createBookFeatureUseCase.execute(createBookEvent);
+            createBookFeatureUseCase.execute(event);
+
+            CreateRecommendationCommand command = CreateRecommendationCommand.of(
+                    event.bookId(),
+                    event.title(),
+                    event.description(),
+                    event.releaseYear(),
+                    event.coverUrl(),
+                    event.author(),
+                    event.genres()
+            );
+            createRecommendationUseCase.execute(command);
 
             log.info("Book creation event processed successfully. BookId={}",
-                    createBookEvent.bookId());
+                    event.bookId());
 
         } catch (Exception e) {
             log.error("Error processing book creation event. BookId={}, Genres={}",
-                    createBookEvent.bookId(),
-                    createBookEvent.genres(),
+                    event.bookId(),
+                    event.genres(),
                     e);
             throw e;
         }
