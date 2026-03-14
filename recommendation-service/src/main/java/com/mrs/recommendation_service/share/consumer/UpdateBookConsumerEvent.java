@@ -1,5 +1,7 @@
 package com.mrs.recommendation_service.share.consumer;
 
+import com.mrs.recommendation_service.module.recommendation.application.command.UpdateRecommendationCommand;
+import com.mrs.recommendation_service.module.recommendation.application.use_case.UpdateRecommendationUseCase;
 import com.mrs.recommendation_service.share.event.UpdateBookEvent;
 import com.mrs.recommendation_service.module.book_feature.application.command.UpdateBookFeatureCommand;
 import com.mrs.recommendation_service.module.book_feature.application.use_case.UpdateMediaFeatureUseCase;
@@ -12,9 +14,11 @@ import org.springframework.stereotype.Component;
 public class UpdateBookConsumerEvent {
 
     private final UpdateMediaFeatureUseCase updateMediaFeatureUseCase;
+    private final UpdateRecommendationUseCase updateRecommendationUseCase;
 
-    public UpdateBookConsumerEvent(UpdateMediaFeatureUseCase updateMediaFeatureUseCase) {
+    public UpdateBookConsumerEvent(UpdateMediaFeatureUseCase updateMediaFeatureUseCase, UpdateRecommendationUseCase updateRecommendationUseCase) {
         this.updateMediaFeatureUseCase = updateMediaFeatureUseCase;
+        this.updateRecommendationUseCase = updateRecommendationUseCase;
     }
 
     @KafkaListener(
@@ -28,7 +32,18 @@ public class UpdateBookConsumerEvent {
 
         try {
             UpdateBookFeatureCommand mediaFeatureCommand = UpdateBookFeatureCommand.of(event.bookId(), event.genres());
+            UpdateRecommendationCommand updateRecommendationCommand = UpdateRecommendationCommand.of(
+                    event.bookId(),
+                    event.title(),
+                    event.description(),
+                    event.releaseYear(),
+                    event.coverUrl(),
+                    event.author(),
+                    event.genres()
+            );
+
             updateMediaFeatureUseCase.execute(mediaFeatureCommand);
+            updateRecommendationUseCase.execute(updateRecommendationCommand);
 
             log.info("Book update event processed successfully. BookId={}",
                     event.bookId());
