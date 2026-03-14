@@ -54,4 +54,25 @@ public class Recommendation {
     )
     private List<Genre> genres;
 
+    public void update(String title, String description, String author, String coverUrl, int releaseYear, List<Genre> genres) {
+        if(title != null) {
+            this.title = title;
+        }
+        if(description != null) {
+            this.description = description;
+        }
+        if(author != null) {
+            this.author = author;
+        }
+        if(coverUrl != null) {
+            this.coverUrl = coverUrl;
+        }
+        if(releaseYear != 0) {
+            this.releaseYear = releaseYear;
+        }
+        if(genres != null) {
+            this.genres = genres;
+        }
+    }
+
 }

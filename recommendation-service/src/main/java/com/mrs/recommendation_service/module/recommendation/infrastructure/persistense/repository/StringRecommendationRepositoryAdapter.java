@@ -3,6 +3,7 @@ package com.mrs.recommendation_service.module.recommendation.infrastructure.pers
 import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
 import com.mrs.recommendation_service.module.recommendation.domain.port.RecommendationRepository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public class StringRecommendationRepositoryAdapter implements RecommendationRepository {
@@ -16,6 +17,11 @@ public class StringRecommendationRepositoryAdapter implements RecommendationRepo
     @Override
     public void save(Recommendation recommendation) {
         recommendationRepositoryJpa.save(recommendation);
+    }
+
+    @Override
+    public Optional<Recommendation> findById(UUID id) {
+        return recommendationRepositoryJpa.findById(id);
     }
 
 }
