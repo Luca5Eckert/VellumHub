@@ -1,9 +1,9 @@
 package com.mrs.recommendation_service.module.recommendation.application.handler;
 
 import com.mrs.recommendation_service.module.book_feature.domain.model.Genre;
-import com.mrs.recommendation_service.module.recommendation.application.dto.RecommendationResponse;
-import com.mrs.recommendation_service.module.recommendation.application.mapper.RecommendationMapper;
-import com.mrs.recommendation_service.module.recommendation.domain.command.GetRecommendationsCommand;
+import com.mrs.recommendation_service.module.recommendation.presentation.dto.RecommendationResponse;
+import com.mrs.recommendation_service.module.recommendation.presentation.mapper.RecommendationMapper;
+import com.mrs.recommendation_service.module.recommendation.application.command.GetRecommendationsCommand;
 import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
 import com.mrs.recommendation_service.module.recommendation.application.use_case.GetRecommendationsUseCase;
 import org.junit.jupiter.api.DisplayName;

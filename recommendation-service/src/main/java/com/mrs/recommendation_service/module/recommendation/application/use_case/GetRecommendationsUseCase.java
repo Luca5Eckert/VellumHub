@@ -2,7 +2,7 @@ package com.mrs.recommendation_service.module.recommendation.application.use_cas
 
 import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.mrs.recommendation_service.module.book_feature.domain.port.CatalogClient;
-import com.mrs.recommendation_service.module.recommendation.domain.command.GetRecommendationsCommand;
+import com.mrs.recommendation_service.module.recommendation.application.command.GetRecommendationsCommand;
 import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
 import org.springframework.stereotype.Component;
 
