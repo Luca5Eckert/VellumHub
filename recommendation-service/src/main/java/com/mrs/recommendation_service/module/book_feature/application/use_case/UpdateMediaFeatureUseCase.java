@@ -16,7 +16,7 @@ public class UpdateMediaFeatureUseCase {
     }
 
     public void execute(UpdateBookFeatureCommand command){
-        BookFeature bookFeature = bookFeatureRepository.findById(command.mediaId())
+        BookFeature bookFeature = bookFeatureRepository.findById(command.bookId())
                 .orElseThrow(BookFeatureNotFoundException::new);
 
         bookFeature.update(command.genres());
