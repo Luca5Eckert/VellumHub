@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_list.application.use_case;
+package com.mrs.catalog_service.module.book_list.application.use_case.list;
 
 import com.mrs.catalog_service.module.book_list.application.query.GetBookListByIdQuery;
 import com.mrs.catalog_service.module.book_list.domain.exception.BookListDomainException;

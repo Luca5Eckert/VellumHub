@@ -87,9 +87,8 @@ public class BookList {
     }
 
     public void addMember(UUID userId, MembershipRole membershipRole) {
-        if (this.memberships == null) {
-            this.memberships = new ArrayList<>();
-        }
+        if (this.memberships == null) this.memberships = new ArrayList<>();
+        if(isMember(userId)) return;
 
         BookListMembership membership = BookListMembership.create(this, userId, membershipRole);
         this.memberships.add(membership);
@@ -104,8 +103,7 @@ public class BookList {
     public boolean canUpdate(UUID userId) {
         if (userOwner.equals(userId)) return true;
 
-        return memberships.stream()
-                .anyMatch(m -> m.getUserId().equals(userId) && m.getRole() == MembershipRole.ADMIN);
+        return isAdmin(userId);
     }
 
     public boolean canRead(UUID userId) {
@@ -120,8 +118,21 @@ public class BookList {
                 .anyMatch(m -> m.getUserId().equals(userId));
     }
 
+    public boolean isAdmin(UUID userId) {
+        return memberships.stream()
+                .anyMatch(m -> m.getUserId().equals(userId) && m.getRole() == MembershipRole.ADMIN);
+    }
+
     public boolean canDelete(UUID userId) {
         return userOwner.equals(userId);
     }
+
+    public boolean canAddMember(UUID userId) {
+        if(userOwner.equals(userId)) return true;
+        if(type == TypeBookList.PRIVATE) return false;
+
+        return isAdmin(userId);
+    }
+
 }
 

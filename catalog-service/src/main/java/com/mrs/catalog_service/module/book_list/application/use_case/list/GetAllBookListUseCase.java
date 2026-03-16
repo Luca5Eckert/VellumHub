@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_list.application.use_case;
+package com.mrs.catalog_service.module.book_list.application.use_case.list;
 
 import com.mrs.catalog_service.module.book_list.application.query.GetAllBookListQuery;
 import com.mrs.catalog_service.module.book_list.domain.filter.BookListFilter;
@@ -7,8 +7,6 @@ import com.mrs.catalog_service.module.book_list.domain.model.BookList;
 import com.mrs.catalog_service.module.book_list.domain.port.BookListRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class GetAllBookListUseCase {

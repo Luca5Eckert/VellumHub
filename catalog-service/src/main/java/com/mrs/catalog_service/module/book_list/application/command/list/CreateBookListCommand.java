@@ -1,10 +1,8 @@
-package com.mrs.catalog_service.module.book_list.application.command;
+package com.mrs.catalog_service.module.book_list.application.command.list;
 
-import com.mrs.catalog_service.module.book_list.domain.exception.BookListDomainException;
 import com.mrs.catalog_service.module.book_list.domain.model.TypeBookList;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 public record CreateBookListCommand(

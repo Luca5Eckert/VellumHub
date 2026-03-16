@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book_list.application.use_case;
+package com.mrs.catalog_service.module.book_list.application.use_case.list;
 
-import com.mrs.catalog_service.module.book_list.application.command.UpdateBookListCommand;
+import com.mrs.catalog_service.module.book_list.application.command.list.UpdateBookListCommand;
 import com.mrs.catalog_service.module.book_list.domain.exception.BookListDomainException;
 import com.mrs.catalog_service.module.book_list.domain.model.BookList;
 import com.mrs.catalog_service.module.book_list.domain.port.BookListRepository;
