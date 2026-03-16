@@ -1,12 +1,12 @@
 package com.mrs.catalog_service.module.book_list.presentation.controller;
 
 import com.mrs.catalog_service.module.book.domain.model.Genre;
-import com.mrs.catalog_service.module.book_list.application.command.CreateBookListCommand;
-import com.mrs.catalog_service.module.book_list.application.command.DeleteBookListCommand;
-import com.mrs.catalog_service.module.book_list.application.command.UpdateBookListCommand;
+import com.mrs.catalog_service.module.book_list.application.command.list.CreateBookListCommand;
+import com.mrs.catalog_service.module.book_list.application.command.list.DeleteBookListCommand;
+import com.mrs.catalog_service.module.book_list.application.command.list.UpdateBookListCommand;
 import com.mrs.catalog_service.module.book_list.application.query.GetAllBookListQuery;
 import com.mrs.catalog_service.module.book_list.application.query.GetBookListByIdQuery;
-import com.mrs.catalog_service.module.book_list.application.use_case.*;
+import com.mrs.catalog_service.module.book_list.application.use_case.list.*;
 import com.mrs.catalog_service.module.book_list.domain.model.TypeBookList;
 import com.mrs.catalog_service.module.book_list.presentation.dto.response.BookListGetAllResponse;
 import com.mrs.catalog_service.module.book_list.presentation.dto.response.BookListResponse;
