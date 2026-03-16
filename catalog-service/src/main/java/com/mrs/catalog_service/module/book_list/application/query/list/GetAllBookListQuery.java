@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_list.application.query;
+package com.mrs.catalog_service.module.book_list.application.query.list;
 
 import com.mrs.catalog_service.module.book.domain.model.Genre;
 import com.mrs.catalog_service.module.book_list.domain.model.TypeBookList;
