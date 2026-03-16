@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "book_features")
+@Builder
 @Getter
 @Setter
 @NoArgsConstructor
@@ -40,10 +42,11 @@ public class BookFeature {
         this.embedding = genresVector;
     }
 
-    public static BookFeature of(List<Genre> genres) {
-        BookFeature bookFeature = new BookFeature();
-        bookFeature.update(genres);
-        return bookFeature;
+    public static BookFeature of(UUID bookId, List<Genre> genres) {
+        return new BookFeature(
+                bookId,
+                defineVector(genres)
+        );
     }
 
     public void update(List<Genre> genres) {
@@ -52,7 +55,7 @@ public class BookFeature {
     }
 
 
-    public float[] defineVector(List<Genre> genres) {
+    public static float[] defineVector(List<Genre> genres) {
         float[] vector = new float[Genre.total()];
 
         if (genres == null || genres.isEmpty()) {

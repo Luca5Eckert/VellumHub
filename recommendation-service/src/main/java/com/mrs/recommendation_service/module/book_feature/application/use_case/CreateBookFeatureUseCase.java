@@ -15,7 +15,7 @@ public class CreateBookFeatureUseCase {
     }
 
     public void execute(CreateBookEvent event){
-        BookFeature bookFeature = BookFeature.of(event.genres());
+        BookFeature bookFeature = BookFeature.of(event.bookId(), event.genres());
 
         bookFeatureRepository.save(bookFeature);
     }
