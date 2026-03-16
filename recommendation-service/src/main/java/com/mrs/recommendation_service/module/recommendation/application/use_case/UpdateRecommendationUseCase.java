@@ -1,6 +1,5 @@
 package com.mrs.recommendation_service.module.recommendation.application.use_case;
 
-import com.mrs.recommendation_service.module.recommendation.application.command.CreateRecommendationCommand;
 import com.mrs.recommendation_service.module.recommendation.application.command.UpdateRecommendationCommand;
 import com.mrs.recommendation_service.module.recommendation.domain.exception.RecommendationDomainException;
 import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
