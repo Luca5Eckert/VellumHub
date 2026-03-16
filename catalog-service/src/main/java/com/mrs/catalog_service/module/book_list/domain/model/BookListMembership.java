@@ -1,5 +1,6 @@
 package com.mrs.catalog_service.module.book_list.domain.model;
 
+import com.mrs.catalog_service.module.book_list.domain.exception.MembershipBookListDomainException;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -54,6 +55,12 @@ public class BookListMembership {
                 .userId(userId)
                 .role(role)
                 .build();
+    }
+
+    public void updateRole(MembershipRole newRole) {
+        if(this.role == MembershipRole.OWNER) throw new MembershipBookListDomainException("Cannot change the role of the owner");
+
+        this.role = newRole;
     }
 
 }
