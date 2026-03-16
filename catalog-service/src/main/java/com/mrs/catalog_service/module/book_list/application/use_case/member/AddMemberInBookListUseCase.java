@@ -19,14 +19,13 @@ public class AddMemberInBookListUseCase {
      * The user must have permission to add members to the book list.
      *
      * @param command the command containing the information needed to add a member to a book list
-     * @throws BookListDomainException if the book list is not found or if the user don't have permission to add members to the book list
-     */
+     * @throws BookListDomainException if the book list is not found or if the user doesn't have permission to add members to the book list     */
     public void execute(AddMemberInBookListCommand command){
         var bookList = bookListRepository.findById(command.bookListId())
                 .orElseThrow( () -> new BookListDomainException("Book list not found") );
 
         if(!bookList.canAddMember(command.userAuthenticatedId())) {
-            throw new BookListDomainException("User don't have permission to add member to this book list");
+            throw new BookListDomainException("User doesn't have permission to add a member to this book list");
         }
 
         bookList.addMember(command.userIdToAdd(), command.role());

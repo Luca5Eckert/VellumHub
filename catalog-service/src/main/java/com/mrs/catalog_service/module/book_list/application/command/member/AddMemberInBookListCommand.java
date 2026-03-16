@@ -11,11 +11,11 @@ public record AddMemberInBookListCommand(
         MembershipRole role
 ) {
 
-    public static AddMemberInBookListCommand of(UUID bookListId, UUID userAuthenticatedId, MembershipRole role, UUID requesterId) {
+    public static AddMemberInBookListCommand of(UUID bookListId, UUID userAuthenticatedId, MembershipRole role, UUID userIdToAdd) {
         return new AddMemberInBookListCommand(
                 bookListId,
                 userAuthenticatedId,
-                requesterId,
+                userIdToAdd,
                 role
         );
     }
