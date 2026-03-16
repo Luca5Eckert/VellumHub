@@ -14,6 +14,12 @@ public class UpdateRoleOfMembershipUseCase {
         this.membershipBookListRepository = membershipBookListRepository;
     }
 
+    /**
+     * Update the role of a member in a book list.
+     * The user must have permission to update the role of a member in the book list.
+     * @param command the command containing the information needed to update the role of a member in a book list
+     * @throws MembershipBookListDomainException if the membership is not found or if the user don't have permission to update the role of a member in the book list
+     */
     public void execute(UpdateRoleOfMembershipCommand command) {
         var membership = membershipBookListRepository.findById(command.membershipId())
                 .orElseThrow(() -> new MembershipBookListDomainException("Membership not found"));
