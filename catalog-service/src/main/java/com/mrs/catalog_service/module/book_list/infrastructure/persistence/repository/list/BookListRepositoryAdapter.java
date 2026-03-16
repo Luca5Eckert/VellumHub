@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_list.infrastructure.persistence.repository;
+package com.mrs.catalog_service.module.book_list.infrastructure.persistence.repository.list;
 
 import com.mrs.catalog_service.module.book_list.domain.filter.BookListFilter;
 import com.mrs.catalog_service.module.book_list.domain.filter.BookListPage;
