@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.recommendation.infrastructure.persistense.repository;
+package com.mrs.recommendation_service.module.recommendation.infrastructure.persistence.repository;
 
 import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
 import org.springframework.data.jpa.repository.JpaRepository;

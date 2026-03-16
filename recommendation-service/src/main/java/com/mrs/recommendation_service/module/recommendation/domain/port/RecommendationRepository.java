@@ -2,6 +2,7 @@ package com.mrs.recommendation_service.module.recommendation.domain.port;
 
 import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,4 +12,6 @@ public interface RecommendationRepository {
     Optional<Recommendation> findById(UUID id);
 
     void deleteById(UUID id);
+
+    List<Recommendation> findAllById(List<UUID> mediasIds);
 }
