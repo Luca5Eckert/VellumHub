@@ -53,12 +53,14 @@ VellumHub combines the social aspects of book tracking with AI-powered recommend
 |---------|--------|-------------|
 | **📚 Book Catalog Management** | ✅ Implemented | CRUD operations for books with metadata (author, ISBN, page count, genres) |
 | **✋ Book Submission & Approval** | ✅ Implemented | Users submit books → Admins approve/reject → Catalog updated |
-| **⭐ Rating System** | ✅ Implemented | Star ratings that influence personalized recommendations |
+| **📋 Book Lists & Collections** | ✅ Implemented | Create, share and collaborate on curated book collections with like/membership features |
+| **⭐ Rating System** | ✅ Implemented | Star ratings (0-5 stars) with text reviews that influence personalized recommendations |
 | **📖 Reading Progress Tracking** | ✅ Implemented | Track reading status (TO_READ, READING, COMPLETED) with page progress |
 | **🎯 Personalized Recommendations** | ✅ Implemented | Vector similarity-based book suggestions using pgvector |
-| **🔒 JWT Authentication** | ✅ Implemented | Secure authentication with role-based access (USER/ADMIN) |
+| **🔒 JWT Authentication** | ✅ Implemented | Secure authentication with role-based access (USER/ADMIN), including Google OAuth |
 | **📊 Event-Driven Updates** | ✅ Implemented | Kafka events for real-time profile and catalog updates |
 | **🖥️ Monitoring Dashboard** | ✅ Implemented | Kafka UI for monitoring topics, consumers, and message flow |
+| **🖼️ Book Cover Management** | ✅ Implemented | Upload and retrieve book cover images with bulk operations support |
 
 ### Planned Features
 
@@ -576,12 +578,26 @@ POST   /books              # Create book (ADMIN only)
 PUT    /books/{id}         # Update book (ADMIN only)
 DELETE /books/{id}         # Delete book (ADMIN only)
 POST   /books/bulk         # Get multiple books by IDs (internal use)
+POST   /books/{id}/cover   # Upload book cover (ADMIN only)
+GET    /books/{id}/cover   # Get book cover image
+POST   /books/covers/bulk  # Get multiple book covers in bulk (Base64 encoded)
+```
+
+#### Book Lists
+
+```http
+POST   /book/list                 # Create new book list
+GET    /book/list                 # Get all lists (filters: title, description, genres, owner, type; paginated)
+GET    /book/list/{bookListId}    # Get specific list by ID
+PUT    /book/list/{bookListId}    # Update list (owner/admin only)
+DELETE /book/list/{bookListId}    # Delete list (owner only)
 ```
 
 #### Book Requests
 
 ```http
 POST   /book-requests                    # Submit book for approval
+GET    /book-requests                    # List all requests (ADMIN only, paginated)
 POST   /book-requests/{id}/approve       # Approve book request (ADMIN only)
 ```
 
@@ -597,10 +613,12 @@ GET    /book-progress/reading-list       # Get authenticated user's reading list
 ### Engagement Service (Port 8083)
 
 ```http
-POST   /rating              # Submit a rating (0–5 stars)
-GET    /rating/{userId}     # Get ratings by user ID (filters: minStars, maxStars, from, to; paginated)
-GET    /rating/me           # Get authenticated user's own ratings (same filters)
-PUT    /rating/{ratingId}   # Update an existing rating
+POST   /rating               # Submit a rating (0–5 stars with optional text review)
+GET    /rating/{userId}      # Get ratings by user ID (filters: minStars, maxStars, from, to; paginated)
+GET    /rating/me            # Get authenticated user's own ratings (same filters)
+GET    /rating/{bookId}      # Get all ratings for a specific book (paginated)
+PUT    /rating/{ratingId}    # Update an existing rating
+DELETE /rating/{ratingId}    # Delete a rating
 ```
 
 ### Recommendation Service (Port 8085)
@@ -686,7 +704,8 @@ VellumHub/
 │   ├── pom.xml
 │   └── src/main/java/com/mrs/catalog_service/
 │       └── module/
-│           ├── book/              # Book management
+│           ├── book/              # Book management & cover operations
+│           ├── book_list/         # User-created book collections
 │           ├── book_request/      # Approval workflow
 │           └── book_progress/     # Reading status
 │
