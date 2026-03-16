@@ -82,7 +82,7 @@ public class BookList {
                 .memberships(new ArrayList<>())
                 .build();
 
-        bookList.addMember(userOwner, MembershipRole.ADMIN);
+        bookList.addMember(userOwner, MembershipRole.OWNER);
 
         return bookList;
     }
