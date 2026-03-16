@@ -16,6 +16,7 @@ public class RecommendationMapper {
                 recommendation.getDescription(),
                 recommendation.getReleaseYear(),
                 recommendation.getCoverUrl(),
+                recommendation.getAuthor(),
                 recommendation.getGenres()
         );
     }
