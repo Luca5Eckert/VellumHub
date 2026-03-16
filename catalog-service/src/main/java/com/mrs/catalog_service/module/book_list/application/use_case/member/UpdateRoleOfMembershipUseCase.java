@@ -25,7 +25,7 @@ public class UpdateRoleOfMembershipUseCase {
                 .orElseThrow(() -> new MembershipBookListDomainException("Membership not found"));
         var bookList = membership.getBookList();
 
-        if(bookList.canUpdateRole(command.userAuthenticatedId())){
+        if(!bookList.canUpdateRole(command.userAuthenticatedId())){
             throw new MembershipBookListDomainException("User don't have permission to update role of membership in this book list");
         }
 
