@@ -33,8 +33,8 @@ public class SpringRecommendationRepositoryAdapter implements RecommendationRepo
     }
 
     @Override
-    public List<Recommendation> findAllById(List<UUID> mediasIds) {
-        return recommendationRepositoryJpa.findAllById(mediasIds);
+    public List<Recommendation> findAllById(List<UUID> booksId) {
+        return recommendationRepositoryJpa.findAllById(booksId);
     }
 
 }

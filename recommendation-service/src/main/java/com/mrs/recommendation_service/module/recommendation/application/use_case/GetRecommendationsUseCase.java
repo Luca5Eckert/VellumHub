@@ -21,17 +21,17 @@ public class GetRecommendationsUseCase {
     }
 
     public List<Recommendation> execute(GetRecommendationsCommand command) {
-        List<UUID> mediasIds = bookFeatureRepository.findAllByUserId(
+        List<UUID> booksId = bookFeatureRepository.findAllByUserId(
                 command.userId(),
                 command.limit(),
                 command.offset()
         );
 
-        if(mediasIds == null || mediasIds.isEmpty()){
-            mediasIds = bookFeatureRepository.findMostPopularMedias(command.limit(), command.offset());
+        if(booksId == null || booksId.isEmpty()){
+            booksId = bookFeatureRepository.findMostPopularMedias(command.limit(), command.offset());
         }
 
-        return recommendationRepository.findAllById(mediasIds);
+        return recommendationRepository.findAllById(booksId);
     }
 
 }

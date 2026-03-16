@@ -13,5 +13,5 @@ public interface RecommendationRepository {
 
     void deleteById(UUID id);
 
-    List<Recommendation> findAllById(List<UUID> mediasIds);
+    List<Recommendation> findAllById(List<UUID> booksId);
 }
