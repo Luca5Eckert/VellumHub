@@ -1,10 +1,7 @@
 package com.mrs.recommendation_service.module.recommendation.domain.model;
 
 import com.mrs.recommendation_service.module.book_feature.domain.model.Genre;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
@@ -49,9 +46,8 @@ public class Recommendation {
     )
     private String author;
 
-    @Column(
-            nullable = false
-    )
+    @ElementCollection(targetClass = Genre.class)
+    @Enumerated(EnumType.STRING)
     private List<Genre> genres;
 
     public void update(String title, String description, String author, String coverUrl, int releaseYear, List<Genre> genres) {
