@@ -15,6 +15,12 @@ public class GetMembershipBookListUseCase {
         this.membershipBookListRepository = membershipBookListRepository;
     }
 
+    /**
+     * Get a membership by id
+     * Check if the membership exists, if not throw an exception
+     * @param query the query with the membership id
+     * @return the membership
+     */
     public BookListMembership execute(GetMembershipQuery query){
         return membershipBookListRepository.findById(query.membershipId())
                 .orElseThrow(() -> new MembershipBookListDomainException("Membership not found"));
