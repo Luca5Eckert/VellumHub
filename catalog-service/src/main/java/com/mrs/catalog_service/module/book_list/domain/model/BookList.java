@@ -148,5 +148,11 @@ public class BookList {
         memberships.removeIf(m -> m.getUserId().equals(userId));
     }
 
+    public boolean canUpdateRole(UUID user) {
+        if(userOwner.equals(user)) return true;
+        if(type == TypeBookList.PRIVATE) return false;
+
+        return isAdmin(user);
+    }
 }
 
