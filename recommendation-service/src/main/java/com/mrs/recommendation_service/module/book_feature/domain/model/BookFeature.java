@@ -18,7 +18,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "book_features")
-@Builder
 @Getter
 @Setter
 @NoArgsConstructor
