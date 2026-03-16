@@ -1,6 +1,6 @@
 package com.mrs.catalog_service.module.book_list.application.use_case.list;
 
-import com.mrs.catalog_service.module.book_list.application.query.GetAllBookListQuery;
+import com.mrs.catalog_service.module.book_list.application.query.list.GetAllBookListQuery;
 import com.mrs.catalog_service.module.book_list.domain.filter.BookListFilter;
 import com.mrs.catalog_service.module.book_list.domain.filter.BookListPage;
 import com.mrs.catalog_service.module.book_list.domain.model.BookList;
