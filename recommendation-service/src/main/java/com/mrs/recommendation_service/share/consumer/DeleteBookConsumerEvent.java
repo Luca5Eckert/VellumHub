@@ -7,6 +7,7 @@ import com.mrs.recommendation_service.module.book_feature.application.use_case.D
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Slf4j

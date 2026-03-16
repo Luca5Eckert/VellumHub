@@ -3,6 +3,7 @@ package com.mrs.recommendation_service.module.recommendation.application.use_cas
 import com.mrs.recommendation_service.module.recommendation.application.command.DeleteRecommendationCommand;
 import com.mrs.recommendation_service.module.recommendation.domain.port.RecommendationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DeleteRecommendationUseCase {
@@ -13,6 +14,7 @@ public class DeleteRecommendationUseCase {
         this.recommendationRepository = recommendationRepository;
     }
 
+    @Transactional
     public void execute(DeleteRecommendationCommand command) {
         recommendationRepository.deleteById(command.bookId());
     }
