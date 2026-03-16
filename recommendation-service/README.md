@@ -82,6 +82,7 @@ This service maintains user preference profiles and book feature embeddings, usi
 
 - **Vector Similarity Search:** Cosine distance in 15D space
 - **Event-Driven:** Kafka consumers for async updates
+- **Event-Carried State Transfer (ECST):** Events carry book/rating state to keep `book_features` and `user_profiles` current
 - **Microservice Integration:** Feign clients for service communication
 - **CQRS:** Separation of profile updates and recommendation reads
 
@@ -176,6 +177,7 @@ Stores learned preference vectors for each user.
 ## 🔄 Event Consumption
 
 The service consumes events from Kafka to maintain data consistency:
+These events implement **Event-Carried State Transfer**, ensuring recommendation state stays local and up to date via incremental updates.
 
 ### Consumed Events
 

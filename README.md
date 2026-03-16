@@ -253,6 +253,16 @@ The current architecture eliminates the ML Service entirely, integrating vector 
 - ✅ **Domain specialization** - Book-focused features (ISBN, authors, page tracking)
 - ✅ **Enhanced user engagement** - Star ratings and reading progress tracking
 
+### Version 2.1: Event-Carried State Transfer for Recommendation
+
+The latest evolution adopts **Event-Carried State Transfer (ECST)** in the Recommendation Service. Kafka events now carry the state needed to keep `book_features` and `user_profiles` updated incrementally, turning the recommendation store into a fast, local read model.
+
+**What improved:**
+- ✅ **Faster recommendation reads** - scoring relies on local state instead of rebuilding profiles on demand
+- ✅ **Lower coupling** - core recommendation state stays synchronized without synchronous cross-service rebuilds
+- ✅ **Resilient recovery** - consumer replay can restore derived state after failures
+- ✅ **Scalable consumers** - horizontal scaling with deterministic, event-driven updates
+
 ---
 
 ## Database Architecture
