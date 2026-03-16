@@ -46,7 +46,7 @@ public class ApproveBookRequestUseCase {
         CreateBookEvent createBookEvent = new CreateBookEvent(
                 book.getId(),
                 book.getTitle(),
-                bookRequest.getDescription(),
+                book.getDescription(),
                 book.getReleaseYear(),
                 book.getCoverUrl(),
                 book.getAuthor(),

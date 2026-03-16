@@ -7,6 +7,7 @@ import com.mrs.recommendation_service.module.book_feature.application.use_case.C
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Slf4j
@@ -25,6 +26,7 @@ public class CreateBookConsumerEvent {
             topics = "created-book",
             groupId = "recommendation-service"
     )
+    @Transactional
     public void listen(CreateBookEvent event){
         log.info("Event received: Book creation. BookId={}, Genres={}",
                 event.bookId(),
