@@ -1,6 +1,6 @@
 package com.mrs.catalog_service.module.book_list.application.use_case.member;
 
-import com.mrs.catalog_service.module.book_list.application.command.member.AddMemberCommand;
+import com.mrs.catalog_service.module.book_list.application.command.member.AddMemberInBookListCommand;
 import com.mrs.catalog_service.module.book_list.domain.exception.BookListDomainException;
 import com.mrs.catalog_service.module.book_list.domain.model.BookList;
 import com.mrs.catalog_service.module.book_list.domain.model.MembershipRole;
@@ -40,7 +40,7 @@ class AddMemberInBookListUseCaseTest {
         var bookListId = UUID.randomUUID();
         var newUser = UUID.randomUUID();
         var bookList = BookList.create("Sci-Fi Favorites", "Best sci-fi books", TypeBookList.PUBLIC, ownerId, List.of());
-        var command = new AddMemberCommand(bookListId, ownerId, newUser, MembershipRole.VIEWER);
+        var command = new AddMemberInBookListCommand(bookListId, ownerId, newUser, MembershipRole.VIEWER);
 
         when(bookListRepository.findById(bookListId)).thenReturn(Optional.of(bookList));
 
@@ -57,7 +57,7 @@ class AddMemberInBookListUseCaseTest {
     @DisplayName("Should throw exception when book list does not exist")
     void shouldThrowExceptionWhenBookListNotFound() {
         // Arrange
-        var command = new AddMemberCommand(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), MembershipRole.VIEWER);
+        var command = new AddMemberInBookListCommand(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), MembershipRole.VIEWER);
         when(bookListRepository.findById(any())).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -73,7 +73,7 @@ class AddMemberInBookListUseCaseTest {
         var ownerId = UUID.randomUUID();
         var strangerId = UUID.randomUUID();
         var bookList = BookList.create("Private List", "Secret books", TypeBookList.PRIVATE, ownerId, List.of());
-        var command = new AddMemberCommand(bookList.getId(), strangerId, UUID.randomUUID(), MembershipRole.VIEWER);
+        var command = new AddMemberInBookListCommand(bookList.getId(), strangerId, UUID.randomUUID(), MembershipRole.VIEWER);
 
         when(bookListRepository.findById(any())).thenReturn(Optional.of(bookList));
 

@@ -6,4 +6,10 @@ public record GetAllMembershipOfBookListQuery(
         UUID bookListId,
         UUID userAuthenticatedId
 ) {
+    public static GetAllMembershipOfBookListQuery of(UUID bookListId, UUID userId) {
+        return new GetAllMembershipOfBookListQuery(
+                bookListId,
+                userId
+        );
+    }
 }

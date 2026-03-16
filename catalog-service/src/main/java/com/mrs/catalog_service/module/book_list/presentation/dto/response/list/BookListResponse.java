@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_list.presentation.dto.response;
+package com.mrs.catalog_service.module.book_list.presentation.dto.response.list;
 
 import java.util.List;
 import java.util.UUID;

@@ -5,4 +5,9 @@ import java.util.UUID;
 public record GetMembershipQuery(
         UUID membershipId
 ) {
+    public static GetMembershipQuery of(UUID membershipId) {
+        return new GetMembershipQuery(
+                membershipId
+        );
+    }
 }
