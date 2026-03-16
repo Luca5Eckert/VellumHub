@@ -60,9 +60,9 @@ public class BookListMembershipController {
 
         var command = AddMemberInBookListCommand.of(
                 bookListId,
-                request.userId(),
+                requesterId,
                 request.role(),
-                requesterId
+                request.userId()
         );
 
         addMemberUseCase.execute(command);
