@@ -1,6 +1,6 @@
 package com.mrs.catalog_service.module.book_list.application.use_case.member;
 
-import com.mrs.catalog_service.module.book_list.application.command.member.UpdateRoleOfMembershipCommand;
+import com.mrs.catalog_service.module.book_list.application.command.member.UpdateMemberRoleCommand;
 import com.mrs.catalog_service.module.book_list.domain.exception.MembershipBookListDomainException;
 import com.mrs.catalog_service.module.book_list.domain.model.BookList;
 import com.mrs.catalog_service.module.book_list.domain.model.BookListMembership;
@@ -25,13 +25,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class UpdateRoleOfMembershipUseCaseTest {
+class UpdateMemberRoleUseCaseTest {
 
     @Mock
     private MembershipBookListRepository membershipRepository;
 
     @InjectMocks
-    private UpdateRoleOfMembershipUseCase useCase;
+    private UpdateMemberRoleUseCase useCase;
 
     @Test
     @DisplayName("Should successfully update role when user is owner/admin")
@@ -42,7 +42,7 @@ class UpdateRoleOfMembershipUseCaseTest {
         var memberId = UUID.randomUUID();
         var membership = BookListMembership.create(bookList, memberId, MembershipRole.VIEWER);
 
-        var command = new UpdateRoleOfMembershipCommand(MembershipRole.ADMIN, ownerId, UUID.randomUUID());
+        var command = new UpdateMemberRoleCommand(MembershipRole.ADMIN, ownerId, UUID.randomUUID());
         when(membershipRepository.findById(any())).thenReturn(Optional.of(membership));
 
         // Act
@@ -57,7 +57,7 @@ class UpdateRoleOfMembershipUseCaseTest {
     @DisplayName("Should throw exception when membership is not found")
     void shouldThrowExceptionWhenMembershipNotFound() {
         // Arrange
-        var command = new UpdateRoleOfMembershipCommand(MembershipRole.ADMIN, UUID.randomUUID(), UUID.randomUUID());
+        var command = new UpdateMemberRoleCommand(MembershipRole.ADMIN, UUID.randomUUID(), UUID.randomUUID());
         when(membershipRepository.findById(any())).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -74,7 +74,7 @@ class UpdateRoleOfMembershipUseCaseTest {
         var bookList = BookList.create("Dev Books", "Tech", TypeBookList.PUBLIC, ownerId, List.of());
         var ownerMembership = bookList.getMemberships().getFirst();
 
-        var command = new UpdateRoleOfMembershipCommand(MembershipRole.ADMIN, ownerId, UUID.randomUUID());
+        var command = new UpdateMemberRoleCommand(MembershipRole.ADMIN, ownerId, UUID.randomUUID());
         when(membershipRepository.findById(any())).thenReturn(Optional.of(ownerMembership));
 
         // Act & Assert

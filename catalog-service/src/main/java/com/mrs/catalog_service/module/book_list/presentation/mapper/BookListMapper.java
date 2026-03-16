@@ -2,9 +2,9 @@ package com.mrs.catalog_service.module.book_list.presentation.mapper;
 
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book_list.domain.model.BookList;
-import com.mrs.catalog_service.module.book_list.presentation.dto.response.BookListGetAllResponse;
-import com.mrs.catalog_service.module.book_list.presentation.dto.response.BookListResponse;
-import com.mrs.catalog_service.module.book_list.presentation.dto.response.BookResponse;
+import com.mrs.catalog_service.module.book_list.presentation.dto.response.list.BookListGetAllResponse;
+import com.mrs.catalog_service.module.book_list.presentation.dto.response.list.BookListResponse;
+import com.mrs.catalog_service.module.book_list.presentation.dto.response.list.BookResponse;
 import org.springframework.stereotype.Component;
 
 @Component

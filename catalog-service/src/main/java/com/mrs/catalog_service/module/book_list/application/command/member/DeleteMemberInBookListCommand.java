@@ -7,4 +7,11 @@ public record DeleteMemberInBookListCommand(
             UUID userIdToDelete,
             UUID bookListId
 ) {
+    public static DeleteMemberInBookListCommand of(UUID bookListId, UUID memberId, UUID requesterId) {
+        return new DeleteMemberInBookListCommand(
+                requesterId,
+                memberId,
+                bookListId
+        );
+    }
 }

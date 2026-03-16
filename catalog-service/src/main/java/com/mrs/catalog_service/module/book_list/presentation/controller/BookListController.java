@@ -8,10 +8,10 @@ import com.mrs.catalog_service.module.book_list.application.query.list.GetAllBoo
 import com.mrs.catalog_service.module.book_list.application.query.list.GetBookListByIdQuery;
 import com.mrs.catalog_service.module.book_list.application.use_case.list.*;
 import com.mrs.catalog_service.module.book_list.domain.model.TypeBookList;
-import com.mrs.catalog_service.module.book_list.presentation.dto.response.BookListGetAllResponse;
-import com.mrs.catalog_service.module.book_list.presentation.dto.response.BookListResponse;
-import com.mrs.catalog_service.module.book_list.presentation.dto.request.CreatedBookListRequest;
-import com.mrs.catalog_service.module.book_list.presentation.dto.request.UpdateBookListRequest;
+import com.mrs.catalog_service.module.book_list.presentation.dto.response.list.BookListGetAllResponse;
+import com.mrs.catalog_service.module.book_list.presentation.dto.response.list.BookListResponse;
+import com.mrs.catalog_service.module.book_list.presentation.dto.request.list.CreatedBookListRequest;
+import com.mrs.catalog_service.module.book_list.presentation.dto.request.list.UpdateBookListRequest;
 import com.mrs.catalog_service.module.book_list.presentation.mapper.BookListMapper;
 import com.mrs.catalog_service.share.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
