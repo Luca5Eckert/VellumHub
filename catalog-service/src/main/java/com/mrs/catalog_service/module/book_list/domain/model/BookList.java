@@ -1,6 +1,7 @@
 package com.mrs.catalog_service.module.book_list.domain.model;
 
 import com.mrs.catalog_service.module.book.domain.model.Book;
+import com.mrs.catalog_service.module.book_list.domain.exception.BookListDomainException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -132,6 +133,19 @@ public class BookList {
         if(type == TypeBookList.PRIVATE) return false;
 
         return isAdmin(userId);
+    }
+
+    public boolean canDeleteMember(UUID userId) {
+        if(userOwner.equals(userId)) return true;
+        if(type == TypeBookList.PRIVATE) return false;
+
+        return isAdmin(userId);
+    }
+
+    public void deleteMember(UUID userId) {
+        if(userId.equals(userOwner)) throw new BookListDomainException("Owner can't be removed from the book list");
+
+        memberships.removeIf(m -> m.getUserId().equals(userId));
     }
 
 }
