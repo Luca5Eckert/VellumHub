@@ -20,6 +20,7 @@ VellumHub combines the social aspects of book tracking with AI-powered recommend
 - [Architecture](#architecture)
   - [System Architecture](#system-architecture)
   - [Architecture Evolution](#architecture-evolution)
+  - [System Versions](#system-versions)
   - [Database Architecture](#database-architecture)
   - [Event-Driven Communication](#event-driven-communication)
 - [Technology Stack](#technology-stack)
@@ -166,30 +167,11 @@ sequenceDiagram
 
 ## Architecture Evolution
 
-VellumHub has evolved from a tightly-coupled system with performance bottlenecks to a modern, scalable microservices platform. This transformation demonstrates our commitment to engineering excellence and continuous improvement.
+This section describes the **technical architecture changes** only. Product versioning is documented separately in [System Versions](#system-versions).
 
-### From ML Service to pgvector + AI Vectorization
+### Legacy Technical Baseline (External ML Service)
 
-```mermaid
-graph LR
-    V1[v1.0<br/>With ML Service<br/>Performance Issues]
-    V2[v2.0<br/>pgvector Foundation<br/>Book-first Platform]
-    V21[v2.1<br/>ECST Adoption<br/>Incremental State]
-    V22[v2.2<br/>AI Vectorization +<br/>Book Lists Expansion]
-    
-    V1 -->|Eliminated ML Service<br/>60-75% Latency Reduction<br/>Domain Focus| V2
-    V2 -->|Recommendation state events<br/>local read model| V21
-    V21 -->|Richer vectors + product features<br/>recent platform updates| V22
-    
-    style V1 fill:#ff6b6b,stroke:#c92a2a,stroke-width:2px,color:#fff
-    style V2 fill:#74c0fc,stroke:#1c7ed6,stroke-width:2px,color:#fff
-    style V21 fill:#69db7c,stroke:#2b8a3e,stroke-width:2px,color:#fff
-    style V22 fill:#51cf66,stroke:#2f9e44,stroke-width:2px,color:#fff
-```
-
-### Version 1.0: Architecture with ML Service
-
-The original architecture relied on an external Python Flask ML Service for recommendations, which created critical performance and operational challenges.
+The original implementation relied on an external Python Flask ML service for recommendation inference, creating avoidable latency and operational coupling.
 
 **Architecture:**
 ```
@@ -210,9 +192,9 @@ The original architecture relied on an external Python Flask ML Service for reco
 | **Redundant Computation** | Full recalculation on every request |
 | **Poor API Design** | Client had to orchestrate multiple service calls |
 
-### Version 2.0: Foundation Architecture (pgvector + Book Platform)
+### Current Technical Baseline (pgvector + Java Services)
 
-The current architecture eliminates the ML Service entirely, integrating vector similarity search directly into PostgreSQL with pgvector while focusing on book recommendations.
+The current technical baseline removes the external ML service and executes vector retrieval directly in PostgreSQL (pgvector), with recommendation orchestration inside Java services.
 
 **Architecture:**
 ```
@@ -240,44 +222,58 @@ The current architecture eliminates the ML Service entirely, integrating vector 
 
 **Key Improvements:**
 
-| Aspect | v1.0 (With ML Service) | v2.0 (Current) |
-|--------|------------------------|----------------|
+| Aspect | Legacy Baseline | Current Baseline |
+|--------|-----------------|------------------|
 | **Architecture** | 5 services (incl. Flask ML) | 4 services (pure Java) |
 | **Domain** | General media | Books only |
 | **Latency** | ~300-500ms | ~80-120ms |
 | **Recommendation Engine** | External ML Service (REST) | Native pgvector (SQL) |
 | **Profile Updates** | On-demand recalculation | Real-time via Kafka events |
 | **API Design** | Client orchestration | Server-side aggregation |
-| **Interactions** | LIKE, DISLIKE, WATCH | ⭐ Star Ratings (0–5)<br/>📖 Reading Status |
-| **Catalog** | Open creation | 🛡️ Admin approval required |
+| **Interactions** | LIKE, DISLIKE, WATCH | Star Ratings (0–5) + Reading Status |
+| **Catalog** | Open creation | Admin approval required |
 
 **Technical Achievements:**
-- ✅ **60-75% latency reduction** (300-500ms → 80-120ms)
-- ✅ **Pure Java stack** - eliminated Python dependency
-- ✅ **Event-driven architecture** - Kafka for real-time profile updates
-- ✅ **Vector similarity search** - PostgreSQL pgvector with HNSW indexing
-- ✅ **Domain specialization** - Book-focused features (ISBN, authors, page tracking)
-- ✅ **Enhanced user engagement** - Star ratings and reading progress tracking
+- 60-75% latency reduction (300-500ms → 80-120ms)
+- Pure Java stack with reduced operational complexity
+- Event-driven profile updates via Kafka
+- PostgreSQL pgvector with vector similarity search and HNSW indexing
+- Book-focused domain model (ISBN, author metadata, page tracking)
 
-### Version 2.1: Event-Carried State Transfer for Recommendation
+### Recommendation State Model (Event-Carried State Transfer)
 
-The latest evolution adopts **Event-Carried State Transfer (ECST)** in the Recommendation Service. Kafka events now carry the state needed to keep `book_features` and `user_profiles` updated incrementally, turning the recommendation store into a fast, local read model.
+Recommendation state is maintained using **Event-Carried State Transfer (ECST)**. Kafka events carry the data required to keep `book_features` and `user_profiles` updated incrementally, turning the recommendation database into a local, replayable read model.
 
 **What improved:**
-- ✅ **Faster recommendation reads** - scoring relies on local state instead of rebuilding profiles on demand
-- ✅ **Lower coupling** - core recommendation state stays synchronized without synchronous cross-service rebuilds
-- ✅ **Resilient recovery** - consumer replay can restore derived state after failures
-- ✅ **Scalable consumers** - horizontal scaling with deterministic, event-driven updates
+- Faster recommendation reads with local state
+- Lower coupling between producer and consumer services
+- Deterministic replay for recovery scenarios
+- Horizontal consumer scalability
 
-### Version 2.2: Current Architecture (AI Vectorization + Book Lists)
+## System Versions
 
-The current v2 phase introduces a stronger **AI-based vectorization** strategy in the Recommendation Service while expanding product capabilities in Catalog with **Book Lists** as a first-class feature.
+This section tracks **product versioning** and delivery scope. It is intentionally separate from architecture internals.
 
-**What changed recently:**
-- ✅ **AI-powered vectorization (v2)** - recommendation vectors now combine catalog metadata and engagement signals for richer ranking inputs
-- ✅ **Book Lists added to the core platform** - users can create, share, and collaborate through list membership and likes
-- ✅ **ECST kept as the synchronization backbone** - recommendation state remains incrementally updated through Kafka events
-- ✅ **Better end-to-end flow** - list curation, ratings, and recommendation updates now coexist as part of the same book-centric experience
+| Version | Status | Focus |
+|---------|--------|-------|
+| **v1.x** | Historical baseline | First generation recommendation flow with external ML dependency |
+| **v2.0** | Delivered | Book-first platform on pgvector + Java microservices |
+| **v2.1** | Delivered | Event-Carried State Transfer for recommendation state synchronization |
+| **v2.2** | In progress (current) | AI embeddings maturity, Book Lists consolidation, and ranking quality improvements |
+
+### Added in v2
+
+- AI embedding pipeline in Recommendation Service using LangChain4j `EmbeddingModel` for `book_features` (`vector(384)`)
+- Incremental user profile learning with 384-dimensional `user_profiles` vectors updated from rating events
+- ECST event flow (`created-book`, `updated-book`, `deleted-book`, `created-rating`) to maintain recommendation state
+- Book Lists domain in Catalog Service, including list ownership, membership roles, and likes
+
+### Planned for v2.x
+
+- Continue tuning embedding/ranking strategy (vector distance + popularity weighting) for recommendation quality
+- Expand automated validation with stronger integration/end-to-end coverage
+- Introduce API gateway for centralized routing and cross-cutting concerns
+- Complete frontend integration for the full v2 experience
 
 ---
 
