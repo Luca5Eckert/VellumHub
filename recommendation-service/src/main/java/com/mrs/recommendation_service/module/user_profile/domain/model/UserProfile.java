@@ -48,25 +48,39 @@ public class UserProfile {
         this.lastUpdated = Instant.now();
     }
 
+
     /**
-     * Processes a book rating and adjusts the entire state of the user profile.
-     * This method encapsulates the business rules for updating a user's semantic preferences.
+     * Processes a book rating by determining the engagement score adjustment based on the rating change, updating the user's profile vector using vector learning, and recording the interaction with the book. The method first checks if the rating change results in a category change (e.g., from "Neutral" to "Liked") to determine if an update is necessary. If an update is needed, it calculates the weight adjustment based on the new and old ratings, updates the engagement score, applies vector learning to adjust the profile vector towards or away from the book's embedding, and finally updates the last updated timestamp.
      *
-     * @param command       The command containing details about the rating change.
-     * @param bookEmbedding The dense semantic vector (embedding) of the rated book.
+     * @param newStars The new star rating given by the user for the book, which will be used to determine the engagement score adjustment and vector learning direction.
+     * @param oldStars The previous star rating for the book, which is used to calculate the difference in engagement score and determine if a category change has occurred.
+     * @param isNewRating A boolean flag indicating whether this is a new rating (true) or an update to an existing rating (false), which affects how the method determines if an update is necessary.
+     * @param bookEmbedding The embedding vector of the book being rated, which is used in the vector learning process to adjust the user's profile vector based on the rating change.
+     * @param bookId The unique identifier of the book being rated, which is added to the set of interacted book IDs to track user interactions for future recommendations.
      */
-    public void processBookRating(UpdateUserProfileWithRatingCommand command, float[] bookEmbedding) {
-        if (!command.hasCategoryChanged()) {
+    public void processBookRating(int newStars, int oldStars, boolean isNewRating, float[] bookEmbedding, UUID bookId) {
+        if (!hasCategoryChanged(newStars, oldStars, isNewRating)) {
             return;
         }
 
-        int adjustmentWeight = command.getWeightAdjustment();
+        int adjustmentWeight = getWeightAdjustment(newStars, oldStars, isNewRating);
 
-        this.updateEngagementScore(adjustmentWeight, command.mediaId());
-
+        this.updateEngagementScore(adjustmentWeight, bookId);
         this.applyVectorLearning(bookEmbedding, adjustmentWeight);
 
         this.lastUpdated = Instant.now();
+    }
+
+    private int getWeightAdjustment(int newStars, int oldStars, boolean isNewRating) {
+        int newWeight = RatingCategory.fromStars(newStars).getWeight();
+        int oldWeight = isNewRating ? 0 : RatingCategory.fromStars(oldStars).getWeight();
+
+        return newWeight - oldWeight;
+    }
+
+    private boolean hasCategoryChanged(int newStars, int oldStars, boolean isNewRating){
+        if (isNewRating) return true;
+        return RatingCategory.fromStars(oldStars) != RatingCategory.fromStars(newStars);
     }
 
 

@@ -24,10 +24,16 @@ public class UpdateUserProfileWithRatingUseCase {
         UserProfile profile = userProfileRepository.findById(command.userId())
                 .orElseGet(() -> new UserProfile(command.userId()));
 
-        BookFeature book = bookFeatureRepository.findById(command.mediaId())
+        BookFeature book = bookFeatureRepository.findById(command.bookId())
                 .orElseThrow(() -> new RuntimeException("Book features not found"));
 
-        profile.processBookRating(command, book.getEmbedding());
+        profile.processBookRating(
+                command.newStars(),
+                command.oldStars(),
+                command.isNewRating(),
+                book.getEmbedding(),
+                book.getBookId()
+        );
 
         userProfileRepository.save(profile);
     }
