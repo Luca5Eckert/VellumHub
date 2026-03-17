@@ -48,7 +48,8 @@ public class UserProfile {
     }
 
     /**
-     * Aplica a lógica de transição de faixas de avaliação (estrelas).
+     * Adjusts the user's engagement score based on the rating change and updates the profile vector accordingly.
+     * @param command The command containing details about the rating change, including the old and new star ratings, and whether it's a new rating.
      */
     public void updateScoreByRating(UpdateUserProfileWithRatingCommand command) {
         if (!command.hasCategoryChanged()) {
@@ -63,13 +64,34 @@ public class UserProfile {
         this.interactedBookIds.add(command.mediaId());
     }
 
+    /**
+     * Applies a vector adjustment to the user's profile vector based on the book embedding and the rating adjustment.
+     * @param bookEmbedding The embedding vector of the book that the user interacted with.
+     * @param adjustment The weight adjustment derived from the rating change, which indicates how much to adjust the profile vector in the direction of the book embedding.
+     */
     public void applyVectorAdjustment(float[] bookEmbedding, int adjustment) {
         float learningRate = 0.1f;
+        double sumOfSquares = 0.0;
 
         for (int i = 0; i < this.profileVector.length; i++) {
             this.profileVector[i] += (bookEmbedding[i] * adjustment * learningRate);
+            sumOfSquares += (this.profileVector[i] * this.profileVector[i]);
+        }
 
-            if (this.profileVector[i] < 0) this.profileVector[i] = 0;
+        this.normalizeProfileVector(sumOfSquares);
+    }
+
+
+    /**
+     * Normalizes the user's profile vector to ensure it has a magnitude of 1.
+     */
+    private void normalizeProfileVector(double sumOfSquares) {
+        float magnitude = (float) Math.sqrt(sumOfSquares);
+
+        if (magnitude > 0) {
+            for (int i = 0; i < this.profileVector.length; i++) {
+                this.profileVector[i] /= magnitude;
+            }
         }
     }
 
