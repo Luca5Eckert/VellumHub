@@ -6,21 +6,10 @@ import java.util.UUID;
 
 public record UpdateUserProfileWithRatingCommand(
         UUID userId,
-        UUID mediaId,
+        UUID bookId,
         int oldStars,
         int newStars,
         boolean isNewRating
 ) {
-    public int getWeightAdjustment() {
-        int newWeight = RatingCategory.fromStars(newStars).getWeight();
-        int oldWeight = isNewRating ? 0 : RatingCategory.fromStars(oldStars).getWeight();
-
-        return newWeight - oldWeight;
-    }
-
-    public boolean hasCategoryChanged() {
-        if (isNewRating) return true;
-        return RatingCategory.fromStars(oldStars) != RatingCategory.fromStars(newStars);
-    }
 
 }
