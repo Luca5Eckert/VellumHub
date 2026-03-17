@@ -28,7 +28,6 @@ public class UpdateUserProfileWithRatingUseCase {
                 .orElseThrow(() -> new RuntimeException("Book features not found"));
 
         profile.updateScoreByRating(command);
-
         profile.applyVectorAdjustment(book.getEmbedding(), command.getWeightAdjustment());
 
         userProfileRepository.save(profile);
