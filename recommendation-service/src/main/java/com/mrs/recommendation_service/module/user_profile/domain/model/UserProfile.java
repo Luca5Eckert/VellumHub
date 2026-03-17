@@ -24,8 +24,9 @@ public class UserProfile {
     @Id
     private UUID userId;
 
-    @Column(columnDefinition = "vector(15)")
-    private float[] profileVector = new float[15];
+    @Column(columnDefinition = "vector(384)")
+    @JdbcTypeCode(SqlTypes.VECTOR)
+    private float[] profileVector = new float[384];
 
     @Column(name = "interacted_book_ids", columnDefinition = "uuid[]")
     @JdbcTypeCode(SqlTypes.ARRAY)
@@ -48,44 +49,58 @@ public class UserProfile {
     }
 
     /**
-     * Adjusts the user's engagement score based on the rating change and updates the profile vector accordingly.
-     * @param command The command containing details about the rating change, including the old and new star ratings, and whether it's a new rating.
+     * Processes a book rating and adjusts the entire state of the user profile.
+     * This method encapsulates the business rules for updating a user's semantic preferences.
+     *
+     * @param command       The command containing details about the rating change.
+     * @param bookEmbedding The dense semantic vector (embedding) of the rated book.
      */
-    public void updateScoreByRating(UpdateUserProfileWithRatingCommand command) {
+    public void processBookRating(UpdateUserProfileWithRatingCommand command, float[] bookEmbedding) {
         if (!command.hasCategoryChanged()) {
             return;
         }
 
-        int adjustment = command.getWeightAdjustment();
+        int adjustmentWeight = command.getWeightAdjustment();
 
-        this.totalEngagementScore += adjustment;
+        this.updateEngagementScore(adjustmentWeight, command.mediaId());
+
+        this.applyVectorLearning(bookEmbedding, adjustmentWeight);
+
         this.lastUpdated = Instant.now();
-
-        this.interactedBookIds.add(command.mediaId());
     }
 
+
     /**
-     * Applies a vector adjustment to the user's profile vector based on the book embedding and the rating adjustment.
-     * @param bookEmbedding The embedding vector of the book that the user interacted with.
-     * @param adjustment The weight adjustment derived from the rating change, which indicates how much to adjust the profile vector in the direction of the book embedding.
+     * Updates the user's total engagement score based on the rating adjustment and records the interacted book ID.
+     * @param weightAdjustment The calculated weight adjustment based on the rating change.
+     * @param bookId  The ID of the book that the user interacted with, which will be added to the set of interacted books.
      */
-    public void applyVectorAdjustment(float[] bookEmbedding, int adjustment) {
+    private void updateEngagementScore(int weightAdjustment, UUID bookId) {
+        this.totalEngagementScore += weightAdjustment;
+        this.interactedBookIds.add(bookId);
+    }
+
+    private void applyVectorLearning(float[] bookEmbedding, int adjustmentWeight) {
+        if (bookEmbedding == null || bookEmbedding.length != this.profileVector.length) {
+            throw new IllegalArgumentException("Book embedding dimension must match the profile vector dimension.");
+        }
+
         float learningRate = 0.1f;
         double sumOfSquares = 0.0;
 
         for (int i = 0; i < this.profileVector.length; i++) {
-            this.profileVector[i] += (bookEmbedding[i] * adjustment * learningRate);
+            this.profileVector[i] += (bookEmbedding[i] * adjustmentWeight * learningRate);
             sumOfSquares += (this.profileVector[i] * this.profileVector[i]);
         }
 
-        this.normalizeProfileVector(sumOfSquares);
+        this.normalizeVector(sumOfSquares);
     }
 
-
     /**
-     * Normalizes the user's profile vector to ensure it has a magnitude of 1.
+     * Applies L2 Normalization to ensure the vector maintains a magnitude of 1.0.
+     * This is required for accurate Cosine Similarity searches in the database.
      */
-    private void normalizeProfileVector(double sumOfSquares) {
+    private void normalizeVector(double sumOfSquares) {
         float magnitude = (float) Math.sqrt(sumOfSquares);
 
         if (magnitude > 0) {
