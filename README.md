@@ -19,6 +19,7 @@ VellumHub combines the social aspects of book tracking with AI-powered recommend
 - [Key Features](#key-features)
 - [Architecture](#architecture)
   - [System Architecture](#system-architecture)
+  - [System Design (v2)](#system-design-v2)
   - [Architecture Evolution](#architecture-evolution)
   - [System Versions](#system-versions)
   - [Database Architecture](#database-architecture)
@@ -129,6 +130,42 @@ graph TB
     style RCS fill:#FF6B35,stroke:#fff,stroke-width:2px,color:#fff
     style DB4 fill:#336791,stroke:#fff,stroke-width:2px,color:#fff
 ```
+
+### System Design (v2)
+
+This is the central design model for the current platform release. It describes how VellumHub v2 is structured to deliver recommendation quality, operational resilience, and service autonomy.
+
+#### Design Principles
+
+- **Domain ownership by service**: each microservice owns its write model and persistence
+- **Asynchronous state propagation**: recommendation state is materialized from Kafka events
+- **AI-enhanced retrieval**: semantic embeddings are used for candidate scoring and ranking
+- **Separation of concerns**: architecture internals and release versioning are documented in separate sections
+
+#### Core v2 Design Components
+
+| Component | Responsibility | Why it matters in v2 |
+|-----------|----------------|----------------------|
+| **Catalog Service** | Source of truth for book metadata and lifecycle events | Feeds high-quality book context into recommendation embeddings |
+| **Engagement Service** | Source of truth for user ratings | Drives continuous preference learning in user profiles |
+| **Recommendation Service** | Maintains `book_features` + `user_profiles`, computes ranking | Keeps recommendation reads fast and local via pgvector |
+| **Kafka Topics** (`created-book`, `updated-book`, `deleted-book`, `created-rating`) | Event backbone for state synchronization | Enables ECST and deterministic replay/recovery |
+| **PostgreSQL + pgvector** | Stores vectors and executes cosine distance queries | Provides low-latency vector retrieval within the transactional stack |
+
+#### AI Embedding and Retrieval Flow
+
+1. **Book ingestion**
+   - Catalog publishes book events with metadata (`title`, `author`, `description`, `genres`)
+   - Recommendation Service generates semantic embedding vectors via LangChain4j `EmbeddingModel`
+   - `book_features.embedding` is persisted as `vector(384)`
+2. **Profile learning**
+   - Engagement publishes `created-rating`
+   - Recommendation Service updates `user_profiles.profile_vector` (384D) and engagement state incrementally
+   - Profile vectors are normalized for cosine similarity operations
+3. **Recommendation read path**
+   - Query nearest candidates in pgvector using cosine distance
+   - Apply ranking blend (vector distance + popularity)
+   - Enrich result payload with Catalog metadata for final API response
 
 ### Data Flow: Book Recommendation
 
@@ -337,20 +374,18 @@ The Recommendation Service database leverages **pgvector** extension for high-pe
 
 **Vector Storage:**
 ```sql
--- Book feature vectors (genre-based embeddings)
--- 15 dimensions: one per genre (one-hot encoding for 15 book genres)
+-- Book semantic embeddings generated from title, author, description and genres
 CREATE TABLE book_features (
     book_id UUID PRIMARY KEY,
-    embedding vector(15),  -- Genre-based embedding
+    embedding vector(384),
     popularity_score DOUBLE PRECISION,
     last_updated TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
--- User profile vectors (preference embeddings)
--- 15 dimensions: matches book vectors for direct cosine similarity computation
+-- User preference vectors learned from rating behavior
 CREATE TABLE user_profiles (
     user_id UUID PRIMARY KEY,
-    profile_vector vector(15),  -- User genre preferences
+    profile_vector vector(384),
     total_engagement_score DOUBLE PRECISION,
     last_updated TIMESTAMP WITH TIME ZONE NOT NULL
 );
@@ -366,10 +401,10 @@ LIMIT 10;
 ```
 
 **How It Works:**
-- **Genre Encoding**: Each of the 15 dimensions represents one book genre (Fantasy, Sci-Fi, Horror, Romance, etc.)
-- **Book Vectors**: One-hot encoding where dimension = 1.0 if book belongs to that genre, 0.0 otherwise
-- **User Vectors**: Weighted preferences updated based on ratings (higher weights for genres user enjoys)
-- **Similarity Search**: PostgreSQL pgvector computes cosine distance between user preferences and book genres
+- **Semantic Embedding Generation**: vectors are generated from book metadata with an embedding model
+- **Book Vectors**: `book_features.embedding` stores 384-dimensional semantic representations
+- **User Vectors**: `user_profiles.profile_vector` is updated incrementally from rating events
+- **Similarity Search**: PostgreSQL pgvector computes cosine distance between user and book vectors
 
 **Performance Optimization:**
 - **HNSW Index** (Hierarchical Navigable Small World) for approximate nearest neighbor search
@@ -425,7 +460,7 @@ graph LR
 
 | Event | Producer | Consumer | Trigger | Action |
 |-------|----------|----------|---------|--------|
-| **created-book** | Catalog Service | Recommendation Service | Book approved by admin | Create `BookFeature` with genre-based vector embedding |
+| **created-book** | Catalog Service | Recommendation Service | Book approved by admin | Create `BookFeature` with semantic vector embedding |
 | **updated-book** | Catalog Service | Recommendation Service | Book metadata changed | Update `BookFeature` vector |
 | **deleted-book** | Catalog Service | Recommendation Service | Book removed from catalog | Delete `BookFeature` |
 | **created-rating** | Engagement Service | Recommendation Service | User rates a book | Update `UserProfile` preference vector |

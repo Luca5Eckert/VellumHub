@@ -21,14 +21,14 @@ This service maintains user preference profiles and book feature embeddings, usi
 - Configurable result limits and offsets
 
 ### 2. **User Profile Learning** 📚
-- Dynamic preference vectors (15-dimensional)
+- Dynamic preference vectors (384-dimensional)
 - Learns from rating behavior
 - Positive reinforcement for high ratings (4-5 stars)
 - Negative adjustments for low ratings (1-2 stars)
 - Engagement score tracking
 
 ### 3. **Book Feature Management** 📊
-- Genre-based vector embeddings
+- AI-generated semantic vector embeddings
 - Popularity score calculation
 - Real-time updates via Kafka events
 - Synchronized with catalog service
@@ -65,7 +65,7 @@ This service maintains user preference profiles and book feature embeddings, usi
   - UpdateMediaFeature
   - DeleteBookFeature
 - **Features:**
-  - 15-dimensional genre embeddings
+  - 384-dimensional semantic embeddings
   - Popularity score calculation
   - Feign client integration with Catalog Service
 
@@ -80,7 +80,7 @@ This service maintains user preference profiles and book feature embeddings, usi
 
 ### Architecture Patterns
 
-- **Vector Similarity Search:** Cosine distance in 15D space
+- **Vector Similarity Search:** Cosine distance in 384D space
 - **Event-Driven:** Kafka consumers for async updates
 - **Event-Carried State Transfer (ECST):** Events carry book/rating state to keep `book_features` and `user_profiles` current
 - **Microservice Integration:** Feign clients for service communication
@@ -144,21 +144,21 @@ Authorization: Bearer <jwt-token>
 Stores vector embeddings and metadata for each book.
 
 - `book_id` (UUID, PK) - Book identifier (from catalog)
-- `embedding` (float[15]) - Genre-based vector embedding
+- `embedding` (float[384]) - Semantic vector embedding
 - `popularity_score` (double) - Book popularity metric
 - `last_updated` (Instant) - Last sync timestamp
 
 **Embedding Structure:**
-- 15-dimensional vector representing genre composition
-- Each dimension corresponds to genre weights
-- Normalized for cosine similarity calculation
+- 384-dimensional semantic vector generated from title, author, description, and genres
+- Text normalization is applied before embedding generation
+- Stored in pgvector for cosine similarity search
 
 ### user_profiles Table
 
 Stores learned preference vectors for each user.
 
 - `user_id` (UUID, PK) - User identifier
-- `profile_vector` (float[15]) - Learned preference embedding
+- `profile_vector` (float[384]) - Learned preference embedding
 - `interacted_book_ids` (UUID[], array) - Books user has rated
 - `total_engagement_score` (double) - Cumulative engagement metric
 - `created_at` (Instant) - Profile creation time
@@ -167,10 +167,10 @@ Stores learned preference vectors for each user.
 **Profile Vector Learning:**
 - Initialized with neutral values
 - Updated based on rating behavior:
-  - 5 stars: Strong positive adjustment (+0.3 per genre)
-  - 4 stars: Moderate positive adjustment (+0.15 per genre)
+  - 5 stars: Strong positive adjustment toward the rated book embedding
+  - 4 stars: Moderate positive adjustment toward the rated book embedding
   - 3 stars: Minimal adjustment
-  - 1-2 stars: Negative adjustment (-0.1 to -0.2 per genre)
+  - 1-2 stars: Negative adjustment away from the rated book embedding
 
 ---
 
@@ -181,23 +181,23 @@ These events implement **Event-Carried State Transfer**, ensuring recommendation
 
 ### Consumed Events
 
-#### From Catalog Service (Topic: `book-events`)
+#### From Catalog Service (Topics: `created-book`, `updated-book`, `deleted-book`)
 
-**CreateBookEvent:**
+**CreateBookEvent (`created-book`):**
 - Creates new book feature
-- Generates genre embedding
+- Generates semantic embedding
 - Initializes popularity score
 
-**UpdateBookEvent:**
+**UpdateBookEvent (`updated-book`):**
 - Updates existing book feature
-- Recalculates embedding if genres changed
+- Recalculates embedding when metadata changes
 - Updates metadata
 
-**DeleteBookEvent:**
+**DeleteBookEvent (`deleted-book`):**
 - Removes book feature from database
 - Cleans up recommendation data
 
-#### From Engagement Service (Topic: `rating-events`)
+#### From Engagement Service (Topic: `created-rating`)
 
 **CreatedRatingEvent:**
 - Updates user profile vector
@@ -217,13 +217,10 @@ Uses **cosine similarity** between user profile and book embeddings:
 similarity = (userVector · bookVector) / (||userVector|| × ||bookVector||)
 ```
 
-### 2. Genre Embedding
+### 2. Semantic Embedding
 
-Books are represented as 15-dimensional vectors where each dimension corresponds to a genre weight:
-
-```
-Example: ["FICTION", "ROMANCE"] → [0.5, 0.5, 0, 0, ..., 0]
-```
+Books are represented as 384-dimensional semantic vectors generated from normalized textual content.
+The embedding payload includes title, author, description, and genre labels.
 
 ### 3. User Profile Learning
 
@@ -380,8 +377,8 @@ curl http://localhost:8085/actuator/metrics
 ### Kafka Consumer Monitoring
 
 Monitor consumer lag via Kafka UI at `http://localhost:8090`:
-- Check `book-events` consumer group
-- Check `rating-events` consumer group
+- Check `recommendation-service` consumer group subscriptions for `created-book`, `updated-book`, and `deleted-book`
+- Check `recommendation-service` consumer group subscription for `created-rating`
 - Monitor message processing rates
 
 ---
@@ -406,7 +403,7 @@ WHERE user_id = '123e4567-e89b-12d3-a456-426614174000';
 ### 3. Find Similar Books
 
 ```sql
-SELECT book_id, embedding <=> '[0.5,0.5,0,0,0,0,0,0,0,0,0,0,0,0,0]'::vector AS distance
+SELECT book_id, embedding <=> :user_profile_vector::vector AS distance
 FROM book_features
 ORDER BY distance
 LIMIT 10;
@@ -427,38 +424,24 @@ LIMIT 20;
 
 ## 🎓 Understanding the Vector Space
 
-### Genre Dimensions (15D)
+### Semantic Dimensions (384D)
 
-Each dimension represents a book genre:
-1. FICTION
-2. NON_FICTION
-3. MYSTERY
-4. THRILLER
-5. ROMANCE
-6. SCIENCE_FICTION
-7. FANTASY
-8. BIOGRAPHY
-9. HISTORY
-10. SELF_HELP
-11. BUSINESS
-12. TECHNOLOGY
-13. CHILDREN
-14. YOUNG_ADULT
-15. POETRY
+Each vector dimension is part of a dense semantic representation learned by the embedding model.
+Dimensions are not one-hot genre slots; meaning emerges from the full vector pattern.
 
 ### Example Vectors
 
-**User Profile (loves sci-fi and fantasy):**
+**User Profile (truncated example):**
 ```
-[0.1, 0.05, 0, 0, 0, 0.8, 0.7, 0, 0, 0, 0, 0, 0, 0, 0]
-```
-
-**Book (sci-fi novel):**
-```
-[0.3, 0.1, 0, 0, 0, 0.9, 0.2, 0, 0, 0, 0, 0, 0, 0, 0]
+[0.11, -0.03, 0.28, ..., 0.07]
 ```
 
-**Similarity:** High (both strong in dimension 6 = SCIENCE_FICTION)
+**Book (truncated example):**
+```
+[0.10, -0.02, 0.31, ..., 0.05]
+```
+
+**Similarity:** High when cosine distance is low between user and book vectors.
 
 ---
 
@@ -510,7 +493,7 @@ Recommendations not updating after new ratings:
 
 If you see errors related to vector operations:
 - Ensure pgvector extension is installed: `CREATE EXTENSION vector;`
-- Verify vector dimensions match (15D)
+- Verify vector dimensions match (384D)
 - Check PostgreSQL version (requires 11+)
 
 ### Feign Client Errors
