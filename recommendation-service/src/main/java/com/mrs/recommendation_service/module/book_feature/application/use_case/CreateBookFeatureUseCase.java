@@ -2,6 +2,7 @@ package com.mrs.recommendation_service.module.book_feature.application.use_case;
 
 import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
+import com.mrs.recommendation_service.module.book_feature.domain.port.EmbeddingBookProvider;
 import com.mrs.recommendation_service.share.event.CreateBookEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,14 +11,23 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateBookFeatureUseCase {
 
     private final BookFeatureRepository bookFeatureRepository;
+    private final EmbeddingBookProvider embeddingBookProvider;
 
-    public CreateBookFeatureUseCase(BookFeatureRepository bookFeatureRepository) {
+    public CreateBookFeatureUseCase(BookFeatureRepository bookFeatureRepository, EmbeddingBookProvider embeddingBookProvider) {
         this.bookFeatureRepository = bookFeatureRepository;
+        this.embeddingBookProvider = embeddingBookProvider;
     }
 
     @Transactional
     public void execute(CreateBookEvent event){
-        BookFeature bookFeature = BookFeature.of(event.bookId(), event.genres());
+        var vectors = embeddingBookProvider.of(
+                event.title(),
+                event.author(),
+                event.description(),
+                event.genres()
+        );
+
+        BookFeature bookFeature = BookFeature.create(event.bookId(), vectors, 1);
 
         bookFeatureRepository.save(bookFeature);
     }

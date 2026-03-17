@@ -1,11 +1,9 @@
 package com.mrs.recommendation_service.module.book_feature.domain.model;
 
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,7 +11,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -27,7 +24,7 @@ public class BookFeature {
     private UUID bookId;
 
     @JdbcTypeCode(SqlTypes.VECTOR)
-    @Column(name = "embedding", columnDefinition = "vector(15)")
+    @Column(name = "embedding", columnDefinition = "vector(384)")
     private float[] embedding;
 
     @Column(name = "popularity_score")
@@ -36,38 +33,30 @@ public class BookFeature {
     @Column(name = "last_updated", nullable = false)
     private Instant lastUpdated = Instant.now();
 
-    public BookFeature(UUID bookId, float[] genresVector) {
+    private BookFeature(UUID bookId, float[] embedding, double popularityScore) {
         this.bookId = bookId;
-        this.embedding = genresVector;
-    }
-
-    public static BookFeature of(UUID bookId, List<Genre> genres) {
-        return new BookFeature(
-                bookId,
-                defineVector(genres)
-        );
-    }
-
-    public void update(List<Genre> genres) {
-        this.embedding = defineVector(genres);
+        this.embedding = embedding;
+        this.popularityScore = popularityScore;
         this.lastUpdated = Instant.now();
     }
 
-
-    public static float[] defineVector(List<Genre> genres) {
-        float[] vector = new float[Genre.total()];
-
-        if (genres == null || genres.isEmpty()) {
-            return vector;
+    public static BookFeature create(UUID bookId, float[] embedding, double popularityScore) {
+        if (embedding == null || embedding.length == 0) {
+            throw new IllegalArgumentException("Embedding vector cannot be null or empty");
         }
-
-        for (Genre genre : genres) {
-            if (genre.index < vector.length) {
-                vector[genre.index] = 1.0f;
-            }
-        }
-
-        return vector;
+        return new BookFeature(bookId, embedding, popularityScore);
     }
 
+    public void updateEmbedding(float[] newEmbedding) {
+        if (newEmbedding == null || newEmbedding.length == 0) {
+            throw new IllegalArgumentException("New embedding cannot be null or empty");
+        }
+        this.embedding = newEmbedding;
+        this.lastUpdated = Instant.now();
+    }
+
+    public void updatePopularity(double newScore) {
+        this.popularityScore = newScore;
+        this.lastUpdated = Instant.now();
+    }
 }
