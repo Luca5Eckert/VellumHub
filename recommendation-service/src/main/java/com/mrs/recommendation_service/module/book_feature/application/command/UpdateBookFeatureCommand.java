@@ -7,9 +7,24 @@ import java.util.UUID;
 
 public record UpdateBookFeatureCommand(
         UUID bookId,
+        String title,
+        String author,
+        String description,
         List<Genre> genres
 ) {
-    public static UpdateBookFeatureCommand of(UUID bookId, List<Genre> genres) {
-        return new UpdateBookFeatureCommand(bookId, genres);
+    public static UpdateBookFeatureCommand of(
+            UUID bookId,
+            String title,
+            String author,
+            String description,
+            List<Genre> genres
+    ) {
+        return new UpdateBookFeatureCommand(
+                bookId,
+                title,
+                author,
+                description,
+                genres
+        );
     }
 }
