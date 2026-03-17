@@ -168,17 +168,23 @@ sequenceDiagram
 
 VellumHub has evolved from a tightly-coupled system with performance bottlenecks to a modern, scalable microservices platform. This transformation demonstrates our commitment to engineering excellence and continuous improvement.
 
-### From ML Service to pgvector
+### From ML Service to pgvector + AI Vectorization
 
 ```mermaid
 graph LR
     V1[v1.0<br/>With ML Service<br/>Performance Issues]
-    V2[v2.0<br/>Current Architecture<br/>pgvector + Books]
+    V2[v2.0<br/>pgvector Foundation<br/>Book-first Platform]
+    V21[v2.1<br/>ECST Adoption<br/>Incremental State]
+    V22[v2.2<br/>AI Vectorization +<br/>Book Lists Expansion]
     
     V1 -->|Eliminated ML Service<br/>60-75% Latency Reduction<br/>Domain Focus| V2
+    V2 -->|Recommendation state events<br/>local read model| V21
+    V21 -->|Richer vectors + product features<br/>recent platform updates| V22
     
     style V1 fill:#ff6b6b,stroke:#c92a2a,stroke-width:2px,color:#fff
-    style V2 fill:#51cf66,stroke:#2f9e44,stroke-width:2px,color:#fff
+    style V2 fill:#74c0fc,stroke:#1c7ed6,stroke-width:2px,color:#fff
+    style V21 fill:#69db7c,stroke:#2b8a3e,stroke-width:2px,color:#fff
+    style V22 fill:#51cf66,stroke:#2f9e44,stroke-width:2px,color:#fff
 ```
 
 ### Version 1.0: Architecture with ML Service
@@ -204,7 +210,7 @@ The original architecture relied on an external Python Flask ML Service for reco
 | **Redundant Computation** | Full recalculation on every request |
 | **Poor API Design** | Client had to orchestrate multiple service calls |
 
-### Version 2.0: Current Architecture (pgvector + Book Platform)
+### Version 2.0: Foundation Architecture (pgvector + Book Platform)
 
 The current architecture eliminates the ML Service entirely, integrating vector similarity search directly into PostgreSQL with pgvector while focusing on book recommendations.
 
@@ -262,6 +268,16 @@ The latest evolution adopts **Event-Carried State Transfer (ECST)** in the Recom
 - ✅ **Lower coupling** - core recommendation state stays synchronized without synchronous cross-service rebuilds
 - ✅ **Resilient recovery** - consumer replay can restore derived state after failures
 - ✅ **Scalable consumers** - horizontal scaling with deterministic, event-driven updates
+
+### Version 2.2: Current Architecture (AI Vectorization + Book Lists)
+
+The current v2 phase introduces a stronger **AI-based vectorization** strategy in the Recommendation Service while expanding product capabilities in Catalog with **Book Lists** as a first-class feature.
+
+**What changed recently:**
+- ✅ **AI-powered vectorization (v2)** - recommendation vectors now combine catalog metadata and engagement signals for richer ranking inputs
+- ✅ **Book Lists added to the core platform** - users can create, share, and collaborate through list membership and likes
+- ✅ **ECST kept as the synchronization backbone** - recommendation state remains incrementally updated through Kafka events
+- ✅ **Better end-to-end flow** - list curation, ratings, and recommendation updates now coexist as part of the same book-centric experience
 
 ---
 
@@ -665,6 +681,7 @@ VellumHub is in **active development** with core features implemented and functi
 - Book submission and admin approval workflow
 - Star rating system
 - Reading progress tracking (status + page count)
+- Book lists and collaborative collections (membership + likes)
 - Vector-based book recommendations
 - Real-time profile updates via Kafka events
 
@@ -673,7 +690,7 @@ VellumHub is in **active development** with core features implemented and functi
 - No API Gateway (services exposed directly)
 - Limited error handling in some endpoints
 - Unit tests exist across all services; integration and end-to-end tests are still pending
-- Recommendation algorithm is basic (genre-based vectors)
+- Recommendation vectorization is in active v2 evolution (weights and semantic signals continue to be tuned)
 - Frontend application is under active development — see [VellumHubFront](https://github.com/Luca5Eckert/VellumHubFront)
 - No CI/CD pipeline
 
