@@ -374,7 +374,7 @@ The Recommendation Service database leverages **pgvector** extension for high-pe
 
 **Vector Storage:**
 ```sql
--- Book semantic embeddings generated from title, author, description and genres
+-- Book semantic embeddings generated from title, author, description, and genres
 CREATE TABLE book_features (
     book_id UUID PRIMARY KEY,
     embedding vector(384),
