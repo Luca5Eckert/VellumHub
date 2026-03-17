@@ -4,7 +4,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 -- 2. Criação da tabela
 CREATE TABLE IF NOT EXISTS book_features (
     book_id UUID PRIMARY KEY,
-    embedding vector(15),
+    embedding vector(384),
     popularity_score DOUBLE PRECISION,
     last_updated TIMESTAMP WITH TIME ZONE NOT NULL
 );
