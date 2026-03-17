@@ -41,15 +41,15 @@ public class BookFeature {
     }
 
     public static BookFeature create(UUID bookId, float[] embedding, double popularityScore) {
-        if (embedding == null || embedding.length == 0) {
-            throw new IllegalArgumentException("Embedding vector cannot be null or empty");
+        if (embedding == null || embedding.length < 384) {
+            throw new IllegalArgumentException("Embedding vector cannot be null and must have at least 384 dimensions");
         }
         return new BookFeature(bookId, embedding, popularityScore);
     }
 
     public void updateEmbedding(float[] newEmbedding) {
-        if (newEmbedding == null || newEmbedding.length == 0) {
-            throw new IllegalArgumentException("New embedding cannot be null or empty");
+        if (embedding == null || embedding.length < 384) {
+            throw new IllegalArgumentException("Embedding vector cannot be null and must have at least 384 dimensions");
         }
         this.embedding = newEmbedding;
         this.lastUpdated = Instant.now();

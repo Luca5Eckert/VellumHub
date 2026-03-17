@@ -45,7 +45,7 @@ class CreatedRatingConsumerHandlerTest {
 
         UpdateUserProfileWithRatingCommand capturedCommand = captor.getValue();
         assertThat(capturedCommand.userId()).isEqualTo(userId);
-        assertThat(capturedCommand.mediaId()).isEqualTo(bookId);
+        assertThat(capturedCommand.bookId()).isEqualTo(bookId);
         assertThat(capturedCommand.newStars()).isEqualTo(5);
         assertThat(capturedCommand.oldStars()).isZero();
         assertThat(capturedCommand.isNewRating()).isFalse(); // handler hardcodes false for isNewRating
