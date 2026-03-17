@@ -4,29 +4,32 @@ import lombok.Getter;
 
 @Getter
 public enum Genre {
-    FANTASY(0),
-    SCI_FI(1),
-    HORROR(2),
-    THRILLER_MYSTERY(3),
-    ROMANCE(4),
 
-    CLASSICS(5),
-    CONTEMPORARY(6),
-    HISTORICAL_FICTION(7),
+    FANTASY(0, "fantasy"),
+    SCI_FI(1, "science fiction"),
+    HORROR(2, "horror"),
+    THRILLER_MYSTERY(3, "thriller mystery"),
+    ROMANCE(4, "romance"),
 
-    YOUNG_ADULT(8),
-    GRAPHIC_NOVELS(9),
+    CLASSICS(5, "classic literature"),
+    CONTEMPORARY(6, "contemporary fiction"),
+    HISTORICAL_FICTION(7, "historical fiction"),
 
-    BIOGRAPHY_MEMOIR(10),
-    SELF_HELP(11),
-    PHILOSOPHY_RELIGION(12),
-    HISTORY_POLITICS(13),
-    SCIENCE_TECHNOLOGY(14);
+    YOUNG_ADULT(8, "young adult"),
+    GRAPHIC_NOVELS(9, "graphic novel"),
 
-    public final int index;
+    BIOGRAPHY_MEMOIR(10, "biography memoir"),
+    SELF_HELP(11, "self help"),
+    PHILOSOPHY_RELIGION(12, "philosophy religion"),
+    HISTORY_POLITICS(13, "history politics"),
+    SCIENCE_TECHNOLOGY(14, "science technology");
 
-    Genre(int index) {
+    private final int index;
+    private final String semanticLabel;
+
+    Genre(int index, String semanticLabel) {
         this.index = index;
+        this.semanticLabel = semanticLabel;
     }
 
     public static int total() {
