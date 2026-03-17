@@ -13,28 +13,33 @@ import java.util.UUID;
 public interface JpaBookFeatureRepository extends JpaRepository<BookFeature, UUID> {
 
     @Query(value = """
-    WITH user_profile_data AS (
-        SELECT profile_vector, interacted_book_ids 
-        FROM user_profiles 
-        WHERE user_id = :userId
-    ),
-    candidates AS (
-        SELECT 
-            b.book_id, 
-            b.popularity_score,
-            (b.embedding <=> u.profile_vector) as vector_dist
-        FROM book_features b
-        CROSS JOIN user_profile_data u
-        WHERE NOT (b.book_id = ANY(COALESCE(u.interacted_book_ids, ARRAY[]::uuid[])))
-        ORDER BY b.embedding <=> u.profile_vector ASC
-        LIMIT 200 
-    )
-    SELECT c.book_id 
-    FROM candidates c
-    ORDER BY 
-        (c.vector_dist * 0.7) + ((1 - COALESCE(c.popularity_score, 0)) * 0.3) ASC
-    LIMIT :limit OFFSET :offset
-    """, nativeQuery = true)
+                WITH user_data AS (
+                    -- 1. Isolamos os dados do usuário e garantimos um array vazio seguro para a filtragem
+                    SELECT
+                        profile_vector,
+                        COALESCE(interacted_book_ids, '{}'::uuid[]) AS interacted_ids
+                    FROM user_profiles
+                    WHERE user_id = :userId
+                ),
+                candidates AS (
+                    -- 2. Busca Rápida (Candidate Generation) usando o Índice HNSW
+                    SELECT
+                        b.book_id,
+                        b.popularity_score,
+                        (b.embedding <=> u.profile_vector) AS vector_dist
+                    FROM book_features b
+                    CROSS JOIN user_data u
+                    WHERE b.book_id <> ALL(u.interacted_ids)
+                    ORDER BY b.embedding <=> u.profile_vector ASC
+                    LIMIT 200
+                )
+                -- 3. Re-rankeamento (Scoring) e Paginação
+                SELECT c.book_id
+                FROM candidates c
+                ORDER BY
+                    (c.vector_dist * 0.7) + ((1 - COALESCE(c.popularity_score, 0)) * 0.3) ASC
+                LIMIT :limit OFFSET :offset
+            """, nativeQuery = true)
     List<UUID> findTopVectorRecommendations(
             @Param("userId") UUID userId,
             @Param("limit") int limit,
