@@ -31,7 +31,13 @@ public class UpdateBookConsumerEvent {
                 event.genres());
 
         try {
-            UpdateBookFeatureCommand mediaFeatureCommand = UpdateBookFeatureCommand.of(event.bookId(), event.genres());
+            UpdateBookFeatureCommand mediaFeatureCommand = UpdateBookFeatureCommand.of(
+                    event.bookId(),
+                    event.title(),
+                    event.author(),
+                    event.description(),
+                    event.genres()
+            );
             UpdateRecommendationCommand updateRecommendationCommand = UpdateRecommendationCommand.of(
                     event.bookId(),
                     event.title(),
