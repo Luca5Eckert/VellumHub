@@ -1,14 +1,14 @@
 package com.mrs.catalog_service.service;
 
-import com.mrs.catalog_service.module.book.application.dto.CreateBookRequest;
-import com.mrs.catalog_service.module.book.application.dto.GetBookResponse;
-import com.mrs.catalog_service.module.book.application.dto.PageBook;
-import com.mrs.catalog_service.module.book.application.dto.UpdateBookRequest;
-import com.mrs.catalog_service.module.book.application.mapper.BookMapper;
+import com.mrs.catalog_service.module.book.presentation.dto.CreateBookRequest;
+import com.mrs.catalog_service.module.book.presentation.dto.GetBookResponse;
+import com.mrs.catalog_service.module.book.presentation.dto.PageBook;
+import com.mrs.catalog_service.module.book.presentation.dto.UpdateBookRequest;
+import com.mrs.catalog_service.module.book.presentation.mapper.BookMapper;
 import com.mrs.catalog_service.module.book.domain.handler.*;
 import com.mrs.catalog_service.module.book.domain.model.Genre;
 import com.mrs.catalog_service.module.book.domain.model.Book;
-import com.mrs.catalog_service.module.book.domain.service.BookService;
+import com.mrs.catalog_service.module.book.application.service.BookService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

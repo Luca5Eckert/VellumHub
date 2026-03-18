@@ -1,11 +1,11 @@
-package com.mrs.catalog_service.module.book.application.controller;
+package com.mrs.catalog_service.module.book.presentation.controller;
 
-import com.mrs.catalog_service.module.book.application.dto.BookCoverResponse;
-import com.mrs.catalog_service.module.book.application.dto.CreateBookRequest;
-import com.mrs.catalog_service.module.book.application.dto.GetBookResponse;
-import com.mrs.catalog_service.module.book.application.dto.Recommendation;
-import com.mrs.catalog_service.module.book.application.dto.UpdateBookRequest;
-import com.mrs.catalog_service.module.book.domain.service.BookService;
+import com.mrs.catalog_service.module.book.presentation.dto.BookCoverResponse;
+import com.mrs.catalog_service.module.book.presentation.dto.CreateBookRequest;
+import com.mrs.catalog_service.module.book.presentation.dto.GetBookResponse;
+import com.mrs.catalog_service.module.book.presentation.dto.Recommendation;
+import com.mrs.catalog_service.module.book.presentation.dto.UpdateBookRequest;
+import com.mrs.catalog_service.module.book.application.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

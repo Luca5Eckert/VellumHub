@@ -2,7 +2,8 @@ package com.mrs.catalog_service.module.book.application.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
-import com.mrs.catalog_service.module.book.domain.service.BookService;
+import com.mrs.catalog_service.module.book.application.service.BookService;
+import com.mrs.catalog_service.module.book.presentation.controller.BookController;
 import com.mrs.catalog_service.share.security.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

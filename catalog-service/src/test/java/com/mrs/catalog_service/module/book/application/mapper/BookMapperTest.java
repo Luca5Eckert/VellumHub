@@ -1,9 +1,10 @@
 package com.mrs.catalog_service.module.book.application.mapper;
 
-import com.mrs.catalog_service.module.book.application.dto.GetBookResponse;
-import com.mrs.catalog_service.module.book.application.dto.Recommendation;
+import com.mrs.catalog_service.module.book.presentation.dto.GetBookResponse;
+import com.mrs.catalog_service.module.book.presentation.dto.Recommendation;
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.mrs.catalog_service.module.book.presentation.mapper.BookMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
