@@ -1,7 +1,7 @@
-package com.mrs.catalog_service.module.book.application.mapper;
+package com.mrs.catalog_service.module.book.presentation.mapper;
 
-import com.mrs.catalog_service.module.book.application.dto.GetBookResponse;
-import com.mrs.catalog_service.module.book.application.dto.Recommendation;
+import com.mrs.catalog_service.module.book.presentation.dto.GetBookResponse;
+import com.mrs.catalog_service.module.book.presentation.dto.Recommendation;
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import org.springframework.stereotype.Component;
 

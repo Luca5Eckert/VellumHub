@@ -1,6 +1,6 @@
 package com.mrs.catalog_service.domain.handler;
 
-import com.mrs.catalog_service.module.book.application.dto.BookCoverResponse;
+import com.mrs.catalog_service.module.book.presentation.dto.BookCoverResponse;
 import com.mrs.catalog_service.module.book.domain.handler.GetBookCoversBulkHandler;
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book.domain.port.BookCoverStorage;

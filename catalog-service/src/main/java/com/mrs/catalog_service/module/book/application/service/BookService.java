@@ -1,7 +1,7 @@
-package com.mrs.catalog_service.module.book.domain.service;
+package com.mrs.catalog_service.module.book.application.service;
 
-import com.mrs.catalog_service.module.book.application.dto.*;
-import com.mrs.catalog_service.module.book.application.mapper.BookMapper;
+import com.mrs.catalog_service.module.book.presentation.dto.*;
+import com.mrs.catalog_service.module.book.presentation.mapper.BookMapper;
 import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;
 import com.mrs.catalog_service.module.book.domain.handler.*;
 import com.mrs.catalog_service.module.book.domain.model.Book;

@@ -1,6 +1,6 @@
 package com.mrs.catalog_service.domain.handler;
 
-import com.mrs.catalog_service.module.book.application.dto.PageBook;
+import com.mrs.catalog_service.module.book.presentation.dto.PageBook;
 import com.mrs.catalog_service.module.book.domain.handler.GetAllBooksHandler;
 import com.mrs.catalog_service.module.book.domain.model.Genre;
 import com.mrs.catalog_service.module.book.domain.model.Book;

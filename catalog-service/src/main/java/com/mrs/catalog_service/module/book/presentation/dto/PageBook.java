@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book.application.dto;
+package com.mrs.catalog_service.module.book.presentation.dto;
 
 
 public record PageBook(
