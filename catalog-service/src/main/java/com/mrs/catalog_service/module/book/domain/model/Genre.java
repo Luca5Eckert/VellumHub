@@ -1,34 +1,25 @@
 package com.mrs.catalog_service.module.book.domain.model;
 
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "genres")
+@Setter
 @Getter
-public enum Genre {
-    FANTASY(0),
-    SCI_FI(1),
-    HORROR(2),
-    THRILLER_MYSTERY(3),
-    ROMANCE(4),
+@AllArgsConstructor
+@NoArgsConstructor
+public class Genre {
 
-    CLASSICS(5),
-    CONTEMPORARY(6),
-    HISTORICAL_FICTION(7),
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
 
-    YOUNG_ADULT(8),
-    GRAPHIC_NOVELS(9),
+    @Column(nullable = false, unique = true)
+    private String name;
 
-    BIOGRAPHY_MEMOIR(10),
-    SELF_HELP(11),
-    PHILOSOPHY_RELIGION(12),
-    HISTORY_POLITICS(13),
-    SCIENCE_TECHNOLOGY(14);
 
-    public final int index;
-
-    Genre(int index) {
-        this.index = index;
-    }
-
-    public static int total() {
-        return values().length;
-    }
 }
