@@ -26,10 +26,30 @@ public class LangChain4jEmbeddingBookProvider implements EmbeddingBookProvider {
 
         String semanticContent = buildSemanticContent(title, author, description, genres);
 
-        return embeddingModel
+        var rawVectors = embeddingModel
                 .embed(semanticContent)
                 .content()
                 .vector();
+
+        return normalizeVectors(rawVectors);
+    }
+
+    private float[] normalizeVectors(float[] rawVectors) {
+        double sumSqrs = 0.0;
+        for (float value : rawVectors) {
+            sumSqrs += value * value;
+        }
+        double magnitude = Math.sqrt(sumSqrs);
+
+        if (magnitude < 1e-9) {
+            return rawVectors;
+        }
+
+        float[] normalizedVectors = new float[rawVectors.length];
+        for (int i = 0; i < rawVectors.length; i++) {
+            normalizedVectors[i] = (float) (rawVectors[i] / magnitude);
+        }
+        return normalizedVectors;
     }
 
     private String buildSemanticContent(String title, String author, String description, List<Genre> genres) {
