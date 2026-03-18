@@ -3,19 +3,20 @@ package com.mrs.catalog_service.module.book.domain.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @Table(name = "books")
 @Getter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -64,15 +65,13 @@ public class Book {
 
     private Instant deletedAt;
 
-    @ElementCollection
-    @CollectionTable(
-            name = "tb_book_genre",
-            joinColumns = @JoinColumn(name = "book_id")
+    @ManyToMany
+    @JoinTable(
+            name = "book_genre_id",
+            joinColumns = @JoinColumn(name = "book_id"),
+            inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
-    @Enumerated(EnumType.STRING)
-    @Column(name = "genre_name")
-    @Builder.Default
-    private List<Genre> genres = new ArrayList<>();
+    private Set<Genre> genres;
 
     /**
      * Domain method to update the entity.
@@ -87,7 +86,7 @@ public class Book {
             String isbn,
             Integer pageCount,
             String publisher,
-            List<Genre> genres
+            Set<Genre> genres
     ) {
         if (title != null && !title.isBlank()) {
             this.title = title;
@@ -122,7 +121,7 @@ public class Book {
         }
 
         if (genres != null && !genres.isEmpty()) {
-            this.genres = new ArrayList<>(genres);
+            this.genres = new HashSet<>(genres);
         }
     }
 
@@ -135,4 +134,19 @@ public class Book {
         }
     }
 
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null) return false;
+        Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
+        Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
+        if (thisEffectiveClass != oEffectiveClass) return false;
+        Book book = (Book) o;
+        return getId() != null && Objects.equals(getId(), book.getId());
+    }
+
+    @Override
+    public final int hashCode() {
+        return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
+    }
 }
