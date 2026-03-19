@@ -1,7 +1,5 @@
 package com.mrs.recommendation_service.module.recommendation.application.command;
 
-import com.mrs.recommendation_service.module.book_feature.domain.model.Genre;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -12,7 +10,7 @@ public record UpdateRecommendationCommand(
         int releaseYear,
         String coverUrl,
         String author,
-        List<Genre> genres
+        List<String> genres
 ) {
     public static UpdateRecommendationCommand of(
             UUID bookId,
@@ -21,7 +19,7 @@ public record UpdateRecommendationCommand(
             int releaseYear,
             String coverUrl,
             String author,
-            List<Genre> genres
+            List<String> genres
     ) {
         return new UpdateRecommendationCommand(
                 bookId,

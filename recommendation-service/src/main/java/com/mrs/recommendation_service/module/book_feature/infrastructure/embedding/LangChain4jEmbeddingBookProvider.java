@@ -1,6 +1,5 @@
 package com.mrs.recommendation_service.module.book_feature.infrastructure.embedding;
 
-import com.mrs.recommendation_service.module.book_feature.domain.model.Genre;
 import com.mrs.recommendation_service.module.book_feature.domain.port.EmbeddingBookProvider;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import org.springframework.stereotype.Component;
@@ -22,7 +21,7 @@ public class LangChain4jEmbeddingBookProvider implements EmbeddingBookProvider {
     }
 
     @Override
-    public float[] of(String title, String author, String description, List<Genre> genres) {
+    public float[] of(String title, String author, String description, List<String> genres) {
 
         String semanticContent = buildSemanticContent(title, author, description, genres);
 
@@ -52,7 +51,7 @@ public class LangChain4jEmbeddingBookProvider implements EmbeddingBookProvider {
         return normalizedVectors;
     }
 
-    private String buildSemanticContent(String title, String author, String description, List<Genre> genres) {
+    private String buildSemanticContent(String title, String author, String description, List<String> genres) {
 
         String normalizedTitle = normalizeText(title);
         String normalizedAuthor = normalizeText(author);
@@ -91,7 +90,7 @@ public class LangChain4jEmbeddingBookProvider implements EmbeddingBookProvider {
         return content.toString().trim();
     }
 
-    private String normalizeGenres(List<Genre> genres) {
+    private String normalizeGenres(List<String> genres) {
 
         if (genres == null || genres.isEmpty()) {
             return "";
@@ -99,7 +98,6 @@ public class LangChain4jEmbeddingBookProvider implements EmbeddingBookProvider {
 
         return genres.stream()
                 .filter(Objects::nonNull)
-                .map(Genre::getSemanticLabel)
                 .distinct()
                 .collect(Collectors.joining(", "));
     }
