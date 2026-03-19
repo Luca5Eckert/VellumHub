@@ -1,10 +1,8 @@
 package com.mrs.catalog_service.module.book.domain.model;
 
+import io.swagger.v3.core.converter.AnnotatedType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "genres")
@@ -12,6 +10,7 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Genre {
 
     @Id
