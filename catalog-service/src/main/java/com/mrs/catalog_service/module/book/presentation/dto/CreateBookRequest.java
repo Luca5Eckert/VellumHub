@@ -32,6 +32,6 @@ public record CreateBookRequest(
         String publisher,
 
         @NotEmpty(message = "At least one genre must be provided")
-        List<Genre> genres
+        List<String> genres
 ) {
 }

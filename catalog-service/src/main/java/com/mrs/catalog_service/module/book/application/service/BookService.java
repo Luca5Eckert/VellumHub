@@ -43,32 +43,20 @@ public class BookService {
     }
 
     public void create(CreateBookRequest createBookRequest) {
-        Book book = Book.builder()
-                .title( createBookRequest.title() )
-                .description( createBookRequest.description() )
-                .releaseYear( createBookRequest.releaseYear() )
-                .author( createBookRequest.author() )
-                .isbn( createBookRequest.isbn() )
-                .pageCount( createBookRequest.pageCount() )
-                .publisher( createBookRequest.publisher() )
-                .genres( createBookRequest.genres() )
-                .coverUrl(createBookRequest.coverUrl())
-                .build();
-
-        createBookHandler.execute(book);
+        createBookHandler.execute(createBookRequest);
     }
 
-    public void delete(UUID bookId){
+    public void delete(UUID bookId) {
         deleteBookHandler.execute(bookId);
     }
 
-    public GetBookResponse get(UUID bookId){
+    public GetBookResponse get(UUID bookId) {
         Book book = getBookHandler.execute(bookId);
 
         return bookMapper.toGetResponse(book);
     }
 
-    public List<GetBookResponse> getAll(int pageNumber, int pageSize){
+    public List<GetBookResponse> getAll(int pageNumber, int pageSize) {
         PageBook pageBook = new PageBook(pageSize, pageNumber);
 
         Page<Book> bookPage = getAllBooksHandler.execute(pageBook);
