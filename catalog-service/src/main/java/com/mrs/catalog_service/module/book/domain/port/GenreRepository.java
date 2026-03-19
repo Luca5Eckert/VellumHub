@@ -8,4 +8,6 @@ public interface GenreRepository {
     Optional<Genre> findByName(String normalizedName);
 
     Genre save(Genre newGenre);
+
+    boolean existsByName(String name);
 }

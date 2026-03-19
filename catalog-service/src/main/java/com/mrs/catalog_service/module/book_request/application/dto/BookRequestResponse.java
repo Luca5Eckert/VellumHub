@@ -14,6 +14,6 @@ public record BookRequestResponse(
         String isbn,
         int pageCount,
         String publisher,
-        List<Genre> genres
+        List<String> genres
 ) {
 }

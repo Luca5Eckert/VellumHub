@@ -1,6 +1,7 @@
 package com.mrs.catalog_service.module.book.domain.handler;
 
 import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.mrs.catalog_service.module.book.domain.port.GenreRepository;
 import com.mrs.catalog_service.module.book.presentation.dto.UpdateBookRequest;
 import com.mrs.catalog_service.module.book.domain.event.UpdateBookEvent;
 import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
@@ -8,7 +9,6 @@ import com.mrs.catalog_service.module.book.domain.exception.InvalidBookException
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
-import com.mrs.catalog_service.module.book.domain.port.GenreRepository; // <-- Import do Repository
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
