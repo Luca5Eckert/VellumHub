@@ -1,5 +1,6 @@
 package com.mrs.catalog_service.module.book.application.service;
 
+import com.mrs.catalog_service.module.book.application.command.CreateBookCommand;
 import com.mrs.catalog_service.module.book.presentation.dto.*;
 import com.mrs.catalog_service.module.book.presentation.mapper.BookMapper;
 import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,8 +44,24 @@ public class BookService {
         this.bookMapper = bookMapper;
     }
 
-    public void create(CreateBookRequest createBookRequest) {
-        createBookHandler.execute(createBookRequest);
+    /**
+     * Creates a new book in the catalog.
+     * @param request the details of the book to be created
+     */
+    public void create(CreateBookRequest request) {
+        CreateBookCommand command = new CreateBookCommand(
+                request.title(),
+                request.description(),
+                request.releaseYear(),
+                request.author(),
+                request.isbn(),
+                request.pageCount(),
+                request.publisher(),
+                request.coverUrl(),
+                request.genres() != null ? new HashSet<>(request.genres()) : new HashSet<>()
+        );
+
+        createBookHandler.execute(command);
     }
 
     public void delete(UUID bookId) {
