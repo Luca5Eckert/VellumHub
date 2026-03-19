@@ -21,4 +21,7 @@ public class Genre {
     private String name;
 
 
+    public Genre(String normalizedName) {
+        this.name = normalizedName;
+    }
 }

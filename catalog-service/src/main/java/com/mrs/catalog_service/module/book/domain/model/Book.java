@@ -1,5 +1,6 @@
 package com.mrs.catalog_service.module.book.domain.model;
 
+import com.mrs.catalog_service.module.book.application.command.CreateBookCommand;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
@@ -72,6 +73,20 @@ public class Book {
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
     private Set<Genre> genres;
+
+    public static Book create(CreateBookCommand command, Set<Genre> resolvedGenres) {
+        return Book.builder()
+                .title(command.title())
+                .description(command.description())
+                .releaseYear(command.releaseYear())
+                .author(command.author())
+                .isbn(command.isbn())
+                .pageCount(command.pageCount())
+                .publisher(command.publisher())
+                .coverUrl(command.coverUrl())
+                .genres(resolvedGenres)
+                .build();
+    }
 
     /**
      * Domain method to update the entity.
