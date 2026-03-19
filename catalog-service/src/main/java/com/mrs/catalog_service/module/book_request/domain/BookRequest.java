@@ -9,7 +9,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "book_requests")
@@ -68,10 +70,9 @@ public class BookRequest {
             name = "tb_book_request_genre",
             joinColumns = @JoinColumn(name = "book_request_id")
     )
-    @Enumerated(EnumType.STRING)
     @Column(name = "genre_name")
     @Builder.Default
-    private List<Genre> genres = new ArrayList<>();
+    private Set<Genre> genres = new HashSet<>();
 
     public BookRequest(String title, String description, int releaseYear, String coverUrl, String author, String isbn, int pageCount, String publisher) {
         this.title = title;

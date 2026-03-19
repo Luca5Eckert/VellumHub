@@ -11,7 +11,6 @@ import com.mrs.catalog_service.module.book_request.domain.use_case.GetAllBookReq
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class BookRequestApplicationService {

@@ -13,6 +13,6 @@ public record CreateBookRequestCommand(
         String isbn,
         int pageCount,
         String publisher,
-        List<Genre> genres
+        List<String> genres
 ) {
 }

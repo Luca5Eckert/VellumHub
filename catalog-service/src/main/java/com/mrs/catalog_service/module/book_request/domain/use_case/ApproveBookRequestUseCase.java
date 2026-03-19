@@ -2,25 +2,34 @@ package com.mrs.catalog_service.module.book_request.domain.use_case;
 
 import com.mrs.catalog_service.module.book.domain.event.CreateBookEvent;
 import com.mrs.catalog_service.module.book.domain.model.Book;
+import com.mrs.catalog_service.module.book.domain.model.Genre;
 import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
+import com.mrs.catalog_service.module.book.domain.port.GenreRepository;
 import com.mrs.catalog_service.module.book_request.domain.BookRequest;
 import com.mrs.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import com.mrs.catalog_service.module.book_request.domain.port.BookRequestRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Component
 public class ApproveBookRequestUseCase {
 
     private final BookRequestRepository bookRequestRepository;
     private final BookRepository bookRepository;
+    private final GenreRepository genreRepository;
 
     private final BookEventProducer<String, CreateBookEvent> producer;
 
-    public ApproveBookRequestUseCase(BookRequestRepository bookRequestRepository, BookRepository bookRepository, BookEventProducer<String, CreateBookEvent> producer) {
+    public ApproveBookRequestUseCase(BookRequestRepository bookRequestRepository, BookRepository bookRepository, GenreRepository genreRepository, BookEventProducer<String, CreateBookEvent> producer) {
         this.bookRequestRepository = bookRequestRepository;
         this.bookRepository = bookRepository;
+        this.genreRepository = genreRepository;
         this.producer = producer;
     }
 
@@ -50,10 +59,28 @@ public class ApproveBookRequestUseCase {
                 book.getReleaseYear(),
                 book.getCoverUrl(),
                 book.getAuthor(),
-                book.getGenres()
+                bookRequest.getGenres().stream().map(Genre::getName).toList()
         );
 
         producer.send("created-book", book.getId().toString(), createBookEvent);
+    }
+
+    private Set<Genre> resolveGenres(List<String> rawGenres) {
+        if (rawGenres == null || rawGenres.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        return rawGenres.stream()
+                .filter(g -> g != null && !g.isBlank())
+                .map(this::findOrCreateGenre)
+                .collect(Collectors.toSet());
+    }
+
+    private Genre findOrCreateGenre(String genreName) {
+        String normalizedName = genreName.trim().toUpperCase();
+
+        return genreRepository.findByName(normalizedName)
+                .orElseGet(() -> genreRepository.save(new Genre(normalizedName)));
     }
 
 }
