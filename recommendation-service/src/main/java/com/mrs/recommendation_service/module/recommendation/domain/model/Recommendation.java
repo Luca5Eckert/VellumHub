@@ -1,6 +1,5 @@
 package com.mrs.recommendation_service.module.recommendation.domain.model;
 
-import com.mrs.recommendation_service.module.book_feature.domain.model.Genre;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -46,11 +45,11 @@ public class Recommendation {
     )
     private String author;
 
-    @ElementCollection(targetClass = Genre.class)
+    @ElementCollection(targetClass = String.class)
     @Enumerated(EnumType.STRING)
-    private List<Genre> genres;
+    private List<String> genres;
 
-    public void update(String title, String description, String author, String coverUrl, int releaseYear, List<Genre> genres) {
+    public void update(String title, String description, String author, String coverUrl, int releaseYear, List<String> genres) {
         if(title != null) {
             this.title = title;
         }
