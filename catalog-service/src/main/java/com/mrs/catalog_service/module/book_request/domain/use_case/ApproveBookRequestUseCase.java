@@ -65,22 +65,17 @@ public class ApproveBookRequestUseCase {
         producer.send("created-book", book.getId().toString(), createBookEvent);
     }
 
-    private Set<Genre> resolveGenres(List<String> rawGenres) {
-        if (rawGenres == null || rawGenres.isEmpty()) {
-            return new HashSet<>();
-        }
-
-        return rawGenres.stream()
-                .filter(g -> g != null && !g.isBlank())
-                .map(this::findOrCreateGenre)
+    private Set<Genre> ensureGenresAreValid(List<String> genres) {
+        return genres.stream()
+                .filter(genreRepository::existsByName)
+                .map(this::findGenre)
                 .collect(Collectors.toSet());
     }
 
-    private Genre findOrCreateGenre(String genreName) {
-        String normalizedName = genreName.trim().toUpperCase();
-
-        return genreRepository.findByName(normalizedName)
-                .orElseGet(() -> genreRepository.save(new Genre(normalizedName)));
+    private Genre findGenre(String name) {
+        return genreRepository.findByName(name)
+                .orElseThrow(() -> new BookRequestDomainException("Genre not found: " + name));
     }
+
 
 }

@@ -9,6 +9,7 @@ import com.mrs.catalog_service.module.book.domain.exception.InvalidBookException
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
+import com.mrs.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,12 +45,7 @@ public class UpdateBookHandler {
 
         verifyIfBookAlreadyExists(book, request);
 
-        Set<Genre> resolvedGenres = null;
-        if (request.genres() != null) {
-            resolvedGenres = request.genres().stream()
-                    .map(this::findOrCreateGenre)
-                    .collect(Collectors.toSet());
-        }
+        Set<Genre> resolvedGenres = ensureGenresAreValid(request.genres());
 
         book.update(
                 request.title(),
@@ -78,20 +74,16 @@ public class UpdateBookHandler {
         bookEventProducer.send("updated-book", book.getId().toString(), updateBookEvent);
     }
 
-    /**
-     * Search for an existing genre by name. If it doesn't exist, create a new one and save it to the database.
-     *
-     * @param genreName The name of the genre to find or create.
-     * @return The existing or newly created Genre entity.
-     */
-    private Genre findOrCreateGenre(String genreName) {
-        String normalizedName = genreName.trim().toUpperCase();
+    private Set<Genre> ensureGenresAreValid(Set<String> genres) {
+        return genres.stream()
+                .filter(genreRepository::existsByName)
+                .map(this::findGenre)
+                .collect(Collectors.toSet());
+    }
 
-        return genreRepository.findByName(normalizedName)
-                .orElseGet(() -> {
-                    Genre newGenre = Genre.builder().name(normalizedName).build();
-                    return genreRepository.save(newGenre);
-                });
+    private Genre findGenre(String name) {
+        return genreRepository.findByName(name)
+                .orElseThrow(() -> new BookRequestDomainException("Genre not found: " + name));
     }
 
     private void verifyIfBookAlreadyExists(Book book, UpdateBookRequest request) {

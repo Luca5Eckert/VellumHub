@@ -3,6 +3,7 @@ package com.mrs.catalog_service.module.book.presentation.dto;
 import com.mrs.catalog_service.module.book.domain.model.Genre;
 
 import java.util.List;
+import java.util.Set;
 
 public record UpdateBookRequest(
         String title,
@@ -13,6 +14,6 @@ public record UpdateBookRequest(
         String isbn,
         int pageCount,
         String publisher,
-        List<String> genres
+        Set<String> genres
 ) {
 }
