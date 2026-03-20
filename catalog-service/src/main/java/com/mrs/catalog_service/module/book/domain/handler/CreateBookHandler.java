@@ -1,6 +1,6 @@
 package com.mrs.catalog_service.module.book.domain.handler;
 
-import com.mrs.catalog_service.module.book.application.command.CreateBookCommand; // <-- Usando Command
+import com.mrs.catalog_service.module.book.application.command.CreateBookCommand;
 import com.mrs.catalog_service.module.book.domain.exception.InvalidBookException;
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book.domain.model.Genre;
@@ -8,10 +8,10 @@ import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
 import com.mrs.catalog_service.module.book.domain.port.GenreRepository;
 import com.mrs.catalog_service.module.book.domain.event.CreateBookEvent;
+import com.mrs.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,7 +37,7 @@ public class CreateBookHandler {
 
         verifyUniquenessPolicy(command);
 
-        Set<Genre> resolvedGenres = resolveGenres(command.genres());
+        Set<Genre> resolvedGenres = ensureGenresAreValid(command.genres());
 
         var book = Book.create(command, resolvedGenres);
 
@@ -56,22 +56,16 @@ public class CreateBookHandler {
         }
     }
 
-    private Set<Genre> resolveGenres(Set<String> rawGenres) {
-        if (rawGenres == null || rawGenres.isEmpty()) {
-            return new HashSet<>();
-        }
-
-        return rawGenres.stream()
-                .filter(g -> g != null && !g.isBlank())
-                .map(this::findOrCreateGenre)
+    private Set<Genre> ensureGenresAreValid(Set<String> genres) {
+        return genres.stream()
+                .filter(genreRepository::existsByName)
+                .map(this::findGenre)
                 .collect(Collectors.toSet());
     }
 
-    private Genre findOrCreateGenre(String genreName) {
-        String normalizedName = genreName.trim().toUpperCase();
-
-        return genreRepository.findByName(normalizedName)
-                .orElseGet(() -> genreRepository.save(new Genre(normalizedName)));
+    private Genre findGenre(String name) {
+        return genreRepository.findByName(name)
+                .orElseThrow(() -> new BookRequestDomainException("Genre not found: " + name));
     }
 
     private void publishEvent(Book book) {

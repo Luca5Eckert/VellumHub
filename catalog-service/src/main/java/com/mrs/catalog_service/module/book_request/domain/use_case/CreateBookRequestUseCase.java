@@ -31,7 +31,7 @@ public class CreateBookRequestUseCase {
     public BookRequest execute(CreateBookRequestCommand command){
         verifyBookExists(command.title(), command.author());
 
-        var genres = verifyIfGenresAreValid(command.genres());
+        var genres = ensureGenresAreValid(command.genres());
 
         BookRequest bookRequest = BookRequest.builder()
                 .title(command.title())
@@ -50,7 +50,7 @@ public class CreateBookRequestUseCase {
         return bookRequest;
     }
 
-    private Set<Genre> verifyIfGenresAreValid(List<String> genres) {
+    private Set<Genre> ensureGenresAreValid(List<String> genres) {
         return genres.stream()
                 .filter(genreRepository::existsByName)
                 .map(this::findGenre)
