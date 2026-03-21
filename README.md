@@ -96,7 +96,7 @@ This allows recommendation reads to stay local to the Recommendation Service per
 
 ### v2.0
 - Moved recommendation compute into Java + PostgreSQL pgvector
-- Repository history documents latency movement from **~300–500ms** to **~80–120ms** for the recommendation path narrative
+- Historical project documentation in this repository reports recommendation latency movement from **~300–500ms** to **~80–120ms** as part of the v1.0 → v2.0 evolution narrative
 
 ### v2.1 (current)
 - Event-Carried State Transfer (ECST) consolidates Recommendation Service state via Kafka events
@@ -117,10 +117,10 @@ Swagger/OpenAPI is configured in all four services (`OpenApiConfig` classes + Sp
 
 | Service | Swagger UI | OpenAPI JSON | Evidence |
 |---|---|---|---|
-| User Service | `http://localhost:8084/swagger-ui/index.html` | `http://localhost:8084/v3/api-docs` | `user-service/.../OpenApiConfig.java`, `user-service/.../SecurityConfig.java` |
-| Catalog Service | `http://localhost:8081/swagger-ui/index.html` | `http://localhost:8081/v3/api-docs` | `catalog-service/.../OpenApiConfig.java`, `catalog-service/.../SecurityConfig.java` |
-| Engagement Service | `http://localhost:8083/swagger-ui/index.html` | `http://localhost:8083/v3/api-docs` | `engagement-service/.../OpenApiConfig.java`, `engagement-service/.../SecurityConfig.java` |
-| Recommendation Service | `http://localhost:8085/swagger-ui/index.html` | `http://localhost:8085/v3/api-docs` | `recommendation-service/.../OpenApiConfig.java`, `recommendation-service/.../SecurityConfig.java` |
+| User Service | `http://localhost:8084/swagger-ui/index.html` | `http://localhost:8084/v3/api-docs` | `user-service/src/main/java/com/mrs/user_service/share/config/OpenApiConfig.java`, `user-service/src/main/java/com/mrs/user_service/share/security/config/SecurityConfig.java` |
+| Catalog Service | `http://localhost:8081/swagger-ui/index.html` | `http://localhost:8081/v3/api-docs` | `catalog-service/src/main/java/com/mrs/catalog_service/share/config/OpenApiConfig.java`, `catalog-service/src/main/java/com/mrs/catalog_service/share/security/SecurityConfig.java` |
+| Engagement Service | `http://localhost:8083/swagger-ui/index.html` | `http://localhost:8083/v3/api-docs` | `engagement-service/src/main/java/com/mrs/engagement_service/share/config/OpenApiConfig.java`, `engagement-service/src/main/java/com/mrs/engagement_service/share/security/config/SecurityConfig.java` |
+| Recommendation Service | `http://localhost:8085/swagger-ui/index.html` | `http://localhost:8085/v3/api-docs` | `recommendation-service/src/main/java/com/mrs/recommendation_service/share/config/OpenApiConfig.java`, `recommendation-service/src/main/java/com/mrs/recommendation_service/share/security/config/SecurityConfig.java` |
 
 ---
 
@@ -131,7 +131,7 @@ Swagger/OpenAPI is configured in all four services (`OpenApiConfig` classes + Sp
 The Recommendation Service uses **LangChain4j** with `AllMiniLmL6V2EmbeddingModel` and persists vectors in **384 dimensions**.
 
 ```java
-// recommendation-service/src/main/java/.../share/config/EmbeddingConfig.java
+// recommendation-service/src/main/java/com/mrs/recommendation_service/share/config/EmbeddingConfig.java
 @Bean
 public EmbeddingModel embeddingModel() {
     return new AllMiniLmL6V2EmbeddingModel();
@@ -139,13 +139,13 @@ public EmbeddingModel embeddingModel() {
 ```
 
 ```java
-// recommendation-service/src/main/java/.../book_feature/domain/model/BookFeature.java
+// recommendation-service/src/main/java/com/mrs/recommendation_service/module/book_feature/domain/model/BookFeature.java
 @Column(name = "embedding", columnDefinition = "vector(384)")
 private float[] embedding;
 ```
 
 ```java
-// recommendation-service/src/main/java/.../user_profile/domain/model/UserProfile.java
+// recommendation-service/src/main/java/com/mrs/recommendation_service/module/user_profile/domain/model/UserProfile.java
 @Column(columnDefinition = "vector(384)")
 private float[] profileVector = new float[384];
 ```
@@ -173,7 +173,7 @@ User profile learning is **incremental vector learning + L2 normalization**.
 - Final profile vector is normalized back to unit magnitude
 
 ```java
-// recommendation-service/src/main/java/.../user_profile/domain/model/UserProfile.java
+// recommendation-service/src/main/java/com/mrs/recommendation_service/module/user_profile/domain/model/UserProfile.java
 int adjustmentWeight = getWeightAdjustment(newStars, oldStars, isNewRating);
 this.profileVector[i] += (bookEmbedding[i] * adjustmentWeight * learningRate);
 ...
@@ -196,7 +196,7 @@ private void normalizeVector(double sumOfSquares) {
 Recommendation candidates are retrieved with pgvector cosine distance (`<=>`) and then reranked with a blend of vector distance + popularity score.
 
 ```sql
--- recommendation-service/src/main/java/.../JpaBookFeatureRepository.java
+-- recommendation-service/src/main/java/com/mrs/recommendation_service/module/book_feature/infrastructure/repository/JpaBookFeatureRepository.java
 SELECT
     b.book_id,
     b.popularity_score,
@@ -356,7 +356,9 @@ This confirms:
 ## Known Limitations
 
 - Recommendation Service OpenAPI description text still references a 15-dimensional genre-vector approach, while implementation uses `vector(384)` with LangChain4j embeddings.
+  - Tracking note: this should be corrected in `recommendation-service/src/main/java/com/mrs/recommendation_service/share/config/OpenApiConfig.java` so generated API docs match runtime implementation.
 - Event naming in some descriptive text is inconsistent with active topic names (`created-rating` is the topic used in producer/consumer code).
+- Rating event payload naming is inconsistent across services (`mediaId` in Engagement producer contract vs `bookId` in Recommendation consumer contract).
 - Full repository test execution in this environment requires Java 21; current runner JDK does not support `--release 21`.
 - No API Gateway is present; services are exposed directly.
 - Integration/E2E coverage remains limited compared to unit-level coverage.
