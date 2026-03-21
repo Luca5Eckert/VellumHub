@@ -6,7 +6,7 @@ import java.util.UUID;
 public record RatingGetResponse(
         Long id,
         UUID userId,
-        UUID mediaId,
+        UUID bookId,
         int stars,
         String review,
         LocalDateTime timestamp

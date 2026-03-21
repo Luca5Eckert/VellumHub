@@ -186,15 +186,14 @@ The service publishes events to Kafka for inter-service communication:
 
 ### Produced Events
 
-**Topic:** `rating-events`
+**Topic:** `created-rating`
 
 **Event:** `CreatedRatingEvent`
 ```json
 {
   "userId": "123e4567-e89b-12d3-a456-426614174000",
   "bookId": "123e4567-e89b-12d3-a456-426614174001",
-  "stars": 5,
-  "timestamp": "2024-03-15T10:30:00"
+  "stars": 5
 }
 ```
 

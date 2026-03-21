@@ -31,7 +31,7 @@ public class OpenApiConfig {
                                 This service provides intelligent book recommendations using:
                                 - **Vector Similarity Search**: PostgreSQL pgvector extension for cosine similarity
                                 - **User Profile Vectors**: Dynamically updated based on rating history
-                                - **Genre-Based Embeddings**: 15-dimensional vectors representing book genres
+                                - **Semantic Embeddings**: 384-dimensional vectors generated via LangChain4j
                                 
                                 ## How It Works
                                 1. User ratings are consumed from Kafka events
@@ -40,7 +40,7 @@ public class OpenApiConfig {
                                 4. Results are enriched with book metadata from the Catalog Service
                                 
                                 ## Algorithm Details
-                                - **Vector Dimensions**: 15 (one per genre: Fantasy, Sci-Fi, Horror, Romance, etc.)
+                                - **Vector Dimensions**: 384
                                 - **Similarity Metric**: Cosine distance for accurate preference matching
                                 - **Index Type**: HNSW (Hierarchical Navigable Small World) for fast approximate nearest neighbor search
                                 - **Performance**: Typically under 100ms for datasets with 100K+ books
@@ -50,8 +50,7 @@ public class OpenApiConfig {
                                 - `created-book`: Create book feature vectors
                                 - `updated-book`: Update book feature vectors
                                 - `deleted-book`: Remove book feature vectors
-                                - `rating-created`: Update user profile vectors
-                                - `reading-status-updated`: Adjust user preference weights
+                                - `created-rating`: Update user profile vectors
                                 """)
                         .version("1.0.0")
                         .contact(new Contact()

@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public record CreatedRatingEvent(
         UUID userId,
-        UUID mediaId,
+        UUID bookId,
         int stars
 ) {
 }

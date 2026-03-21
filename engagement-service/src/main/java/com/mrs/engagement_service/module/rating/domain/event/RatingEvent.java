@@ -6,7 +6,7 @@ import java.util.UUID;
 public record RatingEvent(
         long id,
         UUID userId,
-        UUID mediaId,
+        UUID bookId,
         int stars,
         String review,
         LocalDateTime timestamp
