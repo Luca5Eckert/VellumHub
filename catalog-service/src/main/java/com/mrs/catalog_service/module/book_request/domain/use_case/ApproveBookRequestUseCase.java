@@ -12,24 +12,18 @@ import com.mrs.catalog_service.module.book_request.domain.port.BookRequestReposi
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class ApproveBookRequestUseCase {
 
     private final BookRequestRepository bookRequestRepository;
     private final BookRepository bookRepository;
-    private final GenreRepository genreRepository;
 
     private final BookEventProducer<String, CreateBookEvent> producer;
 
-    public ApproveBookRequestUseCase(BookRequestRepository bookRequestRepository, BookRepository bookRepository, GenreRepository genreRepository, BookEventProducer<String, CreateBookEvent> producer) {
+    public ApproveBookRequestUseCase(BookRequestRepository bookRequestRepository, BookRepository bookRepository, BookEventProducer<String, CreateBookEvent> producer) {
         this.bookRequestRepository = bookRequestRepository;
         this.bookRepository = bookRepository;
-        this.genreRepository = genreRepository;
         this.producer = producer;
     }
 
@@ -65,17 +59,6 @@ public class ApproveBookRequestUseCase {
         producer.send("created-book", book.getId().toString(), createBookEvent);
     }
 
-    private Set<Genre> ensureGenresAreValid(List<String> genres) {
-        return genres.stream()
-                .filter(genreRepository::existsByName)
-                .map(this::findGenre)
-                .collect(Collectors.toSet());
-    }
-
-    private Genre findGenre(String name) {
-        return genreRepository.findByName(name)
-                .orElseThrow(() -> new BookRequestDomainException("Genre not found: " + name));
-    }
 
 
 }
