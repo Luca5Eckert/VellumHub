@@ -228,43 +228,13 @@ This is currently tolerable only because both are UUID in position-compatible ev
 
 ---
 
-## Day 2 Operations
-
-### Reliability Testing
-
-**What exists now:**
-- Unit and slice testing patterns are present (`MockitoExtension`, `@WebMvcTest`, `@SpringBootTest`)
-- `spring-kafka-test` dependency is present
-
-**What was searched and not found:**
-- No `Testcontainers` dependency or usage (`org.testcontainers`, `@Testcontainers`, `KafkaContainer`, `PostgreSQLContainer`)
-
-**Implication:**
-- Integration confidence for real Kafka + PostgreSQL/pgvector behavior is lower than if containerized integration tests were present.
-
-### Resilience & Error Handling
-
-**What was searched and not found:**
-- No explicit retry/DLT stack in code (`@Retryable`, `@RetryableTopic`, `DeadLetterPublishingRecoverer`, custom `DefaultErrorHandler`)
-
-**Current behavior:**
-- Kafka consumers log and rethrow exceptions.
-- Event producer logs success/failure asynchronously.
-- If embedding generation fails inside recommendation event handling, the exception bubbles up; no documented custom backoff or dead-letter route is configured in code.
-
 ### Observability
 
-**What exists:**
 - Spring Boot Actuator included in all services
 - Health/metrics/prometheus endpoints enabled in service properties
 - Health endpoints exposed through security configuration
 - Kafka health indicator is enabled (`management.health.kafka.enabled=true`)
 
-**What was searched and not found:**
-- No distributed tracing stack (`sleuth`, `zipkin`) or explicit micrometer tracing instrumentation in code
-
-**Operational takeaway:**
-- You can observe service health and metrics endpoints, but end-to-end trace correlation from Engagement rating ingest to Recommendation profile update is not yet implemented as a first-class trace pipeline.
 
 ---
 
@@ -294,19 +264,6 @@ Confirmed from code and SQL:
 
 ---
 
-## Technical Glossary
-
-### ECST (Event-Carried State Transfer)
-A pattern where domain events carry enough state for downstream services to build their own local read models. VellumHub uses ECST so Recommendation can update vectors from Kafka without synchronous dependency chains during recommendation reads.
-
-### HNSW Indexing
-Hierarchical Navigable Small World indexing is an approximate nearest-neighbor strategy used by pgvector for fast high-dimensional search at scale. It is chosen over flat scans to keep retrieval latency practical as corpus size grows.
-
-### L2 Normalization
-L2 normalization scales vectors to unit magnitude. This is critical when using cosine-based similarity, because it stabilizes comparisons and keeps learned profile vectors numerically consistent over repeated updates.
-
----
-
 ## Known Discrepancies & Limitations
 
 ### Known Discrepancy 1 — OpenAPI dimensionality text vs runtime implementation
@@ -329,7 +286,7 @@ Recommendation runtime implementation is 384-dimensional, but `OpenApiConfig` st
 
 This should be standardized to a single field name (`bookId`) across producer and consumer contracts.
 
-### Additional current limitations
+### Current limitations
 
 - No custom retry/DLT strategy found for Kafka consumers.
 - No distributed tracing instrumentation (Sleuth/Zipkin or Micrometer Tracing) found.
