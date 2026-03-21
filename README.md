@@ -96,7 +96,7 @@ This allows recommendation reads to stay local to the Recommendation Service per
 
 ### v2.0
 - Moved recommendation compute into Java + PostgreSQL pgvector
-- Historical project documentation in this repository reports recommendation latency movement from **~300–500ms** to **~80–120ms** as part of the v1.0 → v2.0 evolution narrative
+- Historical project documentation in this repository reports that recommendation latency moved from **~300–500ms** to **~80–120ms** as part of the v1.0 → v2.0 evolution narrative
 
 ### v2.1 (current)
 - Event-Carried State Transfer (ECST) consolidates Recommendation Service state via Kafka events
@@ -264,7 +264,7 @@ public record CreateBookEvent(
 public record DeleteBookEvent(UUID bookId) {}
 ```
 
-#### Engagement rating event
+#### Engagement Service producer payload
 
 Producer payload class:
 
@@ -293,7 +293,7 @@ Recommendation consumer listens to `created-rating` and maps payload into its lo
 public void consume(@Payload CreatedRatingEvent createdRatingEvent) { ... }
 ```
 
-Consumer-side contract:
+Recommendation Service consumer contract:
 
 ```java
 public record CreatedRatingEvent(
