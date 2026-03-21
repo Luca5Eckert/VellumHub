@@ -46,7 +46,6 @@ public class Recommendation {
     private String author;
 
     @ElementCollection(targetClass = String.class)
-    @Enumerated(EnumType.STRING)
     private List<String> genres;
 
     public void update(String title, String description, String author, String coverUrl, int releaseYear, List<String> genres) {
