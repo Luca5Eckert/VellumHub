@@ -1,7 +1,6 @@
 package com.mrs.recommendation_service.module.book_feature.domain.use_case;
 
 import com.mrs.recommendation_service.module.book_feature.application.use_case.CreateBookFeatureUseCase;
-import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.mrs.recommendation_service.share.event.CreateBookEvent;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +27,7 @@ class CreateBookFeatureUseCaseTest {
     void shouldSaveBookFeatureSuccessfully() {
         // Arrange
         CreateBookEvent createBookEvent = new CreateBookEvent(UUID.randomUUID(), "Book Title", "Author Name",
-                2020, "http://cover.jpg", "Lucas", List.of(Genre.FANTASY, Genre.BIOGRAPHY_MEMOIR));
+                2020, "http://cover.jpg", "Lucas", List.of("Fantasy", "Lucas"));
         // Act
         createBookFeatureUseCase.execute(createBookEvent);
 

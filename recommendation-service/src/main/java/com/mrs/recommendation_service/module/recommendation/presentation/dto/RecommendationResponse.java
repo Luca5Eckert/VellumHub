@@ -10,5 +10,5 @@ public record RecommendationResponse (
         int releaseYear,
         String coverUrl,
         String author,
-        List<Genre> genres
+        List<String> genres
 ){}
