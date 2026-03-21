@@ -20,12 +20,8 @@ This README is intentionally architecture-first and evidence-driven.
 - [Active API Documentation (Swagger/OpenAPI)](#active-api-documentation-swaggeropenapi)
 - [AI & Vector Pipeline](#ai--vector-pipeline)
 - [Event-Driven Backbone (ECST)](#event-driven-backbone-ecst)
-- [Day 2 Operations](#day-2-operations)
-  - [Reliability Testing](#reliability-testing)
-  - [Resilience & Error Handling](#resilience--error-handling)
-  - [Observability](#observability)
+- [Observability](#observability)
 - [Database and pgvector Design](#database-and-pgvector-design)
-- [Technical Glossary](#technical-glossary)
 - [Known Discrepancies & Limitations](#known-discrepancies--limitations)
 - [Quick Start](#quick-start)
 
