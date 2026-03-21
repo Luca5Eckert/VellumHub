@@ -215,12 +215,10 @@ Use these topic names consistently:
 
 ### Internal Contract Variance
 
-There is a real payload variance between producer and consumer contracts for the rating event:
+Payload naming is now aligned for the rating event contract:
 
-- Engagement producer event field: `mediaId`
+- Engagement producer event field: `bookId`
 - Recommendation consumer event field: `bookId`
-
-This is currently tolerable only because both are UUID in position-compatible event payload mapping, but it is a contract smell and should be aligned.
 
 ---
 
@@ -262,25 +260,14 @@ Confirmed from code and SQL:
 
 ## Known Discrepancies & Limitations
 
-### Known Discrepancy 1 — OpenAPI dimensionality text vs runtime implementation
+### Known Discrepancy 1 — resolved in code
 
-Recommendation runtime implementation is 384-dimensional, but `OpenApiConfig` still documents 15-dimensional genre vectors.
+- Recommendation OpenAPI text now reflects 384-dimensional semantic embeddings.
+- Recommendation and Engagement OpenAPI event naming now uses `created-rating`.
 
-**Exact file to fix:**
-- `/home/runner/work/VellumHub/VellumHub/recommendation-service/src/main/java/com/mrs/recommendation_service/share/config/OpenApiConfig.java`
+### Known Discrepancy 2 — resolved in code
 
-**Strings to update in that file:**
-1. `- **Genre-Based Embeddings**: 15-dimensional vectors representing book genres`
-2. `- **Vector Dimensions**: 15 (one per genre: Fantasy, Sci-Fi, Horror, Romance, etc.)`
-3. `- \`rating-created\`: Update user profile vectors` (should use `created-rating`)
-
-### Known Discrepancy 2 — Internal contract variance
-
-`CreatedRatingEvent` naming mismatch across services:
-- Engagement event uses `UUID mediaId`
-- Recommendation event uses `UUID bookId`
-
-This should be standardized to a single field name (`bookId`) across producer and consumer contracts.
+- `CreatedRatingEvent` naming is now standardized across services to `bookId`.
 
 ### Current limitations
 

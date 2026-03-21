@@ -65,7 +65,7 @@ This service maintains user preference profiles and book feature embeddings, usi
   - UpdateMediaFeature
   - DeleteBookFeature
 - **Features:**
-  - 15-dimensional genre embeddings
+  - 384-dimensional semantic embeddings
   - Popularity score calculation
   - Feign client integration with Catalog Service
 
@@ -80,7 +80,7 @@ This service maintains user preference profiles and book feature embeddings, usi
 
 ### Architecture Patterns
 
-- **Vector Similarity Search:** Cosine distance in 15D space
+- **Vector Similarity Search:** Cosine distance in 384D space
 - **Event-Driven:** Kafka consumers for async updates
 - **Event-Carried State Transfer (ECST):** Events carry book/rating state to keep `book_features` and `user_profiles` current
 - **Microservice Integration:** Feign clients for service communication

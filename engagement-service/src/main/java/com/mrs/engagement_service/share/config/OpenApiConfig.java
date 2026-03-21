@@ -40,8 +40,7 @@ public class OpenApiConfig {
                                 
                                 ## Event Publishing
                                 This service publishes events to Apache Kafka for:
-                                - `rating-created`: When a user submits a new rating
-                                - `reading-status-updated`: When reading progress changes
+                                - `created-rating`: When a user submits a new rating
                                 
                                 ## Filtering Options
                                 Rating queries support filtering by:
