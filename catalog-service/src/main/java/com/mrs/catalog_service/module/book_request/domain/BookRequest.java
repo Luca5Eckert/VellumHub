@@ -65,12 +65,12 @@ public class BookRequest {
 
     private Instant deletedAt;
 
-    @ElementCollection
-    @CollectionTable(
-            name = "tb_book_request_genre",
-            joinColumns = @JoinColumn(name = "book_request_id")
+    @ManyToMany
+    @JoinTable(
+            name = "book_request_genre_id",
+            joinColumns = @JoinColumn(name = "book_request_id"),
+            inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
-    @Column(name = "genre_name")
     @Builder.Default
     private Set<Genre> genres = new HashSet<>();
 
