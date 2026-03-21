@@ -22,7 +22,7 @@ This README is intentionally architecture-first and evidence-driven.
 - [Event-Driven Backbone (ECST)](#event-driven-backbone-ecst)
 - [Observability](#observability)
 - [Database and pgvector Design](#database-and-pgvector-design)
-- [Known Discrepancies & Limitations](#known-discrepancies--limitations)
+- [Roadmap and Future Enhancements](#eoadmap-and-future-enhancements)
 - [Quick Start](#quick-start)
 
 ---
@@ -258,23 +258,14 @@ Confirmed from code and SQL:
 
 ---
 
-## Known Discrepancies & Limitations
+## Roadmap and Future Enhancements
 
-### Known Discrepancy 1 — resolved in code
+### Planned Technical Improvements
 
-- Recommendation OpenAPI text now reflects 384-dimensional semantic embeddings.
-- Recommendation and Engagement OpenAPI event naming now uses `created-rating`.
-
-### Known Discrepancy 2 — resolved in code
-
-- `CreatedRatingEvent` naming is now standardized across services to `bookId`.
-
-### Current limitations
-
-- No custom retry/DLT strategy found for Kafka consumers.
-- No distributed tracing instrumentation (Sleuth/Zipkin or Micrometer Tracing) found.
-- No Testcontainers-based integration test suite found for Kafka + pgvector paths.
-- In this runner, Maven tests fail due to Java version mismatch (`release version 21 not supported`).
+- **Kafka Resilience:** Implement custom retry and Dead Letter Topic (DLT) strategies for consumers.
+- **Observability:** Integrate distributed tracing instrumentation (e.g., Micrometer Tracing or Zipkin) across services.
+- **Integration Testing:** Introduce a Testcontainers-based test suite to validate Kafka and pgvector workflows.
+- **CI/CD Alignment:** Upgrade pipeline runners to fully support Java 21 for seamless Maven test execution.
 
 ---
 
