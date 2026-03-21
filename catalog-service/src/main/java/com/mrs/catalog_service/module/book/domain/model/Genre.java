@@ -1,8 +1,9 @@
 package com.mrs.catalog_service.module.book.domain.model;
 
-import io.swagger.v3.core.converter.AnnotatedType;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.Objects;
 
 @Entity
 @Table(name = "genres")
@@ -20,8 +21,20 @@ public class Genre {
     @Column(nullable = false, unique = true)
     private String name;
 
-
     public Genre(String normalizedName) {
         this.name = normalizedName;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Genre genre = (Genre) o;
+        return id == genre.id && Objects.equals(name, genre.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name);
+    }
+
 }
