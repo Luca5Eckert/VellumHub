@@ -1,7 +1,5 @@
 package com.mrs.catalog_service.module.book_request.application.dto;
 
-import com.mrs.catalog_service.module.book.domain.model.Genre;
-
 import java.util.List;
 
 public record CreateBookRequestDto(
