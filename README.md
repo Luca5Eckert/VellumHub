@@ -1,15 +1,15 @@
 # 📖 VellumHub
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.2-green)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-Mixed%203.4.x%20%2B%204.0.x-green)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
 [![pgvector](https://img.shields.io/badge/pgvector-enabled-blue)](https://github.com/pgvector/pgvector)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-VellumHub is a Spring Boot microservices platform for book discovery, user engagement, and personalized recommendations.
+VellumHub is a book-focused microservices platform with event-driven recommendation updates, pgvector similarity search, and local read models for low-latency serving.
 
-This document focuses on **current architecture reality (v2.1)**, with emphasis on the recommendation engine, pgvector, and event-driven state transfer.
+This README is intentionally architecture-first and evidence-driven.
 
 ---
 
@@ -20,8 +20,13 @@ This document focuses on **current architecture reality (v2.1)**, with emphasis 
 - [Active API Documentation (Swagger/OpenAPI)](#active-api-documentation-swaggeropenapi)
 - [AI & Vector Pipeline](#ai--vector-pipeline)
 - [Event-Driven Backbone (ECST)](#event-driven-backbone-ecst)
+- [Day 2 Operations](#day-2-operations)
+  - [Reliability Testing](#reliability-testing)
+  - [Resilience & Error Handling](#resilience--error-handling)
+  - [Observability](#observability)
 - [Database and pgvector Design](#database-and-pgvector-design)
-- [Known Limitations](#known-limitations)
+- [Technical Glossary](#technical-glossary)
+- [Known Discrepancies & Limitations](#known-discrepancies--limitations)
 - [Quick Start](#quick-start)
 
 ---
@@ -31,7 +36,7 @@ This document focuses on **current architecture reality (v2.1)**, with emphasis 
 ```mermaid
 graph TB
     subgraph Clients
-      C[Clients]
+      U[User]
     end
 
     subgraph Services
@@ -42,10 +47,10 @@ graph TB
     end
 
     subgraph Kafka
-      T1[created-book]
-      T2[updated-book]
-      T3[deleted-book]
-      T4[created-rating]
+      B1[created-book]
+      B2[updated-book]
+      B3[deleted-book]
+      R1[created-rating]
     end
 
     subgraph Databases
@@ -55,83 +60,78 @@ graph TB
       RDB[(recommendation_db + pgvector)]
     end
 
-    C --> US
-    C --> CS
-    C --> ES
-    C --> RS
+    U --> US
+    U --> CS
+    U --> ES
+    U --> RS
 
     US --> UDB
     CS --> CDB
     ES --> EDB
     RS --> RDB
 
-    CS --> T1
-    CS --> T2
-    CS --> T3
-    ES --> T4
+    CS --> B1
+    CS --> B2
+    CS --> B3
+    ES --> R1
 
-    T1 --> RS
-    T2 --> RS
-    T3 --> RS
-    T4 --> RS
+    B1 --> RS
+    B2 --> RS
+    B3 --> RS
+    R1 --> RS
 ```
 
-### Why v2.1 matters
-
-The Recommendation Service is now modeled as an **event-fed local read model**:
-
-- `book_features` stores vectorized book representations
-- `user_profiles` stores evolving user preference vectors
-- `recommendations` stores recommendation-facing book metadata
-
-This allows recommendation reads to stay local to the Recommendation Service persistence boundary.
+The Recommendation Service acts as an event-fed local read model:
+- `book_features` for vector search state
+- `user_profiles` for preference vectors
+- `recommendations` for response metadata
 
 ---
 
 ## Architecture Evolution (v1.0 → v2.0 → v2.1)
 
 ### v1.0
-- External ML service in the recommendation path
-- Higher network and operational coupling
+- External ML service in critical recommendation path
+- More network hops and operational coupling
 
 ### v2.0
-- Moved recommendation compute into Java + PostgreSQL pgvector
-- Historical project documentation in this repository reports that recommendation latency moved from **~300–500ms** to **~80–120ms** as part of the v1.0 → v2.0 evolution narrative
+- Recommendation compute moved into JVM services + PostgreSQL pgvector
+- Historical project docs in this repository report latency movement from ~300–500ms to ~80–120ms in this transition narrative
 
-### v2.1 (current)
-- Event-Carried State Transfer (ECST) consolidates Recommendation Service state via Kafka events
-- Book and rating events incrementally update local vector/read models
-- Recommendation query path remains local to Recommendation Service data
+### v2.1
+- Event-Carried State Transfer (ECST) used to keep recommendation state synchronized incrementally
+- User interactions feed Kafka topics, and consumers update vectors continuously
 
 ```mermaid
 graph LR
   V1[v1.0\nExternal ML Service] --> V2[v2.0\npgvector in Recommendation DB]
-  V2 --> V21[v2.1\nECST Local Read Model]
+  V2 --> V21[v2.1\nECST + Local Read Model]
 ```
 
 ---
 
 ## Active API Documentation (Swagger/OpenAPI)
 
-Swagger/OpenAPI is configured in all four services (`OpenApiConfig` classes + Springdoc UI dependency).
+Swagger/OpenAPI is configured in all services and exposed publicly via security rules:
+`/swagger-ui/**`, `/swagger-ui.html`, `/v3/api-docs/**`.
 
-| Service | Swagger UI | OpenAPI JSON | Evidence |
-|---|---|---|---|
-| User Service | `http://localhost:8084/swagger-ui/index.html` | `http://localhost:8084/v3/api-docs` | `user-service/src/main/java/com/mrs/user_service/share/config/OpenApiConfig.java`, `user-service/src/main/java/com/mrs/user_service/share/security/config/SecurityConfig.java` |
-| Catalog Service | `http://localhost:8081/swagger-ui/index.html` | `http://localhost:8081/v3/api-docs` | `catalog-service/src/main/java/com/mrs/catalog_service/share/config/OpenApiConfig.java`, `catalog-service/src/main/java/com/mrs/catalog_service/share/security/SecurityConfig.java` |
-| Engagement Service | `http://localhost:8083/swagger-ui/index.html` | `http://localhost:8083/v3/api-docs` | `engagement-service/src/main/java/com/mrs/engagement_service/share/config/OpenApiConfig.java`, `engagement-service/src/main/java/com/mrs/engagement_service/share/security/config/SecurityConfig.java` |
-| Recommendation Service | `http://localhost:8085/swagger-ui/index.html` | `http://localhost:8085/v3/api-docs` | `recommendation-service/src/main/java/com/mrs/recommendation_service/share/config/OpenApiConfig.java`, `recommendation-service/src/main/java/com/mrs/recommendation_service/share/security/config/SecurityConfig.java` |
+| Service | Swagger UI | OpenAPI JSON |
+|---|---|---|
+| User Service | `http://localhost:8084/swagger-ui/index.html` | `http://localhost:8084/v3/api-docs` |
+| Catalog Service | `http://localhost:8081/swagger-ui/index.html` | `http://localhost:8081/v3/api-docs` |
+| Engagement Service | `http://localhost:8083/swagger-ui/index.html` | `http://localhost:8083/v3/api-docs` |
+| Recommendation Service | `http://localhost:8085/swagger-ui/index.html` | `http://localhost:8085/v3/api-docs` |
 
 ---
 
 ## AI & Vector Pipeline
 
-### 1) Embedding generation
+### Embedding model and dimensionality
 
-The Recommendation Service uses **LangChain4j** with `AllMiniLmL6V2EmbeddingModel` and persists vectors in **384 dimensions**.
+Recommendation uses LangChain4j embeddings with `AllMiniLmL6V2EmbeddingModel`, stored as `vector(384)`:
 
 ```java
-// recommendation-service/src/main/java/com/mrs/recommendation_service/share/config/EmbeddingConfig.java
+// recommendation-service/.../share/config/EmbeddingConfig.java
 @Bean
 public EmbeddingModel embeddingModel() {
     return new AllMiniLmL6V2EmbeddingModel();
@@ -139,64 +139,37 @@ public EmbeddingModel embeddingModel() {
 ```
 
 ```java
-// recommendation-service/src/main/java/com/mrs/recommendation_service/module/book_feature/domain/model/BookFeature.java
+// recommendation-service/.../book_feature/domain/model/BookFeature.java
 @Column(name = "embedding", columnDefinition = "vector(384)")
 private float[] embedding;
 ```
 
 ```java
-// recommendation-service/src/main/java/com/mrs/recommendation_service/module/user_profile/domain/model/UserProfile.java
+// recommendation-service/.../user_profile/domain/model/UserProfile.java
 @Column(columnDefinition = "vector(384)")
 private float[] profileVector = new float[384];
 ```
 
-Book textual input is assembled from title/author/genres/description and L2-normalized after embedding:
+The book embedding provider normalizes vectors to unit length before persistence.
+
+### User profile update logic on new ratings
+
+Profile updates are incremental and normalized:
+- Category weight mapping (`DETRACTOR=-5`, `NEUTRAL=1`, `PROMOTER=5`)
+- Delta update with learning rate `0.1f`
+- L2 normalization after update
 
 ```java
-var rawVectors = embeddingModel
-        .embed(semanticContent)
-        .content()
-        .vector();
-
-return normalizeVectors(rawVectors);
-```
-
-### 2) User profile update logic on new ratings
-
-User profile learning is **incremental vector learning + L2 normalization**.
-
-- Ratings are mapped into category weights via `RatingCategory`:
-  - `DETRACTOR(-5)` for stars `<=2`
-  - `NEUTRAL(1)` for stars `==3`
-  - `PROMOTER(5)` for stars `>=4`
-- Delta weight is applied with learning rate `0.1f`
-- Final profile vector is normalized back to unit magnitude
-
-```java
-// recommendation-service/src/main/java/com/mrs/recommendation_service/module/user_profile/domain/model/UserProfile.java
 int adjustmentWeight = getWeightAdjustment(newStars, oldStars, isNewRating);
 this.profileVector[i] += (bookEmbedding[i] * adjustmentWeight * learningRate);
-...
 this.normalizeVector(sumOfSquares);
 ```
 
-```java
-private void normalizeVector(double sumOfSquares) {
-    float magnitude = (float) Math.sqrt(sumOfSquares);
-    if (magnitude > 0) {
-        for (int i = 0; i < this.profileVector.length; i++) {
-            this.profileVector[i] /= magnitude;
-        }
-    }
-}
-```
+### Retrieval path
 
-### 3) Vector retrieval and ranking
-
-Recommendation candidates are retrieved with pgvector cosine distance (`<=>`) and then reranked with a blend of vector distance + popularity score.
+Candidate retrieval uses cosine-distance operator `<=>`, then re-ranks with popularity blend:
 
 ```sql
--- recommendation-service/src/main/java/com/mrs/recommendation_service/module/book_feature/infrastructure/repository/JpaBookFeatureRepository.java
 SELECT
     b.book_id,
     b.popularity_score,
@@ -215,117 +188,91 @@ ORDER BY
 
 ## Event-Driven Backbone (ECST)
 
-### Topic flow
-
-- Catalog → Recommendation:
-  - `created-book`
-  - `updated-book`
-  - `deleted-book`
-- Engagement → Recommendation:
-  - `created-rating`
+### Learning loop (interaction → event → vector update)
 
 ```mermaid
 sequenceDiagram
-    participant CS as Catalog Service
+    participant User
     participant ES as Engagement Service
     participant K as Kafka
     participant RS as Recommendation Service
-    participant RDB as recommendation_db
+    participant DB as recommendation_db
 
-    CS->>K: created-book / updated-book / deleted-book
-    ES->>K: created-rating
+    User->>ES: Submit rating (bookId, stars)
+    ES->>K: Publish created-rating
+    K->>RS: Deliver CreatedRatingEvent
+    RS->>DB: Update user_profiles.profile_vector (L2 normalized)
 
-    K->>RS: CreateBookEvent / UpdateBookEvent / DeleteBookEvent
-    RS->>RDB: upsert/delete book_features + recommendations
-
-    K->>RS: CreatedRatingEvent
-    RS->>RDB: update user_profiles.profile_vector
+    User->>RS: Request recommendations
+    RS->>DB: Query book_features with <=> + re-rank
+    DB-->>RS: Ranked book IDs
+    RS-->>User: Personalized recommendation list
 ```
 
-### Event payloads (actual field names in code)
+### Topic naming (standardized)
 
-#### Catalog book events
+Use these topic names consistently:
+- `created-book`
+- `updated-book`
+- `deleted-book`
+- `created-rating`
 
-```java
-public record CreateBookEvent(
-        UUID bookId,
-        String title,
-        String description,
-        int releaseYear,
-        String coverUrl,
-        String author,
-        List<Genre> genres
-) {}
-```
+### Internal Contract Variance
 
-`UpdateBookEvent` has the same field set. `DeleteBookEvent` contains:
+There is a real payload variance between producer and consumer contracts for the rating event:
 
-```java
-public record DeleteBookEvent(UUID bookId) {}
-```
+- Engagement producer event field: `mediaId`
+- Recommendation consumer event field: `bookId`
 
-#### Engagement Service producer payload
+This is currently tolerable only because both are UUID in position-compatible event payload mapping, but it is a contract smell and should be aligned.
 
-Producer payload class:
+---
 
-```java
-public record CreatedRatingEvent(
-        UUID userId,
-        UUID mediaId,
-        int stars
-) {}
-```
+## Day 2 Operations
 
-Published via:
+### Reliability Testing
 
-```java
-eventProducer.send(
-        "created-rating",
-        event.userId().toString(),
-        event
-);
-```
+**What exists now:**
+- Unit and slice testing patterns are present (`MockitoExtension`, `@WebMvcTest`, `@SpringBootTest`)
+- `spring-kafka-test` dependency is present
 
-Recommendation consumer listens to `created-rating` and maps payload into its local rating event contract:
+**What was searched and not found:**
+- No `Testcontainers` dependency or usage (`org.testcontainers`, `@Testcontainers`, `KafkaContainer`, `PostgreSQLContainer`)
 
-```java
-@KafkaListener(topics = "created-rating", groupId = "recommendation-service")
-public void consume(@Payload CreatedRatingEvent createdRatingEvent) { ... }
-```
+**Implication:**
+- Integration confidence for real Kafka + PostgreSQL/pgvector behavior is lower than if containerized integration tests were present.
 
-Recommendation Service consumer contract:
+### Resilience & Error Handling
 
-```java
-public record CreatedRatingEvent(
-        UUID userId,
-        UUID bookId,
-        int stars
-) {}
-```
+**What was searched and not found:**
+- No explicit retry/DLT stack in code (`@Retryable`, `@RetryableTopic`, `DeadLetterPublishingRecoverer`, custom `DefaultErrorHandler`)
 
-### Local read model maintenance in Recommendation Service
+**Current behavior:**
+- Kafka consumers log and rethrow exceptions.
+- Event producer logs success/failure asynchronously.
+- If embedding generation fails inside recommendation event handling, the exception bubbles up; no documented custom backoff or dead-letter route is configured in code.
 
-- `CreateBookConsumerEvent`:
-  - Creates `BookFeature` vector (`CreateBookFeatureUseCase`)
-  - Creates recommendation-facing metadata row (`CreateRecommendationUseCase`)
-- `UpdateBookConsumerEvent`:
-  - Regenerates book embedding
-  - Updates recommendation metadata
-- `DeleteBookConsumerEvent`:
-  - Deletes from both `book_features` and `recommendations`
-- `CreatedRatingConsumerEvent`:
-  - Updates `user_profiles` vector through `UpdateUserProfileWithRatingUseCase`
+### Observability
 
-This is the practical ECST outcome: Recommendation reads are backed by state already transferred by events, reducing synchronous dependency in the recommendation path.
+**What exists:**
+- Spring Boot Actuator included in all services
+- Health/metrics/prometheus endpoints enabled in service properties
+- Health endpoints exposed through security configuration
+- Kafka health indicator is enabled (`management.health.kafka.enabled=true`)
+
+**What was searched and not found:**
+- No distributed tracing stack (`sleuth`, `zipkin`) or explicit micrometer tracing instrumentation in code
+
+**Operational takeaway:**
+- You can observe service health and metrics endpoints, but end-to-end trace correlation from Engagement rating ingest to Recommendation profile update is not yet implemented as a first-class trace pipeline.
 
 ---
 
 ## Database and pgvector Design
 
-The repository contains explicit pgvector bootstrap SQL for Recommendation DB:
+The repository includes explicit Recommendation DB bootstrap SQL:
 
 ```sql
--- scripts/create-vector-in-recommendation-db.sql
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE IF NOT EXISTS book_features (
@@ -340,28 +287,54 @@ ON book_features
 USING hnsw (embedding vector_cosine_ops);
 ```
 
-Similarity operator used by the recommendation query layer:
-
-```sql
-(b.embedding <=> u.profile_vector)
-```
-
-This confirms:
-- **Index type**: `hnsw`
-- **Operator class**: `vector_cosine_ops`
-- **Similarity operator**: `<=>` (cosine distance in this setup)
+Confirmed from code and SQL:
+- Index type: `hnsw`
+- Operator class: `vector_cosine_ops`
+- Similarity operator used in query path: `<=>`
 
 ---
 
-## Known Limitations
+## Technical Glossary
 
-- Recommendation Service OpenAPI description text still references a 15-dimensional genre-vector approach, while implementation uses `vector(384)` with LangChain4j embeddings.
-  - Tracking note: this should be corrected in `recommendation-service/src/main/java/com/mrs/recommendation_service/share/config/OpenApiConfig.java` so generated API docs match runtime implementation.
-- Event naming in some descriptive text is inconsistent with active topic names (`created-rating` is the topic used in producer/consumer code).
-- Rating event payload naming is inconsistent across services (`mediaId` in Engagement producer contract vs `bookId` in Recommendation consumer contract).
-- Full repository test execution in this environment requires Java 21; current runner JDK does not support `--release 21`.
-- No API Gateway is present; services are exposed directly.
-- Integration/E2E coverage remains limited compared to unit-level coverage.
+### ECST (Event-Carried State Transfer)
+A pattern where domain events carry enough state for downstream services to build their own local read models. VellumHub uses ECST so Recommendation can update vectors from Kafka without synchronous dependency chains during recommendation reads.
+
+### HNSW Indexing
+Hierarchical Navigable Small World indexing is an approximate nearest-neighbor strategy used by pgvector for fast high-dimensional search at scale. It is chosen over flat scans to keep retrieval latency practical as corpus size grows.
+
+### L2 Normalization
+L2 normalization scales vectors to unit magnitude. This is critical when using cosine-based similarity, because it stabilizes comparisons and keeps learned profile vectors numerically consistent over repeated updates.
+
+---
+
+## Known Discrepancies & Limitations
+
+### Known Discrepancy 1 — OpenAPI dimensionality text vs runtime implementation
+
+Recommendation runtime implementation is 384-dimensional, but `OpenApiConfig` still documents 15-dimensional genre vectors.
+
+**Exact file to fix:**
+- `/home/runner/work/VellumHub/VellumHub/recommendation-service/src/main/java/com/mrs/recommendation_service/share/config/OpenApiConfig.java`
+
+**Strings to update in that file:**
+1. `- **Genre-Based Embeddings**: 15-dimensional vectors representing book genres`
+2. `- **Vector Dimensions**: 15 (one per genre: Fantasy, Sci-Fi, Horror, Romance, etc.)`
+3. `- \`rating-created\`: Update user profile vectors` (should use `created-rating`)
+
+### Known Discrepancy 2 — Internal contract variance
+
+`CreatedRatingEvent` naming mismatch across services:
+- Engagement event uses `UUID mediaId`
+- Recommendation event uses `UUID bookId`
+
+This should be standardized to a single field name (`bookId`) across producer and consumer contracts.
+
+### Additional current limitations
+
+- No custom retry/DLT strategy found for Kafka consumers.
+- No distributed tracing instrumentation (Sleuth/Zipkin or Micrometer Tracing) found.
+- No Testcontainers-based integration test suite found for Kafka + pgvector paths.
+- In this runner, Maven tests fail due to Java version mismatch (`release version 21 not supported`).
 
 ---
 
@@ -371,8 +344,7 @@ This confirms:
 docker-compose up -d
 ```
 
-Service URLs (from `docker-compose.yml`):
-
+Service URLs:
 - User Service: `http://localhost:8084`
 - Catalog Service: `http://localhost:8081`
 - Engagement Service: `http://localhost:8083`
