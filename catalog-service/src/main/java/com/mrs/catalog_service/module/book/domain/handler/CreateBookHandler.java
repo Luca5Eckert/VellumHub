@@ -39,7 +39,17 @@ public class CreateBookHandler {
 
         Set<Genre> resolvedGenres = ensureGenresAreValid(command.genres());
 
-        var book = Book.create(command, resolvedGenres);
+        var book = Book.create(
+                command.title(),
+                command.description(),
+                command.releaseYear(),
+                command.author(),
+                command.isbn(),
+                command.pageCount(),
+                command.publisher(),
+                command.coverUrl(),
+                resolvedGenres
+        );
 
         bookRepository.save(book);
 
