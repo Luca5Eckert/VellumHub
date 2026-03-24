@@ -4,6 +4,7 @@ import com.mrs.catalog_service.module.book.application.command.CreateBookCommand
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -22,12 +23,12 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @DynamicUpdate
+@SQLRestriction("deleted_at IS NULL")
 @EntityListeners(AuditingEntityListener.class)
 public class Book {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include
     private UUID id;
 
     @Column(nullable = false)
@@ -74,16 +75,18 @@ public class Book {
     )
     private Set<Genre> genres;
 
-    public static Book create(CreateBookCommand command, Set<Genre> resolvedGenres) {
+    public static Book create(String title, String description, int releaseYear, String author,
+                              String isbn, int pageCount, String publisher, String coverUrl,
+                              Set<Genre> resolvedGenres) {
         return Book.builder()
-                .title(command.title())
-                .description(command.description())
-                .releaseYear(command.releaseYear())
-                .author(command.author())
-                .isbn(command.isbn())
-                .pageCount(command.pageCount())
-                .publisher(command.publisher())
-                .coverUrl(command.coverUrl())
+                .title(title)
+                .description(description)
+                .releaseYear(releaseYear)
+                .author(author)
+                .isbn(isbn)
+                .pageCount(pageCount)
+                .publisher(publisher)
+                .coverUrl(coverUrl)
                 .genres(resolvedGenres)
                 .build();
     }
