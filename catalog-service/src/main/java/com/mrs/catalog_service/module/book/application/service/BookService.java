@@ -131,4 +131,6 @@ public class BookService {
         return getBookCoversBulkHandler.execute(bookIds);
     }
 
+    public void createByIsbn(String isbn) {
+    }
 }
