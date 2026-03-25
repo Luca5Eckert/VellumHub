@@ -1,6 +1,7 @@
 package com.mrs.catalog_service.module.book_list.presentation.mapper;
 
 import com.mrs.catalog_service.module.book.domain.model.Book;
+import com.mrs.catalog_service.module.book.domain.model.Genre;
 import com.mrs.catalog_service.module.book_list.domain.model.BookList;
 import com.mrs.catalog_service.module.book_list.presentation.dto.response.list.BookListGetAllResponse;
 import com.mrs.catalog_service.module.book_list.presentation.dto.response.list.BookListResponse;
@@ -37,7 +38,7 @@ public class BookListMapper {
                 book.getIsbn(),
                 book.getPageCount(),
                 book.getPublisher(),
-                book.getGenres(),
+                book.getGenres().stream().map(Genre::getName).toList(),
                 book.getCreatedAt(),
                 book.getUpdatedAt()
         );
