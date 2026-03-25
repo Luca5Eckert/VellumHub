@@ -58,6 +58,24 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PostMapping("/isbn")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create book by ISBN", description = "Creates a new book in the catalog by fetching details from an external API using the provided ISBN. Requires ADMIN role.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Book created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid ISBN or data", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin permission required", content = @Content)
+    })
+    public ResponseEntity<UUID> createByIsbn(@RequestBody String isbn) {
+        var bookId = bookService.createByIsbn(isbn);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(bookId);
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete book", description = "Removes a book from the catalog. Requires ADMIN role.")
