@@ -28,10 +28,11 @@ public class BookService {
     private final UploadBookCoverHandler uploadBookCoverHandler;
     private final GetBookCoverHandler getBookCoverHandler;
     private final GetBookCoversBulkHandler getBookCoversBulkHandler;
+    private final CreateBookWithIsbnHandler createBookWithIsbnHandler;
 
     private final BookMapper bookMapper;
 
-    public BookService(CreateBookHandler createBookHandler, DeleteBookHandler deleteBookHandler, GetBookHandler getBookHandler, GetAllBooksHandler getAllBooksHandler, UpdateBookHandler updateBookHandler, GetBooksByIdsHandler getBooksByIdsHandler, UploadBookCoverHandler uploadBookCoverHandler, GetBookCoverHandler getBookCoverHandler, GetBookCoversBulkHandler getBookCoversBulkHandler, BookMapper bookMapper) {
+    public BookService(CreateBookHandler createBookHandler, DeleteBookHandler deleteBookHandler, GetBookHandler getBookHandler, GetAllBooksHandler getAllBooksHandler, UpdateBookHandler updateBookHandler, GetBooksByIdsHandler getBooksByIdsHandler, UploadBookCoverHandler uploadBookCoverHandler, GetBookCoverHandler getBookCoverHandler, GetBookCoversBulkHandler getBookCoversBulkHandler, CreateBookWithIsbnHandler createBookWithIsbnHandler, BookMapper bookMapper) {
         this.createBookHandler = createBookHandler;
         this.deleteBookHandler = deleteBookHandler;
         this.getBookHandler = getBookHandler;
@@ -41,6 +42,7 @@ public class BookService {
         this.uploadBookCoverHandler = uploadBookCoverHandler;
         this.getBookCoverHandler = getBookCoverHandler;
         this.getBookCoversBulkHandler = getBookCoversBulkHandler;
+        this.createBookWithIsbnHandler = createBookWithIsbnHandler;
         this.bookMapper = bookMapper;
     }
 
@@ -131,7 +133,7 @@ public class BookService {
         return getBookCoversBulkHandler.execute(bookIds);
     }
 
-    public void createByIsbn(String isbn) {
-
+    public UUID createByIsbn(String isbn) {
+        return createBookWithIsbnHandler.handle(isbn);
     }
 }
