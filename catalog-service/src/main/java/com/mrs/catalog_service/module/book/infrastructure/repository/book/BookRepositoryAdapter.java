@@ -2,6 +2,7 @@ package com.mrs.catalog_service.module.book.infrastructure.repository.book;
 
 import com.mrs.catalog_service.module.book.domain.model.Book;
 import com.mrs.catalog_service.module.book.domain.port.BookRepository;
+import com.mrs.catalog_service.module.book_list.infrastructure.persistence.repository.list.JpaBookListRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -15,9 +16,12 @@ import java.util.UUID;
 public class BookRepositoryAdapter implements BookRepository {
 
     private final JpaBookRepository bookRepository;
+    private final JpaBookListRepository jpaBookListRepository;
 
-    public BookRepositoryAdapter(JpaBookRepository bookRepository) {
+    public BookRepositoryAdapter(JpaBookRepository bookRepository,
+                                 JpaBookListRepository jpaBookListRepository) {
         this.bookRepository = bookRepository;
+        this.jpaBookListRepository = jpaBookListRepository;
     }
 
     @Override
@@ -62,6 +66,11 @@ public class BookRepositoryAdapter implements BookRepository {
                 author,
                 isbn
         );
+    }
+
+    @Override
+    public boolean existsByIsbn(String isbn) {
+        return jpaBookListRepository.existsByIsbn(isbn);
     }
 
 }
