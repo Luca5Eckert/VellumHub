@@ -45,7 +45,7 @@ public class GoogleBooksAdapter implements BookExternalProvider {
                 return Optional.empty();
             }
 
-            return Optional.of(mapToDomain(response, isbn));
+            return mapToDomain(response, isbn);
 
         } catch (Exception e) {
             log.error("Unexpected error fetching book by ISBN: {}", isbn, e);
@@ -53,8 +53,10 @@ public class GoogleBooksAdapter implements BookExternalProvider {
         }
     }
 
-    private Book mapToDomain(GoogleBooksResponse response, String requestedIsbn) {
+    private Optional<Book> mapToDomain(GoogleBooksResponse response, String requestedIsbn) {
         var volumeInfo = response.items().getFirst().volumeInfo();
+
+        if(volumeInfo == null) return Optional.empty();
 
         String author = volumeInfo.authors() != null && !volumeInfo.authors().isEmpty()
                 ? String.join(", ", volumeInfo.authors())
@@ -64,7 +66,7 @@ public class GoogleBooksAdapter implements BookExternalProvider {
                 ? volumeInfo.imageLinks().thumbnail()
                 : null;
 
-        return Book.create(
+        Book book = Book.create(
                 volumeInfo.title() != null ? volumeInfo.title() : "Title Unavailable",
                 volumeInfo.description(),
                 extractYear(volumeInfo.publishedDate()),
@@ -75,6 +77,8 @@ public class GoogleBooksAdapter implements BookExternalProvider {
                 coverUrl,
                 Collections.emptySet()
         );
+
+        return Optional.of(book);
     }
 
     private int extractYear(String publishedDate) {
