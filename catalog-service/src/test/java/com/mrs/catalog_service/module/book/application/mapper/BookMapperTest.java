@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,7 +47,7 @@ class BookMapperTest {
                     .isbn("978-0-261-10221-4")
                     .pageCount(310)
                     .publisher("George Allen & Unwin")
-                    .genres(List.of(Genre.FANTASY, Genre.ROMANCE))
+                    .genres(Set.of(new Genre("FANTASY"), new Genre("ROMANCE")))
                     .build();
 
             // Simulating JPA audit fields
@@ -78,7 +78,7 @@ class BookMapperTest {
             assertThat(response.isbn()).isEqualTo("978-0-261-10221-4");
             assertThat(response.pageCount()).isEqualTo(310);
             assertThat(response.publisher()).isEqualTo("George Allen & Unwin");
-            assertThat(response.genres()).containsExactly(Genre.FANTASY, Genre.ROMANCE);
+            assertThat(response.genres()).containsExactly("FANTASY", "ROMANCE");
             assertThat(response.createdAt()).isEqualTo(now);
             assertThat(response.updatedAt()).isEqualTo(now);
         }
@@ -99,7 +99,7 @@ class BookMapperTest {
                     .releaseYear(2023)
                     .description(null)
                     .coverUrl(null)
-                    .genres(List.of())
+                    .genres(Set.of())
                     .build();
 
             // When
@@ -135,7 +135,7 @@ class BookMapperTest {
                     .isbn("978-0-452-28423-4")
                     .pageCount(328)
                     .publisher("Secker & Warburg")
-                    .genres(List.of(Genre.SCI_FI, Genre.THRILLER_MYSTERY))
+                    .genres(Set.of(new Genre("FANTASY"), new Genre("ROMANCE")))
                     .build();
 
             // Simulating JPA audit fields
@@ -160,7 +160,7 @@ class BookMapperTest {
             assertThat(recommendation.description()).isEqualTo("A dystopian social science fiction novel");
             assertThat(recommendation.releaseYear()).isEqualTo(1949);
             assertThat(recommendation.coverUrl()).isEqualTo("https://example.com/1984.jpg");
-            assertThat(recommendation.genres()).containsExactly(Genre.SCI_FI, Genre.THRILLER_MYSTERY);
+            assertThat(recommendation.genres()).containsExactly("FANTASY","ROMANCE");
             assertThat(recommendation.createdAt()).isEqualTo(now);
             assertThat(recommendation.updatedAt()).isEqualTo(now);
         }
@@ -181,7 +181,7 @@ class BookMapperTest {
                     .isbn("123-456-789")
                     .pageCount(100)
                     .publisher("Test Publisher")
-                    .genres(List.of(Genre.FANTASY))
+                    .genres(Set.of(new Genre("FANTASY")))
                     .build();
 
             // When
@@ -195,7 +195,7 @@ class BookMapperTest {
             assertThat(recommendation.description()).isEqualTo("Test Description");
             assertThat(recommendation.releaseYear()).isEqualTo(2023);
             assertThat(recommendation.coverUrl()).isEqualTo("https://example.com/test.jpg");
-            assertThat(recommendation.genres()).containsExactly(Genre.FANTASY);
+            assertThat(recommendation.genres()).containsExactly("FANTASY");
         }
     }
 }

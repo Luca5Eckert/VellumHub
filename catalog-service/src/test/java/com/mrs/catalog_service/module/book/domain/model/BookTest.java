@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,7 +26,7 @@ class BookTest {
                 .isbn("111-222-333")
                 .pageCount(200)
                 .publisher("Original Publisher")
-                .genres(List.of(Genre.FANTASY))
+                .genres(Set.of(new Genre("FANTASY")))
                 .build();
     }
 
@@ -36,7 +37,8 @@ class BookTest {
         @Test
         @DisplayName("Should update all fields when all values are provided and valid")
         void shouldUpdateAllFields() {
-            List<Genre> newGenres = List.of(Genre.SCI_FI, Genre.HORROR);
+            var newGenres = Set.of(new Genre("SCI_FI"), new Genre("HORROR"));
+
 
             book.update("New Title", "New Desc", "https://new.url/cover.jpg",
                     2023, "New Author", "999-888-777", 350, "New Publisher", newGenres);
@@ -49,7 +51,7 @@ class BookTest {
             assertThat(book.getIsbn()).isEqualTo("999-888-777");
             assertThat(book.getPageCount()).isEqualTo(350);
             assertThat(book.getPublisher()).isEqualTo("New Publisher");
-            assertThat(book.getGenres()).containsExactlyInAnyOrder(Genre.SCI_FI, Genre.HORROR);
+            assertThat(book.getGenres()).containsExactlyInAnyOrder(new Genre("SCI_FI"), new Genre("HORROR"));
         }
     }
 
@@ -73,7 +75,7 @@ class BookTest {
         void shouldKeepGenresWhenNull() {
             book.update(null, null, null, null, null, null, null, null, null);
 
-            assertThat(book.getGenres()).containsExactly(Genre.FANTASY);
+            assertThat(book.getGenres()).containsExactly(new Genre("FANTASY"));
         }
 
         @Test

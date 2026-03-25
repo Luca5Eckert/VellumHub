@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.domain.handler;
+package com.mrs.catalog_service.module.book.domain.handler;
 
 import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.mrs.catalog_service.module.book.domain.handler.GetBookHandler;
@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,7 +39,7 @@ class GetBookHandlerTest {
                 .title("Test Movie")
                 .description("A test movie")
                 .releaseYear(2024)
-                .genres(List.of(Genre.FANTASY, Genre.SCI_FI))
+                .genres(Set.of(new Genre("FANTASY")))
                 .build();
 
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(expectedMedia));
