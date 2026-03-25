@@ -1,6 +1,5 @@
 package com.mrs.catalog_service.module.book.domain.model;
 
-import com.mrs.catalog_service.module.book.application.command.CreateBookCommand;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
