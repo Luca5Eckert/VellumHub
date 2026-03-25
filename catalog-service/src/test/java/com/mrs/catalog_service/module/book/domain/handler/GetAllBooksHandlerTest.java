@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.domain.handler;
+package com.mrs.catalog_service.module.book.domain.handler;
 
 import com.mrs.catalog_service.module.book.presentation.dto.PageBook;
 import com.mrs.catalog_service.module.book.domain.handler.GetAllBooksHandler;
@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,12 +44,12 @@ class GetAllBooksHandlerTest {
                 Book.builder()
                         .id(UUID.randomUUID())
                         .title("Movie 1")
-                        .genres(List.of(Genre.FANTASY))
+                        .genres(Set.of(new Genre("FANTASY")))
                         .build(),
                 Book.builder()
                         .id(UUID.randomUUID())
                         .title("Series 1")
-                        .genres(List.of(Genre.SCI_FI))
+                        .genres(Set.of(new Genre("SCI_FI")))
                         .build()
         );
 

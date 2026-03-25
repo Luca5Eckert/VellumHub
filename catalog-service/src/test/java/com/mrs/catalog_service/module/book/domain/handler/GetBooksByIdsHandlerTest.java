@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.domain.handler;
+package com.mrs.catalog_service.module.book.domain.handler;
 
 import com.mrs.catalog_service.module.book.domain.handler.GetBooksByIdsHandler;
 import com.mrs.catalog_service.module.book.domain.model.Book;
@@ -12,10 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -49,7 +46,7 @@ class GetBooksByIdsHandlerTest {
                     .title("The Hobbit")
                     .author("J.R.R. Tolkien")
                     .isbn("978-0-261-10221-4")
-                    .genres(List.of(Genre.FANTASY))
+                    .genres(Set.of(new Genre("FANTASY")))
                     .build();
 
             Book book2 = Book.builder()
@@ -57,7 +54,7 @@ class GetBooksByIdsHandlerTest {
                     .title("1984")
                     .author("George Orwell")
                     .isbn("978-0-452-28423-4")
-                    .genres(List.of(Genre.SCI_FI))
+                    .genres(Set.of(new Genre("SCI-FI")))
                     .build();
 
             given(bookRepository.findAllById(bookIds)).willReturn(Arrays.asList(book1, book2));
@@ -93,8 +90,8 @@ class GetBooksByIdsHandlerTest {
 
             // Then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getId()).isEqualTo(bookId);
-            assertThat(result.get(0).getTitle()).isEqualTo("The Hobbit");
+            assertThat(result.getFirst().getId()).isEqualTo(bookId);
+            assertThat(result.getFirst().getTitle()).isEqualTo("The Hobbit");
         }
 
         @Test
@@ -134,7 +131,7 @@ class GetBooksByIdsHandlerTest {
 
             // Then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getId()).isEqualTo(existingId);
+            assertThat(result.getFirst().getId()).isEqualTo(existingId);
         }
     }
 }

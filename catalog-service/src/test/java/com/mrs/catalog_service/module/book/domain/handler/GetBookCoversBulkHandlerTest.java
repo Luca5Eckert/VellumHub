@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.domain.handler;
+package com.mrs.catalog_service.module.book.domain.handler;
 
 import com.mrs.catalog_service.module.book.presentation.dto.BookCoverResponse;
 import com.mrs.catalog_service.module.book.domain.handler.GetBookCoversBulkHandler;
