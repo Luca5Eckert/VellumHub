@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageImpl;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -47,7 +48,7 @@ class GetAllBookRequestUseCaseTest {
                     .author("J.R.R. Tolkien")
                     .isbn("978-0-261-10221-4")
                     .description("A fantasy novel")
-                    .genres(List.of(Genre.FANTASY))
+                    .genres(Set.of(new Genre("FANTASY")))
                     .pageCount(310)
                     .publisher("George Allen & Unwin")
                     .build();
@@ -58,7 +59,7 @@ class GetAllBookRequestUseCaseTest {
                     .author("George Orwell")
                     .isbn("978-0-452-28423-4")
                     .description("A dystopian novel")
-                    .genres(List.of(Genre.SCI_FI))
+                    .genres(Set.of(new Genre("SCI-FI")))
                     .pageCount(328)
                     .publisher("Secker & Warburg")
                     .build();
@@ -108,7 +109,7 @@ class GetAllBookRequestUseCaseTest {
                     .author("Frank Herbert")
                     .isbn("978-0-441-17271-9")
                     .description("A science fiction novel")
-                    .genres(List.of(Genre.SCI_FI))
+                    .genres(Set.of(new Genre("SCI-FI")))
                     .pageCount(688)
                     .publisher("Chilton Books")
                     .build();
@@ -121,7 +122,7 @@ class GetAllBookRequestUseCaseTest {
 
             // Then
             assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).getTitle()).isEqualTo("Dune");
+            assertThat(result.getContent().getFirst().getTitle()).isEqualTo("Dune");
             then(bookRequestRepository).should().findAll(page, size);
         }
     }
