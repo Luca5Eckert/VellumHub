@@ -19,5 +19,4 @@ public interface JpaBookListRepository extends JpaRepository<BookList, UUID>, Jp
            """)
     Optional<BookList> findByIdFull(@Param("id") UUID id);
 
-    boolean existsByIsbn(String isbn);
 }
