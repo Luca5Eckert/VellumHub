@@ -18,6 +18,6 @@ public class BookSnapshot {
 
     @Id
     @Column(nullable = false)
-    private UUID id;
+    private UUID bookId;
 
 }
