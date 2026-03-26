@@ -14,7 +14,6 @@ public class DeleteBookSnapshotUseCase {
         this.bookSnapshotRepository = bookSnapshotRepository;
     }
 
-    @Transactional
     public void execute(DeleteBookSnapshotCommand command) {
         bookSnapshotRepository.deleteByBookId(command.bookId());
     }
