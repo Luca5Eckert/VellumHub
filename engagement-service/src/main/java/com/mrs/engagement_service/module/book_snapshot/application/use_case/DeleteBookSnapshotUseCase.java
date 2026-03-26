@@ -3,7 +3,6 @@ package com.mrs.engagement_service.module.book_snapshot.application.use_case;
 import com.mrs.engagement_service.module.book_snapshot.application.command.DeleteBookSnapshotCommand;
 import com.mrs.engagement_service.module.book_snapshot.domain.port.BookSnapshotRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DeleteBookSnapshotUseCase {

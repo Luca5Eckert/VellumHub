@@ -7,7 +7,5 @@ import java.util.UUID;
 public interface BookSnapshotRepository {
     void save(BookSnapshot bookSnapshot);
 
-    boolean existsByBookId(UUID bookId);
-
     void deleteByBookId(UUID uuid);
 }
