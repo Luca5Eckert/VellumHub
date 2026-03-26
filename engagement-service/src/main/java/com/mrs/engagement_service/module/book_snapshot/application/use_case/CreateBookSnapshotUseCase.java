@@ -15,7 +15,6 @@ public class CreateBookSnapshotUseCase {
         this.bookSnapshotRepository = bookSnapshotRepository;
     }
 
-    @Transactional
     public void execute(CreateBookSnapshotCommand command) {
         var bookSnapshot = new BookSnapshot(command.bookId());
 
