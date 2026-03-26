@@ -4,6 +4,7 @@ import com.mrs.engagement_service.module.book_snapshot.application.command.Creat
 import com.mrs.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
 import com.mrs.engagement_service.module.book_snapshot.domain.port.BookSnapshotRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CreateBookSnapshotUseCase {
@@ -14,6 +15,7 @@ public class CreateBookSnapshotUseCase {
         this.bookSnapshotRepository = bookSnapshotRepository;
     }
 
+    @Transactional
     public void execute(CreateBookSnapshotCommand command) {
         var bookSnapshot = new BookSnapshot(command.bookId());
 
