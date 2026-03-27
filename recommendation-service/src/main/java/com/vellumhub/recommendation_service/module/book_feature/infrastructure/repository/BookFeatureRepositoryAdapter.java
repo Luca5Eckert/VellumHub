@@ -1,7 +1,7 @@
-package com.mrs.recommendation_service.module.book_feature.infrastructure.repository;
+package com.vellumhub.recommendation_service.module.book_feature.infrastructure.repository;
 
-import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
-import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
+import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
+import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

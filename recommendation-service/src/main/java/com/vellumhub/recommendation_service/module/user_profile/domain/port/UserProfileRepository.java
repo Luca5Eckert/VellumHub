@@ -1,6 +1,6 @@
-package com.mrs.recommendation_service.module.user_profile.domain.port;
+package com.vellumhub.recommendation_service.module.user_profile.domain.port;
 
-import com.mrs.recommendation_service.module.user_profile.domain.model.UserProfile;
+import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 
 import java.util.Optional;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.share.config;
+package com.vellumhub.recommendation_service.share.config;
 
 import dev.langchain4j.model.embedding.AllMiniLmL6V2EmbeddingModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;

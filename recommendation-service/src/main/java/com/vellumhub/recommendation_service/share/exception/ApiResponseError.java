@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.share.exception;
+package com.vellumhub.recommendation_service.share.exception;
 
 import lombok.Builder;
 

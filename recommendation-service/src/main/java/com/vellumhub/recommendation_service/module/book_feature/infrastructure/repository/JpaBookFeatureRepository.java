@@ -1,6 +1,6 @@
-package com.mrs.recommendation_service.module.book_feature.infrastructure.repository;
+package com.vellumhub.recommendation_service.module.book_feature.infrastructure.repository;
 
-import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
+import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

@@ -1,6 +1,6 @@
-package com.mrs.recommendation_service.module.book_feature.domain.port;
+package com.vellumhub.recommendation_service.module.book_feature.domain.port;
 
-import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
+import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 
 import java.util.List;
 import java.util.Optional;

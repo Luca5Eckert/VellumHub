@@ -1,8 +1,8 @@
-package com.mrs.recommendation_service.module.user_profile.application.consumer;
+package com.vellumhub.recommendation_service.module.user_profile.application.consumer;
 
-import com.mrs.recommendation_service.module.user_profile.application.event.CreatedRatingEvent;
-import com.mrs.recommendation_service.module.user_profile.application.handler.CreatedRatingConsumerHandler;
-import com.mrs.recommendation_service.module.user_profile.domain.use_case.UpdateUserProfileWithRatingUseCase;
+import com.vellumhub.recommendation_service.module.user_profile.application.event.CreatedRatingEvent;
+import com.vellumhub.recommendation_service.module.user_profile.application.handler.CreatedRatingConsumerHandler;
+import com.vellumhub.recommendation_service.module.user_profile.domain.use_case.UpdateUserProfileWithRatingUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;

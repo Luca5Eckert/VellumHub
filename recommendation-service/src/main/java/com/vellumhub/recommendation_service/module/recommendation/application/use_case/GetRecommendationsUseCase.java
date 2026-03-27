@@ -1,9 +1,9 @@
-package com.mrs.recommendation_service.module.recommendation.application.use_case;
+package com.vellumhub.recommendation_service.module.recommendation.application.use_case;
 
-import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
-import com.mrs.recommendation_service.module.recommendation.application.command.GetRecommendationsCommand;
-import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
-import com.mrs.recommendation_service.module.recommendation.domain.port.RecommendationRepository;
+import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
+import com.vellumhub.recommendation_service.module.recommendation.application.command.GetRecommendationsCommand;
+import com.vellumhub.recommendation_service.module.recommendation.domain.model.Recommendation;
+import com.vellumhub.recommendation_service.module.recommendation.domain.port.RecommendationRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

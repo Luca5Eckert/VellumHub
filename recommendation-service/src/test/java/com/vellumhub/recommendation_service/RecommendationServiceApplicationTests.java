@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service;
+package com.vellumhub.recommendation_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

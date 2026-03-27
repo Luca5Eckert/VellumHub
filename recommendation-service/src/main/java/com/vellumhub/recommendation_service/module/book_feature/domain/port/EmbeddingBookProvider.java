@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.book_feature.domain.port;
+package com.vellumhub.recommendation_service.module.book_feature.domain.port;
 
 import java.util.List;
 

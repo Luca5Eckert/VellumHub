@@ -1,6 +1,6 @@
-package com.mrs.recommendation_service.module.book_feature.infrastructure.embedding;
+package com.vellumhub.recommendation_service.module.book_feature.infrastructure.embedding;
 
-import com.mrs.recommendation_service.module.book_feature.domain.port.EmbeddingBookProvider;
+import com.vellumhub.recommendation_service.module.book_feature.domain.port.EmbeddingBookProvider;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import org.springframework.stereotype.Component;
 

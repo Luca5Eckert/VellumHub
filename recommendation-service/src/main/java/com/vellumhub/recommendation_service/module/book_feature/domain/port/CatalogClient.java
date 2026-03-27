@@ -1,6 +1,6 @@
-package com.mrs.recommendation_service.module.book_feature.domain.port;
+package com.vellumhub.recommendation_service.module.book_feature.domain.port;
 
-import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
+import com.vellumhub.recommendation_service.module.recommendation.domain.model.Recommendation;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;

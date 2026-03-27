@@ -1,10 +1,10 @@
-package com.mrs.recommendation_service.module.book_feature.application.use_case;
+package com.vellumhub.recommendation_service.module.book_feature.application.use_case;
 
-import com.mrs.recommendation_service.module.book_feature.application.command.UpdateBookFeatureCommand;
-import com.mrs.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
-import com.mrs.recommendation_service.module.book_feature.domain.model.BookFeature;
-import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
-import com.mrs.recommendation_service.module.book_feature.domain.port.EmbeddingBookProvider;
+import com.vellumhub.recommendation_service.module.book_feature.application.command.UpdateBookFeatureCommand;
+import com.vellumhub.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
+import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
+import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
+import com.vellumhub.recommendation_service.module.book_feature.domain.port.EmbeddingBookProvider;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,9 +1,9 @@
-package com.mrs.recommendation_service.share.exception;
+package com.vellumhub.recommendation_service.share.exception;
 
-import com.mrs.recommendation_service.module.book_feature.domain.exception.BookFeatureDomainException;
-import com.mrs.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
-import com.mrs.recommendation_service.module.user_profile.domain.exception.UserProfileDomainException;
-import com.mrs.recommendation_service.module.user_profile.domain.exception.UserProfileNotFoundException;
+import com.vellumhub.recommendation_service.module.book_feature.domain.exception.BookFeatureDomainException;
+import com.vellumhub.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
+import com.vellumhub.recommendation_service.module.user_profile.domain.exception.UserProfileDomainException;
+import com.vellumhub.recommendation_service.module.user_profile.domain.exception.UserProfileNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,10 +1,10 @@
-package com.mrs.recommendation_service.share.consumer;
+package com.vellumhub.recommendation_service.share.consumer;
 
-import com.mrs.recommendation_service.module.recommendation.application.command.UpdateRecommendationCommand;
-import com.mrs.recommendation_service.module.recommendation.application.use_case.UpdateRecommendationUseCase;
-import com.mrs.recommendation_service.share.event.UpdateBookEvent;
-import com.mrs.recommendation_service.module.book_feature.application.command.UpdateBookFeatureCommand;
-import com.mrs.recommendation_service.module.book_feature.application.use_case.UpdateMediaFeatureUseCase;
+import com.vellumhub.recommendation_service.module.recommendation.application.command.UpdateRecommendationCommand;
+import com.vellumhub.recommendation_service.module.recommendation.application.use_case.UpdateRecommendationUseCase;
+import com.vellumhub.recommendation_service.share.event.UpdateBookEvent;
+import com.vellumhub.recommendation_service.module.book_feature.application.command.UpdateBookFeatureCommand;
+import com.vellumhub.recommendation_service.module.book_feature.application.use_case.UpdateMediaFeatureUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;

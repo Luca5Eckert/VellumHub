@@ -1,6 +1,6 @@
-package com.mrs.recommendation_service.module.user_profile.domain.command;
+package com.vellumhub.recommendation_service.module.user_profile.domain.command;
 
-import com.mrs.recommendation_service.module.user_profile.domain.model.RatingCategory;
+import com.vellumhub.recommendation_service.module.user_profile.domain.model.RatingCategory;
 
 import java.util.UUID;
 

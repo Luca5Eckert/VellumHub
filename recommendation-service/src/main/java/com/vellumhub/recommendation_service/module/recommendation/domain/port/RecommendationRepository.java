@@ -1,6 +1,6 @@
-package com.mrs.recommendation_service.module.recommendation.domain.port;
+package com.vellumhub.recommendation_service.module.recommendation.domain.port;
 
-import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
+import com.vellumhub.recommendation_service.module.recommendation.domain.model.Recommendation;
 
 import java.util.List;
 import java.util.Optional;

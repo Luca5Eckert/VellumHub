@@ -1,6 +1,6 @@
-package com.mrs.recommendation_service.module.user_profile.infrastructure.repository;
+package com.vellumhub.recommendation_service.module.user_profile.infrastructure.repository;
 
-import com.mrs.recommendation_service.module.user_profile.domain.model.UserProfile;
+import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

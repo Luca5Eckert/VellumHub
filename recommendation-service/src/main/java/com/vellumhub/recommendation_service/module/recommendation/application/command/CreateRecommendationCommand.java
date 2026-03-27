@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.recommendation.application.command;
+package com.vellumhub.recommendation_service.module.recommendation.application.command;
 
 import java.util.List;
 import java.util.UUID;

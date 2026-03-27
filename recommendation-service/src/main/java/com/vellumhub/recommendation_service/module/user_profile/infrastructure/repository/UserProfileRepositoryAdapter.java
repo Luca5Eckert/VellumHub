@@ -1,7 +1,7 @@
-package com.mrs.recommendation_service.module.user_profile.infrastructure.repository;
+package com.vellumhub.recommendation_service.module.user_profile.infrastructure.repository;
 
-import com.mrs.recommendation_service.module.user_profile.domain.model.UserProfile;
-import com.mrs.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
+import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
+import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;

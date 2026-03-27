@@ -1,6 +1,6 @@
-package com.mrs.recommendation_service.module.user_profile.domain.model;
+package com.vellumhub.recommendation_service.module.user_profile.domain.model;
 
-import com.mrs.recommendation_service.module.user_profile.domain.command.UpdateUserProfileWithRatingCommand;
+import com.vellumhub.recommendation_service.module.user_profile.domain.command.UpdateUserProfileWithRatingCommand;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

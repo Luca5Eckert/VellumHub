@@ -1,9 +1,9 @@
-package com.mrs.recommendation_service.module.recommendation.application.use_case;
+package com.vellumhub.recommendation_service.module.recommendation.application.use_case;
 
-import com.mrs.recommendation_service.module.recommendation.application.command.UpdateRecommendationCommand;
-import com.mrs.recommendation_service.module.recommendation.domain.exception.RecommendationDomainException;
-import com.mrs.recommendation_service.module.recommendation.domain.model.Recommendation;
-import com.mrs.recommendation_service.module.recommendation.domain.port.RecommendationRepository;
+import com.vellumhub.recommendation_service.module.recommendation.application.command.UpdateRecommendationCommand;
+import com.vellumhub.recommendation_service.module.recommendation.domain.exception.RecommendationDomainException;
+import com.vellumhub.recommendation_service.module.recommendation.domain.model.Recommendation;
+import com.vellumhub.recommendation_service.module.recommendation.domain.port.RecommendationRepository;
 import org.springframework.stereotype.Service;
 
 @Service

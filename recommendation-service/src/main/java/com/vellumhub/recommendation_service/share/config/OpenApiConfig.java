@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.share.config;
+package com.vellumhub.recommendation_service.share.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.ExternalDocumentation;

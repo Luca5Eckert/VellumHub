@@ -1,8 +1,8 @@
-package com.mrs.recommendation_service.module.book_feature.domain.use_case;
+package com.vellumhub.recommendation_service.module.book_feature.domain.use_case;
 
-import com.mrs.recommendation_service.module.book_feature.application.use_case.CreateBookFeatureUseCase;
-import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
-import com.mrs.recommendation_service.share.event.CreateBookEvent;
+import com.vellumhub.recommendation_service.module.book_feature.application.use_case.CreateBookFeatureUseCase;
+import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
+import com.vellumhub.recommendation_service.share.event.CreateBookEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

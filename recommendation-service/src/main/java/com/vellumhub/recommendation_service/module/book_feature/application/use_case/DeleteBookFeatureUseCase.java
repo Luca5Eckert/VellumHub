@@ -1,6 +1,6 @@
-package com.mrs.recommendation_service.module.book_feature.application.use_case;
+package com.vellumhub.recommendation_service.module.book_feature.application.use_case;
 
-import com.mrs.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
+import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.recommendation.domain.model;
+package com.vellumhub.recommendation_service.module.recommendation.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;

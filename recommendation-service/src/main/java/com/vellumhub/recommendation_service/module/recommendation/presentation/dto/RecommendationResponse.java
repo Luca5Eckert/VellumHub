@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.recommendation.presentation.dto;
+package com.vellumhub.recommendation_service.module.recommendation.presentation.dto;
 
 import java.util.List;
 import java.util.UUID;

@@ -1,9 +1,9 @@
-package com.mrs.recommendation_service.share.consumer;
+package com.vellumhub.recommendation_service.share.consumer;
 
-import com.mrs.recommendation_service.module.recommendation.application.command.DeleteRecommendationCommand;
-import com.mrs.recommendation_service.module.recommendation.application.use_case.DeleteRecommendationUseCase;
-import com.mrs.recommendation_service.share.event.DeleteBookEvent;
-import com.mrs.recommendation_service.module.book_feature.application.use_case.DeleteBookFeatureUseCase;
+import com.vellumhub.recommendation_service.module.recommendation.application.command.DeleteRecommendationCommand;
+import com.vellumhub.recommendation_service.module.recommendation.application.use_case.DeleteRecommendationUseCase;
+import com.vellumhub.recommendation_service.share.event.DeleteBookEvent;
+import com.vellumhub.recommendation_service.module.book_feature.application.use_case.DeleteBookFeatureUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;

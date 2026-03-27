@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.book_feature.domain.exception;
+package com.vellumhub.recommendation_service.module.book_feature.domain.exception;
 
 public class BookFeatureNotFoundException extends BookFeatureDomainException {
     public BookFeatureNotFoundException() {

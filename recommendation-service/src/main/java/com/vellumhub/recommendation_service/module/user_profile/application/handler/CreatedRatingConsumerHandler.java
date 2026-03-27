@@ -1,8 +1,8 @@
-package com.mrs.recommendation_service.module.user_profile.application.handler;
+package com.vellumhub.recommendation_service.module.user_profile.application.handler;
 
-import com.mrs.recommendation_service.module.user_profile.application.event.CreatedRatingEvent;
-import com.mrs.recommendation_service.module.user_profile.domain.command.UpdateUserProfileWithRatingCommand;
-import com.mrs.recommendation_service.module.user_profile.domain.use_case.UpdateUserProfileWithRatingUseCase;
+import com.vellumhub.recommendation_service.module.user_profile.application.event.CreatedRatingEvent;
+import com.vellumhub.recommendation_service.module.user_profile.domain.command.UpdateUserProfileWithRatingCommand;
+import com.vellumhub.recommendation_service.module.user_profile.domain.use_case.UpdateUserProfileWithRatingUseCase;
 import org.springframework.stereotype.Component;
 
 @Component

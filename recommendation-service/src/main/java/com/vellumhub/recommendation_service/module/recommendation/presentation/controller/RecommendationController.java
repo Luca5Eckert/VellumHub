@@ -1,10 +1,10 @@
-package com.mrs.recommendation_service.module.recommendation.presentation.controller;
+package com.vellumhub.recommendation_service.module.recommendation.presentation.controller;
 
-import com.mrs.recommendation_service.module.recommendation.presentation.dto.RecommendationResponse;
-import com.mrs.recommendation_service.module.recommendation.presentation.mapper.RecommendationMapper;
-import com.mrs.recommendation_service.module.recommendation.application.use_case.GetRecommendationsUseCase;
-import com.mrs.recommendation_service.module.recommendation.application.command.GetRecommendationsCommand;
-import com.mrs.recommendation_service.share.provider.UserAuthenticationProvider;
+import com.vellumhub.recommendation_service.module.recommendation.presentation.dto.RecommendationResponse;
+import com.vellumhub.recommendation_service.module.recommendation.presentation.mapper.RecommendationMapper;
+import com.vellumhub.recommendation_service.module.recommendation.application.use_case.GetRecommendationsUseCase;
+import com.vellumhub.recommendation_service.module.recommendation.application.command.GetRecommendationsCommand;
+import com.vellumhub.recommendation_service.share.provider.UserAuthenticationProvider;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

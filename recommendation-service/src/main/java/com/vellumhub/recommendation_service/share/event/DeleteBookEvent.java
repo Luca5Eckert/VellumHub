@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.share.event;
+package com.vellumhub.recommendation_service.share.event;
 
 import java.util.UUID;
 

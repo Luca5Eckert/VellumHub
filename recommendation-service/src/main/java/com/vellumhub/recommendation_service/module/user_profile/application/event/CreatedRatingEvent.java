@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.user_profile.application.event;
+package com.vellumhub.recommendation_service.module.user_profile.application.event;
 
 import java.util.UUID;
 

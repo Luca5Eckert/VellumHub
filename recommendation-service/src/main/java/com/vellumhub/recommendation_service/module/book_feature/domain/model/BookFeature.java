@@ -1,4 +1,4 @@
-package com.mrs.recommendation_service.module.book_feature.domain.model;
+package com.vellumhub.recommendation_service.module.book_feature.domain.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
