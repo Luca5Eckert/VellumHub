@@ -32,20 +32,21 @@ services:
     depends_on:
       redis-gateway:
         condition: service_healthy
+      # 🚀 FIX: Changed to service_started to prevent deadlock if a microservice crashes
       user-service:
-        condition: service_healthy
+        condition: service_started
       catalog-service:
-        condition: service_healthy
+        condition: service_started
       engagement-service:
-        condition: service_healthy
+        condition: service_started
       recommendation-service:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 40s
 
   redis-gateway:
     image: redis:7-alpine
@@ -192,7 +193,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 15
-      start_period: 20s
+      start_period: 60s
 
   kafka-ui:
     image: provectuslabs/kafka-ui@sha256:8f2ff02d64b0a7a2b71b6b3b3148b85f66d00ec20ad40c30bdcd415d46d31818
@@ -235,11 +236,11 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 45s
+      start_period: 60s
 
   engagement-service:
     build: ./engagement-service
@@ -264,11 +265,11 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 45s
+      start_period: 60s
 
   user-service:
     build: ./user-service
@@ -295,11 +296,11 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 45s
+      start_period: 60s
 
   recommendation-service:
     build: ./recommendation-service
@@ -325,11 +326,11 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 45s
+      start_period: 60s
 
 volumes:
   postgres_catalog_data:
