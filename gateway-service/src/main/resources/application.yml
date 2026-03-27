@@ -1,6 +1,10 @@
 server:
   port: 8080
 
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE
+
 spring:
   application:
     name: gateway-service
@@ -8,36 +12,26 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: auth
+        - id: user
           uri: ${USER_SERVICE_URL:http://user-service:8080}
           predicates:
-            - Path=/api/v1/auth/**
+            - Path=/api/v1/user-service/**
           filters:
-            - StripPrefix=0
+            - StripPrefix=2
             - name: RequestRateLimiter
               args:
                 key-resolver: "#{@ipKeyResolver}"
                 redis-rate-limiter.replenishRate: 5
                 redis-rate-limiter.burstCapacity: 10
 
-        - id: users
-          uri: ${USER_SERVICE_URL:http://user-service:8080}
-          predicates:
-            - Path=/api/v1/users/**
-          filters:
-            - StripPrefix=0
-            - name: RequestRateLimiter
-              args:
-                key-resolver: "#{@userKeyResolver}"
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
+
 
         - id: catalogs
           uri: ${CATALOG_SERVICE_URL:http://catalog-service:8080}
           predicates:
             - Path=/api/v1/catalog/**
           filters:
-            - StripPrefix=0
+            - StripPrefix=2
             - name: RequestRateLimiter
               args:
                 key-resolver: "#{@userKeyResolver}"
@@ -49,7 +43,7 @@ spring:
           predicates:
             - Path=/api/v1/engagement/**
           filters:
-            - StripPrefix=0
+            - StripPrefix=2
             - name: RequestRateLimiter
               args:
                 key-resolver: "#{@userKeyResolver}"
@@ -61,7 +55,7 @@ spring:
           predicates:
             - Path=/api/v1/recommendation/**
           filters:
-            - StripPrefix=0
+            - StripPrefix=2
             - name: RequestRateLimiter
               args:
                 key-resolver: "#{@userKeyResolver}"
@@ -79,3 +73,27 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
       connect-timeout: 2s
+
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus"
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+    kafka:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
