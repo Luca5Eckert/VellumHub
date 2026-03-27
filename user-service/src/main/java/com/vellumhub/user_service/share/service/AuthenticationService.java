@@ -1,6 +1,6 @@
-package com.mrs.user_service.share.service;
+package com.vellumhub.user_service.share.service;
 
-import com.mrs.user_service.share.exception.UserNotAuthenticatedException;
+import com.vellumhub.user_service.share.exception.UserNotAuthenticatedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.mrs.user_service.share.config;
+package com.vellumhub.user_service.share.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

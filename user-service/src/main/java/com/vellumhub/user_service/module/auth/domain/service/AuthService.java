@@ -1,13 +1,13 @@
-package com.mrs.user_service.module.auth.domain.service;
+package com.vellumhub.user_service.module.auth.domain.service;
 
-import com.mrs.user_service.module.auth.application.dto.LoginExternalRequest;
-import com.mrs.user_service.module.auth.application.dto.LoginUserRequest;
-import com.mrs.user_service.module.auth.application.dto.RegisterUserRequest;
-import com.mrs.user_service.module.auth.domain.handler.LoginExternalHandler;
-import com.mrs.user_service.module.auth.domain.handler.LoginUserHandler;
-import com.mrs.user_service.module.auth.domain.handler.RegisterUserHandler;
-import com.mrs.user_service.module.user.domain.RoleUser;
-import com.mrs.user_service.module.user.domain.UserEntity;
+import com.vellumhub.user_service.module.auth.application.dto.LoginExternalRequest;
+import com.vellumhub.user_service.module.auth.application.dto.LoginUserRequest;
+import com.vellumhub.user_service.module.auth.application.dto.RegisterUserRequest;
+import com.vellumhub.user_service.module.auth.domain.handler.LoginExternalHandler;
+import com.vellumhub.user_service.module.auth.domain.handler.LoginUserHandler;
+import com.vellumhub.user_service.module.auth.domain.handler.RegisterUserHandler;
+import com.vellumhub.user_service.module.user.domain.RoleUser;
+import com.vellumhub.user_service.module.user.domain.UserEntity;
 import org.springframework.stereotype.Service;
 
 @Service

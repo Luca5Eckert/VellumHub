@@ -1,12 +1,12 @@
-package com.mrs.user_service.module.user.domain.service;
+package com.vellumhub.user_service.module.user.domain.service;
 
-import com.mrs.user_service.module.user.application.dto.CreateUserRequest;
-import com.mrs.user_service.module.user.domain.UserEntity;
-import com.mrs.user_service.module.user.domain.handler.*;
-import com.mrs.user_service.module.user.domain.mapper.UserMapper;
-import com.mrs.user_service.module.user.domain.page.PageUser;
-import com.mrs.user_service.module.user.application.dto.UpdateUserRequest;
-import com.mrs.user_service.module.user.application.dto.UserGetResponse;
+import com.vellumhub.user_service.module.user.application.dto.CreateUserRequest;
+import com.vellumhub.user_service.module.user.domain.UserEntity;
+import com.vellumhub.user_service.module.user.domain.handler.*;
+import com.vellumhub.user_service.module.user.domain.mapper.UserMapper;
+import com.vellumhub.user_service.module.user.domain.page.PageUser;
+import com.vellumhub.user_service.module.user.application.dto.UpdateUserRequest;
+import com.vellumhub.user_service.module.user.application.dto.UserGetResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 

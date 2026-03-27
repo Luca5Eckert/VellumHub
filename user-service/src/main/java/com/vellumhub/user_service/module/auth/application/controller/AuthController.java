@@ -1,9 +1,9 @@
-package com.mrs.user_service.module.auth.application.controller;
+package com.vellumhub.user_service.module.auth.application.controller;
 
-import com.mrs.user_service.module.auth.application.dto.LoginExternalRequest;
-import com.mrs.user_service.module.auth.application.dto.LoginUserRequest;
-import com.mrs.user_service.module.auth.application.dto.RegisterUserRequest;
-import com.mrs.user_service.module.auth.domain.service.AuthService;
+import com.vellumhub.user_service.module.auth.application.dto.LoginExternalRequest;
+import com.vellumhub.user_service.module.auth.application.dto.LoginUserRequest;
+import com.vellumhub.user_service.module.auth.application.dto.RegisterUserRequest;
+import com.vellumhub.user_service.module.auth.domain.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

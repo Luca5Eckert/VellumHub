@@ -1,9 +1,9 @@
-package com.mrs.user_service.share.exception;
+package com.vellumhub.user_service.share.exception;
 
-import com.mrs.user_service.module.auth.domain.exception.AuthDomainException;
-import com.mrs.user_service.module.user.application.exception.UserApplicationException;
-import com.mrs.user_service.module.user.domain.exception.UserDomainException;
-import com.mrs.user_service.module.user_preference.domain.exception.UserPreferenceDomainException;
+import com.vellumhub.user_service.module.auth.domain.exception.AuthDomainException;
+import com.vellumhub.user_service.module.user.application.exception.UserApplicationException;
+import com.vellumhub.user_service.module.user.domain.exception.UserDomainException;
+import com.vellumhub.user_service.module.user_preference.domain.exception.UserPreferenceDomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

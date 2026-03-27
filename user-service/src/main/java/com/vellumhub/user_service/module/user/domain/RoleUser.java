@@ -1,4 +1,4 @@
-package com.mrs.user_service.module.user.domain;
+package com.vellumhub.user_service.module.user.domain;
 
 import org.springframework.security.core.GrantedAuthority;
 

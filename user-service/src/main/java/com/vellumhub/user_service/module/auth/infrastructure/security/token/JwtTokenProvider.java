@@ -1,6 +1,6 @@
-package com.mrs.user_service.module.auth.infrastructure.security.token;
+package com.vellumhub.user_service.module.auth.infrastructure.security.token;
 
-import com.mrs.user_service.module.auth.domain.port.TokenProvider;
+import com.vellumhub.user_service.module.auth.domain.port.TokenProvider;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;

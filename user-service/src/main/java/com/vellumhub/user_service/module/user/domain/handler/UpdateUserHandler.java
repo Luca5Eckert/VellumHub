@@ -1,10 +1,10 @@
-package com.mrs.user_service.module.user.domain.handler;
+package com.vellumhub.user_service.module.user.domain.handler;
 
-import com.mrs.user_service.module.user.application.dto.UpdateUserRequest;
-import com.mrs.user_service.module.user.application.exception.UserNotFoundException;
-import com.mrs.user_service.module.user.domain.exception.EmailAlreadyInUseException;
-import com.mrs.user_service.module.user.domain.UserEntity;
-import com.mrs.user_service.module.user.domain.port.UserRepository;
+import com.vellumhub.user_service.module.user.application.dto.UpdateUserRequest;
+import com.vellumhub.user_service.module.user.application.exception.UserNotFoundException;
+import com.vellumhub.user_service.module.user.domain.exception.EmailAlreadyInUseException;
+import com.vellumhub.user_service.module.user.domain.UserEntity;
+import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;

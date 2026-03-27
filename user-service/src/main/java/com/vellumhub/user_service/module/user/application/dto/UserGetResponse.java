@@ -1,4 +1,4 @@
-package com.mrs.user_service.module.user.application.dto;
+package com.vellumhub.user_service.module.user.application.dto;
 
 import java.util.UUID;
 

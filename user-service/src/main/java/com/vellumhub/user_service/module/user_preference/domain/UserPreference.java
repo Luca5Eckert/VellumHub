@@ -1,6 +1,6 @@
-package com.mrs.user_service.module.user_preference.domain;
+package com.vellumhub.user_service.module.user_preference.domain;
 
-import com.mrs.user_service.module.user.domain.Genre;
+import com.vellumhub.user_service.module.user.domain.Genre;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

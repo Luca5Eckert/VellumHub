@@ -1,7 +1,7 @@
-package com.mrs.user_service.share.security.config;
+package com.vellumhub.user_service.share.security.config;
 
-import com.mrs.user_service.module.auth.infrastructure.security.user.UserDetailsServiceImpl;
-import com.mrs.user_service.module.user.domain.port.UserRepository;
+import com.vellumhub.user_service.module.auth.infrastructure.security.user.UserDetailsServiceImpl;
+import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

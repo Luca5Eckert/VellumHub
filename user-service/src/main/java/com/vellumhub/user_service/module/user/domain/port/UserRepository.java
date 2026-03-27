@@ -1,6 +1,6 @@
-package com.mrs.user_service.module.user.domain.port;
+package com.vellumhub.user_service.module.user.domain.port;
 
-import com.mrs.user_service.module.user.domain.UserEntity;
+import com.vellumhub.user_service.module.user.domain.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

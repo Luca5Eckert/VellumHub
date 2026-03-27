@@ -1,8 +1,8 @@
-package com.mrs.user_service.module.user.domain.mapper;
+package com.vellumhub.user_service.module.user.domain.mapper;
 
 
-import com.mrs.user_service.module.user.application.dto.UserGetResponse;
-import com.mrs.user_service.module.user.domain.UserEntity;
+import com.vellumhub.user_service.module.user.application.dto.UserGetResponse;
+import com.vellumhub.user_service.module.user.domain.UserEntity;
 import org.springframework.stereotype.Component;
 
 @Component

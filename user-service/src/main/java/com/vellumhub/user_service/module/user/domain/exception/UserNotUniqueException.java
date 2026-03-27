@@ -1,4 +1,4 @@
-package com.mrs.user_service.module.user.domain.exception;
+package com.vellumhub.user_service.module.user.domain.exception;
 
 public class UserNotUniqueException extends UserDomainException {
     public UserNotUniqueException() {

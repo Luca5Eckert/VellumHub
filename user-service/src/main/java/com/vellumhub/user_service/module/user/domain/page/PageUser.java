@@ -1,4 +1,4 @@
-package com.mrs.user_service.module.user.domain.page;
+package com.vellumhub.user_service.module.user.domain.page;
 
 public record PageUser(
         int pageSize,

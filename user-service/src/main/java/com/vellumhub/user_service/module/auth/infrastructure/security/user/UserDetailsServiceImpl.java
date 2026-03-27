@@ -1,7 +1,7 @@
-package com.mrs.user_service.module.auth.infrastructure.security.user;
+package com.vellumhub.user_service.module.auth.infrastructure.security.user;
 
-import com.mrs.user_service.module.user.domain.UserEntity;
-import com.mrs.user_service.module.user.domain.port.UserRepository;
+import com.vellumhub.user_service.module.user.domain.UserEntity;
+import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

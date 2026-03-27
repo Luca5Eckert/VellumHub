@@ -1,4 +1,4 @@
-package com.mrs.user_service.module.user.application.exception;
+package com.vellumhub.user_service.module.user.application.exception;
 
 public class UserNotFoundException extends UserApplicationException {
     public UserNotFoundException() {

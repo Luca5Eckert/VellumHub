@@ -1,8 +1,8 @@
-package com.mrs.user_service.module.auth.domain.handler;
+package com.vellumhub.user_service.module.auth.domain.handler;
 
-import com.mrs.user_service.module.auth.domain.exception.AuthDomainException;
-import com.mrs.user_service.module.user.domain.UserEntity;
-import com.mrs.user_service.module.user.domain.port.UserRepository;
+import com.vellumhub.user_service.module.auth.domain.exception.AuthDomainException;
+import com.vellumhub.user_service.module.user.domain.UserEntity;
+import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import org.passay.PasswordData;
 import org.passay.PasswordValidator;
 import org.passay.RuleResult;

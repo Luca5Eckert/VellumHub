@@ -1,4 +1,4 @@
-package com.mrs.user_service.share.validator.password;
+package com.vellumhub.user_service.share.validator.password;
 
 import org.passay.*;
 import org.springframework.stereotype.Component;

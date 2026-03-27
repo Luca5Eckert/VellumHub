@@ -1,6 +1,6 @@
-package com.mrs.user_service.module.user_preference.domain.port;
+package com.vellumhub.user_service.module.user_preference.domain.port;
 
-import com.mrs.user_service.module.user_preference.domain.UserPreference;
+import com.vellumhub.user_service.module.user_preference.domain.UserPreference;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

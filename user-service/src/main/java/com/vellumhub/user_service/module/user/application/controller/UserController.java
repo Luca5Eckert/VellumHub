@@ -1,10 +1,10 @@
-package com.mrs.user_service.module.user.application.controller;
+package com.vellumhub.user_service.module.user.application.controller;
 
-import com.mrs.user_service.module.user.application.dto.CreateUserRequest;
-import com.mrs.user_service.module.user.application.dto.UpdateUserRequest;
-import com.mrs.user_service.module.user.application.dto.UserGetResponse;
-import com.mrs.user_service.module.user.domain.service.UserService;
-import com.mrs.user_service.share.service.AuthenticationService;
+import com.vellumhub.user_service.module.user.application.dto.CreateUserRequest;
+import com.vellumhub.user_service.module.user.application.dto.UpdateUserRequest;
+import com.vellumhub.user_service.module.user.application.dto.UserGetResponse;
+import com.vellumhub.user_service.module.user.domain.service.UserService;
+import com.vellumhub.user_service.share.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

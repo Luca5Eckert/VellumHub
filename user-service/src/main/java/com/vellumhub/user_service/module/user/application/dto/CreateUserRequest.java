@@ -1,6 +1,6 @@
-package com.mrs.user_service.module.user.application.dto;
+package com.vellumhub.user_service.module.user.application.dto;
 
-import com.mrs.user_service.module.user.domain.RoleUser;
+import com.vellumhub.user_service.module.user.domain.RoleUser;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

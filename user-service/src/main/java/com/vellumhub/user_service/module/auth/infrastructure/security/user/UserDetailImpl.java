@@ -1,6 +1,6 @@
-package com.mrs.user_service.module.auth.infrastructure.security.user;
+package com.vellumhub.user_service.module.auth.infrastructure.security.user;
 
-import com.mrs.user_service.module.user.domain.RoleUser;
+import com.vellumhub.user_service.module.user.domain.RoleUser;
 import jakarta.annotation.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

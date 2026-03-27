@@ -1,4 +1,4 @@
-package com.mrs.user_service.module.user.domain;
+package com.vellumhub.user_service.module.user.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

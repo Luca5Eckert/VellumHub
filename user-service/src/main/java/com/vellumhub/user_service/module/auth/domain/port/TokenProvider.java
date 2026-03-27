@@ -1,4 +1,4 @@
-package com.mrs.user_service.module.auth.domain.port;
+package com.vellumhub.user_service.module.auth.domain.port;
 
 import java.util.List;
 import java.util.UUID;

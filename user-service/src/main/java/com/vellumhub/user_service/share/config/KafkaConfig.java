@@ -1,7 +1,7 @@
-package com.mrs.user_service.share.config;
+package com.vellumhub.user_service.share.config;
 
 import com.fasterxml.jackson.databind.JsonSerializer;
-import com.mrs.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
+import com.vellumhub.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;

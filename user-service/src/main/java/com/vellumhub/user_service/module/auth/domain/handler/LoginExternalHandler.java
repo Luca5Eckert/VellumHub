@@ -1,12 +1,12 @@
-package com.mrs.user_service.module.auth.domain.handler;
+package com.vellumhub.user_service.module.auth.domain.handler;
 
-import com.mrs.user_service.module.auth.domain.exception.AuthDomainException;
-import com.mrs.user_service.module.auth.domain.model.UserInfo;
-import com.mrs.user_service.module.auth.domain.port.ExternalVerification;
-import com.mrs.user_service.module.auth.domain.port.TokenProvider;
-import com.mrs.user_service.module.user.domain.RoleUser;
-import com.mrs.user_service.module.user.domain.UserEntity;
-import com.mrs.user_service.module.user.domain.port.UserRepository;
+import com.vellumhub.user_service.module.auth.domain.exception.AuthDomainException;
+import com.vellumhub.user_service.module.auth.domain.model.UserInfo;
+import com.vellumhub.user_service.module.auth.domain.port.ExternalVerification;
+import com.vellumhub.user_service.module.auth.domain.port.TokenProvider;
+import com.vellumhub.user_service.module.user.domain.RoleUser;
+import com.vellumhub.user_service.module.user.domain.UserEntity;
+import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

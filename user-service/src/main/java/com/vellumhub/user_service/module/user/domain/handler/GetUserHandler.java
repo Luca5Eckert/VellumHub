@@ -1,8 +1,8 @@
-package com.mrs.user_service.module.user.domain.handler;
+package com.vellumhub.user_service.module.user.domain.handler;
 
-import com.mrs.user_service.module.user.application.exception.UserNotFoundException;
-import com.mrs.user_service.module.user.domain.UserEntity;
-import com.mrs.user_service.module.user.domain.port.UserRepository;
+import com.vellumhub.user_service.module.user.application.exception.UserNotFoundException;
+import com.vellumhub.user_service.module.user.domain.UserEntity;
+import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

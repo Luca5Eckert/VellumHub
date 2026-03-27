@@ -1,8 +1,8 @@
-package com.mrs.user_service.module.auth.domain.handler;
+package com.vellumhub.user_service.module.auth.domain.handler;
 
-import com.mrs.user_service.module.auth.domain.model.AuthenticatedUser;
-import com.mrs.user_service.module.auth.domain.port.AuthenticatorPort;
-import com.mrs.user_service.module.auth.domain.port.TokenProvider;
+import com.vellumhub.user_service.module.auth.domain.model.AuthenticatedUser;
+import com.vellumhub.user_service.module.auth.domain.port.AuthenticatorPort;
+import com.vellumhub.user_service.module.auth.domain.port.TokenProvider;
 import org.springframework.stereotype.Component;
 
 @Component

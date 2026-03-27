@@ -1,7 +1,7 @@
-package com.mrs.user_service.module.user_preference.domain.event;
+package com.vellumhub.user_service.module.user_preference.domain.event;
 
 
-import com.mrs.user_service.module.user.domain.Genre;
+import com.vellumhub.user_service.module.user.domain.Genre;
 
 import java.util.List;
 import java.util.UUID;

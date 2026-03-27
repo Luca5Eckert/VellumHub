@@ -1,8 +1,8 @@
-package com.mrs.user_service.module.auth.infrastructure.security.authenticator;
+package com.vellumhub.user_service.module.auth.infrastructure.security.authenticator;
 
-import com.mrs.user_service.module.auth.domain.model.AuthenticatedUser;
-import com.mrs.user_service.module.auth.domain.port.AuthenticatorPort;
-import com.mrs.user_service.module.auth.infrastructure.security.user.UserDetailImpl;
+import com.vellumhub.user_service.module.auth.domain.model.AuthenticatedUser;
+import com.vellumhub.user_service.module.auth.domain.port.AuthenticatorPort;
+import com.vellumhub.user_service.module.auth.infrastructure.security.user.UserDetailImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
