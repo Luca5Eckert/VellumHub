@@ -11,56 +11,70 @@ spring:
 
   cloud:
     gateway:
-      routes:
-        - id: user
-          uri: ${USER_SERVICE_URL:http://user-service:8080}
-          predicates:
-            - Path=/api/v1/user-service/**
-          filters:
-            - StripPrefix=2
-            - name: RequestRateLimiter
-              args:
-                key-resolver: "#{@ipKeyResolver}"
-                redis-rate-limiter.replenishRate: 5
-                redis-rate-limiter.burstCapacity: 10
+      server:
+        webflux:
+          routes:
+            - id: user
+              uri: ${USER_SERVICE_URL:http://user-service:8080}
+              predicates:
+                - Path=/api/v1/users/**
+              filters:
+                - StripPrefix=2
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 5
+                    redis-rate-limiter.burstCapacity: 10
+
+            - id: auth
+              uri: ${USER_SERVICE_URL:http://user-service:8080}
+              predicates:
+                - Path=/api/v1/auth/**
+              filters:
+                - StripPrefix=2
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 5
+                    redis-rate-limiter.burstCapacity: 10
 
 
 
-        - id: catalogs
-          uri: ${CATALOG_SERVICE_URL:http://catalog-service:8080}
-          predicates:
-            - Path=/api/v1/catalog/**
-          filters:
-            - StripPrefix=2
-            - name: RequestRateLimiter
-              args:
-                key-resolver: "#{@userKeyResolver}"
-                redis-rate-limiter.replenishRate: 30
-                redis-rate-limiter.burstCapacity: 60
+            - id: catalogs
+              uri: ${CATALOG_SERVICE_URL:http://catalog-service:8080}
+              predicates:
+                - Path=/api/v1/catalog/**
+              filters:
+                - StripPrefix=2
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@userKeyResolver}"
+                    redis-rate-limiter.replenishRate: 30
+                    redis-rate-limiter.burstCapacity: 60
 
-        - id: engagements
-          uri: ${ENGAGEMENT_SERVICE_URL:http://engagement-service:8080}
-          predicates:
-            - Path=/api/v1/engagement/**
-          filters:
-            - StripPrefix=2
-            - name: RequestRateLimiter
-              args:
-                key-resolver: "#{@userKeyResolver}"
-                redis-rate-limiter.replenishRate: 30
-                redis-rate-limiter.burstCapacity: 60
+            - id: engagements
+              uri: ${ENGAGEMENT_SERVICE_URL:http://engagement-service:8080}
+              predicates:
+                - Path=/api/v1/engagement/**
+              filters:
+                - StripPrefix=2
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@userKeyResolver}"
+                    redis-rate-limiter.replenishRate: 30
+                    redis-rate-limiter.burstCapacity: 60
 
-        - id: recommendations
-          uri: ${RECOMMENDATION_SERVICE_URL:http://recommendation-service:8080}
-          predicates:
-            - Path=/api/v1/recommendation/**
-          filters:
-            - StripPrefix=2
-            - name: RequestRateLimiter
-              args:
-                key-resolver: "#{@userKeyResolver}"
-                redis-rate-limiter.replenishRate: 20
-                redis-rate-limiter.burstCapacity: 40
+            - id: recommendations
+              uri: ${RECOMMENDATION_SERVICE_URL:http://recommendation-service:8080}
+              predicates:
+                - Path=/api/v1/recommendation/**
+              filters:
+                - StripPrefix=2
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@userKeyResolver}"
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
 
   security:
     oauth2:
