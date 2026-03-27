@@ -43,9 +43,9 @@ spring:
             - id: catalogs
               uri: ${CATALOG_SERVICE_URL:http://catalog-service:8080}
               predicates:
-                - Path=/api/v1/**
+                - Path=/api/v1/catalog/**
               filters:
-                - StripPrefix=2
+                - StripPrefix=3
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@userKeyResolver}"
@@ -55,9 +55,9 @@ spring:
             - id: engagements
               uri: ${ENGAGEMENT_SERVICE_URL:http://engagement-service:8080}
               predicates:
-                - Path=/api/v1/**
+                - Path=/api/v1/engagement/**
               filters:
-                - StripPrefix=2
+                - StripPrefix=3
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@userKeyResolver}"
