@@ -2,7 +2,7 @@ version: '3.8'
 name: vellum-hub
 
 networks:
-  mrs-network:
+  vellum-network:
     driver: bridge
 
 services:
@@ -28,7 +28,7 @@ services:
       JWT_KEY: ${JWT_KEY}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     networks:
-      - mrs-network
+      - vellum-network
     depends_on:
       redis-gateway:
         condition: service_healthy
@@ -52,7 +52,7 @@ services:
     container_name: redis-gateway
     restart: unless-stopped
     networks:
-      - mrs-network
+      - vellum-network
     volumes:
       - redis_gateway_data:/data
     healthcheck:
@@ -76,7 +76,7 @@ services:
     volumes:
       - postgres_catalog_data:/var/lib/postgresql/data
     networks:
-      - mrs-network
+      - vellum-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d catalog_db"]
       interval: 5s
@@ -97,7 +97,7 @@ services:
     volumes:
       - postgres_engagement_data:/var/lib/postgresql/data
     networks:
-      - mrs-network
+      - vellum-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d engagement_db"]
       interval: 5s
@@ -119,7 +119,7 @@ services:
       - postgres_user_data:/var/lib/postgresql/data
       - ./scripts/create-admin-user.sql:/docker-entrypoint-initdb.d/init-admin.sql
     networks:
-      - mrs-network
+      - vellum-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d user_db"]
       interval: 5s
@@ -140,7 +140,7 @@ services:
       - postgres_recommendation_data:/var/lib/postgresql/data
       - ./scripts/create-vector-in-recommendation-db.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - mrs-network
+      - vellum-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d recommendation_db"]
       interval: 10s
@@ -160,7 +160,7 @@ services:
       - zookeeper_data:/var/lib/zookeeper/data
       - zookeeper_log:/var/lib/zookeeper/log
     networks:
-      - mrs-network
+      - vellum-network
     healthcheck:
       test: echo srvr | nc localhost 2181 || exit 1
       interval: 10s
@@ -174,7 +174,7 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
     networks:
-      - mrs-network
+      - vellum-network
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
@@ -201,7 +201,7 @@ services:
     ports:
       - "8090:8080"
     networks:
-      - mrs-network
+      - vellum-network
     environment:
       KAFKA_CLUSTERS_0_NAME: vellumhub-cluster
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
@@ -228,7 +228,7 @@ services:
       JWT_KEY: ${JWT_KEY}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     networks:
-      - mrs-network
+      - vellum-network
     depends_on:
       postgres-catalog:
         condition: service_healthy
@@ -257,7 +257,7 @@ services:
       JWT_KEY: ${JWT_KEY}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     networks:
-      - mrs-network
+      - vellum-network
     depends_on:
       postgres-engagement:
         condition: service_healthy
@@ -288,7 +288,7 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     networks:
-      - mrs-network
+      - vellum-network
     depends_on:
       postgres-user:
         condition: service_healthy
@@ -318,7 +318,7 @@ services:
       JWT_KEY: ${JWT_KEY}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     networks:
-      - mrs-network
+      - vellum-network
     depends_on:
       postgres-recommendation:
         condition: service_healthy
