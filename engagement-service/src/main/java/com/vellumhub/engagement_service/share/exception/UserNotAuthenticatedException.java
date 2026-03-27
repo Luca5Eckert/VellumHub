@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.share.exception;
+package com.vellumhub.engagement_service.share.exception;
 
 public class UserNotAuthenticatedException extends RuntimeException
 {

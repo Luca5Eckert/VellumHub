@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.module.book_snapshot.domain.model;
+package com.vellumhub.engagement_service.module.book_snapshot.domain.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

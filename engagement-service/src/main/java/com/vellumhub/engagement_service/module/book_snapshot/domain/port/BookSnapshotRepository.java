@@ -1,6 +1,6 @@
-package com.mrs.engagement_service.module.book_snapshot.domain.port;
+package com.vellumhub.engagement_service.module.book_snapshot.domain.port;
 
-import com.mrs.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
+import com.vellumhub.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
 
 import java.util.UUID;
 

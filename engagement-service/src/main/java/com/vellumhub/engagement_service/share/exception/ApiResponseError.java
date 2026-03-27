@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.share.exception;
+package com.vellumhub.engagement_service.share.exception;
 
 import lombok.Builder;
 

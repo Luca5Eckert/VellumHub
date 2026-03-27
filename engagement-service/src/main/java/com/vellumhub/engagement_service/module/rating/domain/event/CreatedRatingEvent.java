@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.module.rating.domain.event;
+package com.vellumhub.engagement_service.module.rating.domain.event;
 
 import java.util.UUID;
 

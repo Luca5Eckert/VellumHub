@@ -1,8 +1,8 @@
-package com.mrs.engagement_service.module.rating.domain.producer;
+package com.vellumhub.engagement_service.module.rating.domain.producer;
 
-import com.mrs.engagement_service.module.rating.domain.event.CreatedRatingEvent;
-import com.mrs.engagement_service.module.rating.domain.model.Rating;
-import com.mrs.engagement_service.module.rating.domain.port.EventProducer;
+import com.vellumhub.engagement_service.module.rating.domain.event.CreatedRatingEvent;
+import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
+import com.vellumhub.engagement_service.module.rating.domain.port.EventProducer;
 import org.springframework.stereotype.Component;
 
 @Component

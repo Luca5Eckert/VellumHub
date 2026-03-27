@@ -1,6 +1,6 @@
-package com.mrs.engagement_service.module.rating.domain.model;
+package com.vellumhub.engagement_service.module.rating.domain.model;
 
-import com.mrs.engagement_service.module.rating.domain.exception.InvalidRatingException;
+import com.vellumhub.engagement_service.module.rating.domain.exception.InvalidRatingException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

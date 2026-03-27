@@ -1,7 +1,7 @@
-package com.mrs.engagement_service.module.rating.domain.port;
+package com.vellumhub.engagement_service.module.rating.domain.port;
 
-import com.mrs.engagement_service.module.rating.domain.filter.RatingFilter;
-import com.mrs.engagement_service.module.rating.domain.model.Rating;
+import com.vellumhub.engagement_service.module.rating.domain.filter.RatingFilter;
+import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 

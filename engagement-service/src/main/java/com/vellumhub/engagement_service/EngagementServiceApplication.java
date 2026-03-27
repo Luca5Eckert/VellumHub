@@ -1,4 +1,4 @@
-package com.mrs.engagement_service;
+package com.vellumhub.engagement_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

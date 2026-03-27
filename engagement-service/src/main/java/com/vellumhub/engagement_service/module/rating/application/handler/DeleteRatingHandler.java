@@ -1,7 +1,7 @@
-package com.mrs.engagement_service.module.rating.application.handler;
+package com.vellumhub.engagement_service.module.rating.application.handler;
 
-import com.mrs.engagement_service.module.rating.domain.command.DeleteRatingCommand;
-import com.mrs.engagement_service.module.rating.domain.use_case.DeleteRatingUseCase;
+import com.vellumhub.engagement_service.module.rating.domain.command.DeleteRatingCommand;
+import com.vellumhub.engagement_service.module.rating.domain.use_case.DeleteRatingUseCase;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;

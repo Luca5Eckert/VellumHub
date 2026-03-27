@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.module.rating.domain.command;
+package com.vellumhub.engagement_service.module.rating.domain.command;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;

@@ -1,7 +1,7 @@
-package com.mrs.engagement_service.module.rating.application.mapper;
+package com.vellumhub.engagement_service.module.rating.application.mapper;
 
-import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
-import com.mrs.engagement_service.module.rating.domain.model.Rating;
+import com.vellumhub.engagement_service.module.rating.application.dto.RatingGetResponse;
+import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
 import org.springframework.stereotype.Component;
 
 @Component

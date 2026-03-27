@@ -1,7 +1,7 @@
-package com.mrs.engagement_service.share.exception;
+package com.vellumhub.engagement_service.share.exception;
 
-import com.mrs.engagement_service.module.rating.application.exception.EngagementApplicationException;
-import com.mrs.engagement_service.module.rating.domain.exception.RatingDomainException;
+import com.vellumhub.engagement_service.module.rating.application.exception.EngagementApplicationException;
+import com.vellumhub.engagement_service.module.rating.domain.exception.RatingDomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

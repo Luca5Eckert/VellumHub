@@ -1,8 +1,8 @@
-package com.mrs.engagement_service.module.book_snapshot.application.use_case;
+package com.vellumhub.engagement_service.module.book_snapshot.application.use_case;
 
-import com.mrs.engagement_service.module.book_snapshot.application.command.CreateBookSnapshotCommand;
-import com.mrs.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
-import com.mrs.engagement_service.module.book_snapshot.domain.port.BookSnapshotRepository;
+import com.vellumhub.engagement_service.module.book_snapshot.application.command.CreateBookSnapshotCommand;
+import com.vellumhub.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
+import com.vellumhub.engagement_service.module.book_snapshot.domain.port.BookSnapshotRepository;
 import org.springframework.stereotype.Service;
 
 @Service

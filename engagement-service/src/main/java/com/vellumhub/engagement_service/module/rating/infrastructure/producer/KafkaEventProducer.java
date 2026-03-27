@@ -1,6 +1,6 @@
-package com.mrs.engagement_service.module.rating.infrastructure.producer;
+package com.vellumhub.engagement_service.module.rating.infrastructure.producer;
 
-import com.mrs.engagement_service.module.rating.domain.port.EventProducer;
+import com.vellumhub.engagement_service.module.rating.domain.port.EventProducer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;

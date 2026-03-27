@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.module.book_snapshot.application.command;
+package com.vellumhub.engagement_service.module.book_snapshot.application.command;
 
 import java.util.Objects;
 import java.util.UUID;

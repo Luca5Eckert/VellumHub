@@ -1,6 +1,6 @@
-package com.mrs.engagement_service.module.rating.domain.filter;
+package com.vellumhub.engagement_service.module.rating.domain.filter;
 
-import com.mrs.engagement_service.module.rating.domain.exception.FilterRatingIllegalArgumentException;
+import com.vellumhub.engagement_service.module.rating.domain.exception.FilterRatingIllegalArgumentException;
 
 import java.time.OffsetDateTime;
 

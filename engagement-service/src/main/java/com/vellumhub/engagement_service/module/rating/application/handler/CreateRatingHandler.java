@@ -1,10 +1,10 @@
-package com.mrs.engagement_service.module.rating.application.handler;
+package com.vellumhub.engagement_service.module.rating.application.handler;
 
-import com.mrs.engagement_service.module.rating.application.dto.CreateRatingRequest;
-import com.mrs.engagement_service.module.rating.domain.producer.CreatedRatingEventProducer;
-import com.mrs.engagement_service.module.rating.domain.command.CreateRatingCommand;
-import com.mrs.engagement_service.module.rating.domain.model.Rating;
-import com.mrs.engagement_service.module.rating.domain.use_case.CreateRatingUseCase;
+import com.vellumhub.engagement_service.module.rating.application.dto.CreateRatingRequest;
+import com.vellumhub.engagement_service.module.rating.domain.producer.CreatedRatingEventProducer;
+import com.vellumhub.engagement_service.module.rating.domain.command.CreateRatingCommand;
+import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
+import com.vellumhub.engagement_service.module.rating.domain.use_case.CreateRatingUseCase;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

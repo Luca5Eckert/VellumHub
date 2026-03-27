@@ -1,8 +1,8 @@
-package com.mrs.engagement_service.module.book_snapshot.presentation.consumer;
+package com.vellumhub.engagement_service.module.book_snapshot.presentation.consumer;
 
-import com.mrs.engagement_service.module.book_snapshot.application.command.DeleteBookSnapshotCommand;
-import com.mrs.engagement_service.module.book_snapshot.application.use_case.DeleteBookSnapshotUseCase;
-import com.mrs.engagement_service.module.book_snapshot.presentation.event.DeleteBookEvent;
+import com.vellumhub.engagement_service.module.book_snapshot.application.command.DeleteBookSnapshotCommand;
+import com.vellumhub.engagement_service.module.book_snapshot.application.use_case.DeleteBookSnapshotUseCase;
+import com.vellumhub.engagement_service.module.book_snapshot.presentation.event.DeleteBookEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;

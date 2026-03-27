@@ -1,4 +1,4 @@
-package com.mrs.engagement_service;
+package com.vellumhub.engagement_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

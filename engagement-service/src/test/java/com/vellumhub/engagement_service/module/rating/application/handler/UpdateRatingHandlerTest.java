@@ -1,11 +1,11 @@
-package com.mrs.engagement_service.module.rating.application.handler;
+package com.vellumhub.engagement_service.module.rating.application.handler;
 
-import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
-import com.mrs.engagement_service.module.rating.application.dto.UpdateRatingRequest;
-import com.mrs.engagement_service.module.rating.application.mapper.RatingMapper;
-import com.mrs.engagement_service.module.rating.domain.command.UpdateRatingCommand;
-import com.mrs.engagement_service.module.rating.domain.model.Rating;
-import com.mrs.engagement_service.module.rating.domain.use_case.UpdateRatingUseCase;
+import com.vellumhub.engagement_service.module.rating.application.dto.RatingGetResponse;
+import com.vellumhub.engagement_service.module.rating.application.dto.UpdateRatingRequest;
+import com.vellumhub.engagement_service.module.rating.application.mapper.RatingMapper;
+import com.vellumhub.engagement_service.module.rating.domain.command.UpdateRatingCommand;
+import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
+import com.vellumhub.engagement_service.module.rating.domain.use_case.UpdateRatingUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

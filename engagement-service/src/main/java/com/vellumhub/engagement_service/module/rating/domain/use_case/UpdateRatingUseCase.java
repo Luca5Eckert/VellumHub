@@ -1,9 +1,9 @@
-package com.mrs.engagement_service.module.rating.domain.use_case;
+package com.vellumhub.engagement_service.module.rating.domain.use_case;
 
-import com.mrs.engagement_service.module.rating.domain.command.UpdateRatingCommand;
-import com.mrs.engagement_service.module.rating.domain.exception.RatingDomainException;
-import com.mrs.engagement_service.module.rating.domain.model.Rating;
-import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
+import com.vellumhub.engagement_service.module.rating.domain.command.UpdateRatingCommand;
+import com.vellumhub.engagement_service.module.rating.domain.exception.RatingDomainException;
+import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
+import com.vellumhub.engagement_service.module.rating.domain.port.RatingRepository;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,9 +1,9 @@
-package com.mrs.engagement_service.module.rating.domain.use_case;
+package com.vellumhub.engagement_service.module.rating.domain.use_case;
 
-import com.mrs.engagement_service.module.rating.domain.filter.RatingFilter;
-import com.mrs.engagement_service.module.rating.domain.command.GetUserRatingCommand;
-import com.mrs.engagement_service.module.rating.domain.model.Rating;
-import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
+import com.vellumhub.engagement_service.module.rating.domain.filter.RatingFilter;
+import com.vellumhub.engagement_service.module.rating.domain.command.GetUserRatingCommand;
+import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
+import com.vellumhub.engagement_service.module.rating.domain.port.RatingRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;

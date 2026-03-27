@@ -1,7 +1,7 @@
-package com.mrs.engagement_service.module.book_snapshot.infrastructure.persistence.repository;
+package com.vellumhub.engagement_service.module.book_snapshot.infrastructure.persistence.repository;
 
-import com.mrs.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
-import com.mrs.engagement_service.module.book_snapshot.domain.port.BookSnapshotRepository;
+import com.vellumhub.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
+import com.vellumhub.engagement_service.module.book_snapshot.domain.port.BookSnapshotRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;

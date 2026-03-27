@@ -1,7 +1,7 @@
-package com.mrs.engagement_service.share.provider;
+package com.vellumhub.engagement_service.share.provider;
 
-import com.mrs.engagement_service.module.rating.domain.filter.RatingFilter;
-import com.mrs.engagement_service.module.rating.domain.model.Rating;
+import com.vellumhub.engagement_service.module.rating.domain.filter.RatingFilter;
+import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;

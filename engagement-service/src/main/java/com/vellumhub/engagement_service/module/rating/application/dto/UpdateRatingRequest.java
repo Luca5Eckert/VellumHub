@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.module.rating.application.dto;
+package com.vellumhub.engagement_service.module.rating.application.dto;
 
 public record UpdateRatingRequest(
         Integer stars,

@@ -1,9 +1,9 @@
-package com.mrs.engagement_service.module.rating.infrastructure.repository;
+package com.vellumhub.engagement_service.module.rating.infrastructure.repository;
 
-import com.mrs.engagement_service.share.provider.RatingFilterProvider;
-import com.mrs.engagement_service.module.rating.domain.filter.RatingFilter;
-import com.mrs.engagement_service.module.rating.domain.model.Rating;
-import com.mrs.engagement_service.module.rating.domain.port.RatingRepository;
+import com.vellumhub.engagement_service.share.provider.RatingFilterProvider;
+import com.vellumhub.engagement_service.module.rating.domain.filter.RatingFilter;
+import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
+import com.vellumhub.engagement_service.module.rating.domain.port.RatingRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;

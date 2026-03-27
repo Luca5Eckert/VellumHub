@@ -2,9 +2,11 @@ package com.vellumhub.catalog_service.module.book.infrastructure.repository.genr
 
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+@Repository
 public class SpringGenreRepositoryAdapter implements GenreRepository {
 
     private final JpaGenreRepository jpaGenreRepository;

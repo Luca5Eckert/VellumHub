@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.module.interaction.domain.model;
+package com.vellumhub.engagement_service.module.interaction.domain.model;
 
 public enum TypeInteraction {
     LIKE,

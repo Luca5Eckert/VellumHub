@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.module.rating.domain.exception;
+package com.vellumhub.engagement_service.module.rating.domain.exception;
 
 public class RatingAlreadyExistException extends RatingDomainException {
     public RatingAlreadyExistException(String message) {

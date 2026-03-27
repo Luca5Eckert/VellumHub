@@ -1,4 +1,4 @@
-package com.mrs.engagement_service.share.security.config;
+package com.vellumhub.engagement_service.share.security.config;
 
 import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;

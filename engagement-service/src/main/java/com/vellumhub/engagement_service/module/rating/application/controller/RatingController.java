@@ -1,10 +1,10 @@
-package com.mrs.engagement_service.module.rating.application.controller;
+package com.vellumhub.engagement_service.module.rating.application.controller;
 
-import com.mrs.engagement_service.module.rating.application.dto.CreateRatingRequest;
-import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
-import com.mrs.engagement_service.module.rating.application.dto.UpdateRatingRequest;
-import com.mrs.engagement_service.module.rating.application.handler.*;
-import com.mrs.engagement_service.share.service.AuthenticationService;
+import com.vellumhub.engagement_service.module.rating.application.dto.CreateRatingRequest;
+import com.vellumhub.engagement_service.module.rating.application.dto.RatingGetResponse;
+import com.vellumhub.engagement_service.module.rating.application.dto.UpdateRatingRequest;
+import com.vellumhub.engagement_service.module.rating.application.handler.*;
+import com.vellumhub.engagement_service.share.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

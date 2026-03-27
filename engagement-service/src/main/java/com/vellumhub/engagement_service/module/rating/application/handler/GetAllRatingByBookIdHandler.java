@@ -1,9 +1,9 @@
-package com.mrs.engagement_service.module.rating.application.handler;
+package com.vellumhub.engagement_service.module.rating.application.handler;
 
-import com.mrs.engagement_service.module.rating.application.dto.RatingGetResponse;
-import com.mrs.engagement_service.module.rating.application.mapper.RatingMapper;
-import com.mrs.engagement_service.module.rating.domain.command.GetAllRatingByBookCommand;
-import com.mrs.engagement_service.module.rating.domain.use_case.GetAllRatingByBookUseCase;
+import com.vellumhub.engagement_service.module.rating.application.dto.RatingGetResponse;
+import com.vellumhub.engagement_service.module.rating.application.mapper.RatingMapper;
+import com.vellumhub.engagement_service.module.rating.domain.command.GetAllRatingByBookCommand;
+import com.vellumhub.engagement_service.module.rating.domain.use_case.GetAllRatingByBookUseCase;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
