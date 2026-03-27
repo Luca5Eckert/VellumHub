@@ -22,7 +22,7 @@ This README is intentionally architecture-first, evidence-driven, and aligned wi
 - [Event-Driven Backbone (ECST)](#event-driven-backbone-ecst)
 - [Observability](#observability)
 - [Database and pgvector Design](#database-and-pgvector-design)
-- [Roadmap and Future Enhancements](#eoadmap-and-future-enhancements)
+- [Roadmap and Future Enhancements](#roadmap-and-future-enhancements)
 - [Quick Start](#quick-start)
 
 ---
@@ -93,6 +93,16 @@ Edge layer hardening in v3.0:
 - Central ingress through Spring Cloud Gateway (`gateway-service`)
 - Redis-backed request rate limiting per route (`RequestRateLimiter`)
 - Auth route protected by IP-based limiter; authenticated routes protected by user-aware limiter
+
+### v3.0 edge policy (current implementation)
+
+| Route | Key strategy | Replenish rate | Burst capacity |
+|---|---|---:|---:|
+| `/api/v1/auth/**` | IP-based (`ipKeyResolver`) | 5 req/s | 10 |
+| `/api/v1/users/**` | User-based (`userKeyResolver`) | 10 req/s | 20 |
+| `/api/v1/catalog/**` | User-based (`userKeyResolver`) | 30 req/s | 60 |
+| `/api/v1/engagement/**` | User-based (`userKeyResolver`) | 30 req/s | 60 |
+| `/api/v1/recommendation/**` | User-based (`userKeyResolver`) | 20 req/s | 40 |
 
 ---
 
