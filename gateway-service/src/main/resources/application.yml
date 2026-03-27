@@ -8,7 +8,7 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: auth-route
+        - id: auth
           uri: ${USER_SERVICE_URL:http://user-service:8080}
           predicates:
             - Path=/api/v1/auth/**
