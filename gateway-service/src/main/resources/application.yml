@@ -67,7 +67,7 @@ spring:
             - id: recommendations
               uri: ${RECOMMENDATION_SERVICE_URL:http://recommendation-service:8080}
               predicates:
-                - Path=/api/v1/**
+                - Path=/api/v1/recommendations/**
               filters:
                 - StripPrefix=2
                 - name: RequestRateLimiter
