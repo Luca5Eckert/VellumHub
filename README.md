@@ -7,16 +7,16 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-VellumHub is a book-focused microservices platform with event-driven recommendation updates, pgvector similarity search, and local read models for low-latency serving.
+VellumHub is a production-oriented, book-focused microservices platform with event-driven recommendation updates, pgvector similarity search, and local read models for low-latency serving.
 
-This README is intentionally architecture-first and evidence-driven.
+This README is intentionally architecture-first, evidence-driven, and aligned with the current runtime implementation.
 
 ---
 
 ## Table of Contents
 
-- [System Design (v2.1)](#system-design-v21)
-- [Architecture Evolution (v1.0 → v2.0 → v2.1)](#architecture-evolution-v10--v20--v21)
+- [System Design (v3.0)](#system-design-v30)
+- [Architecture Evolution (v1.0 → v2.0 → v2.1 → v3.0)](#architecture-evolution-v10--v20--v21--v30)
 - [Active API Documentation (Swagger/OpenAPI)](#active-api-documentation-swaggeropenapi)
 - [AI & Vector Pipeline](#ai--vector-pipeline)
 - [Event-Driven Backbone (ECST)](#event-driven-backbone-ecst)
@@ -27,12 +27,17 @@ This README is intentionally architecture-first and evidence-driven.
 
 ---
 
-## System Design (v2.1)
+## System Design (v3.0)
 
 ```mermaid
 graph TB
     subgraph Clients
       U[User]
+    end
+
+    subgraph Edge
+      GW[API Gateway]
+      REDIS[(Redis Rate Limiter)]
     end
 
     subgraph Services
@@ -56,10 +61,12 @@ graph TB
       RDB[(recommendation_db + pgvector)]
     end
 
-    U --> US
-    U --> CS
-    U --> ES
-    U --> RS
+    U --> GW
+    GW --> US
+    GW --> CS
+    GW --> ES
+    GW --> RS
+    GW --> REDIS
 
     US --> UDB
     CS --> CDB
@@ -82,9 +89,14 @@ The Recommendation Service acts as an event-fed local read model:
 - `user_profiles` for preference vectors
 - `recommendations` for response metadata
 
+Edge layer hardening in v3.0:
+- Central ingress through Spring Cloud Gateway (`gateway-service`)
+- Redis-backed request rate limiting per route (`RequestRateLimiter`)
+- Auth route protected by IP-based limiter; authenticated routes protected by user-aware limiter
+
 ---
 
-## Architecture Evolution (v1.0 → v2.0 → v2.1)
+## Architecture Evolution (v1.0 → v2.0 → v2.1 → v3.0)
 
 ### v1.0
 - External ML service in critical recommendation path
@@ -98,10 +110,16 @@ The Recommendation Service acts as an event-fed local read model:
 - Event-Carried State Transfer (ECST) used to keep recommendation state synchronized incrementally
 - User interactions feed Kafka topics, and consumers update vectors continuously
 
+### v3.0
+- API Gateway introduced as the single external entry point
+- Route-level rate limiting introduced with Redis token buckets
+- Identity-aware edge control using JWT claim (`user_id`) with safe fallback to principal/IP
+
 ```mermaid
 graph LR
   V1[v1.0\nExternal ML Service] --> V2[v2.0\npgvector in Recommendation DB]
   V2 --> V21[v2.1\nECST + Local Read Model]
+  V21 --> V3[v3.0\nAPI Gateway + Rate Limiting]
 ```
 
 ---
@@ -110,6 +128,8 @@ graph LR
 
 Swagger/OpenAPI is configured in all services and exposed publicly via security rules:
 `/swagger-ui/**`, `/swagger-ui.html`, `/v3/api-docs/**`.
+
+In v3.0, the recommended production ingress is the API Gateway (`http://localhost:8080`), while Swagger remains service-scoped for technical API inspection.
 
 | Service | Swagger UI | OpenAPI JSON |
 |---|---|---|
@@ -228,6 +248,7 @@ Payload naming is now aligned for the rating event contract:
 - Health/metrics/prometheus endpoints enabled in service properties
 - Health endpoints exposed through security configuration
 - Kafka health indicator is enabled (`management.health.kafka.enabled=true`)
+- Gateway edge metrics can be inferred from Redis-backed limiter behavior and route-level traffic controls
 
 
 ---
@@ -262,8 +283,9 @@ Confirmed from code and SQL:
 
 ### Planned Technical Improvements
 
+- **Gateway Hardening:** Expand edge controls with route-specific quotas by client class and environment profiles.
 - **Kafka Resilience:** Implement custom retry and Dead Letter Topic (DLT) strategies for consumers.
-- **Observability:** Integrate distributed tracing instrumentation (e.g., Micrometer Tracing or Zipkin) across services.
+- **Observability:** Integrate distributed tracing instrumentation (e.g., Micrometer Tracing or Zipkin) across services, including gateway hops.
 - **Integration Testing:** Introduce a Testcontainers-based test suite to validate Kafka and pgvector workflows.
 - **CI/CD Alignment:** Upgrade pipeline runners to fully support Java 21 for seamless Maven test execution.
 
@@ -276,6 +298,7 @@ docker-compose up -d
 ```
 
 Service URLs:
+- API Gateway (entry point): `http://localhost:8080`
 - User Service: `http://localhost:8084`
 - Catalog Service: `http://localhost:8081`
 - Engagement Service: `http://localhost:8083`
