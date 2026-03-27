@@ -116,20 +116,16 @@ Edge layer hardening in v3.0:
 - Recommendation compute moved into JVM services + PostgreSQL pgvector
 - Historical project docs in this repository report latency movement from ~300–500ms to ~80–120ms in this transition narrative
 
-### v2.1
-- Event-Carried State Transfer (ECST) used to keep recommendation state synchronized incrementally
-- User interactions feed Kafka topics, and consumers update vectors continuously
-
 ### v3.0
 - API Gateway introduced as the single external entry point
 - Route-level rate limiting introduced with Redis token buckets
-- Identity-aware edge control using JWT claim (`user_id`) with safe fallback to principal/IP
+- Event-Carried State Transfer (ECST) used to keep recommendation state synchronized incrementally
+- User interactions feed Kafka topics, and consumers update vectors continuously
 
 ```mermaid
 graph LR
   V1[v1.0\nExternal ML Service] --> V2[v2.0\npgvector in Recommendation DB]
-  V2 --> V21[v2.1\nECST + Local Read Model]
-  V21 --> V3[v3.0\nAPI Gateway + Rate Limiting]
+  V2 --> V3[v3.0\nAPI Gateway + Rate Limiting + ECST]
 ```
 
 ---
