@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: ${USER_SERVICE_URL:http://user-service:8080}
+          predicates:
+            - Path=/api/v1/users/**
+          filters:
+            - StripPrefix=0
+
+        - id: catalog-service
+          uri: ${CATALOG_SERVICE_URL:http://catalog-service:8080}
+          predicates:
+            - Path=/api/v1/catalog/**
+          filters:
+            - StripPrefix=0
+
+        - id: engagement-service
+          uri: ${ENGAGEMENT_SERVICE_URL:http://engagement-service:8080}
+          predicates:
+            - Path=/api/v1/engagement/**
+          filters:
+            - StripPrefix=0
+
+        - id: recommendation-service
+          uri: ${RECOMMENDATION_SERVICE_URL:http://recommendation-service:8080}
+          predicates:
+            - Path=/api/v1/recommendation/**
+          filters:
+            - StripPrefix=0
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      connect-timeout: 2s
