@@ -32,7 +32,6 @@ services:
     depends_on:
       redis-gateway:
         condition: service_healthy
-      # 🚀 FIX: Changed to service_started to prevent deadlock if a microservice crashes
       user-service:
         condition: service_started
       catalog-service:

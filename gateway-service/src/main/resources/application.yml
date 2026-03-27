@@ -72,7 +72,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          secret-key: ${JWT_KEY:sua_chave_secreta_muito_longa_de_32_caracteres}
+          secret-key: ${JWT_KEY:dasdasidaidIHDASOHDOASHDPHAsdhashdouahsoduahsoduaoudhaoudhohdouashd}
 
   data:
     redis:

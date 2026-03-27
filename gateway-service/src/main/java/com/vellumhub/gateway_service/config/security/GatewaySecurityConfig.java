@@ -17,7 +17,7 @@ import javax.crypto.spec.SecretKeySpec;
 @EnableWebFluxSecurity
 public class GatewaySecurityConfig {
 
-    @Value("${jwt.secret}")
+    @Value("${spring.security.oauth2.resourceserver.jwt.secret-key}")
     private String jwtSecret;
 
     @Bean
@@ -26,7 +26,7 @@ public class GatewaySecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/actuator/**").permitAll()
-                        .pathMatchers("/auth/**").permitAll()
+                        .pathMatchers("/api/v1/auth/**").permitAll()
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
