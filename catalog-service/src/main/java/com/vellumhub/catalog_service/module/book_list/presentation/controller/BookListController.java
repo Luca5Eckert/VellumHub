@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/book/list")
+@RequestMapping("/book-list")
 public class BookListController {
 
     private final AuthenticationService authenticationService;

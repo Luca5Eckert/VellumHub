@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/book/list/membership")
+@RequestMapping("/book-list/membership")
 public class BookListMembershipController {
 
     private final AuthenticationService authenticationService;

@@ -43,7 +43,7 @@ spring:
             - id: catalogs
               uri: ${CATALOG_SERVICE_URL:http://catalog-service:8080}
               predicates:
-                - Path=/api/v1/catalog/**
+                - Path=/api/v1/**
               filters:
                 - StripPrefix=2
                 - name: RequestRateLimiter
@@ -55,7 +55,7 @@ spring:
             - id: engagements
               uri: ${ENGAGEMENT_SERVICE_URL:http://engagement-service:8080}
               predicates:
-                - Path=/api/v1/engagement/**
+                - Path=/api/v1/**
               filters:
                 - StripPrefix=2
                 - name: RequestRateLimiter
@@ -67,7 +67,7 @@ spring:
             - id: recommendations
               uri: ${RECOMMENDATION_SERVICE_URL:http://recommendation-service:8080}
               predicates:
-                - Path=/api/v1/recommendation/**
+                - Path=/api/v1/**
               filters:
                 - StripPrefix=2
                 - name: RequestRateLimiter
