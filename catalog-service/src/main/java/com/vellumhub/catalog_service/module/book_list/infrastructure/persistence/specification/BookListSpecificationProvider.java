@@ -1,9 +1,9 @@
-package com.mrs.catalog_service.module.book_list.infrastructure.persistence.specification;
+package com.vellumhub.catalog_service.module.book_list.infrastructure.persistence.specification;
 
-import com.mrs.catalog_service.module.book_list.domain.filter.BookListFilter;
-import com.mrs.catalog_service.module.book_list.domain.model.BookList;
-import com.mrs.catalog_service.module.book_list.domain.model.BookListMembership;
-import com.mrs.catalog_service.module.book_list.domain.model.TypeBookList;
+import com.vellumhub.catalog_service.module.book_list.domain.filter.BookListFilter;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookList;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookListMembership;
+import com.vellumhub.catalog_service.module.book_list.domain.model.TypeBookList;
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;

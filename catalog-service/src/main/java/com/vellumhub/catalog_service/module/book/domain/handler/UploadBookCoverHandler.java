@@ -1,10 +1,10 @@
-package com.mrs.catalog_service.module.book.domain.handler;
+package com.vellumhub.catalog_service.module.book.domain.handler;
 
-import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;
-import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
-import com.mrs.catalog_service.module.book.domain.model.Book;
-import com.mrs.catalog_service.module.book.domain.port.BookCoverStorage;
-import com.mrs.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.domain.port.BookCoverStorage;
+import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

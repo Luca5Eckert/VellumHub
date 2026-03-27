@@ -1,11 +1,11 @@
-package com.mrs.catalog_service.module.book.application.service;
+package com.vellumhub.catalog_service.module.book.application.service;
 
-import com.mrs.catalog_service.module.book.application.command.CreateBookCommand;
-import com.mrs.catalog_service.module.book.presentation.dto.*;
-import com.mrs.catalog_service.module.book.presentation.mapper.BookMapper;
-import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;
-import com.mrs.catalog_service.module.book.domain.handler.*;
-import com.mrs.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.application.command.CreateBookCommand;
+import com.vellumhub.catalog_service.module.book.domain.handler.*;
+import com.vellumhub.catalog_service.module.book.presentation.dto.*;
+import com.vellumhub.catalog_service.module.book.presentation.mapper.BookMapper;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;

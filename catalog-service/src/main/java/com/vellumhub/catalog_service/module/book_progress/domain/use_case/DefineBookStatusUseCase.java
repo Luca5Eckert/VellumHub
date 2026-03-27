@@ -1,12 +1,12 @@
-package com.mrs.catalog_service.module.book_progress.domain.use_case;
+package com.vellumhub.catalog_service.module.book_progress.domain.use_case;
 
-import com.mrs.catalog_service.module.book.domain.model.Book;
-import com.mrs.catalog_service.module.book.domain.port.BookRepository;
-import com.mrs.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
-import com.mrs.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
-import com.mrs.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
-import com.mrs.catalog_service.module.book_progress.domain.port.BookProgressRepository;
-import com.mrs.catalog_service.module.book_progress.domain.model.BookProgress;
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
+import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import org.springframework.stereotype.Component;
 
 @Component

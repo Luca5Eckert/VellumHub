@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_list.domain.filter;
+package com.vellumhub.catalog_service.module.book_list.domain.filter;
 
 public record BookListPage(
         int pageNumber,

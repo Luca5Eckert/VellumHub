@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.share.files;
+package com.vellumhub.catalog_service.share.files;
 
-import com.mrs.catalog_service.module.book.domain.port.BookCoverStorage;
+import com.vellumhub.catalog_service.module.book.domain.port.BookCoverStorage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

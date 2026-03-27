@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.share.security;
+package com.vellumhub.catalog_service.share.security;
 
 import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;

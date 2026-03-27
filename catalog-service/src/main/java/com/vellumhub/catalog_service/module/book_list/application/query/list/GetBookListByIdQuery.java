@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_list.application.query.list;
+package com.vellumhub.catalog_service.module.book_list.application.query.list;
 
 import java.util.UUID;
 

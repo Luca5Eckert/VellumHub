@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book_list.domain.port;
+package com.vellumhub.catalog_service.module.book_list.domain.port;
 
-import com.mrs.catalog_service.module.book_list.domain.model.BookListMembership;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookListMembership;
 
 import java.util.Optional;
 import java.util.UUID;

@@ -1,8 +1,8 @@
-package com.mrs.catalog_service.module.book_progress.infrastructure.persistence.repository;
+package com.vellumhub.catalog_service.module.book_progress.infrastructure.persistence.repository;
 
-import com.mrs.catalog_service.module.book_progress.domain.model.ReadingStatus;
-import com.mrs.catalog_service.module.book_progress.domain.port.BookProgressRepository;
-import com.mrs.catalog_service.module.book_progress.domain.model.BookProgress;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
+import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

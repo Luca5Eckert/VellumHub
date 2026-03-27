@@ -1,9 +1,9 @@
-package com.mrs.catalog_service.module.book.domain.handler;
+package com.vellumhub.catalog_service.module.book.domain.handler;
 
-import com.mrs.catalog_service.module.book.presentation.dto.BookCoverResponse;
-import com.mrs.catalog_service.module.book.domain.model.Book;
-import com.mrs.catalog_service.module.book.domain.port.BookCoverStorage;
-import com.mrs.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book.presentation.dto.BookCoverResponse;
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.domain.port.BookCoverStorage;
+import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;

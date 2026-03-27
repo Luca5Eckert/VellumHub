@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book_list.infrastructure.persistence.repository.list;
+package com.vellumhub.catalog_service.module.book_list.infrastructure.persistence.repository.list;
 
-import com.mrs.catalog_service.module.book_list.domain.model.BookList;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookList;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;

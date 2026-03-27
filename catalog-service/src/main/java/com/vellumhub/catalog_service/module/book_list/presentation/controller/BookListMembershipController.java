@@ -1,16 +1,16 @@
-package com.mrs.catalog_service.module.book_list.presentation.controller;
+package com.vellumhub.catalog_service.module.book_list.presentation.controller;
 
-import com.mrs.catalog_service.module.book_list.application.command.member.AddMemberInBookListCommand;
-import com.mrs.catalog_service.module.book_list.application.command.member.DeleteMemberInBookListCommand;
-import com.mrs.catalog_service.module.book_list.application.command.member.UpdateMemberRoleCommand;
-import com.mrs.catalog_service.module.book_list.application.query.member.GetAllMembershipOfBookListQuery;
-import com.mrs.catalog_service.module.book_list.application.query.member.GetMembershipQuery;
-import com.mrs.catalog_service.module.book_list.application.use_case.member.*;
-import com.mrs.catalog_service.module.book_list.presentation.dto.request.member.AddMemberRequest;
-import com.mrs.catalog_service.module.book_list.presentation.dto.request.member.UpdateMemberRoleRequest;
-import com.mrs.catalog_service.module.book_list.presentation.dto.response.member.GetMembershipResponse;
-import com.mrs.catalog_service.module.book_list.presentation.mapper.BookListMemberMapper;
-import com.mrs.catalog_service.share.service.AuthenticationService;
+import com.vellumhub.catalog_service.module.book_list.application.command.member.AddMemberInBookListCommand;
+import com.vellumhub.catalog_service.module.book_list.application.command.member.DeleteMemberInBookListCommand;
+import com.vellumhub.catalog_service.module.book_list.application.command.member.UpdateMemberRoleCommand;
+import com.vellumhub.catalog_service.module.book_list.application.query.member.GetAllMembershipOfBookListQuery;
+import com.vellumhub.catalog_service.module.book_list.application.query.member.GetMembershipQuery;
+import com.vellumhub.catalog_service.module.book_list.application.use_case.member.*;
+import com.vellumhub.catalog_service.module.book_list.presentation.dto.request.member.AddMemberRequest;
+import com.vellumhub.catalog_service.module.book_list.presentation.dto.request.member.UpdateMemberRoleRequest;
+import com.vellumhub.catalog_service.module.book_list.presentation.dto.response.member.GetMembershipResponse;
+import com.vellumhub.catalog_service.module.book_list.presentation.mapper.BookListMemberMapper;
+import com.vellumhub.catalog_service.share.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 

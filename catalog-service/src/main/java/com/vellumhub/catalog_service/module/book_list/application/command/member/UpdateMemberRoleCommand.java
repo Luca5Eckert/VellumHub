@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book_list.application.command.member;
+package com.vellumhub.catalog_service.module.book_list.application.command.member;
 
-import com.mrs.catalog_service.module.book_list.domain.model.MembershipRole;
+import com.vellumhub.catalog_service.module.book_list.domain.model.MembershipRole;
 
 import java.util.UUID;
 

@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book.application.command;
+package com.vellumhub.catalog_service.module.book.application.command;
 
 import java.util.Set;
 

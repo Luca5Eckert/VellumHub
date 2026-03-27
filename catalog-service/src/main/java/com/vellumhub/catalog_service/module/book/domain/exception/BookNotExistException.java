@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book.domain.exception;
+package com.vellumhub.catalog_service.module.book.domain.exception;
 
 public class BookNotExistException extends BookDomainException {
     public BookNotExistException() {

@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book.domain.port;
+package com.vellumhub.catalog_service.module.book.domain.port;
 
 import org.springframework.core.io.Resource;
 

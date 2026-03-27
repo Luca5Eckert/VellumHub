@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book_list.domain.model;
+package com.vellumhub.catalog_service.module.book_list.domain.model;
 
-import com.mrs.catalog_service.module.book_list.domain.exception.MembershipBookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.MembershipBookListDomainException;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

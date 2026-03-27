@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book.infrastructure.repository.genre;
+package com.vellumhub.catalog_service.module.book.infrastructure.repository.genre;
 
-import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book.presentation.dto;
+package com.vellumhub.catalog_service.module.book.presentation.dto;
 
 import java.util.UUID;
 

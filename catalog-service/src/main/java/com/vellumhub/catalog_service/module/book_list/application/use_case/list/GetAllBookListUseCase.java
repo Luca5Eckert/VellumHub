@@ -1,10 +1,10 @@
-package com.mrs.catalog_service.module.book_list.application.use_case.list;
+package com.vellumhub.catalog_service.module.book_list.application.use_case.list;
 
-import com.mrs.catalog_service.module.book_list.application.query.list.GetAllBookListQuery;
-import com.mrs.catalog_service.module.book_list.domain.filter.BookListFilter;
-import com.mrs.catalog_service.module.book_list.domain.filter.BookListPage;
-import com.mrs.catalog_service.module.book_list.domain.model.BookList;
-import com.mrs.catalog_service.module.book_list.domain.port.BookListRepository;
+import com.vellumhub.catalog_service.module.book_list.application.query.list.GetAllBookListQuery;
+import com.vellumhub.catalog_service.module.book_list.domain.filter.BookListFilter;
+import com.vellumhub.catalog_service.module.book_list.domain.filter.BookListPage;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookList;
+import com.vellumhub.catalog_service.module.book_list.domain.port.BookListRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 

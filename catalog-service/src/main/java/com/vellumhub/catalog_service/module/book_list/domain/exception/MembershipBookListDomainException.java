@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_list.domain.exception;
+package com.vellumhub.catalog_service.module.book_list.domain.exception;
 
 public class MembershipBookListDomainException extends RuntimeException
 {

@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book_list.infrastructure.persistence.repository.member;
+package com.vellumhub.catalog_service.module.book_list.infrastructure.persistence.repository.member;
 
-import com.mrs.catalog_service.module.book_list.domain.model.BookListMembership;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookListMembership;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

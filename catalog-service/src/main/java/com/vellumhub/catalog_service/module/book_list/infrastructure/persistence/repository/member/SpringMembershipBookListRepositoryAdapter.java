@@ -1,7 +1,7 @@
-package com.mrs.catalog_service.module.book_list.infrastructure.persistence.repository.member;
+package com.vellumhub.catalog_service.module.book_list.infrastructure.persistence.repository.member;
 
-import com.mrs.catalog_service.module.book_list.domain.model.BookListMembership;
-import com.mrs.catalog_service.module.book_list.domain.port.MembershipBookListRepository;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookListMembership;
+import com.vellumhub.catalog_service.module.book_list.domain.port.MembershipBookListRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;

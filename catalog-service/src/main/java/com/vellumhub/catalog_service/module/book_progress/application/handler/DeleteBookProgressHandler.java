@@ -1,7 +1,7 @@
-package com.mrs.catalog_service.module.book_progress.application.handler;
+package com.vellumhub.catalog_service.module.book_progress.application.handler;
 
-import com.mrs.catalog_service.module.book_progress.domain.command.DeleteBookProgressCommand;
-import com.mrs.catalog_service.module.book_progress.domain.use_case.DeleteBookProgressUseCase;
+import com.vellumhub.catalog_service.module.book_progress.domain.command.DeleteBookProgressCommand;
+import com.vellumhub.catalog_service.module.book_progress.domain.use_case.DeleteBookProgressUseCase;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_list.application.command.member;
+package com.vellumhub.catalog_service.module.book_list.application.command.member;
 
 import java.util.UUID;
 

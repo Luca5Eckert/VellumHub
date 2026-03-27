@@ -1,4 +1,4 @@
-package com.mrs.catalog_service;
+package com.vellumhub.catalog_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

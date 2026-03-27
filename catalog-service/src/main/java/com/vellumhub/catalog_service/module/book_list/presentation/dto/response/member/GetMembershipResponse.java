@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book_list.presentation.dto.response.member;
+package com.vellumhub.catalog_service.module.book_list.presentation.dto.response.member;
 
-import com.mrs.catalog_service.module.book_list.domain.model.MembershipRole;
+import com.vellumhub.catalog_service.module.book_list.domain.model.MembershipRole;
 
 import java.time.Instant;
 import java.util.UUID;

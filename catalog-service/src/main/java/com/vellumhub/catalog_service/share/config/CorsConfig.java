@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.share.config;
+package com.vellumhub.catalog_service.share.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

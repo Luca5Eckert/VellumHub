@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.share.exception;
+package com.vellumhub.catalog_service.share.exception;
 
 public class UserNotAuthenticatedException extends RuntimeException {
     public UserNotAuthenticatedException(String message) {

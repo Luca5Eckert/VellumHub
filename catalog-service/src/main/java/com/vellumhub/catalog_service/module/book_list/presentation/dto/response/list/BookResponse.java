@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book_list.presentation.dto.response.list;
+package com.vellumhub.catalog_service.module.book_list.presentation.dto.response.list;
 
-import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 
 import java.time.Instant;
 import java.util.List;

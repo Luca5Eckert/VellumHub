@@ -1,9 +1,9 @@
-package com.mrs.catalog_service.module.book_list.application.use_case.member;
+package com.vellumhub.catalog_service.module.book_list.application.use_case.member;
 
-import com.mrs.catalog_service.module.book_list.application.query.member.GetAllMembershipOfBookListQuery;
-import com.mrs.catalog_service.module.book_list.domain.exception.BookListDomainException;
-import com.mrs.catalog_service.module.book_list.domain.model.BookListMembership;
-import com.mrs.catalog_service.module.book_list.domain.port.BookListRepository;
+import com.vellumhub.catalog_service.module.book_list.application.query.member.GetAllMembershipOfBookListQuery;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookListMembership;
+import com.vellumhub.catalog_service.module.book_list.domain.port.BookListRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

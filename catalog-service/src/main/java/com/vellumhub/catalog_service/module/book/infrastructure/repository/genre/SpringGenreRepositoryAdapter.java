@@ -1,7 +1,7 @@
-package com.mrs.catalog_service.module.book.infrastructure.repository.genre;
+package com.vellumhub.catalog_service.module.book.infrastructure.repository.genre;
 
-import com.mrs.catalog_service.module.book.domain.model.Genre;
-import com.mrs.catalog_service.module.book.domain.port.GenreRepository;
+import com.vellumhub.catalog_service.module.book.domain.model.Genre;
+import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
 
 import java.util.Optional;
 

@@ -1,7 +1,7 @@
-package com.mrs.catalog_service.module.book_list.presentation.mapper;
+package com.vellumhub.catalog_service.module.book_list.presentation.mapper;
 
-import com.mrs.catalog_service.module.book_list.domain.model.BookListMembership;
-import com.mrs.catalog_service.module.book_list.presentation.dto.response.member.GetMembershipResponse;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookListMembership;
+import com.vellumhub.catalog_service.module.book_list.presentation.dto.response.member.GetMembershipResponse;
 
 import org.springframework.stereotype.Component;
 

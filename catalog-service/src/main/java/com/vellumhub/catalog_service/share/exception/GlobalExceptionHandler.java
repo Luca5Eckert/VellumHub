@@ -1,10 +1,10 @@
-package com.mrs.catalog_service.share.exception;
+package com.vellumhub.catalog_service.share.exception;
 
-import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;
-import com.mrs.catalog_service.module.book.domain.exception.BookNotExistException;
-import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
-import com.mrs.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
-import com.mrs.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookNotExistException;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
+import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

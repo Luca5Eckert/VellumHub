@@ -1,10 +1,10 @@
-package com.mrs.catalog_service.module.book_list.infrastructure.persistence.repository.list;
+package com.vellumhub.catalog_service.module.book_list.infrastructure.persistence.repository.list;
 
-import com.mrs.catalog_service.module.book_list.domain.filter.BookListFilter;
-import com.mrs.catalog_service.module.book_list.domain.filter.BookListPage;
-import com.mrs.catalog_service.module.book_list.domain.model.BookList;
-import com.mrs.catalog_service.module.book_list.domain.port.BookListRepository;
-import com.mrs.catalog_service.module.book_list.infrastructure.persistence.specification.BookListSpecificationProvider;
+import com.vellumhub.catalog_service.module.book_list.domain.filter.BookListFilter;
+import com.vellumhub.catalog_service.module.book_list.domain.filter.BookListPage;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookList;
+import com.vellumhub.catalog_service.module.book_list.domain.port.BookListRepository;
+import com.vellumhub.catalog_service.module.book_list.infrastructure.persistence.specification.BookListSpecificationProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

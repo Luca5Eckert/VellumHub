@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book.domain.event;
+package com.vellumhub.catalog_service.module.book.domain.event;
 
 import java.util.UUID;
 

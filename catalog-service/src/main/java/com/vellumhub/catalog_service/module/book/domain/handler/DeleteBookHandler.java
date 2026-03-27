@@ -1,9 +1,9 @@
-package com.mrs.catalog_service.module.book.domain.handler;
+package com.vellumhub.catalog_service.module.book.domain.handler;
 
-import com.mrs.catalog_service.module.book.domain.event.DeleteBookEvent;
-import com.mrs.catalog_service.module.book.domain.exception.BookNotExistException;
-import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
-import com.mrs.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book.domain.event.DeleteBookEvent;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookNotExistException;
+import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
+import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

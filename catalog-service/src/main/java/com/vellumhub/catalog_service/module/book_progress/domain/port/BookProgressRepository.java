@@ -1,8 +1,8 @@
-package com.mrs.catalog_service.module.book_progress.domain.port;
+package com.vellumhub.catalog_service.module.book_progress.domain.port;
 
 
-import com.mrs.catalog_service.module.book_progress.domain.model.ReadingStatus;
-import com.mrs.catalog_service.module.book_progress.domain.model.BookProgress;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 
 import java.util.List;
 import java.util.Optional;

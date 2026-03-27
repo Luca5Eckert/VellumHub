@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_request.application.dto;
+package com.vellumhub.catalog_service.module.book_request.application.dto;
 
 import java.util.List;
 

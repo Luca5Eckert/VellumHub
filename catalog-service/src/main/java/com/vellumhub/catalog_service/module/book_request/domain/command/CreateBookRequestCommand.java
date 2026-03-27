@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_request.domain.command;
+package com.vellumhub.catalog_service.module.book_request.domain.command;
 
 import java.util.List;
 

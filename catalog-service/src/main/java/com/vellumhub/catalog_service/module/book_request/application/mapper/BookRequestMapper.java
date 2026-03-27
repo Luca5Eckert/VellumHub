@@ -1,10 +1,10 @@
-package com.mrs.catalog_service.module.book_request.application.mapper;
+package com.vellumhub.catalog_service.module.book_request.application.mapper;
 
-import com.mrs.catalog_service.module.book.domain.model.Genre;
-import com.mrs.catalog_service.module.book_request.application.dto.BookRequestResponse;
-import com.mrs.catalog_service.module.book_request.application.dto.CreateBookRequestDto;
-import com.mrs.catalog_service.module.book_request.domain.BookRequest;
-import com.mrs.catalog_service.module.book_request.domain.command.CreateBookRequestCommand;
+import com.vellumhub.catalog_service.module.book.domain.model.Genre;
+import com.vellumhub.catalog_service.module.book_request.application.dto.BookRequestResponse;
+import com.vellumhub.catalog_service.module.book_request.application.dto.CreateBookRequestDto;
+import com.vellumhub.catalog_service.module.book_request.domain.BookRequest;
+import com.vellumhub.catalog_service.module.book_request.domain.command.CreateBookRequestCommand;
 import org.springframework.stereotype.Component;
 
 @Component

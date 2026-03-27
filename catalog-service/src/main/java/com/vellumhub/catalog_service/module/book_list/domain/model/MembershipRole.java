@@ -1,4 +1,4 @@
-package com.mrs.catalog_service.module.book_list.domain.model;
+package com.vellumhub.catalog_service.module.book_list.domain.model;
 
 public enum MembershipRole {
     OWNER,

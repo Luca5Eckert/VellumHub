@@ -1,8 +1,8 @@
-package com.mrs.catalog_service.module.book_request.domain.use_case;
+package com.vellumhub.catalog_service.module.book_request.domain.use_case;
 
-import com.mrs.catalog_service.module.book_request.domain.command.DeleteBookRequestCommand;
-import com.mrs.catalog_service.module.book_request.domain.exception.BookRequestNotFoundException;
-import com.mrs.catalog_service.module.book_request.domain.port.BookRequestRepository;
+import com.vellumhub.catalog_service.module.book_request.domain.command.DeleteBookRequestCommand;
+import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestNotFoundException;
+import com.vellumhub.catalog_service.module.book_request.domain.port.BookRequestRepository;
 import org.springframework.stereotype.Component;
 
 @Component

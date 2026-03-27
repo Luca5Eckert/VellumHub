@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book_request.domain;
+package com.vellumhub.catalog_service.module.book_request.domain;
 
-import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;

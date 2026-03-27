@@ -1,8 +1,8 @@
-package com.mrs.catalog_service.module.book.domain.handler;
+package com.vellumhub.catalog_service.module.book.domain.handler;
 
-import com.mrs.catalog_service.module.book.domain.exception.BookNotFoundException;
-import com.mrs.catalog_service.module.book.domain.model.Book;
-import com.mrs.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;

@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book.presentation.dto;
+package com.vellumhub.catalog_service.module.book.presentation.dto;
 
-import com.mrs.catalog_service.module.book.domain.model.Genre;
+import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import jakarta.validation.constraints.*;
 import org.hibernate.validator.constraints.URL;
 

@@ -1,14 +1,14 @@
-package com.mrs.catalog_service.module.book_request.domain.use_case;
+package com.vellumhub.catalog_service.module.book_request.domain.use_case;
 
-import com.mrs.catalog_service.module.book.domain.event.CreateBookEvent;
-import com.mrs.catalog_service.module.book.domain.model.Book;
-import com.mrs.catalog_service.module.book.domain.model.Genre;
-import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
-import com.mrs.catalog_service.module.book.domain.port.BookRepository;
-import com.mrs.catalog_service.module.book.domain.port.GenreRepository;
-import com.mrs.catalog_service.module.book_request.domain.BookRequest;
-import com.mrs.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
-import com.mrs.catalog_service.module.book_request.domain.port.BookRequestRepository;
+import com.vellumhub.catalog_service.module.book.domain.event.CreateBookEvent;
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.domain.model.Genre;
+import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
+import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
+import com.vellumhub.catalog_service.module.book_request.domain.BookRequest;
+import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
+import com.vellumhub.catalog_service.module.book_request.domain.port.BookRequestRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Component;
 

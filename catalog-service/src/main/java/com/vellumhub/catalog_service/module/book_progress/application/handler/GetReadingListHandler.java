@@ -1,8 +1,8 @@
-package com.mrs.catalog_service.module.book_progress.application.handler;
+package com.vellumhub.catalog_service.module.book_progress.application.handler;
 
-import com.mrs.catalog_service.module.book_progress.application.dto.BookProgressResponse;
-import com.mrs.catalog_service.module.book_progress.application.mapper.BookProgressMapper;
-import com.mrs.catalog_service.module.book_progress.domain.use_case.GetReadingListUseCase;
+import com.vellumhub.catalog_service.module.book_progress.application.dto.BookProgressResponse;
+import com.vellumhub.catalog_service.module.book_progress.application.mapper.BookProgressMapper;
+import com.vellumhub.catalog_service.module.book_progress.domain.use_case.GetReadingListUseCase;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

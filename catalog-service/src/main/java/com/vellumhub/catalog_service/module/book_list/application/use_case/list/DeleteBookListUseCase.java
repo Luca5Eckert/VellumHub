@@ -1,9 +1,9 @@
-package com.mrs.catalog_service.module.book_list.application.use_case.list;
+package com.vellumhub.catalog_service.module.book_list.application.use_case.list;
 
-import com.mrs.catalog_service.module.book_list.application.command.list.DeleteBookListCommand;
-import com.mrs.catalog_service.module.book_list.domain.exception.BookListDomainException;
-import com.mrs.catalog_service.module.book_list.domain.model.BookList;
-import com.mrs.catalog_service.module.book_list.domain.port.BookListRepository;
+import com.vellumhub.catalog_service.module.book_list.application.command.list.DeleteBookListCommand;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookList;
+import com.vellumhub.catalog_service.module.book_list.domain.port.BookListRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

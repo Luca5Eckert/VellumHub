@@ -1,8 +1,8 @@
-package com.mrs.catalog_service.module.book_progress.domain.use_case;
+package com.vellumhub.catalog_service.module.book_progress.domain.use_case;
 
-import com.mrs.catalog_service.module.book_progress.domain.command.DeleteBookProgressCommand;
-import com.mrs.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
-import com.mrs.catalog_service.module.book_progress.domain.port.BookProgressRepository;
+import com.vellumhub.catalog_service.module.book_progress.domain.command.DeleteBookProgressCommand;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
+import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
 import org.springframework.stereotype.Component;
 
 @Component

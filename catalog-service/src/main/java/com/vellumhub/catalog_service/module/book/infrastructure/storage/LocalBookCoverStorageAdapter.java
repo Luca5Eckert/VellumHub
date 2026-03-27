@@ -1,7 +1,7 @@
-package com.mrs.catalog_service.module.book.infrastructure.storage;
+package com.vellumhub.catalog_service.module.book.infrastructure.storage;
 
-import com.mrs.catalog_service.module.book.domain.exception.BookDomainException;
-import com.mrs.catalog_service.module.book.domain.port.BookCoverStorage;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
+import com.vellumhub.catalog_service.module.book.domain.port.BookCoverStorage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;

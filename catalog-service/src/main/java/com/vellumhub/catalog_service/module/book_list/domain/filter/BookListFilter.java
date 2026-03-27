@@ -1,7 +1,7 @@
-package com.mrs.catalog_service.module.book_list.domain.filter;
+package com.vellumhub.catalog_service.module.book_list.domain.filter;
 
-import com.mrs.catalog_service.module.book.domain.model.Genre;
-import com.mrs.catalog_service.module.book_list.domain.model.TypeBookList;
+import com.vellumhub.catalog_service.module.book.domain.model.Genre;
+import com.vellumhub.catalog_service.module.book_list.domain.model.TypeBookList;
 
 import java.util.Set;
 import java.util.UUID;

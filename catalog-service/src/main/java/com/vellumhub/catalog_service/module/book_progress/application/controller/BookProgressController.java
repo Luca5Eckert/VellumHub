@@ -1,13 +1,13 @@
-package com.mrs.catalog_service.module.book_progress.application.controller;
+package com.vellumhub.catalog_service.module.book_progress.application.controller;
 
-import com.mrs.catalog_service.module.book_progress.application.dto.UpdateBookProgressRequest;
-import com.mrs.catalog_service.share.service.AuthenticationService;
-import com.mrs.catalog_service.module.book_progress.application.dto.BookProgressResponse;
-import com.mrs.catalog_service.module.book_progress.application.dto.BookStatusRequest;
-import com.mrs.catalog_service.module.book_progress.application.handler.DefineBookStatusHandler;
-import com.mrs.catalog_service.module.book_progress.application.handler.DeleteBookProgressHandler;
-import com.mrs.catalog_service.module.book_progress.application.handler.GetReadingListHandler;
-import com.mrs.catalog_service.module.book_progress.application.handler.UpdateBookProgressHandler;
+import com.vellumhub.catalog_service.module.book_progress.application.dto.UpdateBookProgressRequest;
+import com.vellumhub.catalog_service.share.service.AuthenticationService;
+import com.vellumhub.catalog_service.module.book_progress.application.dto.BookProgressResponse;
+import com.vellumhub.catalog_service.module.book_progress.application.dto.BookStatusRequest;
+import com.vellumhub.catalog_service.module.book_progress.application.handler.DefineBookStatusHandler;
+import com.vellumhub.catalog_service.module.book_progress.application.handler.DeleteBookProgressHandler;
+import com.vellumhub.catalog_service.module.book_progress.application.handler.GetReadingListHandler;
+import com.vellumhub.catalog_service.module.book_progress.application.handler.UpdateBookProgressHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

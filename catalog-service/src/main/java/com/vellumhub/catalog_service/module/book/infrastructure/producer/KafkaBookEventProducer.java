@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book.infrastructure.producer;
+package com.vellumhub.catalog_service.module.book.infrastructure.producer;
 
-import com.mrs.catalog_service.module.book.domain.port.BookEventProducer;
+import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 

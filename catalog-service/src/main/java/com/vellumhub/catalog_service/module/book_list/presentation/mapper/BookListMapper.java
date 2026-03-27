@@ -1,11 +1,11 @@
-package com.mrs.catalog_service.module.book_list.presentation.mapper;
+package com.vellumhub.catalog_service.module.book_list.presentation.mapper;
 
-import com.mrs.catalog_service.module.book.domain.model.Book;
-import com.mrs.catalog_service.module.book.domain.model.Genre;
-import com.mrs.catalog_service.module.book_list.domain.model.BookList;
-import com.mrs.catalog_service.module.book_list.presentation.dto.response.list.BookListGetAllResponse;
-import com.mrs.catalog_service.module.book_list.presentation.dto.response.list.BookListResponse;
-import com.mrs.catalog_service.module.book_list.presentation.dto.response.list.BookResponse;
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.domain.model.Genre;
+import com.vellumhub.catalog_service.module.book_list.domain.model.BookList;
+import com.vellumhub.catalog_service.module.book_list.presentation.dto.response.list.BookListGetAllResponse;
+import com.vellumhub.catalog_service.module.book_list.presentation.dto.response.list.BookListResponse;
+import com.vellumhub.catalog_service.module.book_list.presentation.dto.response.list.BookResponse;
 import org.springframework.stereotype.Component;
 
 @Component

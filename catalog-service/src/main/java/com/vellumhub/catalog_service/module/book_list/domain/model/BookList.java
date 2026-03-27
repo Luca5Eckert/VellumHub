@@ -1,7 +1,7 @@
-package com.mrs.catalog_service.module.book_list.domain.model;
+package com.vellumhub.catalog_service.module.book_list.domain.model;
 
-import com.mrs.catalog_service.module.book.domain.model.Book;
-import com.mrs.catalog_service.module.book_list.domain.exception.BookListDomainException;
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

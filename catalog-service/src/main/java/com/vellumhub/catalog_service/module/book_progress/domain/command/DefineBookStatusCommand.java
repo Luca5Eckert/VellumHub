@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book_progress.domain.command;
+package com.vellumhub.catalog_service.module.book_progress.domain.command;
 
-import com.mrs.catalog_service.module.book_progress.domain.model.ReadingStatus;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
 
 import java.util.UUID;
 

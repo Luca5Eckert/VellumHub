@@ -1,8 +1,8 @@
-package com.mrs.catalog_service.module.book.infrastructure.provider.google.adapter;
+package com.vellumhub.catalog_service.module.book.infrastructure.provider.google.adapter;
 
-import com.mrs.catalog_service.module.book.domain.model.Book;
-import com.mrs.catalog_service.module.book.domain.port.BookExternalProvider;
-import com.mrs.catalog_service.module.book.infrastructure.provider.google.dto.GoogleBooksResponse;
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.domain.port.BookExternalProvider;
+import com.vellumhub.catalog_service.module.book.infrastructure.provider.google.dto.GoogleBooksResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;

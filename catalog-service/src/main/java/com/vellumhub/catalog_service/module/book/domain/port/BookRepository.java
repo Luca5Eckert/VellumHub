@@ -1,6 +1,6 @@
-package com.mrs.catalog_service.module.book.domain.port;
+package com.vellumhub.catalog_service.module.book.domain.port;
 
-import com.mrs.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 

@@ -1,8 +1,8 @@
-package com.mrs.catalog_service.module.book_list.application.use_case.member;
+package com.vellumhub.catalog_service.module.book_list.application.use_case.member;
 
-import com.mrs.catalog_service.module.book_list.application.command.member.DeleteMemberInBookListCommand;
-import com.mrs.catalog_service.module.book_list.domain.exception.BookListDomainException;
-import com.mrs.catalog_service.module.book_list.domain.port.BookListRepository;
+import com.vellumhub.catalog_service.module.book_list.application.command.member.DeleteMemberInBookListCommand;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.port.BookListRepository;
 import org.springframework.stereotype.Service;
 
 @Service
