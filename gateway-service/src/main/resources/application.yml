@@ -8,28 +8,35 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: user-service
+        - id: auth-route
+          uri: ${USER_SERVICE_URL:http://user-service:8080}
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            - StripPrefix=0
+
+        - id: users
           uri: ${USER_SERVICE_URL:http://user-service:8080}
           predicates:
             - Path=/api/v1/users/**
           filters:
             - StripPrefix=0
 
-        - id: catalog-service
+        - id: catalogs
           uri: ${CATALOG_SERVICE_URL:http://catalog-service:8080}
           predicates:
             - Path=/api/v1/catalog/**
           filters:
             - StripPrefix=0
 
-        - id: engagement-service
+        - id: engagements
           uri: ${ENGAGEMENT_SERVICE_URL:http://engagement-service:8080}
           predicates:
             - Path=/api/v1/engagement/**
           filters:
             - StripPrefix=0
 
-        - id: recommendation-service
+        - id: recommendations
           uri: ${RECOMMENDATION_SERVICE_URL:http://recommendation-service:8080}
           predicates:
             - Path=/api/v1/recommendation/**
