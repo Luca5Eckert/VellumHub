@@ -1,5 +1,4 @@
 version: '3.8'
-
 name: vellum-hub
 
 networks:
@@ -7,9 +6,62 @@ networks:
     driver: bridge
 
 services:
-  # ==========================================
+
+  # GATEWAY LAYER
+  gateway-service:
+    build: ./gateway-service
+    container_name: gateway-service
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
+      SPRING_DATA_REDIS_HOST: redis-gateway
+      SPRING_DATA_REDIS_PORT: 6379
+      USER_SERVICE_URL: http://user-service:8080
+      CATALOG_SERVICE_URL: http://catalog-service:8080
+      ENGAGEMENT_SERVICE_URL: http://engagement-service:8080
+      RECOMMENDATION_SERVICE_URL: http://recommendation-service:8080
+      JWT_KEY: ${JWT_KEY}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+    networks:
+      - mrs-network
+    depends_on:
+      redis-gateway:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+      engagement-service:
+        condition: service_healthy
+      recommendation-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  redis-gateway:
+    image: redis:7-alpine
+    container_name: redis-gateway
+    restart: unless-stopped
+    networks:
+      - mrs-network
+    volumes:
+      - redis_gateway_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # DATABASES LAYER
-  # ==========================================
   postgres-catalog:
     image: postgres:15-alpine
     container_name: postgres-catalog
@@ -21,8 +73,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: catalog_db
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_catalog_data:/var/lib/postgresql/data
     networks:
@@ -44,8 +94,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: engagement_db
-    ports:
-      - "5433:5432"
     volumes:
       - postgres_engagement_data:/var/lib/postgresql/data
     networks:
@@ -67,15 +115,13 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: user_db
-    ports:
-      - "5434:5432"
     volumes:
       - postgres_user_data:/var/lib/postgresql/data
       - ./scripts/create-admin-user.sql:/docker-entrypoint-initdb.d/init-admin.sql
     networks:
       - mrs-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d user_db" ]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d user_db"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -84,27 +130,25 @@ services:
     image: pgvector/pgvector:pg15
     container_name: postgres-recommendation
     restart: unless-stopped
+    shm_size: 256mb
+    command: postgres -c shared_buffers=256MB -c max_connections=200 -c work_mem=16MB
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: recommendation_db
-    ports:
-      - "5435:5432"
     volumes:
       - postgres_recommendation_data:/var/lib/postgresql/data
       - ./scripts/create-vector-in-recommendation-db.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - mrs-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d recommendation_db" ]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d recommendation_db"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
 
-  # ==========================================
   # MESSAGING LAYER
-  # ==========================================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
@@ -120,17 +164,13 @@ services:
     healthcheck:
       test: echo srvr | nc localhost 2181 || exit 1
       interval: 10s
+      timeout: 5s
       retries: 10
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: kafka
-    depends_on:
-      zookeeper:
-        condition: service_healthy
-    ports:
-      - "9092:9092"
-      - "9101:9101"
+    restart: unless-stopped
     volumes:
       - kafka_data:/var/lib/kafka/data
     networks:
@@ -139,16 +179,18 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_ZOOKEEPER_CONNECT_TIMEOUT_MS: 60000
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_HEAP_OPTS: "-Xmx512M -Xms512M"
-      KAFKA_JMX_PORT: 9101
-      KAFKA_JMX_HOSTNAME: localhost
+    depends_on:
+      zookeeper:
+        condition: service_healthy
     healthcheck:
-      test: nc -z localhost 9092 || exit 1
+      test: nc -z localhost 29092 || exit 1
       interval: 10s
+      timeout: 5s
       retries: 15
       start_period: 20s
 
@@ -164,21 +206,16 @@ services:
       KAFKA_CLUSTERS_0_NAME: vellumhub-cluster
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
-      KAFKA_CLUSTERS_0_JMXPORT: 9101
       DYNAMIC_CONFIG_ENABLED: 'true'
     depends_on:
       kafka:
         condition: service_healthy
 
-  # ==========================================
   # MICROSERVICES LAYER
-  # ==========================================
   catalog-service:
     build: ./catalog-service
     container_name: catalog-service
     restart: on-failure
-    ports:
-      - "8081:8080"
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
@@ -208,8 +245,6 @@ services:
     build: ./engagement-service
     container_name: engagement-service
     restart: on-failure
-    ports:
-      - "8083:8080"
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
@@ -239,8 +274,6 @@ services:
     build: ./user-service
     container_name: user-service
     restart: on-failure
-    ports:
-      - "8084:8080"
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
@@ -272,8 +305,6 @@ services:
     build: ./recommendation-service
     container_name: recommendation-service
     restart: on-failure
-    ports:
-      - "8085:8080"
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
@@ -305,6 +336,7 @@ volumes:
   postgres_engagement_data:
   postgres_user_data:
   postgres_recommendation_data:
+  redis_gateway_data:
   kafka_data:
   zookeeper_data:
   zookeeper_log:
