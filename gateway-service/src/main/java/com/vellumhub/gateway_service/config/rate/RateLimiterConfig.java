@@ -8,8 +8,11 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
+
 @Configuration
 public class RateLimiterConfig {
+
 
     @Bean
     @Primary
@@ -19,10 +22,7 @@ public class RateLimiterConfig {
                 .map(jwtAuth -> {
                     String userId = jwtAuth.getToken().getClaimAsString("user_id");
 
-                    if (userId != null) {
-                        return "user:" + userId;
-                    }
-                    return "user:" + jwtAuth.getName();
+                    return "user:" + Objects.requireNonNullElseGet(userId, jwtAuth::getName);
                 })
                 .switchIfEmpty(Mono.defer(() -> Mono.just("ip:" + extractClientIp(exchange))))
                 .onErrorResume(e -> Mono.just("ip:" + extractClientIp(exchange)));
@@ -33,6 +33,11 @@ public class RateLimiterConfig {
         return exchange -> Mono.just("ip:" + extractClientIp(exchange));
     }
 
+    /**
+     * Extracts the client's IP address from the request, considering possible proxy headers.
+     * @param exchange the current server exchange
+     * @return the client's IP address as a string
+     */
     private String extractClientIp(ServerWebExchange exchange) {
         String forwardedFor = exchange.getRequest().getHeaders().getFirst("X-Forwarded-For");
 
@@ -43,4 +48,5 @@ public class RateLimiterConfig {
         var remoteAddress = exchange.getRequest().getRemoteAddress();
         return remoteAddress != null ? remoteAddress.getAddress().getHostAddress() : "unknown";
     }
+
 }
