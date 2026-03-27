@@ -29,4 +29,5 @@ public class SpringGenreRepositoryAdapter implements GenreRepository {
     public boolean existsByName(String name) {
         return jpaGenreRepository.existsByName(name);
     }
+
 }
