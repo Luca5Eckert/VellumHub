@@ -1,5 +1,6 @@
 package com.vellumhub.recommendation_service.module.user_profile.presentation.consumer;
 
+import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
 import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedRatingEvent;
 import com.vellumhub.recommendation_service.module.user_profile.application.handler.CreatedRatingConsumerHandler;
 import com.vellumhub.recommendation_service.module.user_profile.domain.use_case.UpdateUserProfileWithRatingUseCase;
@@ -23,25 +24,34 @@ public class CreatedRatingConsumerEvent {
             groupId = "recommendation-service"
     )
     public void consume(
-            @Payload CreatedRatingEvent createdRatingEvent
+            @Payload CreatedRatingEvent event
     ) {
         log.info("Event received: Rating created. UserId={}, BookId={}, Stars={}",
-                createdRatingEvent.userId(),
-                createdRatingEvent.bookId(),
-                createdRatingEvent.stars());
+                event.userId(),
+                event.bookId(),
+                event.stars());
 
         try {
-            createdRatingConsumerHandler.handle(createdRatingEvent);
+            var command = new UpdateUserProfileWithRatingCommand(
+                    event.userId(),
+                    event.bookId(),
+                    0,
+                    event.stars(),
+                    false
+            );
+
+            createdRatingConsumerHandler.handle(command);
+            
 
             log.info("Rating event processed successfully. UserId={}, BookId={}",
-                    createdRatingEvent.userId(),
-                    createdRatingEvent.bookId());
+                    event.userId(),
+                    event.bookId());
 
         } catch (Exception e) {
             log.error("Error processing rating event. UserId={}, BookId={}, Stars={}",
-                    createdRatingEvent.userId(),
-                    createdRatingEvent.bookId(),
-                    createdRatingEvent.stars(),
+                    event.userId(),
+                    event.bookId(),
+                    event.stars(),
                     e);
             throw e;
         }
