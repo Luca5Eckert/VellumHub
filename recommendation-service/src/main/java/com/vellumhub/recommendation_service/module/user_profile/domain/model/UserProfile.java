@@ -49,13 +49,9 @@ public class UserProfile {
 
 
     /**
-     * Processes a book rating by determining the engagement score adjustment based on the rating change, updating the user's profile vector using vector learning, and recording the interaction with the book. The method first checks if the rating change results in a category change (e.g., from "Neutral" to "Liked") to determine if an update is necessary. If an update is needed, it calculates the weight adjustment based on the new and old ratings, updates the engagement score, applies vector learning to adjust the profile vector towards or away from the book's embedding, and finally updates the last updated timestamp.
+     * Applies the provided profile adjustment to the user's profile by updating the engagement score and applying vector learning based on the book embedding and adjustment weight. The method updates the total engagement score using the weight adjustment and records the interaction with the specified book ID. It then applies vector learning to adjust the user's profile vector based on the book embedding and adjustment weight, followed by normalizing the profile vector to maintain a magnitude of 1.0 for accurate similarity calculations in future recommendations. Finally, it updates the last updated timestamp to reflect the time of the profile update.
      *
-     * @param newStars The new star rating given by the user for the book, which will be used to determine the engagement score adjustment and vector learning direction.
-     * @param oldStars The previous star rating for the book, which is used to calculate the difference in engagement score and determine if a category change has occurred.
-     * @param isNewRating A boolean flag indicating whether this is a new rating (true) or an update to an existing rating (false), which affects how the method determines if an update is necessary.
-     * @param bookEmbedding The embedding vector of the book being rated, which is used in the vector learning process to adjust the user's profile vector based on the rating change.
-     * @param bookId The unique identifier of the book being rated, which is added to the set of interacted book IDs to track user interactions for future recommendations.
+     * @param profileAdjustment The profile adjustment containing the necessary information to update the user's profile, including the weight adjustment for engagement score, the book ID of the interacted book, and the embedding vector for vector learning. The method uses this information to update the user's profile accordingly.
      */
     public void applyUpdate(ProfileAdjustment profileAdjustment) {
         this.updateEngagementScore(profileAdjustment.adjustment(), profileAdjustment.bookId());
@@ -66,9 +62,10 @@ public class UserProfile {
 
 
     /**
-     * Updates the user's total engagement score based on the rating adjustment and records the interacted book ID.
-     * @param weightAdjustment The calculated weight adjustment based on the rating change.
-     * @param bookId  The ID of the book that the user interacted with, which will be added to the set of interacted books.
+     * Updates the user's total engagement score based on the provided weight adjustment and records the interaction with the specified book ID. The method adds the weight adjustment to the total engagement score and adds the book ID to the set of interacted book IDs, which helps track user interactions for future recommendations.
+     *
+     * @param weightAdjustment The calculated adjustment to the engagement score based on the user's rating change, which is added to the total engagement score to reflect the user's level of engagement with the book.
+     * @param bookId The unique identifier of the book that the user interacted with, which is added to the set of interacted book IDs to keep track of the user's interactions for future recommendation algorithms.
      */
     private void updateEngagementScore(float weightAdjustment, UUID bookId) {
         this.totalEngagementScore += weightAdjustment;
