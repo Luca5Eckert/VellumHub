@@ -3,7 +3,6 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateUserProfileWithRatingUseCase;
 import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedRatingEvent;
-import com.vellumhub.recommendation_service.module.user_profile.application.handler.CreatedRatingConsumerHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
