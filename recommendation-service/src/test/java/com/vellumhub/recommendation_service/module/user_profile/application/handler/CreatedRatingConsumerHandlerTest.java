@@ -1,7 +1,7 @@
 package com.vellumhub.recommendation_service.module.user_profile.application.handler;
 
-import com.vellumhub.recommendation_service.module.user_profile.application.event.CreatedRatingEvent;
-import com.vellumhub.recommendation_service.module.user_profile.domain.command.UpdateUserProfileWithRatingCommand;
+import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedRatingEvent;
+import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
 import com.vellumhub.recommendation_service.module.user_profile.domain.use_case.UpdateUserProfileWithRatingUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

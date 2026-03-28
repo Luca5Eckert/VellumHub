@@ -1,6 +1,6 @@
-package com.vellumhub.recommendation_service.module.user_profile.application.consumer;
+package com.vellumhub.recommendation_service.module.user_profile.presentation.consumer;
 
-import com.vellumhub.recommendation_service.module.user_profile.application.event.CreatedRatingEvent;
+import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedRatingEvent;
 import com.vellumhub.recommendation_service.module.user_profile.application.handler.CreatedRatingConsumerHandler;
 import com.vellumhub.recommendation_service.module.user_profile.domain.use_case.UpdateUserProfileWithRatingUseCase;
 import lombok.extern.slf4j.Slf4j;
