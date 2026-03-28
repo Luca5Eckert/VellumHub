@@ -1,4 +1,4 @@
-package com.vellumhub.recommendation_service.module.user_profile.domain.use_case;
+package com.vellumhub.recommendation_service.module.user_profile.application.use_case;
 
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
