@@ -57,29 +57,11 @@ public class UserProfile {
      * @param bookEmbedding The embedding vector of the book being rated, which is used in the vector learning process to adjust the user's profile vector based on the rating change.
      * @param bookId The unique identifier of the book being rated, which is added to the set of interacted book IDs to track user interactions for future recommendations.
      */
-    public void processBookRating(int newStars, int oldStars, boolean isNewRating, float[] bookEmbedding, UUID bookId) {
-        if (!hasCategoryChanged(newStars, oldStars, isNewRating)) {
-            return;
-        }
-
-        int adjustmentWeight = getWeightAdjustment(newStars, oldStars, isNewRating);
-
-        this.updateEngagementScore(adjustmentWeight, bookId);
-        this.applyVectorLearning(bookEmbedding, adjustmentWeight);
+    public void applyUpdate(ProfileAdjustment profileAdjustment) {
+        this.updateEngagementScore(profileAdjustment.adjustment(), profileAdjustment.bookId());
+        this.applyVectorLearning(profileAdjustment.embedding(), profileAdjustment.adjustment());
 
         this.lastUpdated = Instant.now();
-    }
-
-    private int getWeightAdjustment(int newStars, int oldStars, boolean isNewRating) {
-        int newWeight = RatingCategory.fromStars(newStars).getWeight();
-        int oldWeight = isNewRating ? 0 : RatingCategory.fromStars(oldStars).getWeight();
-
-        return newWeight - oldWeight;
-    }
-
-    private boolean hasCategoryChanged(int newStars, int oldStars, boolean isNewRating){
-        if (isNewRating) return true;
-        return RatingCategory.fromStars(oldStars) != RatingCategory.fromStars(newStars);
     }
 
 
@@ -88,12 +70,12 @@ public class UserProfile {
      * @param weightAdjustment The calculated weight adjustment based on the rating change.
      * @param bookId  The ID of the book that the user interacted with, which will be added to the set of interacted books.
      */
-    private void updateEngagementScore(int weightAdjustment, UUID bookId) {
+    private void updateEngagementScore(float weightAdjustment, UUID bookId) {
         this.totalEngagementScore += weightAdjustment;
         this.interactedBookIds.add(bookId);
     }
 
-    private void applyVectorLearning(float[] bookEmbedding, int adjustmentWeight) {
+    private void applyVectorLearning(float[] bookEmbedding, float adjustmentWeight) {
         if (bookEmbedding == null || bookEmbedding.length != this.profileVector.length) {
             throw new IllegalArgumentException("Book embedding dimension must match the profile vector dimension.");
         }
