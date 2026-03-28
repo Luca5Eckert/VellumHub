@@ -1,7 +1,5 @@
 package com.vellumhub.recommendation_service.module.user_profile.application.command;
 
-import com.vellumhub.recommendation_service.module.user_profile.domain.model.RatingCategory;
-
 import java.util.UUID;
 
 public record UpdateUserProfileWithRatingCommand(
