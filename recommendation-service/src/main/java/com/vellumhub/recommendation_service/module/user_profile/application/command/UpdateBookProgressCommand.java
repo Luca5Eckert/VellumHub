@@ -1,12 +1,14 @@
 package com.vellumhub.recommendation_service.module.user_profile.application.command;
 
 
+import java.util.UUID;
+
 public record UpdateBookProgressCommand(
-        String userId,
-        String bookId,
+        UUID userId,
+        UUID bookId,
         String progress
 ) {
-    public static UpdateBookProgressCommand of(String userId, String bookId, String progress) {
+    public static UpdateBookProgressCommand of(UUID userId, UUID bookId, String progress) {
         return new UpdateBookProgressCommand(userId, bookId, progress);
     }
 }
