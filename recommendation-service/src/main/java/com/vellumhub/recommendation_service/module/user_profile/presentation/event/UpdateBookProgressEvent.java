@@ -5,6 +5,8 @@ import java.util.UUID;
 public record UpdateBookProgressEvent(
         UUID userId,
         UUID bookId,
-        String progress
+        String progress,
+        int oldPage,
+        int newPage
 ) {
 }
