@@ -75,6 +75,7 @@ services:
       POSTGRES_DB: catalog_db
     volumes:
       - postgres_catalog_data:/var/lib/postgresql/data
+      - ./scripts/create-genres.sql:/docker-entrypoint-initdb.d/init-admin.sql
     networks:
       - vellum-network
     healthcheck:
