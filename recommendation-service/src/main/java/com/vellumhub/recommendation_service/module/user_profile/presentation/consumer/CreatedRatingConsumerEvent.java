@@ -1,9 +1,9 @@
 package com.vellumhub.recommendation_service.module.user_profile.presentation.consumer;
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
+import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateUserProfileWithRatingUseCase;
 import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedRatingEvent;
 import com.vellumhub.recommendation_service.module.user_profile.application.handler.CreatedRatingConsumerHandler;
-import com.vellumhub.recommendation_service.module.user_profile.domain.use_case.UpdateUserProfileWithRatingUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class CreatedRatingConsumerEvent {
 
-    private final CreatedRatingConsumerHandler createdRatingConsumerHandler;
+    private final UpdateUserProfileWithRatingUseCase updateUserProfileWithRatingUseCase;
 
-    public CreatedRatingConsumerEvent(CreatedRatingConsumerHandler createdRatingConsumerHandler) {
-        this.createdRatingConsumerHandler = createdRatingConsumerHandler;
+    public CreatedRatingConsumerEvent(UpdateUserProfileWithRatingUseCase updateUserProfileWithRatingUseCase) {
+        this.updateUserProfileWithRatingUseCase = updateUserProfileWithRatingUseCase;
     }
 
     @KafkaListener(
@@ -40,7 +40,7 @@ public class CreatedRatingConsumerEvent {
                     false
             );
 
-            createdRatingConsumerHandler.handle(command);
+            updateUserProfileWithRatingUseCase.execute(command);
             
 
             log.info("Rating event processed successfully. UserId={}, BookId={}",
