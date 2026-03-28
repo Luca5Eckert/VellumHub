@@ -2,7 +2,7 @@ package com.vellumhub.recommendation_service.module.user_profile.domain.use_case
 
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
-import com.vellumhub.recommendation_service.module.user_profile.domain.command.UpdateUserProfileWithRatingCommand;
+import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
 import org.springframework.stereotype.Component;
