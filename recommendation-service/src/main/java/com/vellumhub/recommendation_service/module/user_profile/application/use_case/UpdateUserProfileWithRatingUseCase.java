@@ -42,7 +42,7 @@ public class UpdateUserProfileWithRatingUseCase {
         userProfileRepository.save(profile);
     }
 
-    public ProfileAdjustment getProfileAdjustment(
+    private ProfileAdjustment getProfileAdjustment(
             int oldStars,
             int newStars,
             boolean isNewRating,
