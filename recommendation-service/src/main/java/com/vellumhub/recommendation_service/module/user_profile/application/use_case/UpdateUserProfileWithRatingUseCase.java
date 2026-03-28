@@ -3,6 +3,9 @@ package com.vellumhub.recommendation_service.module.user_profile.application.use
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
+import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.BookInteraction;
+import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.RatingBookInteration;
+import com.vellumhub.recommendation_service.module.user_profile.domain.model.ProfileAdjustment;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
 import org.springframework.stereotype.Component;
@@ -27,15 +30,27 @@ public class UpdateUserProfileWithRatingUseCase {
         BookFeature book = bookFeatureRepository.findById(command.bookId())
                 .orElseThrow(() -> new RuntimeException("Book features not found"));
 
-        profile.processBookRating(
-                command.newStars(),
+        ProfileAdjustment profileAdjustment = getProfileAdjustment(
                 command.oldStars(),
+                command.newStars(),
                 command.isNewRating(),
-                book.getEmbedding(),
-                book.getBookId()
+                book
         );
 
+        profile.applyUpdate(profileAdjustment);
+
         userProfileRepository.save(profile);
+    }
+
+    public ProfileAdjustment getProfileAdjustment(
+            int oldStars,
+            int newStars,
+            boolean isNewRating,
+            BookFeature book
+    ) {
+        BookInteraction bookInteraction = new RatingBookInteration(oldStars, newStars, isNewRating);
+
+        return bookInteraction.toAdjustment(book);
     }
 
 }
