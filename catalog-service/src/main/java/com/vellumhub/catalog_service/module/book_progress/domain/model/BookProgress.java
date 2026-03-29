@@ -1,5 +1,7 @@
 package com.vellumhub.catalog_service.module.book_progress.domain.model;
 
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,44 +22,36 @@ public class BookProgress {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(
-            nullable = false,
-            name = "book_id"
-    )
-    private UUID bookId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_id", nullable = false)
+    private Book book;
 
-    @Column(
-            nullable = false,
-            name = "user_id"
-    )
+    @Column(nullable = false, name = "user_id")
     private UUID userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            name = "reading_status"
-    )
+    @Column(nullable = false, name = "reading_status")
     private ReadingStatus readingStatus;
 
-    @Column(
-            nullable = true,
-            name = "current_page"
-    )
-    private int currentPage;
+    @Column(name = "current_page")
+    private Integer currentPage;
 
-    public BookProgress(UUID bookId, UUID userId) {
-        this.bookId = bookId;
+    public BookProgress(Book book, UUID userId) {
+        this.book = book;
         this.userId = userId;
-    }
-
-    public void update(int currentPage) {
-        this.setCurrentPage(currentPage);
+        this.readingStatus = ReadingStatus.WANT_TO_READ;
+        this.currentPage = 0;
     }
 
     public void defineProgress(ReadingStatus readingStatus, int currentPage) {
-        this.setCurrentPage(currentPage);
+        if (currentPage < 0) {
+            throw new BookProgressDomainException("Current page cannot be negative");
+        }
+        if (book.getPageCount() < currentPage) {
+            throw new BookProgressDomainException("Current page cannot exceed total page count of the book");
+        }
 
+        this.currentPage = currentPage;
         this.readingStatus = readingStatus;
     }
-
 }
