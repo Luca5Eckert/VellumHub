@@ -1,13 +1,17 @@
 package com.vellumhub.catalog_service.module.book_progress.domain.use_case;
 
+import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book_progress.domain.UpdateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 public class DefineBookStatusUseCase {
@@ -20,20 +24,30 @@ public class DefineBookStatusUseCase {
         this.bookRepository = bookRepository;
     }
 
-    public BookProgress execute(DefineBookStatusCommand command) {
-        BookProgress bookProgress = bookProgressRepository.findByUserIdAndBookId(command.userId(), command.bookId())
-                .orElseGet(() -> new BookProgress(command.bookId(), command.userId()));
+    public UpdateBookProgressEvent execute(DefineBookStatusCommand command) {
+        BookProgress bookProgress = getBookProgress(command.userId(), command.bookId());
 
-        Book book = bookRepository.findById(command.bookId())
-                        .orElseThrow(BookProgressNotFoundException::new);
+        int currentPage = bookProgress.getCurrentPage();
 
-        if(command.currentPage() > book.getPageCount()) {
-            throw new BookProgressDomainException("Current page cannot be greater than total page count");
-        }
+        bookProgress.defineProgress(command.readingStatus(), command.newCurrentPage());
 
-        bookProgress.defineProgress(command.readingStatus(), command.currentPage());
+        bookProgressRepository.save(bookProgress);
 
-        return bookProgressRepository.save(bookProgress);
+        return new UpdateBookProgressEvent(
+                command.userId(),
+                command.bookId(),
+                bookProgress.getReadingStatus().name(),
+                currentPage,
+                bookProgress.getCurrentPage()
+        );
+    }
+
+    private BookProgress getBookProgress(UUID userId, UUID bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new BookNotFoundException("Book with id " + bookId + " not found"));
+
+        return bookProgressRepository.findByUserIdAndBookId(userId, bookId)
+                .orElseGet(() -> new BookProgress(book, userId));
     }
 
 }

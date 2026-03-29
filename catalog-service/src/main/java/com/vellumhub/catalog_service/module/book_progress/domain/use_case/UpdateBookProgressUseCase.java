@@ -25,7 +25,7 @@ public class UpdateBookProgressUseCase {
                throw new BookIsNotBeingReadException();
           }
 
-          bookProgress.update(command.currentPage());
+          bookProgress.defineProgress(bookProgress.getReadingStatus(), command.currentPage());
 
           return bookProgressRepository.save(bookProgress);
      }
