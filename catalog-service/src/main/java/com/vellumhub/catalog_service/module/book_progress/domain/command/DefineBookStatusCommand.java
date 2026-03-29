@@ -8,6 +8,6 @@ public record DefineBookStatusCommand(
         UUID userId,
         UUID bookId,
         ReadingStatus readingStatus,
-        int currentPage
+        int newCurrentPage
 ) {
 }

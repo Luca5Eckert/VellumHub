@@ -1,11 +1,11 @@
 package com.vellumhub.catalog_service.module.book_progress.application.handler;
 
-import com.vellumhub.catalog_service.module.book_progress.application.dto.BookProgressResponse;
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookStatusRequest;
-import com.vellumhub.catalog_service.module.book_progress.application.mapper.BookProgressMapper;
+import com.vellumhub.catalog_service.module.book_progress.domain.UpdateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
+import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressEventProducer;
 import com.vellumhub.catalog_service.module.book_progress.domain.use_case.DefineBookStatusUseCase;
-import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
+
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,16 +15,16 @@ import java.util.UUID;
 public class DefineBookStatusHandler {
 
     private final DefineBookStatusUseCase defineBookStatusUseCase;
+    private final BookProgressEventProducer<String, UpdateBookProgressEvent> bookProgressEventProducer;
 
-    private final BookProgressMapper bookProgressMapper;
 
-    public DefineBookStatusHandler(DefineBookStatusUseCase defineBookStatusUseCase, BookProgressMapper bookProgressMapper) {
+    public DefineBookStatusHandler(DefineBookStatusUseCase defineBookStatusUseCase, BookProgressEventProducer<String, UpdateBookProgressEvent> bookProgressEventProducer) {
         this.defineBookStatusUseCase = defineBookStatusUseCase;
-        this.bookProgressMapper = bookProgressMapper;
+        this.bookProgressEventProducer = bookProgressEventProducer;
     }
 
     @Transactional
-    public BookProgressResponse handle(BookStatusRequest bookStatusRequest, UUID userId, UUID bookId) {
+    public void handle(BookStatusRequest bookStatusRequest, UUID userId, UUID bookId) {
         DefineBookStatusCommand defineBookStatusCommand = new DefineBookStatusCommand(
                 userId,
                 bookId,
@@ -32,8 +32,9 @@ public class DefineBookStatusHandler {
                 bookStatusRequest.currentPage()
         );
 
-        BookProgress bookProgress = defineBookStatusUseCase.execute(defineBookStatusCommand);
+        UpdateBookProgressEvent event = defineBookStatusUseCase.execute(defineBookStatusCommand);
 
-        return bookProgressMapper.toResponse(bookProgress);
+        bookProgressEventProducer.send("updated-progress", event.userId().toString(), event);
     }
+
 }
