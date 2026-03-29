@@ -52,19 +52,17 @@ public class BookProgressController {
     @Operation(summary = "Set book status", description = "Sets the reading status for a book (TO_READ, READING, COMPLETED)")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Book status set successfully",
-                    content = @Content(schema = @Schema(implementation = BookProgressResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid status value", content = @Content),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
             @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
     })
-    public ResponseEntity<BookProgressResponse> defineBookStatus(
+    public ResponseEntity<Void> defineBookStatus(
             @Parameter(description = "Book ID") @PathVariable(value = "bookId") UUID bookId,
             @Valid @RequestBody BookStatusRequest request
     ) {
         UUID userId = authenticationService.getAuthenticatedUserId();
 
-        var response = defineBookStatusHandler.handle(
+        defineBookStatusHandler.handle(
                 request,
                 userId,
                 bookId
@@ -72,7 +70,7 @@ public class BookProgressController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(response);
+                .build();
     }
 
     @PutMapping("/{bookId}/progress")
