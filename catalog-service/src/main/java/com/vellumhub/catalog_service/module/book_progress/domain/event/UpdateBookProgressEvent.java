@@ -1,4 +1,4 @@
-package com.vellumhub.catalog_service.module.book_progress.domain;
+package com.vellumhub.catalog_service.module.book_progress.domain.event;
 
 import java.util.UUID;
 

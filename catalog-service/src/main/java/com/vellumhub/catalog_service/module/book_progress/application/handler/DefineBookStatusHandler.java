@@ -1,7 +1,7 @@
 package com.vellumhub.catalog_service.module.book_progress.application.handler;
 
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookStatusRequest;
-import com.vellumhub.catalog_service.module.book_progress.domain.UpdateBookProgressEvent;
+import com.vellumhub.catalog_service.module.book_progress.domain.event.UpdateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressEventProducer;
 import com.vellumhub.catalog_service.module.book_progress.domain.use_case.DefineBookStatusUseCase;
