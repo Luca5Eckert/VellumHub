@@ -21,7 +21,7 @@ public class UpdateBookProgressConsumerEvent {
     }
 
     @KafkaListener(
-            topics = "update-book-progress",
+            topics = "updated-book-progress",
             groupId = "recommendation-service"
     )
     public void consume(
@@ -39,7 +39,9 @@ public class UpdateBookProgressConsumerEvent {
             var command = UpdateBookProgressCommand.of(
                     event.userId(),
                     event.bookId(),
-                    event.progress()
+                    event.progress(),
+                    event.oldPage(),
+                    event.newPage()
             );
 
             updateBookProgressUseCase.execute(command);
