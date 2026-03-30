@@ -3,6 +3,8 @@ package com.vellumhub.catalog_service.module.book_progress.application.handler;
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookProgressResponse;
 import com.vellumhub.catalog_service.module.book_progress.application.mapper.BookProgressMapper;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.UpdateBookProgressCommand;
+import com.vellumhub.catalog_service.module.book_progress.domain.event.UpdateBookProgressEvent;
+import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressEventProducer;
 import com.vellumhub.catalog_service.module.book_progress.domain.use_case.UpdateBookProgressUseCase;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import org.springframework.stereotype.Component;
@@ -14,25 +16,23 @@ import java.util.UUID;
 public class UpdateBookProgressHandler {
 
     private final UpdateBookProgressUseCase updateBookProgressUseCase;
+    private final BookProgressEventProducer<String, UpdateBookProgressEvent> bookProgressEventProducer;
 
-    private final BookProgressMapper mapper;
-
-    public UpdateBookProgressHandler(UpdateBookProgressUseCase updateBookProgressUseCase, BookProgressMapper mapper) {
+    public UpdateBookProgressHandler(UpdateBookProgressUseCase updateBookProgressUseCase, BookProgressEventProducer<String, UpdateBookProgressEvent> bookProgressEventProducer) {
         this.updateBookProgressUseCase = updateBookProgressUseCase;
-        this.mapper = mapper;
+        this.bookProgressEventProducer = bookProgressEventProducer;
     }
-
     @Transactional
-    public BookProgressResponse handle(int currentPage, UUID bookId, UUID userId){
+    public void handle(int currentPage, UUID bookId, UUID userId){
         UpdateBookProgressCommand updateBookProgressCommand = new UpdateBookProgressCommand(
                 userId,
                 bookId,
                 currentPage
         );
 
-        BookProgress bookProgress = updateBookProgressUseCase.execute(updateBookProgressCommand);
+        UpdateBookProgressEvent event = updateBookProgressUseCase.execute(updateBookProgressCommand);
 
-        return mapper.toResponse(bookProgress);
+        bookProgressEventProducer.send("updated-progress", event.userId().toString(), event);
     }
 
 }
