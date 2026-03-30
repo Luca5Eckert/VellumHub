@@ -83,13 +83,13 @@ public class BookProgressController {
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
             @ApiResponse(responseCode = "404", description = "Book progress record not found", content = @Content)
     })
-    public ResponseEntity<BookProgressResponse> updateBookProgress(
+    public ResponseEntity<Void> updateBookProgress(
             @Parameter(description = "Book ID") @PathVariable(value = "bookId") UUID bookId,
             @Valid @RequestBody UpdateBookProgressRequest request
     ) {
         UUID userId = authenticationService.getAuthenticatedUserId();
 
-        var response = updateBookProgressHandler.handle(
+        updateBookProgressHandler.handle(
                 request.newCurrentPage(),
                 bookId,
                 userId
@@ -97,7 +97,7 @@ public class BookProgressController {
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(response);
+                .build();
     }
 
     @DeleteMapping("/{bookId}")
