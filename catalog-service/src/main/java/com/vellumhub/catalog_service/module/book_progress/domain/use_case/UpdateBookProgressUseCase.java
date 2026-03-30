@@ -1,6 +1,7 @@
 package com.vellumhub.catalog_service.module.book_progress.domain.use_case;
 
 import com.vellumhub.catalog_service.module.book_progress.domain.command.UpdateBookProgressCommand;
+import com.vellumhub.catalog_service.module.book_progress.domain.event.UpdateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookIsNotBeingReadException;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
@@ -17,9 +18,11 @@ public class UpdateBookProgressUseCase {
           this.bookProgressRepository = bookProgressRepository;
      }
 
-     public BookProgress execute(UpdateBookProgressCommand command){
+     public UpdateBookProgressEvent execute(UpdateBookProgressCommand command){
           BookProgress bookProgress = bookProgressRepository.findByUserIdAndBookId(command.userId(), command.bookId())
                   .orElseThrow(BookProgressNotFoundException::new);
+
+          int currentPage = bookProgress.getCurrentPage();
 
           if(!bookProgress.getReadingStatus().equals(ReadingStatus.READING)){
                throw new BookIsNotBeingReadException();
@@ -27,7 +30,15 @@ public class UpdateBookProgressUseCase {
 
           bookProgress.defineProgress(bookProgress.getReadingStatus(), command.currentPage());
 
-          return bookProgressRepository.save(bookProgress);
+          bookProgressRepository.save(bookProgress);
+
+          return new UpdateBookProgressEvent(
+                  command.userId(),
+                  command.bookId(),
+                  bookProgress.getReadingStatus().name(),
+                  currentPage,
+                  bookProgress.getCurrentPage()
+          );
      }
 
 }
