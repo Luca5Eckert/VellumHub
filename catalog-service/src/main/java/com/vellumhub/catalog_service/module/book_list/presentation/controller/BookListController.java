@@ -1,6 +1,7 @@
 package com.vellumhub.catalog_service.module.book_list.presentation.controller;
 
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
+import com.vellumhub.catalog_service.module.book_list.application.command.list.AddBookInListCommand;
 import com.vellumhub.catalog_service.module.book_list.application.command.list.CreateBookListCommand;
 import com.vellumhub.catalog_service.module.book_list.application.command.list.DeleteBookListCommand;
 import com.vellumhub.catalog_service.module.book_list.application.command.list.UpdateBookListCommand;
@@ -36,8 +37,9 @@ public class BookListController {
     private final DeleteBookListUseCase deleteBookListUseCase;
     private final GetBookListByIdUseCase getBookListByIdUseCase;
     private final GetAllBookListUseCase getAllBookListUseCase;
+    private final AddBookInListUseCase addBookInListUseCase;
 
-    public BookListController(AuthenticationService authenticationService, BookListMapper bookListMapper, CreateBookListUseCase createBookListUseCase, UpdateBookListUseCase updateBookListUseCase, DeleteBookListUseCase deleteBookListUseCase, GetBookListByIdUseCase getBookListByIdUseCase, GetAllBookListUseCase getAllBookListUseCase) {
+    public BookListController(AuthenticationService authenticationService, BookListMapper bookListMapper, CreateBookListUseCase createBookListUseCase, UpdateBookListUseCase updateBookListUseCase, DeleteBookListUseCase deleteBookListUseCase, GetBookListByIdUseCase getBookListByIdUseCase, GetAllBookListUseCase getAllBookListUseCase, AddBookInListUseCase addBookInListUseCase) {
         this.authenticationService = authenticationService;
         this.bookListMapper = bookListMapper;
         this.createBookListUseCase = createBookListUseCase;
@@ -45,6 +47,7 @@ public class BookListController {
         this.deleteBookListUseCase = deleteBookListUseCase;
         this.getBookListByIdUseCase = getBookListByIdUseCase;
         this.getAllBookListUseCase = getAllBookListUseCase;
+        this.addBookInListUseCase = addBookInListUseCase;
     }
 
     @Operation(summary = "Create a new book list")
@@ -164,5 +167,21 @@ public class BookListController {
                 .ok(response);
     }
 
+    @PostMapping("/{bookListId}/books/{bookId}")
+    @Operation(
+            summary = "Add a book to a book list",
+            description = "Add a book to an existing book list."
+    )
+    public ResponseEntity<BookListResponse> addBookToList(
+            @PathVariable(name = "bookListId") UUID bookListId,
+            @PathVariable(name = "bookId") UUID bookId
+    ) {
+        var userId = authenticationService.getAuthenticatedUserId();
+
+        var command = AddBookInListCommand.of(userId, bookListId, bookId);
+        addBookInListUseCase.execute(command);
+
+        return ResponseEntity.ok().build();
+    }
 
 }
