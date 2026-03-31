@@ -24,4 +24,9 @@ public class SpringBookSnapshotRepositoryAdapter implements BookSnapshotReposito
     public void deleteByBookId(UUID bookId) {
         jpaBookSnapshotRepository.deleteByBookId(bookId);
     }
+
+    @Override
+    public boolean existsById(UUID bookId) {
+        return jpaBookSnapshotRepository.existsById(bookId);
+    }
 }
