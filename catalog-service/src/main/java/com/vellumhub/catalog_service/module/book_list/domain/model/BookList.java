@@ -154,5 +154,26 @@ public class BookList {
 
         return isAdmin(user);
     }
+
+    /**
+     * Adds a book to the book list.
+     * @param book The book to be added to the book list.
+     * @throws BookListDomainException if the book already exists in the book list.
+     */
+    public void addBook(Book book) {
+        if(this.containsBook(book)) throw new BookListDomainException("Book already exists in the book list");
+
+        this.books.add(book);
+    }
+
+    /**
+     * Removes a book from the book list.
+     * @param book The book to be removed from the book list.
+     * @return true if the book was successfully removed, false if the book was not found in the book list.
+     */
+    private boolean containsBook(Book book) {
+        return this.books.stream()
+                .anyMatch(b -> b.getId().equals(book.getId()));
+    }
 }
 
