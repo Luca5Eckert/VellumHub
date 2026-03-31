@@ -7,4 +7,7 @@ public record RemoveBookInListCommand(
         UUID listId,
         UUID bookId
 ) {
+    public static RemoveBookInListCommand of(UUID userId, UUID bookListId, UUID bookId) {
+        return new RemoveBookInListCommand(userId, bookListId, bookId);
+    }
 }
