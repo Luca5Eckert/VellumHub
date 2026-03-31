@@ -189,5 +189,12 @@ public class BookList {
         return this.books.stream()
                 .anyMatch(b -> b.getId().equals(book.getId()));
     }
+
+    public void removeBook(Book book, UUID userId) {
+        if(!this.canUpdateList(userId)) throw new BookListDomainException("Only admins can remove books from the book list");
+        if(!this.containsBook(book)) throw new BookListDomainException("Book not found in the book list");
+
+        this.books.removeIf(b -> b.getId().equals(book.getId()));
+    }
 }
 
