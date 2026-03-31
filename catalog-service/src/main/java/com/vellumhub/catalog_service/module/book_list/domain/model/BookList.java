@@ -156,11 +156,25 @@ public class BookList {
     }
 
     /**
+     * Checks if the user has permission to update the book list.
+     * @param userId The unique identifier of the user for whom the permission check is being performed.
+     * @return a boolean value indicating whether the user has permission to update the book list.
+     */
+    public boolean canUpdateList(UUID userId){
+        if(userOwner.equals(userId)) return true;
+        if(type == TypeBookList.PRIVATE) return false;
+
+        return isAdmin(userId);
+    }
+    /**
      * Adds a book to the book list.
+     *
      * @param book The book to be added to the book list.
+     * @param userId The unique identifier of the user attempting to add the book to the book list.
      * @throws BookListDomainException if the book already exists in the book list.
      */
-    public void addBook(Book book) {
+    public void addBook(Book book, UUID userId) {
+        if(!this.canUpdateList(userId)) throw new BookListDomainException("Only admins can add books to the book list");
         if(this.containsBook(book)) throw new BookListDomainException("Book already exists in the book list");
 
         this.books.add(book);
