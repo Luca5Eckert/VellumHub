@@ -5,6 +5,7 @@ import com.vellumhub.catalog_service.module.book_list.application.command.list.A
 import com.vellumhub.catalog_service.module.book_list.application.command.list.CreateBookListCommand;
 import com.vellumhub.catalog_service.module.book_list.application.command.list.DeleteBookListCommand;
 import com.vellumhub.catalog_service.module.book_list.application.command.list.UpdateBookListCommand;
+import com.vellumhub.catalog_service.module.book_list.application.command.member.RemoveBookInListCommand;
 import com.vellumhub.catalog_service.module.book_list.application.query.list.GetAllBookListQuery;
 import com.vellumhub.catalog_service.module.book_list.application.query.list.GetBookListByIdQuery;
 import com.vellumhub.catalog_service.module.book_list.application.use_case.list.*;
@@ -37,9 +38,11 @@ public class BookListController {
     private final DeleteBookListUseCase deleteBookListUseCase;
     private final GetBookListByIdUseCase getBookListByIdUseCase;
     private final GetAllBookListUseCase getAllBookListUseCase;
-    private final AddBookInListUseCase addBookInListUseCase;
 
-    public BookListController(AuthenticationService authenticationService, BookListMapper bookListMapper, CreateBookListUseCase createBookListUseCase, UpdateBookListUseCase updateBookListUseCase, DeleteBookListUseCase deleteBookListUseCase, GetBookListByIdUseCase getBookListByIdUseCase, GetAllBookListUseCase getAllBookListUseCase, AddBookInListUseCase addBookInListUseCase) {
+    private final AddBookInListUseCase addBookInListUseCase;
+    private final RemoveBookInListUseCase removeBookInListUseCase;
+
+    public BookListController(AuthenticationService authenticationService, BookListMapper bookListMapper, CreateBookListUseCase createBookListUseCase, UpdateBookListUseCase updateBookListUseCase, DeleteBookListUseCase deleteBookListUseCase, GetBookListByIdUseCase getBookListByIdUseCase, GetAllBookListUseCase getAllBookListUseCase, AddBookInListUseCase addBookInListUseCase, RemoveBookInListUseCase removeBookInListUseCase) {
         this.authenticationService = authenticationService;
         this.bookListMapper = bookListMapper;
         this.createBookListUseCase = createBookListUseCase;
@@ -48,6 +51,7 @@ public class BookListController {
         this.getBookListByIdUseCase = getBookListByIdUseCase;
         this.getAllBookListUseCase = getAllBookListUseCase;
         this.addBookInListUseCase = addBookInListUseCase;
+        this.removeBookInListUseCase = removeBookInListUseCase;
     }
 
     @Operation(summary = "Create a new book list")
@@ -180,6 +184,23 @@ public class BookListController {
 
         var command = AddBookInListCommand.of(userId, bookListId, bookId);
         addBookInListUseCase.execute(command);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{bookListId}/books/{bookId}")
+    @Operation(
+            summary = "Remove a book from a book list",
+            description = "Remove a book from an existing book list."
+    )
+    public ResponseEntity<BookListResponse> removeBookFromList(
+            @PathVariable(name = "bookListId") UUID bookListId,
+            @PathVariable(name = "bookId") UUID bookId
+    ) {
+        var userId = authenticationService.getAuthenticatedUserId();
+
+        var command = RemoveBookInListCommand.of(userId, bookListId, bookId);
+        removeBookInListUseCase.execute(command);
 
         return ResponseEntity.ok().build();
     }
