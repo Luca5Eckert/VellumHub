@@ -25,7 +25,7 @@ public class AddBookInListUseCase {
         var book = bookRepository.findById(command.bookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        bookList.addBook(book);
+        bookList.addBook(book, command.userId());
 
         bookListRepository.save(bookList);
     }
