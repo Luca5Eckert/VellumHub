@@ -1,6 +1,7 @@
 package com.vellumhub.engagement_service.module.interaction.domain.model;
 
 import com.vellumhub.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
+import com.vellumhub.engagement_service.module.interaction.domain.exception.InteractionException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,6 +38,12 @@ public class Interaction {
                 .bookSnapshot(snapshot)
                 .typeInteraction(type)
                 .build();
+    }
+
+    public void updateType(TypeInteraction typeInteraction) {
+        if(typeInteraction == null) throw new InteractionException("Type interaction cannot be null");
+
+        this.typeInteraction = typeInteraction;
     }
 
 }
