@@ -5,13 +5,13 @@ import com.vellumhub.recommendation_service.module.user_profile.domain.model.Pro
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.RatingCategory;
 
 
-public class RatingBookInteration implements BookInteraction{
+public class RatingBookInteraction implements BookInteraction{
 
     private final int oldStars;
     private final int newStars;
     private final boolean isNewRating;
 
-    public RatingBookInteration(int oldStars, int newStars, boolean isNewRating) {
+    public RatingBookInteraction(int oldStars, int newStars, boolean isNewRating) {
         this.oldStars = oldStars;
         this.newStars = newStars;
         this.isNewRating = isNewRating;
