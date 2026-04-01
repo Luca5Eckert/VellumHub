@@ -2,28 +2,26 @@ package com.vellumhub.recommendation_service.module.user_profile.application.use
 
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
-import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
+import com.vellumhub.recommendation_service.module.user_profile.application.command.ReactionChangedCommand;
 import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.BookInteraction;
-import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.rating.RatingBookInteraction;
+import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.reaction.ReactionBookInteraction;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.ProfileAdjustment;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
 
-@Component
-public class UpdateUserProfileWithRatingUseCase {
+@Service
+public class ReactionChangedUseCase {
 
     private final UserProfileRepository userProfileRepository;
     private final BookFeatureRepository bookFeatureRepository;
 
-    public UpdateUserProfileWithRatingUseCase(UserProfileRepository userProfileRepository, BookFeatureRepository bookFeatureRepository) {
+    public ReactionChangedUseCase(UserProfileRepository userProfileRepository, BookFeatureRepository bookFeatureRepository) {
         this.userProfileRepository = userProfileRepository;
         this.bookFeatureRepository = bookFeatureRepository;
     }
 
-    @Transactional
-    public void execute(UpdateUserProfileWithRatingCommand command) {
+    public void execute(ReactionChangedCommand command){
         UserProfile profile = userProfileRepository.findById(command.userId())
                 .orElseGet(() -> new UserProfile(command.userId()));
 
@@ -31,24 +29,18 @@ public class UpdateUserProfileWithRatingUseCase {
                 .orElseThrow(() -> new RuntimeException("Book features not found"));
 
         ProfileAdjustment profileAdjustment = getProfileAdjustment(
-                command.oldStars(),
-                command.newStars(),
-                command.isNewRating(),
+                command.reactionType(),
                 book
         );
 
         profile.applyUpdate(profileAdjustment);
-
-        userProfileRepository.save(profile);
     }
 
     private ProfileAdjustment getProfileAdjustment(
-            int oldStars,
-            int newStars,
-            boolean isNewRating,
+            String reactionType,
             BookFeature book
     ) {
-        BookInteraction bookInteraction = new RatingBookInteraction(oldStars, newStars, isNewRating);
+        BookInteraction bookInteraction = new ReactionBookInteraction(reactionType);
 
         return bookInteraction.toAdjustment(book);
     }
