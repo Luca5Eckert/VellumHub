@@ -4,6 +4,7 @@ import com.vellumhub.engagement_service.module.book_snapshot.domain.model.BookSn
 import com.vellumhub.engagement_service.module.book_snapshot.domain.port.BookSnapshotRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -28,5 +29,10 @@ public class SpringBookSnapshotRepositoryAdapter implements BookSnapshotReposito
     @Override
     public boolean existsById(UUID bookId) {
         return jpaBookSnapshotRepository.existsById(bookId);
+    }
+
+    @Override
+    public Optional<BookSnapshot> findById(UUID id) {
+        return jpaBookSnapshotRepository.findById(id);
     }
 }
