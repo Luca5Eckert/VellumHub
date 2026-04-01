@@ -42,7 +42,7 @@ public class Interaction {
 
     public void updateType(TypeInteraction typeInteraction, UUID userId) {
         if(typeInteraction == null) throw new InteractionException("Type interaction cannot be null");
-        if(userId.equals(this.userId)) throw new InteractionException("User cannot update interaction of another user");
+        if(!userId.equals(this.userId)) throw new InteractionException("User cannot update interaction of another user");
 
         this.typeInteraction = typeInteraction;
     }
