@@ -3,7 +3,6 @@ package com.vellumhub.recommendation_service.module.user_profile.application.use
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.vellumhub.recommendation_service.module.user_profile.application.command.ReactionChangedCommand;
-import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.BookInteraction;
 import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.reaction.ReactionBookInteraction;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.ProfileAdjustment;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
@@ -16,9 +15,12 @@ public class ReactionChangedUseCase {
     private final UserProfileRepository userProfileRepository;
     private final BookFeatureRepository bookFeatureRepository;
 
-    public ReactionChangedUseCase(UserProfileRepository userProfileRepository, BookFeatureRepository bookFeatureRepository) {
+    private final ReactionBookInteraction reactionBookInteraction;
+
+    public ReactionChangedUseCase(UserProfileRepository userProfileRepository, BookFeatureRepository bookFeatureRepository, ReactionBookInteraction reactionBookInteraction) {
         this.userProfileRepository = userProfileRepository;
         this.bookFeatureRepository = bookFeatureRepository;
+        this.reactionBookInteraction = reactionBookInteraction;
     }
 
     /**
@@ -33,9 +35,9 @@ public class ReactionChangedUseCase {
         BookFeature book = bookFeatureRepository.findById(command.bookId())
                 .orElseThrow(() -> new RuntimeException("Book features not found"));
 
-        ProfileAdjustment profileAdjustment = getProfileAdjustment(
-                command.reactionType(),
-                book
+        ProfileAdjustment profileAdjustment = reactionBookInteraction.toAdjustment(
+                book,
+                command.reactionType()
         );
 
         profile.applyUpdate(profileAdjustment);
@@ -43,13 +45,5 @@ public class ReactionChangedUseCase {
         userProfileRepository.save(profile);
     }
 
-    private ProfileAdjustment getProfileAdjustment(
-            String reactionType,
-            BookFeature book
-    ) {
-        BookInteraction bookInteraction = new ReactionBookInteraction(reactionType);
-
-        return bookInteraction.toAdjustment(book);
-    }
 
 }
