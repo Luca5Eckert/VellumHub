@@ -3,13 +3,11 @@ package com.vellumhub.recommendation_service.module.user_profile.application.use
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
-import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.BookInteraction;
 import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.rating.RatingBookInteraction;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.ProfileAdjustment;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class UpdateUserProfileWithRatingUseCase {
@@ -17,9 +15,12 @@ public class UpdateUserProfileWithRatingUseCase {
     private final UserProfileRepository userProfileRepository;
     private final BookFeatureRepository bookFeatureRepository;
 
-    public UpdateUserProfileWithRatingUseCase(UserProfileRepository userProfileRepository, BookFeatureRepository bookFeatureRepository) {
+    private final RatingBookInteraction ratingBookInteraction;
+
+    public UpdateUserProfileWithRatingUseCase(UserProfileRepository userProfileRepository, BookFeatureRepository bookFeatureRepository, RatingBookInteraction ratingBookInteraction) {
         this.userProfileRepository = userProfileRepository;
         this.bookFeatureRepository = bookFeatureRepository;
+        this.ratingBookInteraction = ratingBookInteraction;
     }
 
     public void execute(UpdateUserProfileWithRatingCommand command) {
@@ -29,11 +30,11 @@ public class UpdateUserProfileWithRatingUseCase {
         BookFeature book = bookFeatureRepository.findById(command.bookId())
                 .orElseThrow(() -> new RuntimeException("Book features not found"));
 
-        ProfileAdjustment profileAdjustment = getProfileAdjustment(
+        ProfileAdjustment profileAdjustment = ratingBookInteraction.toAdjustment(
+                book,
                 command.oldStars(),
                 command.newStars(),
-                command.isNewRating(),
-                book
+                command.isNewRating()
         );
 
         profile.applyUpdate(profileAdjustment);
@@ -41,15 +42,5 @@ public class UpdateUserProfileWithRatingUseCase {
         userProfileRepository.save(profile);
     }
 
-    private ProfileAdjustment getProfileAdjustment(
-            int oldStars,
-            int newStars,
-            boolean isNewRating,
-            BookFeature book
-    ) {
-        BookInteraction bookInteraction = new RatingBookInteraction(oldStars, newStars, isNewRating);
-
-        return bookInteraction.toAdjustment(book);
-    }
 
 }
