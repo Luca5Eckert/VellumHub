@@ -9,4 +9,11 @@ public record UpdateInteractionCommand(
         Long interactionId,
         TypeInteraction typeInteraction
 ) {
+    public static UpdateInteractionCommand of(UUID userId, Long id, TypeInteraction typeInteraction) {
+        return new UpdateInteractionCommand(
+                userId,
+                id,
+                typeInteraction
+        );
+    }
 }
