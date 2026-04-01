@@ -21,6 +21,11 @@ public class ReactionChangedUseCase {
         this.bookFeatureRepository = bookFeatureRepository;
     }
 
+    /**
+     * Handles changes in user reactions (like, dislike, etc.) to books. It retrieves the user's profile and the book's features,
+     * calculates the necessary adjustments based on the new reaction, and updates the user's profile accordingly.
+     * @param command The command containing details about the user, book, and the new reaction type.
+     */
     public void execute(ReactionChangedCommand command){
         UserProfile profile = userProfileRepository.findById(command.userId())
                 .orElseGet(() -> new UserProfile(command.userId()));
@@ -34,6 +39,8 @@ public class ReactionChangedUseCase {
         );
 
         profile.applyUpdate(profileAdjustment);
+
+        userProfileRepository.save(profile);
     }
 
     private ProfileAdjustment getProfileAdjustment(
