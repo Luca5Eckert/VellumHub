@@ -1,4 +1,4 @@
-package com.vellumhub.engagement_service.module.interaction.application.presentation.dto.response;
+package com.vellumhub.engagement_service.module.interaction.presentation.dto.response;
 
 import com.vellumhub.engagement_service.module.interaction.domain.model.TypeInteraction;
 

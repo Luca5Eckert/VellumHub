@@ -20,7 +20,7 @@ public class UpdateInteractionUseCase {
         Interaction interaction = interactionRepository.findById(command.interactionId())
                 .orElseThrow(() -> new RuntimeException("Interaction not found"));
 
-        interaction.updateType(command.typeInteraction());
+        interaction.updateType(command.typeInteraction(), command.userId());
 
         interactionRepository.save(interaction);
     }

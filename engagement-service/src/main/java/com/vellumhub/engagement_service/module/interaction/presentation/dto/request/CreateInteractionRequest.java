@@ -1,4 +1,4 @@
-package com.vellumhub.engagement_service.module.interaction.application.presentation.dto.request;
+package com.vellumhub.engagement_service.module.interaction.presentation.dto.request;
 
 import com.vellumhub.engagement_service.module.interaction.domain.model.TypeInteraction;
 import jakarta.validation.constraints.NotNull;
