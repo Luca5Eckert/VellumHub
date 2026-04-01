@@ -4,6 +4,8 @@ import com.vellumhub.engagement_service.module.interaction.domain.model.Interact
 import com.vellumhub.engagement_service.module.interaction.domain.port.InteractionRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public class SpringInteractionRepository implements InteractionRepository {
 
@@ -16,5 +18,10 @@ public class SpringInteractionRepository implements InteractionRepository {
     @Override
     public void save(Interaction interaction) {
         jpaInteractionRepository.save(interaction);
+    }
+
+    @Override
+    public Optional<Interaction> findById(Long id) {
+        return jpaInteractionRepository.findById(id);
     }
 }
