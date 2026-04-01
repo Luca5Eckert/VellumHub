@@ -1,6 +1,7 @@
-package com.vellumhub.recommendation_service.module.user_profile.domain.interaction;
+package com.vellumhub.recommendation_service.module.user_profile.domain.interaction.progress;
 
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
+import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.BookInteraction;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.ProfileAdjustment;
 
 public class BookProgressInteraction implements BookInteraction {
