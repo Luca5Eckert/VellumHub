@@ -5,7 +5,6 @@ import com.vellumhub.recommendation_service.module.book_feature.domain.port.Book
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateBookProgressCommand;
 import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.BookInteraction;
 import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.BookProgressInteraction;
-import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.RatingBookInteration;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.ProfileAdjustment;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;

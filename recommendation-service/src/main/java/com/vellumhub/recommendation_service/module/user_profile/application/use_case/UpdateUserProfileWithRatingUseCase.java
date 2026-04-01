@@ -4,7 +4,7 @@ import com.vellumhub.recommendation_service.module.book_feature.domain.model.Boo
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
 import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.BookInteraction;
-import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.RatingBookInteration;
+import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.RatingBookInteraction;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.ProfileAdjustment;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
@@ -48,7 +48,7 @@ public class UpdateUserProfileWithRatingUseCase {
             boolean isNewRating,
             BookFeature book
     ) {
-        BookInteraction bookInteraction = new RatingBookInteration(oldStars, newStars, isNewRating);
+        BookInteraction bookInteraction = new RatingBookInteraction(oldStars, newStars, isNewRating);
 
         return bookInteraction.toAdjustment(book);
     }
