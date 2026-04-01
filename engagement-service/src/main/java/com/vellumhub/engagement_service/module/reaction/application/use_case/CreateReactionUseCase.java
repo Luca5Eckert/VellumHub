@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CreateReactionUseCase {
 
-    private final ReactionRepository reactionRepository; // Nome consistente
+    private final ReactionRepository reactionRepository;
     private final BookSnapshotRepository bookSnapshotRepository;
     private final EventProducer<String, ReactionEvent> eventProducer;
 
@@ -28,7 +28,6 @@ public class CreateReactionUseCase {
         BookSnapshot book = bookSnapshotRepository.findById(command.bookId())
                 .orElseThrow(() -> new RuntimeException("Book snapshot not found"));
 
-        // O método 'of' já encapsula a regra de criação
         var reaction = Reaction.of(
                 command.userId(),
                 book,
