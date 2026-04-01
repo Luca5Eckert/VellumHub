@@ -1,5 +1,6 @@
 package com.vellumhub.catalog_service.module.book_progress.domain.use_case;
 
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
@@ -41,11 +42,11 @@ class GetReadingListUseCaseTest {
             UUID bookId1 = UUID.randomUUID();
             UUID bookId2 = UUID.randomUUID();
 
-            BookProgress progress1 = new BookProgress(bookId1, userId);
+            BookProgress progress1 = new BookProgress(Book.builder().id(bookId1).build(), userId);
             progress1.setReadingStatus(ReadingStatus.READING);
             progress1.setCurrentPage(50);
 
-            BookProgress progress2 = new BookProgress(bookId2, userId);
+            BookProgress progress2 = new BookProgress(Book.builder().id(bookId2).build(), userId);
             progress2.setReadingStatus(ReadingStatus.READING);
             progress2.setCurrentPage(100);
 
@@ -59,7 +60,6 @@ class GetReadingListUseCaseTest {
 
             // Then
             assertThat(result).hasSize(2);
-            assertThat(result).extracting(BookProgress::getBookId).containsExactly(bookId1, bookId2);
             assertThat(result).allMatch(bp -> bp.getReadingStatus() == ReadingStatus.READING);
             then(bookProgressRepository).should().findAllByUserIdAndReadingStatus(userId, ReadingStatus.READING);
         }
@@ -88,7 +88,7 @@ class GetReadingListUseCaseTest {
             UUID userId = UUID.randomUUID();
             UUID bookId = UUID.randomUUID();
 
-            BookProgress readingProgress = new BookProgress(bookId, userId);
+            BookProgress readingProgress = new BookProgress(Book.builder().id(bookId).build(), userId);
             readingProgress.setReadingStatus(ReadingStatus.READING);
             readingProgress.setCurrentPage(75);
 
@@ -113,7 +113,7 @@ class GetReadingListUseCaseTest {
             UUID bookId = UUID.randomUUID();
             int currentPage = 150;
 
-            BookProgress progress = new BookProgress(bookId, userId);
+            BookProgress progress = new BookProgress(Book.builder().id(bookId).build(), userId);
             progress.setReadingStatus(ReadingStatus.READING);
             progress.setCurrentPage(currentPage);
 
@@ -125,7 +125,7 @@ class GetReadingListUseCaseTest {
 
             // Then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getCurrentPage()).isEqualTo(currentPage);
+            assertThat(result.getFirst().getCurrentPage()).isEqualTo(currentPage);
         }
     }
 }

@@ -10,7 +10,7 @@ public class BookProgressMapper {
     public BookProgressResponse toResponse(BookProgress bookProgress) {
         return new BookProgressResponse(
                 bookProgress.getId(),
-                bookProgress.getBookId(),
+                bookProgress.getBook().getId(),
                 bookProgress.getReadingStatus(),
                 bookProgress.getCurrentPage()
         );

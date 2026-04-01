@@ -1,5 +1,6 @@
 package com.vellumhub.catalog_service.module.book_progress.domain.use_case;
 
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.UpdateBookProgressCommand;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookIsNotBeingReadException;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
@@ -40,7 +41,7 @@ class UpdateBookProgressUseCaseTest {
 
         var command = new UpdateBookProgressCommand(bookId, userId, newPage);
 
-        var bookProgress = new BookProgress(bookId, userId);
+        var bookProgress = new BookProgress(Book.builder().id(bookId).build(), userId);
         bookProgress.setReadingStatus(ReadingStatus.READING);
         bookProgress.setCurrentPage(50);
 
@@ -50,10 +51,10 @@ class UpdateBookProgressUseCaseTest {
         when(bookProgressRepository.save(bookProgress)).thenReturn(bookProgress);
 
         // When
-        BookProgress result = useCase.execute(command);
+        var result = useCase.execute(command);
 
         // Then
-        assertThat(result.getCurrentPage()).isEqualTo(newPage);
+        assertThat(result.newPage()).isEqualTo(newPage);
         verify(bookProgressRepository).save(bookProgress);
     }
 
@@ -81,7 +82,7 @@ class UpdateBookProgressUseCaseTest {
         UUID bookId = UUID.randomUUID();
         var command = new UpdateBookProgressCommand(bookId, userId, 10);
 
-        var bookProgress = new BookProgress(bookId, userId);
+        var bookProgress = new BookProgress(Book.builder().id(bookId).build(), userId);
         bookProgress.setReadingStatus(ReadingStatus.WANT_TO_READ); // Not READING
 
         when(bookProgressRepository.findByUserIdAndBookId(bookId, userId))

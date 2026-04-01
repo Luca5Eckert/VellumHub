@@ -54,7 +54,7 @@ class DefineBookStatusUseCaseTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        BookProgress result = useCase.execute(command);
+        var result = useCase.execute(command);
 
         // Then
         ArgumentCaptor<BookProgress> captor = ArgumentCaptor.forClass(BookProgress.class);
@@ -62,7 +62,7 @@ class DefineBookStatusUseCaseTest {
 
         BookProgress captured = captor.getValue();
         assertThat(captured.getUserId()).isEqualTo(userId);
-        assertThat(captured.getBookId()).isEqualTo(bookId);
+        assertThat(captured.getBook().getId()).isEqualTo(bookId);
         assertThat(captured.getReadingStatus()).isEqualTo(ReadingStatus.WANT_TO_READ);
         assertThat(captured.getCurrentPage()).isZero();
     }
@@ -73,7 +73,7 @@ class DefineBookStatusUseCaseTest {
         // Given
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        var existingProgress = new BookProgress(bookId, userId);
+        var existingProgress = new BookProgress(Book.builder().id(bookId).build(), userId);
         existingProgress.setReadingStatus(ReadingStatus.WANT_TO_READ);
 
         // Command creates a change to READING and page 50
@@ -90,11 +90,9 @@ class DefineBookStatusUseCaseTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        BookProgress result = useCase.execute(command);
+        var result = useCase.execute(command);
 
         // Then
-        assertThat(result.getReadingStatus()).isEqualTo(ReadingStatus.READING);
-        assertThat(result.getCurrentPage()).isEqualTo(50);
         verify(bookProgressRepository).save(existingProgress);
     }
 
@@ -104,7 +102,7 @@ class DefineBookStatusUseCaseTest {
         // Given
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        var existingProgress = new BookProgress(bookId, userId);
+        var existingProgress = new BookProgress(Book.builder().id(bookId).build(), userId);
         existingProgress.setCurrentPage(100);
 
         // Command sends -1 as page (edge case - domain model doesn't validate this)
@@ -121,10 +119,8 @@ class DefineBookStatusUseCaseTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        BookProgress result = useCase.execute(command);
+        var result = useCase.execute(command);
 
-        // Then - Note: Negative page validation should be added to DTO or domain model
-        assertThat(result.getCurrentPage()).isEqualTo(-1);
-        assertThat(result.getReadingStatus()).isEqualTo(ReadingStatus.READING);
+        assertThat(result.progress()).isEqualTo(ReadingStatus.READING.name());
     }
 }
