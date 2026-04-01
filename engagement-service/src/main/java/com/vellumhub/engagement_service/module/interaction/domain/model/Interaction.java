@@ -16,8 +16,7 @@ import java.util.UUID;
 public class Interaction {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "interaction_gen")
-    @SequenceGenerator(name = "interaction_gen", sequenceName = "interactions_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(nullable = false)
     private Long id;
 
