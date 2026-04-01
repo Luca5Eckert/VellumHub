@@ -4,7 +4,7 @@ import com.vellumhub.engagement_service.module.interaction.domain.model.TypeInte
 
 import java.util.UUID;
 
-public record InteractionRequest(
+public record InteractionResponse(
         Long interactionId,
         UUID userId,
         UUID bookId,
