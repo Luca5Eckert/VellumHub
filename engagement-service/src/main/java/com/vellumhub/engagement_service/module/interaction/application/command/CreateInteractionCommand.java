@@ -9,4 +9,11 @@ public record CreateInteractionCommand(
         UUID bookId,
         TypeInteraction typeInteraction
 ) {
+    public static CreateInteractionCommand of(
+            UUID userId,
+            UUID bookId,
+            TypeInteraction typeInteraction
+    ) {
+        return new CreateInteractionCommand(userId, bookId, typeInteraction);
+    }
 }

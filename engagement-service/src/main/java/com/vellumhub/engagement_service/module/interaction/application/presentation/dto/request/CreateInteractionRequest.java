@@ -1,9 +1,12 @@
 package com.vellumhub.engagement_service.module.interaction.application.presentation.dto.request;
 
+import com.vellumhub.engagement_service.module.interaction.domain.model.TypeInteraction;
+import jakarta.validation.constraints.NotNull;
+
 import java.util.UUID;
 
 public record CreateInteractionRequest(
-        UUID bookId,
-        String typeInteraction
+        @NotNull UUID bookId,
+        @NotNull TypeInteraction typeInteraction
 ) {
 }
