@@ -1,19 +1,13 @@
 package com.vellumhub.recommendation_service.module.user_profile.domain.interaction.reaction;
 
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
-import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.BookInteraction;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.ProfileAdjustment;
+import org.springframework.stereotype.Service;
 
-public class ReactionBookInteraction implements BookInteraction {
+@Service
+public class ReactionBookInteraction {
 
-    private final String reactionType;
-
-    public ReactionBookInteraction(String reactionType) {
-        this.reactionType = reactionType;
-    }
-
-    @Override
-    public ProfileAdjustment toAdjustment(BookFeature bookFeature) {
+    public ProfileAdjustment toAdjustment(BookFeature bookFeature, String reactionType) {
         var reaction = Reaction.of(reactionType);
 
         return new ProfileAdjustment(
