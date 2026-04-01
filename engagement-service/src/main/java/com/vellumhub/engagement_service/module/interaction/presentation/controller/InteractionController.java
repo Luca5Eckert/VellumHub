@@ -1,7 +1,7 @@
-package com.vellumhub.engagement_service.module.interaction.application.presentation.controller;
+package com.vellumhub.engagement_service.module.interaction.presentation.controller;
 
 import com.vellumhub.engagement_service.module.interaction.application.command.CreateInteractionCommand;
-import com.vellumhub.engagement_service.module.interaction.application.presentation.dto.request.CreateInteractionRequest;
+import com.vellumhub.engagement_service.module.interaction.presentation.dto.request.CreateInteractionRequest;
 import com.vellumhub.engagement_service.module.interaction.application.use_case.CreateInteractionUseCase;
 import com.vellumhub.engagement_service.module.interaction.application.use_case.GetAllInteractionByUserUseCase;
 import com.vellumhub.engagement_service.module.interaction.application.use_case.GetInteractionUseCase;
