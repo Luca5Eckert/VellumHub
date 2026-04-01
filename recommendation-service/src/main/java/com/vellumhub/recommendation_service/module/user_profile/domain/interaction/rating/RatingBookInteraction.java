@@ -1,11 +1,11 @@
-package com.vellumhub.recommendation_service.module.user_profile.domain.interaction;
+package com.vellumhub.recommendation_service.module.user_profile.domain.interaction.rating;
 
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
+import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.BookInteraction;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.ProfileAdjustment;
-import com.vellumhub.recommendation_service.module.user_profile.domain.model.RatingCategory;
 
 
-public class RatingBookInteraction implements BookInteraction{
+public class RatingBookInteraction implements BookInteraction {
 
     private final int oldStars;
     private final int newStars;

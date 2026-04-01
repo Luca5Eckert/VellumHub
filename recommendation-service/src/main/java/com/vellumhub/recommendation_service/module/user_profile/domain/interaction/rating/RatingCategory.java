@@ -1,4 +1,4 @@
-package com.vellumhub.recommendation_service.module.user_profile.domain.model;
+package com.vellumhub.recommendation_service.module.user_profile.domain.interaction.rating;
 
 public enum RatingCategory {
     DETRACTOR(-5), NEUTRAL(1), PROMOTER(5);
