@@ -22,7 +22,6 @@ public class UpdateUserProfileWithRatingUseCase {
         this.bookFeatureRepository = bookFeatureRepository;
     }
 
-    @Transactional
     public void execute(UpdateUserProfileWithRatingCommand command) {
         UserProfile profile = userProfileRepository.findById(command.userId())
                 .orElseGet(() -> new UserProfile(command.userId()));

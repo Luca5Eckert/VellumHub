@@ -9,6 +9,7 @@ import com.vellumhub.recommendation_service.module.user_profile.domain.model.Pro
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UpdateBookProgressUseCase {
@@ -40,6 +41,8 @@ public class UpdateBookProgressUseCase {
         );
 
         profile.applyUpdate(profileAdjustment);
+
+        userProfileRepository.save(profile);
     }
 
     /**
