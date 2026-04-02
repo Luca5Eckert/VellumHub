@@ -84,6 +84,8 @@ public class LangChain4jEmbeddingUserProfileProvider implements EmbeddingUserPro
 
         return genres.stream()
                 .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(genre -> !genre.isBlank())
                 .distinct()
                 .collect(Collectors.joining(", "));
     }
