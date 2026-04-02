@@ -1,7 +1,7 @@
 package com.vellumhub.recommendation_service.share.kafka.consumer;
 
 import com.vellumhub.recommendation_service.module.book_feature.application.command.UpdateBookFeatureCommand;
-import com.vellumhub.recommendation_service.module.book_feature.application.use_case.UpdateMediaFeatureUseCase;
+import com.vellumhub.recommendation_service.module.book_feature.application.use_case.UpdateBookFeatureUseCase;
 import com.vellumhub.recommendation_service.module.recommendation.application.command.UpdateRecommendationCommand;
 import com.vellumhub.recommendation_service.module.recommendation.application.use_case.UpdateRecommendationUseCase;
 import com.vellumhub.recommendation_service.share.kafka.event.UpdateBookEvent;
@@ -13,11 +13,11 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class UpdateBookConsumerEvent {
 
-    private final UpdateMediaFeatureUseCase updateMediaFeatureUseCase;
+    private final UpdateBookFeatureUseCase updateBookFeatureUseCase;
     private final UpdateRecommendationUseCase updateRecommendationUseCase;
 
-    public UpdateBookConsumerEvent(UpdateMediaFeatureUseCase updateMediaFeatureUseCase, UpdateRecommendationUseCase updateRecommendationUseCase) {
-        this.updateMediaFeatureUseCase = updateMediaFeatureUseCase;
+    public UpdateBookConsumerEvent(UpdateBookFeatureUseCase updateBookFeatureUseCase, UpdateRecommendationUseCase updateRecommendationUseCase) {
+        this.updateBookFeatureUseCase = updateBookFeatureUseCase;
         this.updateRecommendationUseCase = updateRecommendationUseCase;
     }
 
@@ -47,7 +47,7 @@ public class UpdateBookConsumerEvent {
                 event.genres()
         );
 
-        updateMediaFeatureUseCase.execute(mediaFeatureCommand);
+        updateBookFeatureUseCase.execute(mediaFeatureCommand);
         updateRecommendationUseCase.execute(updateRecommendationCommand);
 
         log.info("Book update event processed successfully. BookId={}",

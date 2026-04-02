@@ -8,12 +8,12 @@ import com.vellumhub.recommendation_service.module.book_feature.domain.port.Embe
 import org.springframework.stereotype.Component;
 
 @Component
-public class UpdateMediaFeatureUseCase {
+public class UpdateBookFeatureUseCase {
 
     private final BookFeatureRepository bookFeatureRepository;
     private final EmbeddingBookProvider embeddingBookProvider;
 
-    public UpdateMediaFeatureUseCase(BookFeatureRepository bookFeatureRepository, EmbeddingBookProvider embeddingBookProvider) {
+    public UpdateBookFeatureUseCase(BookFeatureRepository bookFeatureRepository, EmbeddingBookProvider embeddingBookProvider) {
         this.bookFeatureRepository = bookFeatureRepository;
         this.embeddingBookProvider = embeddingBookProvider;
     }
