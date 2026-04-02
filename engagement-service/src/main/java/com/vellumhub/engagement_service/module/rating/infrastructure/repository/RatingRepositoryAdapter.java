@@ -1,6 +1,6 @@
 package com.vellumhub.engagement_service.module.rating.infrastructure.repository;
 
-import com.vellumhub.engagement_service.share.provider.RatingFilterProvider;
+import com.vellumhub.engagement_service.module.rating.infrastructure.provider.RatingFilterProvider;
 import com.vellumhub.engagement_service.module.rating.domain.filter.RatingFilter;
 import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
 import com.vellumhub.engagement_service.module.rating.domain.port.RatingRepository;

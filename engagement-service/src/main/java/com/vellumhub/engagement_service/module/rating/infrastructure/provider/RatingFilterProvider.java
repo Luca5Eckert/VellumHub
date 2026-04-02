@@ -1,4 +1,4 @@
-package com.vellumhub.engagement_service.share.provider;
+package com.vellumhub.engagement_service.module.rating.infrastructure.provider;
 
 import com.vellumhub.engagement_service.module.rating.domain.filter.RatingFilter;
 import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
