@@ -1,10 +1,9 @@
 package com.vellumhub.recommendation_service.module.book_feature.application.use_case;
 
-import com.vellumhub.recommendation_service.module.book_feature.application.use_case.CreateBookFeatureUseCase;
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.EmbeddingBookProvider;
-import com.vellumhub.recommendation_service.share.event.CreateBookEvent;
+import com.vellumhub.recommendation_service.share.kafka.event.CreateBookEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
