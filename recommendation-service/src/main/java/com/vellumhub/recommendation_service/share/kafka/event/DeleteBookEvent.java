@@ -1,4 +1,4 @@
-package com.vellumhub.recommendation_service.share.event;
+package com.vellumhub.recommendation_service.share.kafka.event;
 
 import java.util.UUID;
 
