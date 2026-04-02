@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class UpdateBookProgressConsumerEvent {
 
-    private static final Logger log = LoggerFactory.getLogger(UpdateBookProgressConsumerEvent.class);
     private final UpdateBookProgressUseCase updateBookProgressUseCase;
 
     public UpdateBookProgressConsumerEvent(UpdateBookProgressUseCase updateBookProgressUseCase) {
