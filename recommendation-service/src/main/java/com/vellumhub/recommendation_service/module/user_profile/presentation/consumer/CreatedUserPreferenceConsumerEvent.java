@@ -1,7 +1,7 @@
 package com.vellumhub.recommendation_service.module.user_profile.presentation.consumer;
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.CreatedUserProfileCommand;
-import com.vellumhub.recommendation_service.module.user_profile.application.use_case.CreatUserProfileUseCase;
+import com.vellumhub.recommendation_service.module.user_profile.application.use_case.CreateUserProfileUseCase;
 import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedUserPreferenceEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class CreatedUserPreferenceConsumerEvent {
 
-    private final CreatUserProfileUseCase creatUserProfileUseCase;
+    private final CreateUserProfileUseCase createUserProfileUseCase;
 
-    public CreatedUserPreferenceConsumerEvent(CreatUserProfileUseCase creatUserProfileUseCase) {
-        this.creatUserProfileUseCase = creatUserProfileUseCase;
+    public CreatedUserPreferenceConsumerEvent(CreateUserProfileUseCase createUserProfileUseCase) {
+        this.createUserProfileUseCase = createUserProfileUseCase;
     }
 
     @KafkaListener(
@@ -30,7 +30,7 @@ public class CreatedUserPreferenceConsumerEvent {
                     event.genres(),
                     event.about()
             );
-            creatUserProfileUseCase.execute(command);
+            createUserProfileUseCase.execute(command);
 
             log.info("Successfully processed CreatedUserPreferenceEvent for userId: {}", event.userId());
 

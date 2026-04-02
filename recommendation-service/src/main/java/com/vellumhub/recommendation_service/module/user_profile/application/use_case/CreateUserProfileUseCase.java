@@ -11,13 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
  * Use case for creating a user profile based on the user's preferences.
  */
 @Service
-public class CreatUserProfileUseCase {
+public class CreateUserProfileUseCase {
 
     private final UserProfileRepository userProfileRepository;
 
     private final EmbeddingUserProfileProvider profileProvider;
 
-    public CreatUserProfileUseCase(UserProfileRepository userProfileRepository, EmbeddingUserProfileProvider profileProvider) {
+    public CreateUserProfileUseCase(UserProfileRepository userProfileRepository, EmbeddingUserProfileProvider profileProvider) {
         this.userProfileRepository = userProfileRepository;
         this.profileProvider = profileProvider;
     }
@@ -37,7 +37,6 @@ public class CreatUserProfileUseCase {
                 command.userId(),
                 vectors
         );
-
 
         userProfileRepository.save(userProfile);
     }
