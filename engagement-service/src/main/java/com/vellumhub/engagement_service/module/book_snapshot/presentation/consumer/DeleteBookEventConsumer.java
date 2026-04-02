@@ -24,16 +24,11 @@ public class DeleteBookEventConsumer {
     public void consume(DeleteBookEvent event) {
         log.info("DeleteBookEvent received for bookId: {}", event.bookId());
 
-        try {
-            var command = new DeleteBookSnapshotCommand(event.bookId());
-            deleteBookSnapshotUseCase.execute(command);
-            log.info("Book snapshot successfully deleted for bookId: {}", event.bookId());
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid event received, discarding. bookId: {}. Reason: {}", event.bookId(), e.getMessage());
-        } catch (Exception e) {
-            log.error("Unexpected error processing DeleteBookEvent for bookId: {}", event.bookId(), e);
-            throw e;
-        }
+        var command = new DeleteBookSnapshotCommand(event.bookId());
+        deleteBookSnapshotUseCase.execute(command);
+
+        log.info("Book snapshot successfully deleted for bookId: {}", event.bookId());
+
     }
-    
+
 }

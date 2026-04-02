@@ -24,15 +24,11 @@ public class CreateBookEventConsumer {
     public void consume(CreateBookEvent event) {
         log.info("CreateBookEvent received for bookId: {}", event.bookId());
 
-        try {
-            var command = new CreateBookSnapshotCommand(event.bookId());
-            createBookSnapshotUseCase.execute(command);
-            log.info("Book snapshot successfully created for bookId: {}", event.bookId());
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid event received, discarding. bookId: {}. Reason: {}", event.bookId(), e.getMessage());
-        } catch (Exception e) {
-            log.error("Unexpected error processing CreateBookEvent for bookId: {}", event.bookId(), e);
-            throw e;
-        }
+        var command = new CreateBookSnapshotCommand(event.bookId());
+        createBookSnapshotUseCase.execute(command);
+
+        log.info("Book snapshot successfully created for bookId: {}", event.bookId());
+
     }
+
 }
