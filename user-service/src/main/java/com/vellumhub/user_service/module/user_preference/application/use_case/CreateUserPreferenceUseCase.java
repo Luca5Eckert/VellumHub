@@ -1,6 +1,6 @@
-package com.vellumhub.user_service.module.user_preference.domain.handler;
+package com.vellumhub.user_service.module.user_preference.application.use_case;
 
-import com.vellumhub.user_service.module.user_preference.domain.UserPreference;
+import com.vellumhub.user_service.module.user_preference.domain.model.UserPreference;
 import com.vellumhub.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
 import com.vellumhub.user_service.module.user_preference.domain.exception.UserPreferenceAlreadyExistDomainException;
 import com.vellumhub.user_service.module.user_preference.domain.port.UserPreferenceRepository;
@@ -11,14 +11,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
-public class CreateUserPreferenceHandler {
+public class CreateUserPreferenceUseCase {
 
     private final UserPreferenceRepository userPreferenceRepository;
     private final UserRepository userRepository;
 
     private final KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate;
 
-    public CreateUserPreferenceHandler(UserPreferenceRepository userPreferenceRepository, UserRepository userRepository, KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate) {
+    public CreateUserPreferenceUseCase(UserPreferenceRepository userPreferenceRepository, UserRepository userRepository, KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate) {
         this.userPreferenceRepository = userPreferenceRepository;
         this.userRepository = userRepository;
         this.kafkaTemplate = kafkaTemplate;
@@ -28,7 +28,6 @@ public class CreateUserPreferenceHandler {
     public void execute(UserPreference userPreference){
         if(!userRepository.existsById(userPreference.getUserId())) throw new UserNotFoundException();
 
-        // Race condition //
         if(userPreferenceRepository.existsByUserId(userPreference.getUserId())) throw new UserPreferenceAlreadyExistDomainException("User already have a preference");
 
         userPreferenceRepository.save(userPreference);

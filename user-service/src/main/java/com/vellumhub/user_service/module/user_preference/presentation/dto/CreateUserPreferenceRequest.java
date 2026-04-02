@@ -1,4 +1,4 @@
-package com.vellumhub.user_service.module.user_preference.application.dto;
+package com.vellumhub.user_service.module.user_preference.presentation.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import com.vellumhub.user_service.module.user.domain.Genre;

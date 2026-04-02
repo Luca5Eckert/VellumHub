@@ -6,10 +6,10 @@ import static org.mockito.Mockito.*;
 
 import com.vellumhub.user_service.module.user.application.exception.UserNotFoundException;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
-import com.vellumhub.user_service.module.user_preference.domain.UserPreference;
+import com.vellumhub.user_service.module.user_preference.domain.model.UserPreference;
 import com.vellumhub.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
 import com.vellumhub.user_service.module.user_preference.domain.exception.UserPreferenceAlreadyExistDomainException;
-import com.vellumhub.user_service.module.user_preference.domain.handler.CreateUserPreferenceHandler;
+import com.vellumhub.user_service.module.user_preference.domain.use_case.CreateUserPreferenceHandler;
 import com.vellumhub.user_service.module.user_preference.domain.port.UserPreferenceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

@@ -1,4 +1,4 @@
-package com.vellumhub.user_service.module.user_preference.domain;
+package com.vellumhub.user_service.module.user_preference.domain.model;
 
 import com.vellumhub.user_service.module.user.domain.Genre;
 import jakarta.persistence.*;
