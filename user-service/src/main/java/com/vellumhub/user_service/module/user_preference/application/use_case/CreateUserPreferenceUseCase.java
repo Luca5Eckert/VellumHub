@@ -1,6 +1,7 @@
 package com.vellumhub.user_service.module.user_preference.application.use_case;
 
 import com.vellumhub.user_service.module.user.application.exception.UserNotFoundException;
+import com.vellumhub.user_service.module.user.domain.UserEntity;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import com.vellumhub.user_service.module.user_preference.application.command.CreateUserPreferenceCommand;
 import com.vellumhub.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
@@ -36,10 +37,11 @@ public class CreateUserPreferenceUseCase {
      */
     @Transactional
     public void execute(CreateUserPreferenceCommand command) {
-        if (!userRepository.existsById(command.userId())) throw new UserNotFoundException();
+        var user = userRepository.findById(command.userId())
+                .orElseThrow(UserNotFoundException::new);
 
         var userPreference = getUserPreference(
-                command.userId(),
+                user,
                 command.genres(),
                 command.about()
         );
@@ -47,7 +49,7 @@ public class CreateUserPreferenceUseCase {
         userPreferenceRepository.save(userPreference);
 
         CreateUserPreferenceEvent createUserPreferenceEvent = new CreateUserPreferenceEvent(
-                userPreference.getUserId(),
+                userPreference.getUser().getId(),
                 userPreference.getGenres(),
                 userPreference.getAbout()
         );
@@ -58,16 +60,16 @@ public class CreateUserPreferenceUseCase {
 
     /**
      * Get user preference by user id. If user preference not exist, create new user preference with given genres and about.
-     * @param userId the user id
+     * @param user the user.
      * @param genres the genres of user preference
      * @param about the about of user preference
      * @return the user preference
      */
-    private UserPreference getUserPreference(UUID userId, List<String> genres, String about) {
-        return userPreferenceRepository.findByUserId(userId)
+    private UserPreference getUserPreference(UserEntity user, List<String> genres, String about) {
+        return userPreferenceRepository.findByUserId(user.getId())
                 .orElse(
                         UserPreference.builder()
-                                .userId(userId)
+                                .user(user)
                                 .genres(genres)
                                 .about(about)
                                 .build()
