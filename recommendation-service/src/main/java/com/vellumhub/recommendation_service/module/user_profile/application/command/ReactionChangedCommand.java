@@ -7,4 +7,7 @@ public record ReactionChangedCommand(
         UUID bookId,
         String reactionType
 ){
+    public static ReactionChangedCommand of(UUID userId, UUID bookId, String reactionType) {
+        return new ReactionChangedCommand(userId, bookId, reactionType);
+    }
 }
