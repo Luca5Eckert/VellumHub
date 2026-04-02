@@ -7,6 +7,8 @@ import com.vellumhub.recommendation_service.module.user_profile.domain.port.User
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 /**
  * Use case for creating a user profile based on the user's preferences.
  */
@@ -28,18 +30,19 @@ public class CreateUserProfileUseCase {
      */
     @Transactional
     public void execute(CreatedUserProfileCommand command) {
+        var userProfile = userProfileRepository.findById(command.userId())
+                .orElseGet(() -> UserProfile.create(command.userId()));
+
         var vectors = profileProvider.of(
                 command.genres(),
                 command.about()
         );
 
-        var userProfile = UserProfile.create(
-                command.userId(),
-                vectors
-        );
+        userProfile.applyVectorLearning(vectors, 0.5f);
 
         userProfileRepository.save(userProfile);
     }
+
 
 
 }

@@ -51,10 +51,10 @@ public class UserProfile {
         this.lastUpdated = Instant.now();
     }
 
-    public static UserProfile create(UUID userId, float[] vectors) {
+    public static UserProfile create(UUID userId) {
         return new UserProfile(
                 userId,
-                vectors,
+                new float[384],
                 new HashSet<>(),
                 0.0,
                 Instant.now(),
@@ -87,7 +87,7 @@ public class UserProfile {
         this.interactedBookIds.add(bookId);
     }
 
-    private void applyVectorLearning(float[] bookEmbedding, float adjustmentWeight) {
+    public void applyVectorLearning(float[] bookEmbedding, float adjustmentWeight) {
         if (bookEmbedding == null || bookEmbedding.length != this.profileVector.length) {
             throw new IllegalArgumentException("Book embedding dimension must match the profile vector dimension.");
         }

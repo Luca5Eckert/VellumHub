@@ -49,7 +49,7 @@ class UserProfileTest {
     void shouldCreateProfileWithVectorViaFactoryMethod() {
         float[] vectors = uniformEmbedding(0.5f);
 
-        UserProfile profile = UserProfile.create(USER_ID, vectors);
+        UserProfile profile = UserProfile.create(USER_ID);
 
         assertThat(profile.getUserId()).isEqualTo(USER_ID);
         assertThat(profile.getProfileVector()).isEqualTo(vectors);
@@ -146,7 +146,7 @@ class UserProfileTest {
 
     @Test
     void shouldProduceUnitMagnitudeVectorAfterUpdate() {
-        UserProfile profile = UserProfile.create(USER_ID, uniformEmbedding(0.1f));
+        UserProfile profile = UserProfile.create(USER_ID);
         ProfileAdjustment adjustment = new ProfileAdjustment(UUID.randomUUID(), 1.0f, uniformEmbedding(0.5f));
 
         profile.applyUpdate(adjustment);
@@ -156,7 +156,7 @@ class UserProfileTest {
 
     @Test
     void shouldMaintainUnitMagnitudeAfterMultipleUpdates() {
-        UserProfile profile = UserProfile.create(USER_ID, uniformEmbedding(0.1f));
+        UserProfile profile = UserProfile.create(USER_ID);
 
         for (int i = 0; i < 10; i++) {
             profile.applyUpdate(new ProfileAdjustment(UUID.randomUUID(), 1.0f, uniformEmbedding(0.5f)));
@@ -169,7 +169,7 @@ class UserProfileTest {
     void shouldShiftProfileVectorTowardBookEmbeddingOnPositiveAdjustment() {
         float[] initial = new float[VECTOR_SIZE];
         initial[0] = 1.0f;
-        UserProfile profile = UserProfile.create(USER_ID, initial);
+        UserProfile profile = UserProfile.create(USER_ID);
 
         float[] bookEmbedding = new float[VECTOR_SIZE];
         bookEmbedding[1] = 1.0f;
@@ -184,7 +184,7 @@ class UserProfileTest {
     void shouldShiftProfileVectorAwayFromBookEmbeddingOnNegativeAdjustment() {
         float[] initial = new float[VECTOR_SIZE];
         initial[0] = 1.0f;
-        UserProfile profile = UserProfile.create(USER_ID, initial);
+        UserProfile profile = UserProfile.create(USER_ID);
 
         float[] bookEmbedding = new float[VECTOR_SIZE];
         bookEmbedding[0] = 1.0f;
@@ -200,7 +200,7 @@ class UserProfileTest {
     void shouldNotMutateBookEmbeddingDuringVectorLearning() {
         float[] bookEmbedding = uniformEmbedding(0.5f);
         float[] copy = bookEmbedding.clone();
-        UserProfile profile = UserProfile.create(USER_ID, uniformEmbedding(0.1f));
+        UserProfile profile = UserProfile.create(USER_ID);
 
         profile.applyUpdate(new ProfileAdjustment(UUID.randomUUID(), 1.0f, bookEmbedding));
 
@@ -256,7 +256,7 @@ class UserProfileTest {
     @Test
     void shouldNotThrowWhenProfileVectorIsZeroAfterNegativeAdjustment() {
         float[] zeroVector = new float[VECTOR_SIZE];
-        UserProfile profile = UserProfile.create(USER_ID, zeroVector);
+        UserProfile profile = UserProfile.create(USER_ID);
         float[] bookEmbedding = new float[VECTOR_SIZE];
 
         assertThatCode(() ->
