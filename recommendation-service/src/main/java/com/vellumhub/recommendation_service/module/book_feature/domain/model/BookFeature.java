@@ -48,7 +48,7 @@ public class BookFeature {
     }
 
     public void updateEmbedding(float[] newEmbedding) {
-        if (embedding == null || embedding.length < 384) {
+        if (newEmbedding == null || newEmbedding.length < 384) {
             throw new IllegalArgumentException("Embedding vector cannot be null and must have at least 384 dimensions");
         }
         this.embedding = newEmbedding;
