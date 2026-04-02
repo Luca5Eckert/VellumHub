@@ -1,17 +1,17 @@
 package com.vellumhub.user_service.module.user_preference.domain.model;
 
-import com.vellumhub.user_service.module.user.domain.Genre;
+import com.vellumhub.user_service.module.user.domain.UserEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(name = "user_preferences")
-@Data
+@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserPreference {
@@ -20,16 +20,18 @@ public class UserPreference {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    private UUID userId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
+    private UserEntity user;
 
     @ElementCollection
     @CollectionTable(
-            name = "tb_user_genre",
-            joinColumns = @JoinColumn(name = "user_id")
+            name = "user_preference_genres",
+            joinColumns = @JoinColumn(name = "preference_id")
     )
-    @Enumerated(EnumType.STRING)
     @Column(name = "genre_name")
-    private List<Genre> genres;
+    private List<String> genres;
 
+    private String about;
 
 }
