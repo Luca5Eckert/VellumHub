@@ -1,7 +1,7 @@
 package com.vellumhub.engagement_service.module.reaction.application.use_case;
 
 import com.vellumhub.engagement_service.module.reaction.application.command.UpdateReactionCommand;
-import com.vellumhub.engagement_service.module.reaction.domain.event.ReactionEvent;
+import com.vellumhub.engagement_service.module.reaction.domain.event.ReactionChangedEvent;
 import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
 import com.vellumhub.engagement_service.module.reaction.domain.port.EventProducer;
 import com.vellumhub.engagement_service.module.reaction.domain.port.ReactionRepository;
@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class UpdateReactionUseCase {
 
     private final ReactionRepository reactionRepository;
-    private final EventProducer<String, ReactionEvent> eventProducer;
+    private final EventProducer<String, ReactionChangedEvent> eventProducer;
 
-    public UpdateReactionUseCase(ReactionRepository reactionRepository, EventProducer<String, ReactionEvent> eventProducer) {
+    public UpdateReactionUseCase(ReactionRepository reactionRepository, EventProducer<String, ReactionChangedEvent> eventProducer) {
         this.reactionRepository = reactionRepository;
         this.eventProducer = eventProducer;
     }
@@ -28,9 +28,9 @@ public class UpdateReactionUseCase {
 
         reactionRepository.save(reaction);
 
-        var event = ReactionEvent.from(reaction);
+        var event = ReactionChangedEvent.from(reaction);
 
-        eventProducer.send("user-reacted", event.userId().toString(), event);
+        eventProducer.send("user-reaction-changed", event.userId().toString(), event);
     }
 
 }
