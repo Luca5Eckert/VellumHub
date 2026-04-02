@@ -36,6 +36,7 @@ public class CreatedUserPreferenceConsumerEvent {
 
         } catch (Exception e) {
             log.error("Error processing CreatedUserPreferenceEvent: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao processar CreatedUserPreferenceEvent", e);
         }
     }
 
