@@ -1,5 +1,6 @@
 package com.vellumhub.recommendation_service.module.user_profile.application.use_case;
 
+import com.vellumhub.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
@@ -28,7 +29,7 @@ public class UpdateUserProfileWithRatingUseCase {
                 .orElseGet(() -> new UserProfile(command.userId()));
 
         BookFeature book = bookFeatureRepository.findById(command.bookId())
-                .orElseThrow(() -> new RuntimeException("Book features not found"));
+                .orElseThrow(() -> new BookFeatureNotFoundException("Book features not found"));
 
         ProfileAdjustment profileAdjustment = ratingBookInteraction.toAdjustment(
                 book,
