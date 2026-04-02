@@ -4,8 +4,6 @@ import com.vellumhub.recommendation_service.module.user_profile.application.comm
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateBookProgressUseCase;
 import com.vellumhub.recommendation_service.module.user_profile.presentation.event.UpdateBookProgressEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -33,33 +31,20 @@ public class UpdateBookProgressConsumerEvent {
                 event.progress()
         );
 
-        try {
+        var command = UpdateBookProgressCommand.of(
+                event.userId(),
+                event.bookId(),
+                event.progress(),
+                event.oldPage(),
+                event.newPage()
+        );
 
-            var command = UpdateBookProgressCommand.of(
-                    event.userId(),
-                    event.bookId(),
-                    event.progress(),
-                    event.oldPage(),
-                    event.newPage()
-            );
+        updateBookProgressUseCase.execute(command);
 
-            updateBookProgressUseCase.execute(command);
-
-            log.info("Book progress update event processed successfully. UserId={}, BookId={}",
-                    event.userId(),
-                    event.bookId()
-            );
-
-        } catch (Exception e) {
-            log.error("Error processing book progress update event. UserId={}, BookId={}, Progress={}",
-                    event.userId(),
-                    event.bookId(),
-                    event.progress(),
-                    e
-            );
-            throw e;
-        }
-
+        log.info("Book progress update event processed successfully. UserId={}, BookId={}",
+                event.userId(),
+                event.bookId()
+        );
     }
 
 }

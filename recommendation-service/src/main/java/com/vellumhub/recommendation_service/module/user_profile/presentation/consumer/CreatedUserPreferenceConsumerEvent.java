@@ -5,6 +5,7 @@ import com.vellumhub.recommendation_service.module.user_profile.application.use_
 import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedUserPreferenceEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,7 +22,7 @@ public class CreatedUserPreferenceConsumerEvent {
             topics = "create_user_preference",
             groupId = "recommendation_service_group"
     )
-    public void consume(CreatedUserPreferenceEvent event) {
+    public void consume(@Payload CreatedUserPreferenceEvent event) {
         log.info("Consumed CreatedUserPreferenceEvent: {}", event);
 
         try {

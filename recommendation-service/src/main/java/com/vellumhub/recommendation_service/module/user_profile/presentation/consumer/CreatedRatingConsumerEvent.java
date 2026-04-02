@@ -30,31 +30,21 @@ public class CreatedRatingConsumerEvent {
                 event.bookId(),
                 event.stars());
 
-        try {
-            var command = new UpdateUserProfileWithRatingCommand(
-                    event.userId(),
-                    event.bookId(),
-                    0,
-                    event.stars(),
-                    false
-            );
+        var command = new UpdateUserProfileWithRatingCommand(
+                event.userId(),
+                event.bookId(),
+                0,
+                event.stars(),
+                false
+        );
 
-            updateUserProfileWithRatingUseCase.execute(command);
-            
+        updateUserProfileWithRatingUseCase.execute(command);
 
-            log.info("Rating event processed successfully. UserId={}, BookId={}",
-                    event.userId(),
-                    event.bookId());
 
-        } catch (Exception e) {
-            log.error("Error processing rating event. UserId={}, BookId={}, Stars={}",
-                    event.userId(),
-                    event.bookId(),
-                    event.stars(),
-                    e);
-            throw e;
-        }
-
+        log.info("Rating event processed successfully. UserId={}, BookId={}",
+                event.userId(),
+                event.bookId()
+        );
     }
 
 }
