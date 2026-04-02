@@ -4,8 +4,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -17,7 +19,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "user_profiles")
 @Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class UserProfile {
 
     @Id
@@ -45,6 +49,17 @@ public class UserProfile {
         this.totalEngagementScore = 0.0;
         this.createdAt = Instant.now();
         this.lastUpdated = Instant.now();
+    }
+
+    public static UserProfile create(UUID userId, float[] vectors) {
+        return new UserProfile(
+                userId,
+                vectors,
+                new HashSet<>(),
+                0.0,
+                Instant.now(),
+                Instant.now()
+        );
     }
 
 
