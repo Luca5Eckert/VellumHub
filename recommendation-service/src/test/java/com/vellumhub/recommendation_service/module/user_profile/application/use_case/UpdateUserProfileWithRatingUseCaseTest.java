@@ -3,9 +3,8 @@ package com.vellumhub.recommendation_service.module.user_profile.application.use
 import com.vellumhub.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
-import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateBookProgressCommand;
-import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.progress.BookProgressInteraction;
-import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.progress.Progress;
+import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
+import com.vellumhub.recommendation_service.module.user_profile.domain.interaction.rating.RatingBookInteraction;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.ProfileAdjustment;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
@@ -26,7 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class UpdateBookProgressUseCaseTest {
+class UpdateUserProfileWithRatingUseCaseTest {
 
     private static final float[] EMBEDDING = new float[384];
 
@@ -37,34 +36,34 @@ class UpdateBookProgressUseCaseTest {
     private BookFeatureRepository bookFeatureRepository;
 
     @Mock
-    private BookProgressInteraction bookProgressInteraction;
+    private RatingBookInteraction ratingBookInteraction;
 
     @InjectMocks
-    private UpdateBookProgressUseCase updateBookProgressUseCase;
+    private UpdateUserProfileWithRatingUseCase updateUserProfileWithRatingUseCase;
 
     private UUID userId;
     private UUID bookId;
     private BookFeature bookFeature;
-    private UpdateBookProgressCommand command;
+    private UpdateUserProfileWithRatingCommand command;
 
     @BeforeEach
     void setUp() {
         userId = UUID.randomUUID();
         bookId = UUID.randomUUID();
         bookFeature = BookFeature.create(bookId, EMBEDDING, 1.0);
-        command = UpdateBookProgressCommand.of(userId, bookId, Progress.READING.name(), 0, 50);
+        command = new UpdateUserProfileWithRatingCommand(userId, bookId, 0, 5, true);
     }
 
     @Test
     void execute_whenProfileExists_shouldLoadExistingProfile() {
         UserProfile existingProfile = new UserProfile(userId);
-        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, 1.0f, EMBEDDING);
+        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, 5.0f, EMBEDDING);
 
         when(userProfileRepository.findById(userId)).thenReturn(Optional.of(existingProfile));
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.of(bookFeature));
-        when(bookProgressInteraction.toAdjustment(bookFeature, command.progress(), command.oldPage(), command.newPage())).thenReturn(adjustment);
+        when(ratingBookInteraction.toAdjustment(bookFeature, command.oldStars(), command.newStars(), command.isNewRating())).thenReturn(adjustment);
 
-        updateBookProgressUseCase.execute(command);
+        updateUserProfileWithRatingUseCase.execute(command);
 
         verify(userProfileRepository).findById(userId);
         verify(userProfileRepository, never()).save(argThat(p -> !p.getUserId().equals(userId)));
@@ -72,13 +71,13 @@ class UpdateBookProgressUseCaseTest {
 
     @Test
     void execute_whenProfileDoesNotExist_shouldCreateNewProfile() {
-        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, 1.0f, EMBEDDING);
+        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, 5.0f, EMBEDDING);
 
         when(userProfileRepository.findById(userId)).thenReturn(Optional.empty());
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.of(bookFeature));
-        when(bookProgressInteraction.toAdjustment(bookFeature, command.progress(), command.oldPage(), command.newPage())).thenReturn(adjustment);
+        when(ratingBookInteraction.toAdjustment(bookFeature, command.oldStars(), command.newStars(), command.isNewRating())).thenReturn(adjustment);
 
-        updateBookProgressUseCase.execute(command);
+        updateUserProfileWithRatingUseCase.execute(command);
 
         ArgumentCaptor<UserProfile> captor = ArgumentCaptor.forClass(UserProfile.class);
         verify(userProfileRepository).save(captor.capture());
@@ -90,7 +89,7 @@ class UpdateBookProgressUseCaseTest {
         when(userProfileRepository.findById(userId)).thenReturn(Optional.of(new UserProfile(userId)));
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> updateBookProgressUseCase.execute(command))
+        assertThatThrownBy(() -> updateUserProfileWithRatingUseCase.execute(command))
                 .isInstanceOf(BookFeatureNotFoundException.class);
 
         verify(userProfileRepository, never()).save(any());
@@ -98,26 +97,26 @@ class UpdateBookProgressUseCaseTest {
 
     @Test
     void execute_shouldDelegateAdjustmentCalculationToInteraction() {
-        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, 1.0f, EMBEDDING);
+        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, 5.0f, EMBEDDING);
 
         when(userProfileRepository.findById(userId)).thenReturn(Optional.of(new UserProfile(userId)));
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.of(bookFeature));
-        when(bookProgressInteraction.toAdjustment(bookFeature, command.progress(), command.oldPage(), command.newPage())).thenReturn(adjustment);
+        when(ratingBookInteraction.toAdjustment(bookFeature, command.oldStars(), command.newStars(), command.isNewRating())).thenReturn(adjustment);
 
-        updateBookProgressUseCase.execute(command);
+        updateUserProfileWithRatingUseCase.execute(command);
 
-        verify(bookProgressInteraction).toAdjustment(bookFeature, command.progress(), command.oldPage(), command.newPage());
+        verify(ratingBookInteraction).toAdjustment(bookFeature, command.oldStars(), command.newStars(), command.isNewRating());
     }
 
     @Test
     void execute_shouldSaveProfileAfterApplyingAdjustment() {
-        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, 1.0f, EMBEDDING);
+        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, 5.0f, EMBEDDING);
 
         when(userProfileRepository.findById(userId)).thenReturn(Optional.of(new UserProfile(userId)));
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.of(bookFeature));
-        when(bookProgressInteraction.toAdjustment(bookFeature, command.progress(), command.oldPage(), command.newPage())).thenReturn(adjustment);
+        when(ratingBookInteraction.toAdjustment(bookFeature, command.oldStars(), command.newStars(), command.isNewRating())).thenReturn(adjustment);
 
-        updateBookProgressUseCase.execute(command);
+        updateUserProfileWithRatingUseCase.execute(command);
 
         verify(userProfileRepository).save(any(UserProfile.class));
     }
