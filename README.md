@@ -57,7 +57,7 @@ graph TB
     end
 
     subgraph Messaging
-      K[Kafka\ncreated-book / updated-book / deleted-book\ncreated-rating / create_user_preference\nupdated-book-progress / user-reaction-changed\ncreated-user-profile / updated-user-profile\ncreated-book-feature / updated-book-feature]
+      K[Kafka\ncreated-book / updated-book / deleted-book\ncreated-rating / create_user_preference\nupdated-progress / user-reaction-changed]
       DLT[Dead Letter Topics\n*-dlt]
     end
 
@@ -86,7 +86,6 @@ graph TB
     CS --> K
     ES --> K
     US --> K
-    RS --> K
     K --> RS
     K -->|retries exhausted| DLT
 ```
@@ -139,7 +138,7 @@ However, the vector space was **genre-based with 13 fixed dimensions** — one p
 
 The current version addresses every limitation from v2.
 
-**API Gateway (Spring WebFlux):** Single controlled entry point with JWT validation and per-route rate limiting via Redis. Internal services no longer handle auth independently.
+**API Gateway (Spring WebFlux):** Single controlled entry point with JWT validation and per-route rate limiting via Redis. Downstream services still validate JWT in their own `SecurityConfig` classes (defense in depth).
 
 **Embedding Pipeline:** Replaced 13-dim genre vectors with LangChain4j's `AllMiniLmL6V2EmbeddingModel`, producing **384-dimensional dense vectors**. L2 normalization applied before persistence projects every vector onto the unit sphere, making cosine scores directly comparable regardless of magnitude.
 
@@ -147,7 +146,7 @@ The current version addresses every limitation from v2.
 
 **Kafka Resilience:** All consumers are covered by a single `RetryTopicConfiguration` with 3 attempts and 3-second fixed backoff. Spring Kafka's non-blocking retry mechanism commits the original offset immediately, so partitions are never stalled. Events exhausting retries are forwarded to `*-dlt` topics and captured by a centralized DLT listener.
 
-**Expanded Event Contract:** The Recommendation Service now publishes `created-user-profile`, `updated-user-profile`, `created-book-feature`, and `updated-book-feature`, making the full recommendation lifecycle expressible as an event chain with no synchronous inter-service coupling.
+**Event Contract Evolution:** Core catalog events (`created-book`, `updated-book`, `deleted-book`) exist since the beginning of the system. Newer recommendation-learning signals are `updated-progress` and `user-reaction-changed`, in addition to `created-rating` and `create_user_preference`.
 
 ```mermaid
 graph LR
@@ -177,10 +176,11 @@ The gateway is the exclusive entry point for all external traffic, built on **Sp
 
 | Path Prefix | Upstream Service |
 |---|---|
-| `/api/users/**` | `user-service:8080` |
-| `/api/catalog/**` | `catalog-service:8080` |
-| `/api/engagement/**` | `engagement-service:8080` |
-| `/api/recommendations/**` | `recommendation-service:8080` |
+| `/api/v1/users/**` | `user-service:8080` |
+| `/api/v1/auth/**` | `user-service:8080` |
+| `/api/v1/catalog/**` | `catalog-service:8080` |
+| `/api/v1/engagement/**` | `engagement-service:8080` |
+| `/api/v1/recommendations/**` | `recommendation-service:8080` |
 
 > Swagger UI paths (`/swagger-ui/**`, `/v3/api-docs/**`) bypass the gateway intentionally — they are served directly on each service's port for local development without requiring authentication.
 
@@ -364,15 +364,12 @@ VellumHub uses **Event-Carried State Transfer (ECST)**: Kafka events carry full 
 | `updated-book` | Catalog Service | Recommendation Service | Updated book data |
 | `deleted-book` | Catalog Service | Recommendation Service | Book ID |
 | `created-rating` | Engagement Service | Recommendation Service | `bookId`, `userId`, `stars` |
-| `updated-book-progress` | Engagement Service | Recommendation Service | Progress data |
+| `updated-progress` | Catalog Service | Recommendation Service | Progress data |
 | `user-reaction-changed` | Engagement Service | Recommendation Service | Reaction data |
 | `create_user_preference` | User Service | Recommendation Service | `userId`, `genres`, `about` |
-| `created-user-profile` | Recommendation Service | _(future consumers)_ | New user profile vector |
-| `updated-user-profile` | Recommendation Service | _(future consumers)_ | Updated user profile vector |
-| `created-book-feature` | Recommendation Service | _(future consumers)_ | New book embedding |
-| `updated-book-feature` | Recommendation Service | _(future consumers)_ | Updated book embedding |
 
-The Recommendation Service publishing its own state changes (`created-*` / `updated-*`) means future consumers — analytics, notifications, A/B testing — can react to recommendation state without polling or direct API coupling.
+Additional consumer:
+- `engagement-service` also consumes catalog's `created-book` and `deleted-book` to maintain its local `book_snapshot`.
 
 ### Learning Loop
 
@@ -389,7 +386,6 @@ sequenceDiagram
     K->>RS: Deliver CreatedRatingEvent
     RS->>DB: Fetch book embedding from book_features
     RS->>DB: Update user_profiles.profileVector (delta + L2 normalize)
-    RS->>K: Publish updated-user-profile
 
     User->>RS: GET /recommendations
     RS->>DB: ANN query (HNSW) + exclude interacted books
@@ -424,7 +420,7 @@ public RetryTopicConfiguration defaultRetryConfig(KafkaTemplate<String, Object> 
                     "updated-book",
                     "created-rating",
                     "create_user_preference",
-                    "updated-book-progress",
+                    "updated-progress",
                     "user-reaction-changed"
             ))
             .create(template);
@@ -584,8 +580,8 @@ Event-fed local read model. No synchronous calls to other services at query time
 
 | Module | Responsibility |
 |---|---|
-| `book_feature` | 384-dim embeddings per book; updated on book events; publishes `created-book-feature` / `updated-book-feature` |
-| `user_profile` | Preference vectors updated on rating, preference, reaction, and progress events; publishes `created-user-profile` / `updated-user-profile` |
+| `book_feature` | 384-dim embeddings per book; updated on `created-book` and `updated-book` events |
+| `user_profile` | Preference vectors updated on `created-rating`, `create_user_preference`, `user-reaction-changed`, and `updated-progress` |
 | `recommendation` | ANN query + popularity fallback at serving time; denormalized metadata via ECST |
 
 ---
