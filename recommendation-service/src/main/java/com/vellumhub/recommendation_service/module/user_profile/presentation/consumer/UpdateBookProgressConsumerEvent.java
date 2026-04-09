@@ -18,7 +18,7 @@ public class UpdateBookProgressConsumerEvent {
     }
 
     @KafkaListener(
-            topics = "updated-book-progress",
+            topics = "updated-progress",
             groupId = "recommendation-service"
     )
     public void consume(
