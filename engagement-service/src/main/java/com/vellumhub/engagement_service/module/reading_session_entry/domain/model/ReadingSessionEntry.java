@@ -31,4 +31,12 @@ public class ReadingSessionEntry {
     private Instant timestamp;
 
 
+    public static ReadingSessionEntry create(BookSnapshot bookSnapshot, UUID userId, ReadingSessionType type) {
+        return ReadingSessionEntry.builder()
+                .readingSessionType(type)
+                .userId(userId)
+                .bookSnapshot(bookSnapshot)
+                .build();
+
+    }
 }
