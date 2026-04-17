@@ -14,6 +14,8 @@ public class CreateReadingSessionEntryUseCase {
     }
 
     public void execute(CreateReadingSessionEntryCommand command){
+
+
     }
 
 }
