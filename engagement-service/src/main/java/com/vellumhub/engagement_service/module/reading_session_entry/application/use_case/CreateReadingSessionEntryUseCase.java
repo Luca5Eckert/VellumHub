@@ -21,9 +21,9 @@ public class CreateReadingSessionEntryUseCase {
     private final BookSnapshotRepository bookSnapshotRepository;
 
     private final RequestContext requestContext;
-    private final ReadingSessionEventPublisher eventPublisher;
+    private final ReadingSessionEventPublisher<String, CreateReadingSessionEvent> eventPublisher;
 
-    public CreateReadingSessionEntryUseCase(ReadingSessionEntryRepository readingSessionEntryRepository, BookSnapshotRepository bookSnapshotRepository, RequestContext requestContext, ReadingSessionEventPublisher eventPublisher) {
+    public CreateReadingSessionEntryUseCase(ReadingSessionEntryRepository readingSessionEntryRepository, BookSnapshotRepository bookSnapshotRepository, RequestContext requestContext, ReadingSessionEventPublisher<String, CreateReadingSessionEvent> eventPublisher) {
         this.readingSessionEntryRepository = readingSessionEntryRepository;
         this.bookSnapshotRepository = bookSnapshotRepository;
         this.requestContext = requestContext;
@@ -46,7 +46,11 @@ public class CreateReadingSessionEntryUseCase {
         readingSessionEntryRepository.save(readingSessionEntry);
 
         var event = CreateReadingSessionEvent.of(readingSessionEntry);
-        eventPublisher.publish(event);
+        eventPublisher.publish(
+                "create-reading-session-entry",
+                event.bookId().toString(),
+                event
+        );
     }
 
 }
