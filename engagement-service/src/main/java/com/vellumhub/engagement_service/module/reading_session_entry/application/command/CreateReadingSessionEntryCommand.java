@@ -6,12 +6,14 @@ import java.util.UUID;
 
 public record CreateReadingSessionEntryCommand(
     UUID bookId,
-    ReadingSessionType readingSessionType
+    ReadingSessionType readingSessionType,
+    int pageRead
 ) {
-    public static CreateReadingSessionEntryCommand create(UUID bookId, ReadingSessionType type) {
+    public static CreateReadingSessionEntryCommand create(UUID bookId, ReadingSessionType type, int pageRead) {
         return new CreateReadingSessionEntryCommand(
                 bookId,
-                type
+                type,
+                pageRead
         );
     }
 }

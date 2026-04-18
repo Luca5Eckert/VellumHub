@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record CreateReadingSessionEntryRequest(
         UUID bookId,
-        ReadingSessionType type
+        ReadingSessionType type,
+        int pageRead
 ) {
 }
