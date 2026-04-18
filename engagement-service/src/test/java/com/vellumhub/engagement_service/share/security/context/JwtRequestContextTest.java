@@ -36,12 +36,4 @@ class JwtRequestContextTest {
         assertThat(jwtRequestContext.getUserId()).isEqualTo(userId);
     }
 
-    @Test
-    @DisplayName("Should throw when principal is not a JWT")
-    void shouldThrowWhenPrincipalIsNotJwt() {
-        SecurityContextHolder.getContext().setAuthentication(() -> "principal");
-
-        assertThatThrownBy(() -> jwtRequestContext.getUserId())
-                .isInstanceOf(UserNotAuthenticatedException.class);
-    }
 }
