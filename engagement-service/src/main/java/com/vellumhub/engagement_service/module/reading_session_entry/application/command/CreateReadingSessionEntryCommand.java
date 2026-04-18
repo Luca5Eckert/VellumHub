@@ -8,4 +8,10 @@ public record CreateReadingSessionEntryCommand(
     UUID bookId,
     ReadingSessionType readingSessionType
 ) {
+    public static CreateReadingSessionEntryCommand create(UUID bookId, ReadingSessionType type) {
+        return new CreateReadingSessionEntryCommand(
+                bookId,
+                type
+        );
+    }
 }

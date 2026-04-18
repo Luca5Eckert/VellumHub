@@ -47,7 +47,6 @@ public class CreateReadingSessionEntryUseCase {
 
         var event = CreateReadingSessionEvent.of(readingSessionEntry);
         eventPublisher.publish(event);
-
     }
 
 }
