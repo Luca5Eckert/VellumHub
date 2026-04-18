@@ -40,7 +40,8 @@ public class CreateReadingSessionEntryUseCase {
         var readingSessionEntry = ReadingSessionEntry.create(
                 bookSnapshot,
                 userId,
-                command.readingSessionType()
+                command.readingSessionType(),
+                command.pageRead()
         );
 
         readingSessionEntryRepository.save(readingSessionEntry);

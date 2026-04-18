@@ -20,7 +20,7 @@ public class ReadingSessionEntryController {
 
     @PostMapping
     public ResponseEntity<Void> create(CreateReadingSessionEntryRequest request){
-        var command = CreateReadingSessionEntryCommand.create(request.bookId(), request.type());
+        var command = CreateReadingSessionEntryCommand.create(request.bookId(), request.type(), request.pageRead());
 
         createReadingSessionEntryUseCase.execute(command);
 
