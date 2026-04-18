@@ -4,8 +4,10 @@ import com.vellumhub.engagement_service.module.book_snapshot.domain.exception.Bo
 import com.vellumhub.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
 import com.vellumhub.engagement_service.module.book_snapshot.domain.port.BookSnapshotRepository;
 import com.vellumhub.engagement_service.module.reading_session_entry.application.command.CreateReadingSessionEntryCommand;
+import com.vellumhub.engagement_service.module.reading_session_entry.domain.event.CreateReadingSessionEvent;
 import com.vellumhub.engagement_service.module.reading_session_entry.domain.model.ReadingSessionEntry;
 import com.vellumhub.engagement_service.module.reading_session_entry.domain.port.ReadingSessionEntryRepository;
+import com.vellumhub.engagement_service.module.reading_session_entry.domain.port.ReadingSessionEventPublisher;
 import com.vellumhub.engagement_service.share.port.RequestContext;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -19,11 +21,13 @@ public class CreateReadingSessionEntryUseCase {
     private final BookSnapshotRepository bookSnapshotRepository;
 
     private final RequestContext requestContext;
+    private final ReadingSessionEventPublisher eventPublisher;
 
-    public CreateReadingSessionEntryUseCase(ReadingSessionEntryRepository readingSessionEntryRepository, BookSnapshotRepository bookSnapshotRepository, RequestContext requestContext) {
+    public CreateReadingSessionEntryUseCase(ReadingSessionEntryRepository readingSessionEntryRepository, BookSnapshotRepository bookSnapshotRepository, RequestContext requestContext, ReadingSessionEventPublisher eventPublisher) {
         this.readingSessionEntryRepository = readingSessionEntryRepository;
         this.bookSnapshotRepository = bookSnapshotRepository;
         this.requestContext = requestContext;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -41,6 +45,8 @@ public class CreateReadingSessionEntryUseCase {
 
         readingSessionEntryRepository.save(readingSessionEntry);
 
+        var event = CreateReadingSessionEvent.of(readingSessionEntry);
+        eventPublisher.publish(event);
 
     }
 
