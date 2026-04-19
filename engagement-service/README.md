@@ -1,51 +1,52 @@
 # ⭐ Engagement Service
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x%20%2F%204.0.x-green)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x-green)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
 [![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-black)](https://kafka.apache.org/)
 [![Swagger](https://img.shields.io/badge/OpenAPI-3.0-brightgreen)](https://swagger.io/specification/)
 
-The **Engagement Service** captures user interaction signals (ratings, reactions, reading sessions) and maintains local replicated catalog state (`book_snapshot`) through ECST.
+The **Engagement Service** captures interaction signals from readers and publishes these signals to power recommendation profile updates.
 
-It is the interaction producer of VellumHub, emitting events that continuously update recommendation profiles.
+It also maintains a local `book_snapshot` model from catalog events to reduce synchronous coupling.
 
 ---
 
 ## Table of Contents
 
 - [Service Role in VellumHub](#service-role-in-vellumhub)
-- [Module Map](#module-map)
+- [Domain Modules](#domain-modules)
 - [HTTP API Surface](#http-api-surface)
 - [Event Contract](#event-contract)
 - [Data Ownership](#data-ownership)
-- [Security and Observability](#security-and-observability)
+- [Security Rules](#security-rules)
+- [Observability and API Docs](#observability-and-api-docs)
 - [Quick Start](#quick-start)
 
 ---
 
 ## Service Role in VellumHub
 
-- Captures explicit user feedback and interaction intent
-- Publishes interaction streams consumed by Recommendation Service
-- Keeps local `book_snapshot` synchronized from catalog events for query-time independence
+- Captures explicit feedback (`rating`, `reaction`)
+- Publishes recommendation-relevant interaction events
+- Replicates catalog deltas locally via ECST consumers
 
 ---
 
-## Module Map
+## Domain Modules
 
 | Module | Responsibility |
 |---|---|
-| `rating` | Create/update/delete/query ratings |
-| `reaction` | Create/update/get reactions by user/book context |
-| `reading_session_entry` | Emits reading-session interaction events |
-| `book_snapshot` | Local replica of catalog state via Kafka consumers |
+| `rating` | CRUD/query of ratings with filters and pagination |
+| `reaction` | User reaction lifecycle and lookup |
+| `reading_session_entry` | Reading session event publishing |
+| `book_snapshot` | Local copy of book records from catalog events |
 
 ---
 
 ## HTTP API Surface
 
-Base paths exposed by this service:
+Base paths:
 
 - `/rating`
 - `/reactions`
@@ -77,7 +78,7 @@ Produced topics:
 
 - `created-rating`
 - `user-reaction-changed`
-- reading-session events published by `reading_session_entry`
+- reading-session topic(s) from `reading_session_entry`
 
 Consumed topics:
 
@@ -85,31 +86,31 @@ Consumed topics:
 - `updated-book`
 - `deleted-book`
 
-Retry/DLT handling is configured for Kafka consumers (see `KafkaRetryConfig`).
+Kafka retry and DLT processing are configured in `share/config/KafkaRetryConfig`.
 
 ---
 
 ## Data Ownership
 
-Main database: `engagement_db`.
+Primary DB: `engagement_db`.
 
-Core entities include:
-
-- `rating`
-- `reaction`
-- `book_snapshot`
-- reading session entry persistence model
-
-This service is authoritative for engagement history and interaction events.
+Core persisted domains include ratings, reactions, and local book snapshot state used in engagement workflows.
 
 ---
 
-## Security and Observability
+## Security Rules
 
-- JWT-protected endpoints via Spring Security
-- User-scoped mutations enforced with authenticated user context
-- Actuator enabled: `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`
-- Swagger/OpenAPI: `/swagger-ui/index.html`, `/v3/api-docs`
+- JWT authentication required
+- User context extracted server-side for write operations
+- Ownership checks in update/delete interaction operations
+
+---
+
+## Observability and API Docs
+
+- Actuator: `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`
+- Swagger UI: `/swagger-ui/index.html`
+- OpenAPI: `/v3/api-docs`
 
 ---
 
@@ -122,18 +123,18 @@ cd engagement-service
 ./mvnw spring-boot:run
 ```
 
-### Run via Docker Compose (from repo root)
+### Run via Docker Compose
 
 ```bash
 docker-compose up -d engagement-service
 ```
 
-### Default local access
+### Configuration highlights
 
-- Service: `http://localhost:8083`
-- Swagger UI: `http://localhost:8083/swagger-ui/index.html`
-- OpenAPI: `http://localhost:8083/v3/api-docs`
+- `SPRING_DATASOURCE_*`
+- `KAFKA_BOOTSTRAP_SERVERS`
+- `JWT_KEY`
 
 ---
 
-For full platform architecture and event flow, see [VellumHub root README](../README.md).
+See [root README](../README.md) for full event backbone context.

@@ -1,52 +1,54 @@
 # 📚 Catalog Service
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x%20%2F%204.0.x-green)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x-green)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
 [![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-black)](https://kafka.apache.org/)
 [![Swagger](https://img.shields.io/badge/OpenAPI-3.0-brightgreen)](https://swagger.io/specification/)
 
-The **Catalog Service** owns the platform catalog domain: books, book requests, user book lists, memberships, and reading progress.
+The **Catalog Service** owns the full catalog domain: books, requests, user book lists/memberships, and reading progress.
 
-It is the write-source for catalog state and publishes domain events consumed by other services (especially Recommendation and Engagement), following the architecture described in the [root README](../README.md).
+It is a write-source service that emits catalog and progress events consumed by downstream read models.
 
 ---
 
 ## Table of Contents
 
 - [Service Role in VellumHub](#service-role-in-vellumhub)
-- [Module Map](#module-map)
+- [Domain Modules](#domain-modules)
 - [HTTP API Surface](#http-api-surface)
 - [Event Contract](#event-contract)
 - [Data Ownership](#data-ownership)
-- [Security and Observability](#security-and-observability)
+- [Security Rules](#security-rules)
+- [Observability and API Docs](#observability-and-api-docs)
 - [Quick Start](#quick-start)
 
 ---
 
 ## Service Role in VellumHub
 
-- **Domain owner** for catalog entities and workflows
-- **Producer** of catalog lifecycle events (`created-book`, `updated-book`, `deleted-book`)
-- **Producer** of reading progress interactions (`updated-progress`)
-- **Source of truth** for recommendation metadata replicated through ECST in downstream services
+- System of record for catalog entities
+- Publishes book lifecycle events (`created-book`, `updated-book`, `deleted-book`)
+- Publishes reading interaction updates (`updated-progress`)
+- Supplies data mirrored by Recommendation and Engagement services through ECST
 
 ---
 
-## Module Map
+## Domain Modules
 
 | Module | Responsibility |
 |---|---|
-| `book` | Book CRUD, ISBN creation, bulk fetch, cover upload/retrieval |
-| `book_request` | Community request flow and admin approval |
-| `book_list` | User-curated lists, list memberships, add/remove books |
-| `book_progress` | Per-user status/progress and reading list |
+| `book` | Core CRUD, ISBN-based creation, bulk retrieval, cover upload/retrieval |
+| `book_request` | Community submission and admin approval flow |
+| `book_list` | Curated lists, filters, and add/remove books |
+| `book_list/membership` | Membership and role management inside lists |
+| `book_progress` | User reading status/page progress lifecycle |
 
 ---
 
 ## HTTP API Surface
 
-Base paths exposed by this service:
+Base paths:
 
 - `/books`
 - `/book-requests`
@@ -97,39 +99,41 @@ GET    /book-progress/reading-list
 
 ## Event Contract
 
-Produced topics:
+Produced Kafka topics:
 
 - `created-book`
 - `updated-book`
 - `deleted-book`
 - `updated-progress`
 
-These events are consumed by Recommendation Service (vector state + profile learning) and by Engagement Service (`book_snapshot`) for local read models.
+Downstream usage:
+
+- Recommendation Service: update `book_features`, profile learning inputs, recommendation denormalized state
+- Engagement Service: update local `book_snapshot`
 
 ---
 
 ## Data Ownership
 
-Main database: `catalog_db`.
+Primary DB: `catalog_db`.
 
-Core aggregates include:
-
-- `books`
-- `book_requests`
-- `book_lists`
-- `book_list_memberships`
-- `book_progress`
-
-The service is authoritative for catalog consistency; other services should rely on events or API contracts rather than direct data coupling.
+Core aggregates include books, requests, lists/memberships, and user progress tracking. Other services should consume catalog truth via API/events (no shared DB contracts).
 
 ---
 
-## Security and Observability
+## Security Rules
 
-- JWT-protected endpoints via Spring Security (`bearerAuth`)
-- Role-sensitive operations (`ADMIN`) for catalog mutation/approval
-- Actuator enabled: `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`
-- Swagger/OpenAPI: `/swagger-ui/index.html`, `/v3/api-docs`
+- JWT required for protected endpoints
+- `ADMIN` required for mutating book catalog and request approval
+- User-scoped flows for list membership and reading progress
+
+---
+
+## Observability and API Docs
+
+- Actuator: `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`
+- Swagger UI: `/swagger-ui/index.html`
+- OpenAPI: `/v3/api-docs`
 
 ---
 
@@ -142,18 +146,19 @@ cd catalog-service
 ./mvnw spring-boot:run
 ```
 
-### Run via Docker Compose (from repo root)
+### Run via Docker Compose
 
 ```bash
 docker-compose up -d catalog-service
 ```
 
-### Default local access
+### Configuration highlights
 
-- Service: `http://localhost:8081`
-- Swagger UI: `http://localhost:8081/swagger-ui/index.html`
-- OpenAPI: `http://localhost:8081/v3/api-docs`
+- `SERVER_PORT` (default `8080`)
+- `SPRING_DATASOURCE_*`
+- `KAFKA_BOOTSTRAP_SERVERS`
+- `JWT_KEY`
 
 ---
 
-For cross-service architecture (Gateway, ECST, pgvector pipeline, retry/DLT), see [VellumHub root README](../README.md).
+See [root README](../README.md) for cross-service topology.

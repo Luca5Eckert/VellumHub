@@ -1,50 +1,51 @@
 # 👤 User Service
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x%20%2F%204.0.x-green)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x-green)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
 [![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-black)](https://kafka.apache.org/)
 [![Swagger](https://img.shields.io/badge/OpenAPI-3.0-brightgreen)](https://swagger.io/specification/)
 
-The **User Service** is the identity boundary of VellumHub: registration, authentication, account management, and user preference bootstrap.
+The **User Service** is the identity and access boundary of VellumHub, covering registration, login, and user management.
 
-It issues JWTs used across the platform and publishes preference seed events for cold-start recommendation initialization.
+It also emits user preference seed events used by Recommendation Service in cold-start profile initialization.
 
 ---
 
 ## Table of Contents
 
 - [Service Role in VellumHub](#service-role-in-vellumhub)
-- [Module Map](#module-map)
+- [Domain Modules](#domain-modules)
 - [HTTP API Surface](#http-api-surface)
+- [Authentication Model](#authentication-model)
 - [Event Contract](#event-contract)
 - [Data Ownership](#data-ownership)
-- [Security and Observability](#security-and-observability)
+- [Observability and API Docs](#observability-and-api-docs)
 - [Quick Start](#quick-start)
 
 ---
 
 ## Service Role in VellumHub
 
-- Identity provider for microservice authorization
-- JWT token issuance and validation primitives
-- User preference event source for recommendation cold-start
+- User identity source of truth
+- JWT issuing authority for downstream authorization
+- Preference bootstrap publisher for recommendation cold-start
 
 ---
 
-## Module Map
+## Domain Modules
 
 | Module | Responsibility |
 |---|---|
-| `auth` | Register/login flows (email+password, Google login) |
-| `user` | User CRUD, profile endpoints, role-based administration |
-| `user_preference` | Preference model and `create_user_preference` event publication |
+| `auth` | Register/login flows (email+password and Google token flow) |
+| `user` | User CRUD, lookup, and `/users/me` profile endpoint |
+| `user_preference` | Preference aggregate and Kafka publication |
 
 ---
 
 ## HTTP API Surface
 
-Base paths exposed by this service:
+Base paths:
 
 - `/auth`
 - `/users`
@@ -66,36 +67,45 @@ GET    /users/me
 
 ---
 
+## Authentication Model
+
+- JWT-based stateless authentication
+- Spring Security authorization by role (`ADMIN` and authenticated user flows)
+- Google login endpoint (`/auth/google`) integrated into auth service layer
+
+Config keys:
+
+- `JWT_KEY`
+- `JWT_EXPIRATION`
+- `GOOGLE_CLIENT_ID`
+
+---
+
 ## Event Contract
 
 Produced topic:
 
 - `create_user_preference`
 
-This event is consumed by Recommendation Service to initialize/update user profile vectors in the cold-start path.
+Consumer impact:
+
+- Recommendation Service consumes this event to create/adjust `user_profiles` vectors for cold-start recommendations.
 
 ---
 
 ## Data Ownership
 
-Main database: `user_db`.
+Primary DB: `user_db`.
 
-Core entities include:
-
-- `tb_users`
-- user preference aggregate (`user_preference` module)
-
-This service is authoritative for account identity and user-level preference declarations.
+Main domains include user records (`tb_users`) and user preference data handled by `user_preference` module.
 
 ---
 
-## Security and Observability
+## Observability and API Docs
 
-- Spring Security + JWT-based authentication
-- Role-aware authorization (`USER`/`ADMIN`)
-- Password validation and secure hashing
-- Actuator enabled: `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`
-- Swagger/OpenAPI: `/swagger-ui/index.html`, `/v3/api-docs`
+- Actuator: `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`
+- Swagger UI: `/swagger-ui/index.html`
+- OpenAPI: `/v3/api-docs`
 
 ---
 
@@ -108,18 +118,19 @@ cd user-service
 ./mvnw spring-boot:run
 ```
 
-### Run via Docker Compose (from repo root)
+### Run via Docker Compose
 
 ```bash
 docker-compose up -d user-service
 ```
 
-### Default local access
+### Configuration highlights
 
-- Service: `http://localhost:8084`
-- Swagger UI: `http://localhost:8084/swagger-ui/index.html`
-- OpenAPI: `http://localhost:8084/v3/api-docs`
+- `SPRING_DATASOURCE_*`
+- `KAFKA_BOOTSTRAP_SERVERS`
+- `JWT_KEY`, `JWT_EXPIRATION`
+- `GOOGLE_CLIENT_ID`
 
 ---
 
-For end-to-end platform architecture (Gateway, ECST, recommendation pipeline), see [VellumHub root README](../README.md).
+See [root README](../README.md) for gateway and end-to-end flow.

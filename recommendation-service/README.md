@@ -1,25 +1,26 @@
 # 🤖 Recommendation Service
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x%20%2F%204.0.x-green)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x-green)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
 [![pgvector](https://img.shields.io/badge/pgvector-enabled-blue)](https://github.com/pgvector/pgvector)
 [![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-black)](https://kafka.apache.org/)
 [![Swagger](https://img.shields.io/badge/OpenAPI-3.0-brightgreen)](https://swagger.io/specification/)
 
-The **Recommendation Service** is VellumHub’s event-fed read model for personalized recommendations.
+The **Recommendation Service** is VellumHub’s event-fed recommendation read model.
 
-It consumes catalog and interaction streams, maintains local vector/state tables, and serves low-latency recommendations without synchronous cross-service dependency in the query path.
+It consumes book and user interaction streams, maintains local vector/search state, and serves personalized recommendations in a low-latency path.
 
 ---
 
 ## Table of Contents
 
 - [Service Role in VellumHub](#service-role-in-vellumhub)
-- [Module Map](#module-map)
+- [Domain Modules](#domain-modules)
 - [HTTP API Surface](#http-api-surface)
 - [Event Contract](#event-contract)
-- [Vector and Data Model](#vector-and-data-model)
+- [Vector Pipeline and Ranking](#vector-pipeline-and-ranking)
+- [Data Ownership](#data-ownership)
 - [Security and Observability](#security-and-observability)
 - [Quick Start](#quick-start)
 
@@ -27,26 +28,25 @@ It consumes catalog and interaction streams, maintains local vector/state tables
 
 ## Service Role in VellumHub
 
-- Maintains recommendation state from Kafka streams (ECST)
-- Stores 384-dimensional vectors in pgvector-backed tables
-- Applies profile learning and serves ranked recommendation responses
-- Uses retry + DLT strategy for resilient consumers
+- ECST consumer for catalog and interaction topics
+- Local vector store and recommendation serving layer
+- No synchronous dependency required at query-time for primary recommendation state
 
 ---
 
-## Module Map
+## Domain Modules
 
 | Module | Responsibility |
 |---|---|
-| `book_feature` | Embedding generation/storage and popularity metadata per book |
-| `user_profile` | Incremental user vector updates from rating/progress/reaction/preference events |
-| `recommendation` | Query path: ranking, pagination, and response assembly |
+| `book_feature` | Embedding generation + persistence (`vector(384)`) and popularity signals |
+| `user_profile` | Profile vector updates from ratings/progress/reactions/preferences |
+| `recommendation` | Recommendation retrieval, ranking, and response mapping |
 
 ---
 
 ## HTTP API Surface
 
-Base path exposed by this service:
+Base path:
 
 - `/recommendations`
 
@@ -56,8 +56,7 @@ Endpoint:
 GET /recommendations?limit=10&offset=0
 ```
 
-- Requires JWT bearer token
-- Uses authenticated user ID to fetch personalized results
+Response is personalized using authenticated user ID extracted from JWT context.
 
 ---
 
@@ -73,35 +72,39 @@ Consumed topics:
 - `updated-progress`
 - `user-reaction-changed`
 
-Kafka retry/DLT behavior is configured in `share/kafka/config/KafkaRetryConfig`.
+Retry + DLT behavior for consumers is configured in `share/kafka/config/KafkaRetryConfig`.
 
 ---
 
-## Vector and Data Model
+## Vector Pipeline and Ranking
 
-Main database: `recommendation_db` (PostgreSQL + pgvector).
+- Book embeddings stored in `book_features.embedding` as `vector(384)`
+- User profiles stored in `user_profiles.profile_vector` as `vector(384)`
+- User profile learning applies updates from interaction events and performs L2 normalization in domain logic
+- Recommendation serving combines vector relevance with additional ranking signals (e.g., popularity metadata)
+
+---
+
+## Data Ownership
+
+Primary DB: `recommendation_db` (PostgreSQL + pgvector).
 
 Core tables:
 
 - `book_features`
-  - `embedding vector(384)`
-  - `popularity_score`
 - `user_profiles`
-  - `profile_vector vector(384)`
-  - `interacted_book_ids uuid[]`
-  - `total_engagement_score`
 - `recommendations`
-  - denormalized metadata for efficient response composition
 
-The service applies L2 normalization to profile vectors after learning updates to keep cosine-based comparisons stable.
+This service owns derived recommendation state but not upstream catalog/user source-of-truth entities.
 
 ---
 
 ## Security and Observability
 
-- JWT-protected recommendation endpoint
-- Spring Actuator enabled: `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`
-- Swagger/OpenAPI: `/swagger-ui/index.html`, `/v3/api-docs`
+- JWT-protected endpoint
+- Actuator: `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`
+- Swagger UI: `/swagger-ui/index.html`
+- OpenAPI: `/v3/api-docs`
 
 ---
 
@@ -114,18 +117,19 @@ cd recommendation-service
 ./mvnw spring-boot:run
 ```
 
-### Run via Docker Compose (from repo root)
+### Run via Docker Compose
 
 ```bash
 docker-compose up -d recommendation-service
 ```
 
-### Default local access
+### Configuration highlights
 
-- Service: `http://localhost:8085`
-- Swagger UI: `http://localhost:8085/swagger-ui/index.html`
-- OpenAPI: `http://localhost:8085/v3/api-docs`
+- `SERVER_PORT` (default `8085`)
+- `SPRING_DATASOURCE_*`
+- `KAFKA_BOOTSTRAP_SERVERS`
+- `JWT_KEY`
 
 ---
 
-For system-wide architecture (Gateway, ECST backbone, cold-start strategy), see [VellumHub root README](../README.md).
+See [root README](../README.md) for full system flow.
