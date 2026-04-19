@@ -1,412 +1,138 @@
 # 👤 User Service
 
-The User Service is responsible for user authentication, registration, and profile management in VellumHub. It provides JWT-based authentication with support for traditional email/password login and Google OAuth.
+[![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x-green)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
+[![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-black)](https://kafka.apache.org/)
+[![Swagger](https://img.shields.io/badge/OpenAPI-3.0-brightgreen)](https://swagger.io/specification/)
 
-## 🎯 Overview
+The **User Service** is the identity and access boundary of VellumHub, covering registration, login, and user management.
 
-This service manages user accounts, authentication tokens, and user preferences. It serves as the identity provider for the entire VellumHub platform.
-
-**Port:** `8084`  
-**Database:** `user_db` (PostgreSQL)
-
----
-
-## 📋 Features
-
-### 1. **User Registration** 📝
-- Email/password registration with validation
-- Automatic user preference creation
-- Password strength validation
-- Email uniqueness enforcement
-- Support for USER and ADMIN roles
-
-### 2. **Authentication** 🔐
-- **Email/Password Login** - Traditional authentication
-- **Google OAuth** - Social login integration
-- **JWT Token Generation** - Stateless authentication
-- Token-based session management
-- Role-based access control
-
-### 3. **User Management** 👥
-- Complete CRUD operations for users
-- Profile retrieval
-- User listing with pagination
-- Soft delete support
-- Self-service profile access (`/users/me`)
-
-### 4. **User Preferences** ⭐
-- Genre preference tracking
-- Preference event publishing to Kafka
-- Integration with recommendation engine
+It also emits user preference seed events used by Recommendation Service in cold-start profile initialization.
 
 ---
 
-## 🏗️ Architecture
+## Table of Contents
 
-### Modules
-
-The service is organized into three main modules:
-
-#### **auth** Module
-- **Controller:** `AuthController`
-- **Handlers:** RegisterUser, LoginUser, LoginExternal
-- **Ports:** 
-  - `AuthenticatorPort` - Authentication abstraction
-  - `ExternalVerification` - OAuth verification
-  - `TokenProvider` - JWT token management
-- **Features:**
-  - Password validation via `PasswordValidatorAdapter`
-  - Spring Security integration
-  - Google OAuth verification
-
-#### **user** Module
-- **Controller:** `UserController`
-- **Handlers:** CreateUser, GetUser, GetAllUser, UpdateUser, DeleteUser
-- **Features:**
-  - User CRUD operations
-  - Email uniqueness validation
-  - Kafka event publishing for preferences
-  - Pagination support
-
-#### **user_preference** Module
-- **Handler:** `CreateUserPreferenceHandler`
-- **Events:** `CreateUserPreferenceEvent`
-- **Features:**
-  - Genre preference management
-  - Event-driven preference updates
-
-### Architecture Patterns
-
-- **Modular Monolith:** Clear module boundaries
-- **Hexagonal Architecture:** Ports and adapters for external dependencies
-- **Event-Driven:** Kafka events for preference updates
-- **Token-Based Authentication:** Stateless JWT approach
+- [Service Role in VellumHub](#service-role-in-vellumhub)
+- [Domain Modules](#domain-modules)
+- [HTTP API Surface](#http-api-surface)
+- [Authentication Model](#authentication-model)
+- [Event Contract](#event-contract)
+- [Data Ownership](#data-ownership)
+- [Observability and API Docs](#observability-and-api-docs)
+- [Quick Start](#quick-start)
 
 ---
 
-## 🔌 API Endpoints
+## Service Role in VellumHub
 
-### Authentication
+- User identity source of truth
+- JWT issuing authority for downstream authorization
+- Preference bootstrap publisher for recommendation cold-start
+
+---
+
+## Domain Modules
+
+| Module | Responsibility |
+|---|---|
+| `auth` | Register/login flows (email+password and Google token flow) |
+| `user` | User CRUD, lookup, and `/users/me` profile endpoint |
+| `user_preference` | Preference aggregate and Kafka publication |
+
+---
+
+## HTTP API Surface
+
+Base paths:
+
+- `/auth`
+- `/users`
+
+Representative endpoints:
 
 ```http
-POST   /auth/register    # Register new user
-POST   /auth/login       # Login with email/password
-POST   /auth/google      # Login with Google OAuth
+POST   /auth/register
+POST   /auth/login
+POST   /auth/google
+
+POST   /users
+GET    /users
+GET    /users/{id}
+PUT    /users/{id}
+DELETE /users/{id}
+GET    /users/me
 ```
-
-#### Register Request
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "SecurePass123!"
-}
-```
-
-#### Login Request
-```json
-{
-  "email": "john@example.com",
-  "password": "SecurePass123!"
-}
-```
-
-#### Login Response
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "expiresIn": 86400000
-}
-```
-
-#### Google OAuth Request
-```json
-{
-  "idToken": "google-id-token-here"
-}
-```
-
-### User Management
-
-```http
-POST   /users          # Create user (ADMIN only)
-GET    /users          # List all users (paginated)
-GET    /users/{id}     # Get user by ID
-GET    /users/me       # Get authenticated user's profile
-PUT    /users/{id}     # Update user (ADMIN only)
-DELETE /users/{id}     # Delete user (ADMIN only)
-```
-
-**Query Parameters for GET /users:**
-- `pageNumber` - Page number (default: 0)
-- `pageSize` - Page size (default: 10)
 
 ---
 
-## 📊 Database Schema
+## Authentication Model
 
-### Main Tables
+- JWT-based stateless authentication
+- Spring Security authorization by role (`ADMIN` and authenticated user flows)
+- Google login endpoint (`/auth/google`) integrated into auth service layer
 
-#### tb_users
-- `id` (UUID, PK) - Unique user identifier
-- `name` (String, required) - User's full name
-- `email` (String, unique, required) - User's email
-- `password` (String, required) - Hashed password (BCrypt)
-- `role` (RoleUser enum) - USER or ADMIN
-- `active` (boolean) - Account status
-- `version` (Long) - Optimistic locking
-- `created_at`, `updated_at`, `deleted_at` - Audit timestamps
+Config keys:
 
-#### user_preferences
-- Links users to their preferred book genres
-- Published as Kafka events for the recommendation service
-
-### Enums
-
-#### RoleUser
-- `USER` - Standard user with read/write permissions
-- `ADMIN` - Administrator with full system access
+- `JWT_KEY`
+- `JWT_EXPIRATION`
+- `GOOGLE_CLIENT_ID`
 
 ---
 
-## 🔄 Event Publishing
+## Event Contract
 
-The service publishes events to Kafka for inter-service communication:
+Produced topic:
 
-### Produced Events
+- `create_user_preference`
 
-**Topic:** `user-preference-events`
-- `CreateUserPreferenceEvent` - Published when user preferences are created/updated
+> Naming note: this topic intentionally uses `create_user_preference` (snake_case) to match the current producer/consumer contract implemented in this repository.
 
-These events are consumed by the **Recommendation Service** to initialize and update user profile vectors.
+Consumer impact:
 
----
-
-## 🛠️ Technology Stack
-
-- **Java 21**
-- **Spring Boot 3.4.2**
-- **Spring Security** - Authentication/authorization
-- **Spring Data JPA** - Database access
-- **PostgreSQL** - Relational database
-- **Apache Kafka** - Event streaming
-- **JWT** - JSON Web Tokens for authentication
-- **Google OAuth Client** - Google authentication integration
-- **BCrypt** - Password hashing
-- **Maven** - Build tool
+- Recommendation Service consumes this event to create/adjust `user_profiles` vectors for cold-start recommendations.
 
 ---
 
-## 🚀 Running the Service
+## Data Ownership
 
-### Standalone (Development)
+Primary DB: `user_db`.
+
+Main domains include user records (`tb_users`) and user preference data handled by `user_preference` module.
+
+---
+
+## Observability and API Docs
+
+- Actuator: `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`
+- Swagger UI: `/swagger-ui/index.html`
+- OpenAPI: `/v3/api-docs`
+
+---
+
+## Quick Start
+
+### Run locally
 
 ```bash
 cd user-service
 ./mvnw spring-boot:run
 ```
 
-The service will start on port `8084`.
-
-### With Docker Compose
-
-From the project root:
+### Run via Docker Compose
 
 ```bash
-docker-compose up user-service
+docker-compose up -d user-service
 ```
 
-### Environment Variables
+### Configuration highlights
 
-Required configuration (typically in `.env` or `application.yml`):
-
-```properties
-# Database
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=your-password
-
-# Service Port
-SERVER_PORT=8084
-
-# Kafka
-KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-
-# JWT Configuration
-JWT_KEY=your-256-bit-secret-key-here
-JWT_EXPIRATION=86400000  # 24 hours in milliseconds
-
-# Google OAuth (optional)
-GOOGLE_CLIENT_ID=your-google-client-id
-```
+- `SPRING_DATASOURCE_*`
+- `KAFKA_BOOTSTRAP_SERVERS`
+- `JWT_KEY`, `JWT_EXPIRATION`
+- `GOOGLE_CLIENT_ID`
 
 ---
 
-## 🔐 Security
-
-### Password Requirements
-
-Passwords must meet the following criteria:
-- Minimum length (typically 8 characters)
-- Validation enforced by `PasswordValidatorAdapter`
-
-### JWT Token
-
-- **Algorithm:** HS256 (HMAC with SHA-256)
-- **Expiration:** Configurable (default: 24 hours)
-- **Claims:** Contains user ID, email, and role
-- **Header:** `Authorization: Bearer <token>`
-
-### Role-Based Access Control
-
-Protected endpoints use `@PreAuthorize` annotations:
-
-```java
-@PreAuthorize("hasRole('ADMIN')")  // Admin only
-@PreAuthorize("hasAnyRole('USER', 'ADMIN')")  // Any authenticated user
-```
-
-### Google OAuth Flow
-
-1. Client obtains Google ID token
-2. Service verifies token with Google
-3. Service creates/retrieves user account
-4. Service issues JWT token
-
----
-
-## 🧪 Testing
-
-Run the test suite:
-
-```bash
-./mvnw test
-```
-
-The service includes unit tests using:
-- JUnit 5
-- Mockito
-- Spring Boot Test
-- Spring Security Test
-
----
-
-## 📈 Monitoring
-
-### Health Check
-
-```bash
-curl http://localhost:8084/actuator/health
-```
-
-### Metrics
-
-```bash
-curl http://localhost:8084/actuator/metrics
-```
-
----
-
-## 🔍 Common Use Cases
-
-### 1. New User Registration
-
-```bash
-curl -X POST http://localhost:8084/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Alice Smith",
-    "email": "alice@example.com",
-    "password": "SecurePassword123!"
-  }'
-```
-
-### 2. User Login
-
-```bash
-curl -X POST http://localhost:8084/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "alice@example.com",
-    "password": "SecurePassword123!"
-  }'
-```
-
-### 3. Get Own Profile
-
-```bash
-curl -X GET http://localhost:8084/users/me \
-  -H "Authorization: Bearer <your-jwt-token>"
-```
-
-### 4. Create Admin User (via SQL)
-
-```sql
-INSERT INTO tb_users (id, name, email, password, role, active, created_at, updated_at)
-VALUES (
-  gen_random_uuid(),
-  'Admin',
-  'admin@vellumhub.com',
-  '$2a$10$...',  -- BCrypt hash of password
-  'ADMIN',
-  true,
-  NOW(),
-  NOW()
-);
-```
-
----
-
-## 🤝 Contributing
-
-This service follows established patterns:
-
-1. **Controllers** handle HTTP requests and validation
-2. **Handlers** contain authentication and user management logic
-3. **Services** orchestrate operations
-4. **Ports** define interfaces for external dependencies
-5. **Adapters** implement port interfaces (Spring Security, JWT, Google OAuth)
-
-When adding features:
-- Follow the existing module structure
-- Use DTOs for API contracts
-- Implement proper validation
-- Add unit tests
-- Update this README
-
----
-
-## 📚 Related Services
-
-- **Catalog Service** - Uses user authentication for book operations
-- **Engagement Service** - Validates user tokens for ratings
-- **Recommendation Service** - Consumes user preference events
-
----
-
-## 🐛 Troubleshooting
-
-### "Email already exists" Error
-
-Each email must be unique in the system. Use a different email or update the existing user.
-
-### JWT Token Expired
-
-Tokens expire after the configured duration. Obtain a new token by logging in again.
-
-### Google OAuth Fails
-
-Ensure:
-- Valid Google Client ID is configured
-- ID token is recent (tokens expire quickly)
-- Google account has verified email
-
-### Cannot Access Admin Endpoints
-
-Verify:
-- User has `ADMIN` role in the database
-- JWT token contains correct role claim
-- Token is not expired
-
----
-
-**User Service** - Your gateway to VellumHub 🔐
+See [root README](../README.md) for gateway and end-to-end flow.
