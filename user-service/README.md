@@ -87,6 +87,8 @@ Produced topic:
 
 - `create_user_preference`
 
+> Naming note: this topic intentionally uses `create_user_preference` (snake_case) to match the current producer/consumer contract implemented in this repository.
+
 Consumer impact:
 
 - Recommendation Service consumes this event to create/adjust `user_profiles` vectors for cold-start recommendations.

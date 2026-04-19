@@ -72,6 +72,8 @@ Consumed topics:
 - `updated-progress`
 - `user-reaction-changed`
 
+> Naming note: `create_user_preference` is consumed as-is to preserve compatibility with the current user-service publisher contract.
+
 Retry + DLT behavior for consumers is configured in `share/kafka/config/KafkaRetryConfig`.
 
 ---
