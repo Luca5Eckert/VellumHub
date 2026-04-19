@@ -93,7 +93,7 @@ Core tables:
 
 - `book_features`
 - `user_profiles`
-- `recommendations`
+- `recommendations` (denormalized cache/read table used by recommendation query assembly)
 
 This service owns derived recommendation state but not upstream catalog/user source-of-truth entities.
 
