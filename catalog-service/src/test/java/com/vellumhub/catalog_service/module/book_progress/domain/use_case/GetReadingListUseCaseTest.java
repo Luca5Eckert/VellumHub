@@ -4,7 +4,6 @@ import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,16 +11,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Collections;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("GetReadingListUseCase Unit Tests")
 class GetReadingListUseCaseTest {
 
     @Mock
@@ -30,102 +30,53 @@ class GetReadingListUseCaseTest {
     @InjectMocks
     private GetReadingListUseCase getReadingListUseCase;
 
+    private BookProgress readingProgress(UUID userId, int currentPage) {
+        Book book = mock(Book.class);
+        when(book.getPageCount()).thenReturn(300);
+        return BookProgress.create(userId, book, currentPage, ReadingStatus.READING, OffsetDateTime.now(), null);
+    }
+
     @Nested
-    @DisplayName("Success scenarios")
-    class SuccessScenarios {
+    class Execute {
 
         @Test
-        @DisplayName("Should return list of books currently being read by user")
         void shouldReturnReadingListForUser() {
-            // Given
             UUID userId = UUID.randomUUID();
-            UUID bookId1 = UUID.randomUUID();
-            UUID bookId2 = UUID.randomUUID();
-
-            BookProgress progress1 = new BookProgress(Book.builder().id(bookId1).build(), userId);
-            progress1.setReadingStatus(ReadingStatus.READING);
-            progress1.setCurrentPage(50);
-
-            BookProgress progress2 = new BookProgress(Book.builder().id(bookId2).build(), userId);
-            progress2.setReadingStatus(ReadingStatus.READING);
-            progress2.setCurrentPage(100);
-
-            List<BookProgress> expectedList = List.of(progress1, progress2);
-
+            List<BookProgress> expected = List.of(readingProgress(userId, 50), readingProgress(userId, 100));
             given(bookProgressRepository.findAllByUserIdAndReadingStatus(userId, ReadingStatus.READING))
-                    .willReturn(expectedList);
+                    .willReturn(expected);
 
-            // When
             List<BookProgress> result = getReadingListUseCase.execute(userId);
 
-            // Then
             assertThat(result).hasSize(2);
             assertThat(result).allMatch(bp -> bp.getReadingStatus() == ReadingStatus.READING);
             then(bookProgressRepository).should().findAllByUserIdAndReadingStatus(userId, ReadingStatus.READING);
         }
 
         @Test
-        @DisplayName("Should return empty list when user has no books being read")
-        void shouldReturnEmptyListWhenNoBooksBeingRead() {
-            // Given
+        void shouldReturnEmptyListWhenUserHasNoBooksInReading() {
             UUID userId = UUID.randomUUID();
-
             given(bookProgressRepository.findAllByUserIdAndReadingStatus(userId, ReadingStatus.READING))
-                    .willReturn(Collections.emptyList());
+                    .willReturn(List.of());
 
-            // When
             List<BookProgress> result = getReadingListUseCase.execute(userId);
 
-            // Then
             assertThat(result).isEmpty();
             then(bookProgressRepository).should().findAllByUserIdAndReadingStatus(userId, ReadingStatus.READING);
         }
 
         @Test
-        @DisplayName("Should return only READING status books, not WANT_TO_READ or READ")
-        void shouldReturnOnlyReadingStatusBooks() {
-            // Given
+        void shouldReturnProgressWithCorrectCurrentPage() {
             UUID userId = UUID.randomUUID();
-            UUID bookId = UUID.randomUUID();
-
-            BookProgress readingProgress = new BookProgress(Book.builder().id(bookId).build(), userId);
-            readingProgress.setReadingStatus(ReadingStatus.READING);
-            readingProgress.setCurrentPage(75);
-
-            // The repository will only return READING status books
-            given(bookProgressRepository.findAllByUserIdAndReadingStatus(userId, ReadingStatus.READING))
-                    .willReturn(List.of(readingProgress));
-
-            // When
-            List<BookProgress> result = getReadingListUseCase.execute(userId);
-
-            // Then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).getReadingStatus()).isEqualTo(ReadingStatus.READING);
-            assertThat(result.get(0).getCurrentPage()).isEqualTo(75);
-        }
-
-        @Test
-        @DisplayName("Should include current page progress in results")
-        void shouldIncludeCurrentPageProgress() {
-            // Given
-            UUID userId = UUID.randomUUID();
-            UUID bookId = UUID.randomUUID();
-            int currentPage = 150;
-
-            BookProgress progress = new BookProgress(Book.builder().id(bookId).build(), userId);
-            progress.setReadingStatus(ReadingStatus.READING);
-            progress.setCurrentPage(currentPage);
-
+            BookProgress progress = readingProgress(userId, 75);
             given(bookProgressRepository.findAllByUserIdAndReadingStatus(userId, ReadingStatus.READING))
                     .willReturn(List.of(progress));
 
-            // When
             List<BookProgress> result = getReadingListUseCase.execute(userId);
 
-            // Then
             assertThat(result).hasSize(1);
-            assertThat(result.getFirst().getCurrentPage()).isEqualTo(currentPage);
+            assertThat(result.getFirst().getCurrentPage()).isEqualTo(75);
+            assertThat(result.getFirst().getReadingStatus()).isEqualTo(ReadingStatus.READING);
         }
     }
 }

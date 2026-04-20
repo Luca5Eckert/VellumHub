@@ -1,13 +1,16 @@
 package com.vellumhub.catalog_service.module.book_progress.domain.use_case;
 
-
+import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
+import com.vellumhub.catalog_service.module.book_progress.domain.event.CreateBookProgressEvent;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -15,12 +18,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,92 +37,113 @@ class DefineBookStatusUseCaseTest {
     @InjectMocks
     private DefineBookStatusUseCase useCase;
 
-    @Test
-    @DisplayName("Should create new progress when it does not exist")
-    void shouldCreateNewProgress_WhenNoneExists() {
-        // Given
-        UUID userId = UUID.randomUUID();
-        UUID bookId = UUID.randomUUID();
-        var command = new DefineBookStatusCommand(userId, bookId, ReadingStatus.WANT_TO_READ, 0);
+    private UUID userId;
+    private UUID bookId;
+    private Book book;
 
-        Book book = mock(Book.class);
-        given(book.getPageCount()).willReturn(300);
-
-        when(bookProgressRepository.findByUserIdAndBookId(userId, bookId))
-                .thenReturn(Optional.empty());
-        when(bookRepository.findById(bookId))
-                .thenReturn(Optional.of(book));
-        when(bookProgressRepository.save(any(BookProgress.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        // When
-        var result = useCase.execute(command);
-
-        // Then
-        ArgumentCaptor<BookProgress> captor = ArgumentCaptor.forClass(BookProgress.class);
-        verify(bookProgressRepository).save(captor.capture());
-
-        BookProgress captured = captor.getValue();
-        assertThat(captured.getUserId()).isEqualTo(userId);
-        assertThat(captured.getBook().getId()).isEqualTo(bookId);
-        assertThat(captured.getReadingStatus()).isEqualTo(ReadingStatus.WANT_TO_READ);
-        assertThat(captured.getCurrentPage()).isZero();
+    @BeforeEach
+    void setUp() {
+        userId = UUID.randomUUID();
+        bookId = UUID.randomUUID();
+        book = mock(Book.class);
+        when(book.getId()).thenReturn(bookId);
+        when(book.getPageCount()).thenReturn(300);
     }
 
-    @Test
-    @DisplayName("Should update existing progress and set page when valid")
-    void shouldUpdateExistingProgress_WhenExists() {
-        // Given
-        UUID userId = UUID.randomUUID();
-        UUID bookId = UUID.randomUUID();
-        var existingProgress = new BookProgress(Book.builder().id(bookId).build(), userId);
-        existingProgress.setReadingStatus(ReadingStatus.WANT_TO_READ);
+    @Nested
+    class Execute {
 
-        // Command creates a change to READING and page 50
-        var command = new DefineBookStatusCommand(userId, bookId, ReadingStatus.READING, 50);
+        @Test
+        void shouldSaveBookProgressAndReturnEvent() {
+            DefineBookStatusCommand command = new DefineBookStatusCommand(
+                    userId, bookId, ReadingStatus.READING, 0, OffsetDateTime.now(), null
+            );
+            when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
+            when(bookProgressRepository.existsByUserIdAndBookIdAndIsActive(userId, bookId))
+                    .thenReturn(false);
 
-        Book book = mock(Book.class);
-        given(book.getPageCount()).willReturn(300);
+            CreateBookProgressEvent event = useCase.execute(command);
 
-        when(bookProgressRepository.findByUserIdAndBookId(userId, bookId))
-                .thenReturn(Optional.of(existingProgress));
-        when(bookRepository.findById(bookId))
-                .thenReturn(Optional.of(book));
-        when(bookProgressRepository.save(any(BookProgress.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+            ArgumentCaptor<BookProgress> captor = ArgumentCaptor.forClass(BookProgress.class);
+            verify(bookProgressRepository).save(captor.capture());
 
-        // When
-        var result = useCase.execute(command);
+            BookProgress saved = captor.getValue();
+            assertThat(saved.getUserId()).isEqualTo(userId);
+            assertThat(saved.getReadingStatus()).isEqualTo(ReadingStatus.READING);
 
-        // Then
-        verify(bookProgressRepository).save(existingProgress);
-    }
+            assertThat(event.userId()).isEqualTo(userId);
+            assertThat(event.bookId()).isEqualTo(bookId);
+            assertThat(event.progress()).isEqualTo(ReadingStatus.READING.name());
+        }
 
-    @Test
-    @DisplayName("Should accept negative page number (validation not enforced at domain level)")
-    void shouldAcceptNegativePageNumber() {
-        // Given
-        UUID userId = UUID.randomUUID();
-        UUID bookId = UUID.randomUUID();
-        var existingProgress = new BookProgress(Book.builder().id(bookId).build(), userId);
-        existingProgress.setCurrentPage(100);
+        @Test
+        void shouldThrowWhenBookNotFound() {
+            DefineBookStatusCommand command = new DefineBookStatusCommand(
+                    userId, bookId, ReadingStatus.READING, 0, null, null
+            );
+            when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
 
-        // Command sends -1 as page (edge case - domain model doesn't validate this)
-        var command = new DefineBookStatusCommand(userId, bookId, ReadingStatus.READING, -1);
+            assertThatThrownBy(() -> useCase.execute(command))
+                    .isInstanceOf(BookNotFoundException.class);
 
-        Book book = mock(Book.class);
-        given(book.getPageCount()).willReturn(300);
+            verifyNoInteractions(bookProgressRepository);
+        }
 
-        when(bookProgressRepository.findByUserIdAndBookId(userId, bookId))
-                .thenReturn(Optional.of(existingProgress));
-        when(bookRepository.findById(bookId))
-                .thenReturn(Optional.of(book));
-        when(bookProgressRepository.save(any(BookProgress.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        @Test
+        void shouldThrowWhenUserAlreadyHasBookInReadingStatus() {
+            DefineBookStatusCommand command = new DefineBookStatusCommand(
+                    userId, bookId, ReadingStatus.READING, 0, null, null
+            );
+            when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
+            when(bookProgressRepository.existsByUserIdAndBookIdAndIsActive(userId, bookId))
+                    .thenReturn(true);
 
-        // When
-        var result = useCase.execute(command);
+            assertThatThrownBy(() -> useCase.execute(command))
+                    .isInstanceOf(BookProgressDomainException.class)
+                    .hasMessageContaining("READING");
 
-        assertThat(result.progress()).isEqualTo(ReadingStatus.READING.name());
+            verify(bookProgressRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldReturnEventWithCurrentPageFromSavedProgress() {
+            DefineBookStatusCommand command = new DefineBookStatusCommand(
+                    userId, bookId, ReadingStatus.READING, 42, OffsetDateTime.now(), null
+            );
+            when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
+            when(bookProgressRepository.existsByUserIdAndBookIdAndIsActive(userId, bookId))
+                    .thenReturn(false);
+
+            CreateBookProgressEvent event = useCase.execute(command);
+
+            assertThat(event.initPage()).isEqualTo(42);
+        }
+
+        @Test
+        void shouldReturnCompletedEventWhenEndAtIsProvided() {
+            DefineBookStatusCommand command = new DefineBookStatusCommand(
+                    userId, bookId, ReadingStatus.READING, 0, OffsetDateTime.now(), OffsetDateTime.now()
+            );
+            when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
+            when(bookProgressRepository.existsByUserIdAndBookIdAndIsActive(userId, bookId))
+                    .thenReturn(false);
+
+            CreateBookProgressEvent event = useCase.execute(command);
+
+            assertThat(event.progress()).isEqualTo(ReadingStatus.COMPLETED.name());
+            assertThat(event.initPage()).isEqualTo(300);
+        }
+
+        @Test
+        void shouldNotCheckForDuplicateReadingWhenStatusIsNotReading() {
+            DefineBookStatusCommand command = new DefineBookStatusCommand(
+                    userId, bookId, ReadingStatus.WANT_TO_READ, 0, null, null
+            );
+            when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
+            when(bookProgressRepository.existsByUserIdAndBookIdAndIsActive(userId, bookId))
+                    .thenReturn(false);
+
+            assertThatNoException().isThrownBy(() -> useCase.execute(command));
+        }
     }
 }

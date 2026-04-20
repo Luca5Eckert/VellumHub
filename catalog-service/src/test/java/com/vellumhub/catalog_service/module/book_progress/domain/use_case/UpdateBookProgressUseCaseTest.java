@@ -14,11 +14,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,14 +43,18 @@ class UpdateBookProgressUseCaseTest {
 
         var command = new UpdateBookProgressCommand(bookId, userId, newPage);
 
-        var bookProgress = new BookProgress(Book.builder().id(bookId).build(), userId);
-        bookProgress.setReadingStatus(ReadingStatus.READING);
-        bookProgress.setCurrentPage(50);
+        // CORREÇÃO 1: Adicionado pageCount para evitar que o update() marque como COMPLETED (0)
+        Book book = Book.builder().id(bookId).pageCount(300).build();
+
+        // CORREÇÃO 2: Utilização do factory method "create" no lugar do construtor/setters
+        var bookProgress = BookProgress.create(
+                userId, book, 50, ReadingStatus.READING, OffsetDateTime.now(), null
+        );
 
         when(bookProgressRepository.findByUserIdAndBookId(bookId, userId))
                 .thenReturn(Optional.of(bookProgress));
 
-        when(bookProgressRepository.save(bookProgress)).thenReturn(bookProgress);
+        when(bookProgressRepository.save(any(BookProgress.class))).thenReturn(bookProgress);
 
         // When
         var result = useCase.execute(command);
@@ -82,8 +88,12 @@ class UpdateBookProgressUseCaseTest {
         UUID bookId = UUID.randomUUID();
         var command = new UpdateBookProgressCommand(bookId, userId, 10);
 
-        var bookProgress = new BookProgress(Book.builder().id(bookId).build(), userId);
-        bookProgress.setReadingStatus(ReadingStatus.WANT_TO_READ); // Not READING
+        Book book = Book.builder().id(bookId).pageCount(300).build();
+
+        // CORREÇÃO 3: Criando a entidade já com o status correto de WANT_TO_READ
+        var bookProgress = BookProgress.create(
+                userId, book, 0, ReadingStatus.WANT_TO_READ, null, null
+        );
 
         when(bookProgressRepository.findByUserIdAndBookId(bookId, userId))
                 .thenReturn(Optional.of(bookProgress));
