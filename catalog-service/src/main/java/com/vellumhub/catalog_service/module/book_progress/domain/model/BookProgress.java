@@ -14,7 +14,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "book_progress")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class BookProgress {
 
     @Id
@@ -41,6 +41,9 @@ public class BookProgress {
     @Column(name = "end_at")
     private OffsetDateTime endAt;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
     private BookProgress(UUID userId, Book book, int currentPage,
                          ReadingStatus readingStatus, OffsetDateTime startedAt, OffsetDateTime endAt) {
         this.userId = userId;
@@ -59,7 +62,9 @@ public class BookProgress {
         if (readingStatus == ReadingStatus.WANT_TO_READ) startedAt = null;
         if (readingStatus == ReadingStatus.READING && startedAt == null) startedAt = OffsetDateTime.now();
 
-        return new BookProgress(userId, book, initialPage, readingStatus, startedAt, endAt);
+        var bookProgress = new BookProgress(userId, book, initialPage, readingStatus, startedAt, endAt);
+        bookProgress.ensureStateOfActive();
+        return bookProgress;
     }
 
     public void update(ReadingStatus newStatus, int newPage) {
@@ -69,10 +74,20 @@ public class BookProgress {
         if (newPage >= book.getPageCount()) {
             this.readingStatus = ReadingStatus.COMPLETED;
             this.currentPage = book.getPageCount();
+
+            ensureStateOfActive();
+
             return;
         }
         this.currentPage = newPage;
         this.readingStatus = newStatus;
+
+        ensureStateOfActive();
+    }
+
+    private void ensureStateOfActive() {
+        if(readingStatus == ReadingStatus.COMPLETED) isActive = false;
+        this.isActive = true;
     }
 
 }
