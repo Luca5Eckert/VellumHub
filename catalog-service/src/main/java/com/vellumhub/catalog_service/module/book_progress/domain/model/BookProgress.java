@@ -86,8 +86,7 @@ public class BookProgress {
     }
 
     private void ensureStateOfActive() {
-        if(readingStatus == ReadingStatus.COMPLETED) isActive = false;
-        this.isActive = true;
+        this.isActive = readingStatus != ReadingStatus.COMPLETED;
     }
 
 }
