@@ -3,10 +3,7 @@ package com.vellumhub.catalog_service.module.book_progress.domain.model;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -14,7 +11,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "book_progress")
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BookProgress {
 
     @Id
