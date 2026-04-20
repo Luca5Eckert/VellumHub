@@ -9,23 +9,23 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class UpdateBookProgressConsumerEvent {
+public class CreateBookProgressConsumerEvent {
 
     private final UpdateBookProgressUseCase updateBookProgressUseCase;
 
-    public UpdateBookProgressConsumerEvent(UpdateBookProgressUseCase updateBookProgressUseCase) {
+    public CreateBookProgressConsumerEvent(UpdateBookProgressUseCase updateBookProgressUseCase) {
         this.updateBookProgressUseCase = updateBookProgressUseCase;
     }
 
     @KafkaListener(
-            topics = "updated-reading-progress",
+            topics = "created-reading-progress",
             groupId = "recommendation-service"
     )
     public void consume(
             UpdateBookProgressEvent event
     ) {
 
-        log.info("Event received: Update book progress. UserId={}, BookId={}, Progress={}",
+        log.info("Event received: Create book progress. UserId={}, BookId={}, Progress={}",
                 event.userId(),
                 event.bookId(),
                 event.progress()
