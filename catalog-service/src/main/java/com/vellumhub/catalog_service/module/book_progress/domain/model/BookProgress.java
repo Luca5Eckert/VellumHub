@@ -8,19 +8,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "book_progress")
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BookProgress {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id", nullable = false)
@@ -33,29 +32,47 @@ public class BookProgress {
     @Column(nullable = false, name = "reading_status")
     private ReadingStatus readingStatus;
 
-    @Column(name = "current_page")
+    @Column(name = "current_page", nullable = false)
     private Integer currentPage;
 
-    public BookProgress(Book book, UUID userId) {
-        this.book = book;
+    @Column(name = "started_at")
+    private OffsetDateTime startedAt;
+
+    @Column(name = "end_at")
+    private OffsetDateTime endAt;
+
+    private BookProgress(UUID userId, Book book, int currentPage,
+                         ReadingStatus readingStatus, OffsetDateTime startedAt, OffsetDateTime endAt) {
         this.userId = userId;
-        this.readingStatus = ReadingStatus.WANT_TO_READ;
-        this.currentPage = 0;
-    }
-
-    public static BookProgress create(UUID userId, Book book, int initialPage, ReadingStatus readingStatus) {
-        return new BookProgress(null, book, userId, readingStatus, initialPage);
-    }
-
-    public void update(ReadingStatus readingStatus, int currentPage) {
-        if (currentPage < 0) {
-            throw new BookProgressDomainException("Current page cannot be negative");
-        }
-        if (book.getPageCount() < currentPage) {
-            throw new BookProgressDomainException("Current page cannot exceed total page count of the book");
-        }
-
+        this.book = book;
         this.currentPage = currentPage;
         this.readingStatus = readingStatus;
+        this.startedAt = startedAt;
+        this.endAt = endAt;
     }
+
+    public static BookProgress create(UUID userId, Book book, int initialPage,
+                                      ReadingStatus readingStatus, OffsetDateTime startedAt, OffsetDateTime endAt) {
+
+        if (endAt != null) readingStatus = ReadingStatus.COMPLETED;
+        if (readingStatus == ReadingStatus.COMPLETED) initialPage = book.getPageCount();
+        if (readingStatus == ReadingStatus.WANT_TO_READ) startedAt = null;
+        if (readingStatus == ReadingStatus.READING && startedAt == null) startedAt = OffsetDateTime.now();
+
+        return new BookProgress(userId, book, initialPage, readingStatus, startedAt, endAt);
+    }
+
+    public void update(ReadingStatus newStatus, int newPage) {
+        if (newPage < 0) {
+            throw new BookProgressDomainException("Current page cannot be negative");
+        }
+        if (newPage >= book.getPageCount()) {
+            this.readingStatus = ReadingStatus.COMPLETED;
+            this.currentPage = book.getPageCount();
+            return;
+        }
+        this.currentPage = newPage;
+        this.readingStatus = newStatus;
+    }
+
 }

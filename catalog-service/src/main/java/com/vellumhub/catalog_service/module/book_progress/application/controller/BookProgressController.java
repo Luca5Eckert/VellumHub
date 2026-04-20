@@ -1,13 +1,13 @@
 package com.vellumhub.catalog_service.module.book_progress.application.controller;
 
-import com.vellumhub.catalog_service.module.book_progress.application.dto.UpdateBookProgressRequest;
-import com.vellumhub.catalog_service.share.service.AuthenticationService;
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookProgressResponse;
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookStatusRequest;
+import com.vellumhub.catalog_service.module.book_progress.application.dto.UpdateBookProgressRequest;
 import com.vellumhub.catalog_service.module.book_progress.application.handler.DefineBookStatusHandler;
 import com.vellumhub.catalog_service.module.book_progress.application.handler.DeleteBookProgressHandler;
 import com.vellumhub.catalog_service.module.book_progress.application.handler.GetReadingListHandler;
 import com.vellumhub.catalog_service.module.book_progress.application.handler.UpdateBookProgressHandler;
+import com.vellumhub.catalog_service.share.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,10 +36,15 @@ public class BookProgressController {
     private final UpdateBookProgressHandler updateBookProgressHandler;
     private final DeleteBookProgressHandler deleteBookProgressHandler;
     private final GetReadingListHandler getReadingListHandler;
-
     private final AuthenticationService authenticationService;
 
-    public BookProgressController(DefineBookStatusHandler defineBookStatusHandler, UpdateBookProgressHandler updateBookProgressHandler, DeleteBookProgressHandler deleteBookProgressHandler, GetReadingListHandler getReadingListHandler, AuthenticationService authenticationService) {
+    public BookProgressController(
+            DefineBookStatusHandler defineBookStatusHandler,
+            UpdateBookProgressHandler updateBookProgressHandler,
+            DeleteBookProgressHandler deleteBookProgressHandler,
+            GetReadingListHandler getReadingListHandler,
+            AuthenticationService authenticationService
+    ) {
         this.defineBookStatusHandler = defineBookStatusHandler;
         this.updateBookProgressHandler = updateBookProgressHandler;
         this.deleteBookProgressHandler = deleteBookProgressHandler;
@@ -47,97 +52,93 @@ public class BookProgressController {
         this.authenticationService = authenticationService;
     }
 
-
     @PostMapping("/{bookId}/status")
-    @Operation(summary = "Set book status", description = "Sets the reading status for a book (TO_READ, READING, COMPLETED)")
+    @Operation(
+            summary = "Set book status",
+            description = "Sets the reading status for a book (WANT_TO_READ, READING, COMPLETED)"
+    )
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "400", description = "Invalid status value", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
+            @ApiResponse(responseCode = "201", description = "Book status defined successfully",
+                    content = @Content),
+            @ApiResponse(responseCode = "400", description = "Invalid status value",
+                    content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content),
+            @ApiResponse(responseCode = "404", description = "Book not found",
+                    content = @Content)
     })
     public ResponseEntity<Void> defineBookStatus(
-            @Parameter(description = "Book ID") @PathVariable(value = "bookId") UUID bookId,
+            @Parameter(description = "Book ID") @PathVariable UUID bookId,
             @Valid @RequestBody BookStatusRequest request
     ) {
         UUID userId = authenticationService.getAuthenticatedUserId();
-
-        defineBookStatusHandler.handle(
-                request,
-                userId,
-                bookId
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .build();
+        defineBookStatusHandler.handle(request, userId, bookId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("/{bookId}/progress")
-    @Operation(summary = "Update reading progress", description = "Updates the current page number for a book being read")
+    @Operation(
+            summary = "Update reading progress",
+            description = "Updates the current page number for a book being read"
+    )
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Reading progress updated successfully",
-                    content = @Content(schema = @Schema(implementation = BookProgressResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid page number", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Book progress record not found", content = @Content)
+                    content = @Content),
+            @ApiResponse(responseCode = "400", description = "Invalid page number",
+                    content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content),
+            @ApiResponse(responseCode = "404", description = "Book progress record not found",
+                    content = @Content)
     })
     public ResponseEntity<Void> updateBookProgress(
-            @Parameter(description = "Book ID") @PathVariable(value = "bookId") UUID bookId,
+            @Parameter(description = "Book ID") @PathVariable UUID bookId,
             @Valid @RequestBody UpdateBookProgressRequest request
     ) {
         UUID userId = authenticationService.getAuthenticatedUserId();
-
-        updateBookProgressHandler.handle(
-                request.newCurrentPage(),
-                bookId,
-                userId
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .build();
-    }
-
-    @DeleteMapping("/{bookId}")
-    @Operation(summary = "Remove book progress", description = "Removes a book from the user's reading list and deletes progress tracking")
-    @SecurityRequirement(name = "bearerAuth")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Book progress deleted successfully"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Book progress record not found", content = @Content)
-    })
-    public ResponseEntity<Void> deleteBookProgress(
-            @Parameter(description = "Book ID") @PathVariable(value = "bookId") UUID bookId
-    ) {
-        UUID userId = authenticationService.getAuthenticatedUserId();
-
-        deleteBookProgressHandler.handle(
-                bookId,
-                userId
-        );
-
+        updateBookProgressHandler.handle(request.newCurrentPage(), bookId, userId);
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("/{bookId}")
+    @Operation(
+            summary = "Remove book progress",
+            description = "Removes a book from the user's reading list and deletes progress tracking"
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Book progress deleted successfully",
+                    content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content),
+            @ApiResponse(responseCode = "404", description = "Book progress record not found",
+                    content = @Content)
+    })
+    public ResponseEntity<Void> deleteBookProgress(
+            @Parameter(description = "Book ID") @PathVariable UUID bookId
+    ) {
+        UUID userId = authenticationService.getAuthenticatedUserId();
+        deleteBookProgressHandler.handle(bookId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/reading-list")
-    @Operation(summary = "Get reading list", description = "Retrieves the authenticated user's complete reading list with progress information")
+    @Operation(
+            summary = "Get reading list",
+            description = "Retrieves the authenticated user's complete reading list with progress information"
+    )
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Reading list retrieved successfully",
                     content = @Content(schema = @Schema(implementation = BookProgressResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content)
     })
     public ResponseEntity<List<BookProgressResponse>> getReadingList() {
         UUID userId = authenticationService.getAuthenticatedUserId();
-
-        var response = getReadingListHandler.handle(userId);
-
-        return ResponseEntity.ok(response);
-
+        return ResponseEntity.ok(getReadingListHandler.handle(userId));
     }
-
-
 
 }
