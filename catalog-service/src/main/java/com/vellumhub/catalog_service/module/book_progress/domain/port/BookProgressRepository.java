@@ -21,4 +21,5 @@ public interface BookProgressRepository {
 
     List<BookProgress> findAllByUserIdAndReadingStatus(UUID userId, ReadingStatus status);
 
+    boolean existsByUserIdAndBookIdAndReadingStatus(UUID userId, UUID bookId, ReadingStatus readingStatus);
 }

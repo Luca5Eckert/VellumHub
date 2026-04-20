@@ -6,7 +6,6 @@ public record CreateBookProgressEvent(
         UUID userId,
         UUID bookId,
         String progress,
-        int oldPage,
-        int newPage
+        int initPage
 ) {
 }

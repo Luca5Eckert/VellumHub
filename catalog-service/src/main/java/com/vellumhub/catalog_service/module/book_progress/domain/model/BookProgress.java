@@ -43,7 +43,11 @@ public class BookProgress {
         this.currentPage = 0;
     }
 
-    public void defineProgress(ReadingStatus readingStatus, int currentPage) {
+    public static BookProgress create(UUID userId, Book book, int initialPage, ReadingStatus readingStatus) {
+        return new BookProgress(null, book, userId, readingStatus, initialPage);
+    }
+
+    public void update(ReadingStatus readingStatus, int currentPage) {
         if (currentPage < 0) {
             throw new BookProgressDomainException("Current page cannot be negative");
         }
