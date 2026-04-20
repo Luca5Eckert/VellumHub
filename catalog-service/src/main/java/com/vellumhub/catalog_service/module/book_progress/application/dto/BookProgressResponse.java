@@ -5,7 +5,7 @@ import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingSt
 import java.util.UUID;
 
 public record BookProgressResponse(
-        Long id,
+        UUID id,
         UUID bookId,
         ReadingStatus status,
         int currentPage

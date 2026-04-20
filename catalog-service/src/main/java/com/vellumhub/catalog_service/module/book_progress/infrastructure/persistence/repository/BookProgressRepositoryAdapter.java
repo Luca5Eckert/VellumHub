@@ -49,4 +49,9 @@ public class BookProgressRepositoryAdapter implements BookProgressRepository {
         return bookProgressRepositoryJpa.findAllByUserIdAndReadingStatus(userId, status);
 
     }
+
+    @Override
+    public boolean existsByUserIdAndBookIdAndIsActive(UUID userId, UUID bookId) {
+        return bookProgressRepositoryJpa.existsByUserIdAndBookIdAndIsActive(userId, bookId);
+    }
 }
