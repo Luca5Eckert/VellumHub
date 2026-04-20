@@ -30,9 +30,9 @@ public class UpdateBookProgressHandler {
                 currentPage
         );
 
-        UpdateBookProgressEvent event = updateBookProgressUseCase.execute(updateBookProgressCommand);
+        var event = updateBookProgressUseCase.execute(updateBookProgressCommand);
 
-        bookProgressEventProducer.send("updated-progress", event.userId().toString(), event);
+        bookProgressEventProducer.send("updated-reading-progress", event.userId().toString(), event);
     }
 
 }

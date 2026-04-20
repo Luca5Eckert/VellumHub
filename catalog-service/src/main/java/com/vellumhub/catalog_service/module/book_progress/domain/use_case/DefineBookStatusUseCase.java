@@ -3,6 +3,7 @@ package com.vellumhub.catalog_service.module.book_progress.domain.use_case;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book_progress.domain.event.CreateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.event.UpdateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
@@ -22,7 +23,7 @@ public class DefineBookStatusUseCase {
         this.bookRepository = bookRepository;
     }
 
-    public UpdateBookProgressEvent execute(DefineBookStatusCommand command) {
+    public CreateBookProgressEvent execute(DefineBookStatusCommand command) {
         BookProgress bookProgress = getBookProgress(command.userId(), command.bookId());
 
         int currentPage = bookProgress.getCurrentPage();
@@ -31,7 +32,7 @@ public class DefineBookStatusUseCase {
 
         bookProgressRepository.save(bookProgress);
 
-        return new UpdateBookProgressEvent(
+        return new CreateBookProgressEvent(
                 command.userId(),
                 command.bookId(),
                 bookProgress.getReadingStatus().name(),

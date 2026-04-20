@@ -1,6 +1,7 @@
 package com.vellumhub.catalog_service.module.book_progress.application.handler;
 
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookStatusRequest;
+import com.vellumhub.catalog_service.module.book_progress.domain.event.CreateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.event.UpdateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressEventProducer;
@@ -15,10 +16,10 @@ import java.util.UUID;
 public class DefineBookStatusHandler {
 
     private final DefineBookStatusUseCase defineBookStatusUseCase;
-    private final BookProgressEventProducer<String, UpdateBookProgressEvent> bookProgressEventProducer;
+    private final BookProgressEventProducer<String, CreateBookProgressEvent> bookProgressEventProducer;
 
 
-    public DefineBookStatusHandler(DefineBookStatusUseCase defineBookStatusUseCase, BookProgressEventProducer<String, UpdateBookProgressEvent> bookProgressEventProducer) {
+    public DefineBookStatusHandler(DefineBookStatusUseCase defineBookStatusUseCase, BookProgressEventProducer<String, CreateBookProgressEvent> bookProgressEventProducer) {
         this.defineBookStatusUseCase = defineBookStatusUseCase;
         this.bookProgressEventProducer = bookProgressEventProducer;
     }
@@ -32,9 +33,9 @@ public class DefineBookStatusHandler {
                 bookStatusRequest.currentPage()
         );
 
-        UpdateBookProgressEvent event = defineBookStatusUseCase.execute(defineBookStatusCommand);
+        CreateBookProgressEvent event = defineBookStatusUseCase.execute(defineBookStatusCommand);
 
-        bookProgressEventProducer.send("updated-progress", event.userId().toString(), event);
+        bookProgressEventProducer.send("create-reading-progress", event.userId().toString(), event);
     }
 
 }
