@@ -31,8 +31,7 @@ public class DefineBookStatusUseCase {
                         "Book with id " + command.bookId() + " not found"
                 ));
 
-        if (bookProgressRepository.existsByUserIdAndBookIdAndReadingStatus(
-                command.userId(), command.bookId(), ReadingStatus.READING)) {
+        if (bookProgressRepository.existsByUserIdAndBookIdAndIsActive(command.userId(), command.bookId() )) {
             throw new BookProgressDomainException(
                     "User already has this book marked as READING"
             );
