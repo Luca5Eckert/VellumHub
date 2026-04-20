@@ -37,6 +37,8 @@ public class ApproveBookRequestUseCase {
                 .author(bookRequest.getAuthor())
                 .isbn(bookRequest.getIsbn())
                 .description(bookRequest.getDescription())
+                .releaseYear(bookRequest.getReleaseYear())
+                .coverUrl(bookRequest.getCoverUrl())
                 .genres(bookRequest.getGenres())
                 .pageCount(bookRequest.getPageCount())
                 .publisher(bookRequest.getPublisher())

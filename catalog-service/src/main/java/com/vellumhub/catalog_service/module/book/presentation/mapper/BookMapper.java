@@ -20,7 +20,7 @@ public class BookMapper {
                 book.getIsbn(),
                 book.getPageCount(),
                 book.getPublisher(),
-                book.getGenres().stream().map(Genre::getName).toList(),
+                book.getGenres().stream().map(Genre::getName).sorted().toList(),
                 book.getCreatedAt(),
                 book.getUpdatedAt()
         );
@@ -34,7 +34,7 @@ public class BookMapper {
                 book.getDescription(),
                 book.getReleaseYear(),
                 book.getCoverUrl(),
-                book.getGenres().stream().map(Genre::getName).toList(),
+                book.getGenres().stream().map(Genre::getName).sorted().toList(),
                 book.getCreatedAt(),
                 book.getUpdatedAt()
         );

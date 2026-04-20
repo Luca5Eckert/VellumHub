@@ -35,7 +35,6 @@ class AddMemberInBookListUseCaseTest {
     @Test
     @DisplayName("Should successfully add a new member when user has permission")
     void shouldAddMemberSuccessfully() {
-        // Arrange
         var ownerId = UUID.randomUUID();
         var bookListId = UUID.randomUUID();
         var newUser = UUID.randomUUID();
@@ -44,23 +43,19 @@ class AddMemberInBookListUseCaseTest {
 
         when(bookListRepository.findById(bookListId)).thenReturn(Optional.of(bookList));
 
-        // Act
         useCase.execute(command);
 
-        // Assert
         verify(bookListRepository).save(bookList);
-        assertThat(bookList.getMemberships()).hasSize(2); // Owner + New Member
+        assertThat(bookList.getMemberships()).hasSize(2);
         assertThat(bookList.isMember(newUser)).isTrue();
     }
 
     @Test
     @DisplayName("Should throw exception when book list does not exist")
     void shouldThrowExceptionWhenBookListNotFound() {
-        // Arrange
         var command = new AddMemberInBookListCommand(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), MembershipRole.VIEWER);
         when(bookListRepository.findById(any())).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(command))
                 .isInstanceOf(BookListDomainException.class)
                 .hasMessage("Book list not found");
@@ -69,7 +64,6 @@ class AddMemberInBookListUseCaseTest {
     @Test
     @DisplayName("Should throw exception when authenticated user lacks permission")
     void shouldThrowExceptionWhenUserHasNoPermission() {
-        // Arrange
         var ownerId = UUID.randomUUID();
         var strangerId = UUID.randomUUID();
         var bookList = BookList.create("Private List", "Secret books", TypeBookList.PRIVATE, ownerId, List.of());
@@ -77,9 +71,8 @@ class AddMemberInBookListUseCaseTest {
 
         when(bookListRepository.findById(any())).thenReturn(Optional.of(bookList));
 
-        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(command))
                 .isInstanceOf(BookListDomainException.class)
-                .hasMessage("User don't have permission to add member to this book list");
+                .hasMessage("User doesn't have permission to add a member to this book list");
     }
 }

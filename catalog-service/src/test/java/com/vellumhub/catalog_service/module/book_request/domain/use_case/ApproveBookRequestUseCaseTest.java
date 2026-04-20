@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 import java.util.Set;
@@ -24,6 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -50,9 +52,8 @@ class ApproveBookRequestUseCaseTest {
     class SuccessScenarios {
 
         @Test
-        @DisplayName("Should approve book request successfully, create book, delete request and send event")
+        @DisplayName("Should approve the request, persist the book, delete the request, and publish the event")
         void shouldApproveBookRequestSuccessfully() {
-            // Given
             long requestId = 1L;
             Genre fantasyGenre = mock(Genre.class);
             given(fantasyGenre.getName()).willReturn("Fantasy");
@@ -77,26 +78,15 @@ class ApproveBookRequestUseCaseTest {
 
             given(bookRequestRepository.findById(requestId)).willReturn(Optional.of(bookRequest));
 
-            // Simulating database save behavior by returning a book with an ID
             UUID generatedBookId = UUID.randomUUID();
             doAnswer(invocation -> {
                 Book savedBook = invocation.getArgument(0);
-                // Creating a mock here just to simulate the returned book with an ID for the event
-                Book bookWithId = mock(Book.class);
-                given(bookWithId.getId()).willReturn(generatedBookId);
-                given(bookWithId.getTitle()).willReturn(savedBook.getTitle());
-                given(bookWithId.getDescription()).willReturn(savedBook.getDescription());
-                given(bookWithId.getReleaseYear()).willReturn(savedBook.getReleaseYear());
-                given(bookWithId.getCoverUrl()).willReturn(savedBook.getCoverUrl());
-                given(bookWithId.getAuthor()).willReturn(savedBook.getAuthor());
-
-                return bookWithId; // Em um cenário real de Spring Data, o save() mutaciona a entidade ou devolve uma nova
+                ReflectionTestUtils.setField(savedBook, "id", generatedBookId);
+                return null;
             }).when(bookRepository).save(any(Book.class));
 
-            // When
             approveBookRequestUseCase.execute(requestId);
 
-            // Then
             ArgumentCaptor<Book> bookCaptor = ArgumentCaptor.forClass(Book.class);
             then(bookRepository).should().save(bookCaptor.capture());
 
@@ -114,10 +104,13 @@ class ApproveBookRequestUseCaseTest {
             then(bookRequestRepository).should().deleteById(requestId);
 
             ArgumentCaptor<CreateBookEvent> eventCaptor = ArgumentCaptor.forClass(CreateBookEvent.class);
-            then(producer).should().send(eq("created-book"), anyString(), eventCaptor.capture());
+            then(producer).should().send(eq("created-book"), eq(generatedBookId.toString()), eventCaptor.capture());
 
             CreateBookEvent capturedEvent = eventCaptor.getValue();
+            assertThat(capturedEvent.bookId()).isEqualTo(generatedBookId);
             assertThat(capturedEvent.title()).isEqualTo("The Hobbit");
+            assertThat(capturedEvent.releaseYear()).isEqualTo(1937);
+            assertThat(capturedEvent.coverUrl()).isEqualTo("http://cover.com/hobbit.jpg");
             assertThat(capturedEvent.author()).isEqualTo("J.R.R. Tolkien");
             assertThat(capturedEvent.genres()).containsExactlyInAnyOrder("Fantasy", "Adventure");
         }
@@ -128,13 +121,11 @@ class ApproveBookRequestUseCaseTest {
     class FailureScenarios {
 
         @Test
-        @DisplayName("Should throw exception when book request not found")
+        @DisplayName("Should throw an exception when the request does not exist")
         void shouldThrowExceptionWhenRequestNotFound() {
-            // Given
             long requestId = 999L;
             given(bookRequestRepository.findById(requestId)).willReturn(Optional.empty());
 
-            // When / Then
             assertThatThrownBy(() -> approveBookRequestUseCase.execute(requestId))
                     .isInstanceOf(BookRequestDomainException.class)
                     .hasMessageContaining("Book request not found");

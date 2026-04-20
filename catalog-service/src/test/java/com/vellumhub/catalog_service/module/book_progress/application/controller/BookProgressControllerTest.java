@@ -8,7 +8,8 @@ import com.vellumhub.catalog_service.module.book_progress.application.handler.De
 import com.vellumhub.catalog_service.module.book_progress.application.handler.DeleteBookProgressHandler;
 import com.vellumhub.catalog_service.module.book_progress.application.handler.GetReadingListHandler;
 import com.vellumhub.catalog_service.module.book_progress.application.handler.UpdateBookProgressHandler;
-import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressConflictException;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
 import com.vellumhub.catalog_service.share.service.AuthenticationService;
@@ -16,7 +17,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,12 +28,14 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BookProgressController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class BookProgressControllerTest {
 
     @Autowired
@@ -53,6 +58,9 @@ class BookProgressControllerTest {
 
     @MockitoBean
     private AuthenticationService authenticationService;
+
+    @MockitoBean
+    private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
     private UUID userId;
     private UUID bookId;
@@ -94,7 +102,7 @@ class BookProgressControllerTest {
         @Test
         void shouldReturn409WhenUserAlreadyHasBookInReadingStatus() throws Exception {
             BookStatusRequest request = new BookStatusRequest(ReadingStatus.READING, 0, null, null);
-            doThrow(new BookProgressDomainException("User already has a book in READING status"))
+            doThrow(new BookProgressConflictException("User already has a book in READING status"))
                     .when(defineBookStatusHandler).handle(any(), any(), any());
 
             mockMvc.perform(post("/book-progress/{bookId}/status", bookId)
@@ -130,8 +138,8 @@ class BookProgressControllerTest {
         @Test
         void shouldReturn404WhenProgressRecordNotFound() throws Exception {
             UpdateBookProgressRequest request = new UpdateBookProgressRequest(120);
-            doThrow(new BookProgressDomainException("Progress not found"))
-                    .when(updateBookProgressHandler).handle(any(), any(), any());
+            doThrow(new BookProgressNotFoundException())
+                    .when(updateBookProgressHandler).handle(anyInt(), any(), any());
 
             mockMvc.perform(put("/book-progress/{bookId}/progress", bookId)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -153,7 +161,7 @@ class BookProgressControllerTest {
 
         @Test
         void shouldReturn404WhenProgressRecordNotFound() throws Exception {
-            doThrow(new BookProgressDomainException("Progress not found"))
+            doThrow(new BookProgressNotFoundException())
                     .when(deleteBookProgressHandler).handle(any(), any());
 
             mockMvc.perform(delete("/book-progress/{bookId}", bookId))
@@ -175,7 +183,7 @@ class BookProgressControllerTest {
             mockMvc.perform(get("/book-progress/reading-list"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].readingStatus").value("READING"))
+                    .andExpect(jsonPath("$[0].status").value("READING"))
                     .andExpect(jsonPath("$[0].currentPage").value(42));
         }
 

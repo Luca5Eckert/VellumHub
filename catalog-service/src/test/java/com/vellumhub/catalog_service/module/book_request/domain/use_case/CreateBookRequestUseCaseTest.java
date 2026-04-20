@@ -1,6 +1,8 @@
 package com.vellumhub.catalog_service.module.book_request.domain.use_case;
 
+import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
 import com.vellumhub.catalog_service.module.book_request.domain.BookRequest;
 import com.vellumhub.catalog_service.module.book_request.domain.command.CreateBookRequestCommand;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookAlreadyExistInCatalogException;
@@ -15,11 +17,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CreateBookRequestUseCaseTest {
@@ -28,27 +34,31 @@ class CreateBookRequestUseCaseTest {
     private BookRequestRepository bookRequestRepository;
 
     @Mock
+    private GenreRepository genreRepository;
+
+    @Mock
     private BookRepository bookRepository;
 
     @InjectMocks
     private CreateBookRequestUseCase createBookRequestUseCase;
 
     @Test
-    @DisplayName("Deve criar uma solicitação de livro com sucesso quando não houver duplicatas")
+    @DisplayName("Should create a book request when there are no duplicates")
     void shouldCreateBookRequestSuccessfully() {
-        // Arrange
-        var command = createCommand();
+        CreateBookRequestCommand command = createCommand();
         when(bookRepository.existByTitleAndAuthor(command.title(), command.author())).thenReturn(false);
         when(bookRequestRepository.existByTitleAndAuthor(command.title(), command.author())).thenReturn(false);
+        when(genreRepository.findByName("FANTASY")).thenReturn(Optional.of(new Genre("FANTASY")));
+        when(genreRepository.findByName("HORROR")).thenReturn(Optional.of(new Genre("HORROR")));
 
-        // Act
         BookRequest result = createBookRequestUseCase.execute(command);
 
-        // Assert
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo(command.title());
+        assertThat(result.getGenres())
+                .extracting(Genre::getName)
+                .containsExactlyInAnyOrder("FANTASY", "HORROR");
 
-        // Verificamos se o repositório realmente recebeu o objeto esperado
         ArgumentCaptor<BookRequest> captor = ArgumentCaptor.forClass(BookRequest.class);
         verify(bookRequestRepository, times(1)).save(captor.capture());
 
@@ -58,13 +68,11 @@ class CreateBookRequestUseCaseTest {
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando o livro já existir no catálogo principal")
+    @DisplayName("Should throw an exception when the book already exists in the catalog")
     void shouldThrowExceptionWhenBookAlreadyExistsInCatalog() {
-        // Arrange
-        var command = createCommand();
+        CreateBookRequestCommand command = createCommand();
         when(bookRepository.existByTitleAndAuthor(command.title(), command.author())).thenReturn(true);
 
-        // Act & Assert
         assertThatThrownBy(() -> createBookRequestUseCase.execute(command))
                 .isInstanceOf(BookAlreadyExistInCatalogException.class);
 
@@ -72,14 +80,12 @@ class CreateBookRequestUseCaseTest {
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando já existir uma solicitação pendente para o mesmo livro")
+    @DisplayName("Should throw an exception when a matching request already exists")
     void shouldThrowExceptionWhenBookRequestAlreadyExists() {
-        // Arrange
-        var command = createCommand();
+        CreateBookRequestCommand command = createCommand();
         when(bookRepository.existByTitleAndAuthor(command.title(), command.author())).thenReturn(false);
         when(bookRequestRepository.existByTitleAndAuthor(command.title(), command.author())).thenReturn(true);
 
-        // Act & Assert
         assertThatThrownBy(() -> createBookRequestUseCase.execute(command))
                 .isInstanceOf(BookRequestAlreadyExistException.class);
 
@@ -88,18 +94,15 @@ class CreateBookRequestUseCaseTest {
 
     private CreateBookRequestCommand createCommand() {
         return new CreateBookRequestCommand(
-                "O Programador Pragmático",
-                "Dicas de desenvolvimento",
+                "The Pragmatic Programmer",
+                "Practical software craftsmanship",
                 1999,
                 "http://image.com/cover.jpg",
-                "Addison-Wesley",
-                "978-0201616224",
+                "Andy Hunt",
+                "9780201616224",
                 352,
-                "Trama",
-                List.of(
-                        "ROMANCE",
-                        "HORROR"
-                )
+                "Addison-Wesley",
+                List.of("FANTASY", "HORROR")
         );
     }
 }

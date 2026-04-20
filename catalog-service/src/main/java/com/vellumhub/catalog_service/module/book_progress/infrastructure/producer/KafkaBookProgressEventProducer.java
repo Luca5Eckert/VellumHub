@@ -1,11 +1,8 @@
 package com.vellumhub.catalog_service.module.book_progress.infrastructure.producer;
 
-import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
+import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressEventProducer;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
@@ -14,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Component
 @Slf4j
-public class KafkaBookProgressEventProducer<K, V> implements BookEventProducer<K, V> {
+public class KafkaBookProgressEventProducer<K, V> implements BookProgressEventProducer<K, V> {
 
     private final KafkaTemplate<K, V> kafkaTemplate;
 

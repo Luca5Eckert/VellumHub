@@ -14,13 +14,18 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DefineBookStatusHandlerTest {
@@ -41,11 +46,6 @@ class DefineBookStatusHandlerTest {
     void setUp() {
         userId = UUID.randomUUID();
         bookId = UUID.randomUUID();
-
-        // CORREÇÃO: Substitua "NOME_EXATO_DA_VARIAVEL_AQUI" pelo nome real do atributo
-        // na sua classe DefineBookStatusHandler. Por exemplo, se na sua classe estiver
-        // private String topic; você deve usar "topic" ali.
-        ReflectionTestUtils.setField(handler, "NOME_EXATO_DA_VARIAVEL_AQUI", "create-reading-progress");
     }
 
     @Nested
@@ -82,9 +82,7 @@ class DefineBookStatusHandlerTest {
 
             handler.handle(request, userId, bookId);
 
-            // Se você mudou a lógica e não está mais usando a String do tópico,
-            // você também pode flexibilizar esse teste usando: anyString() no lugar de "create-reading-progress"
-            verify(bookProgressEventProducer).send(eq("create-reading-progress"), eq(userId.toString()), eq(event));
+            verify(bookProgressEventProducer).send("create-reading-progress", userId.toString(), event);
         }
 
         @Test
@@ -106,7 +104,8 @@ class DefineBookStatusHandlerTest {
 
             when(defineBookStatusUseCase.execute(any())).thenThrow(new RuntimeException());
 
-            assertThatThrownBy(() -> handler.handle(request, userId, bookId));
+            assertThatThrownBy(() -> handler.handle(request, userId, bookId))
+                    .isInstanceOf(RuntimeException.class);
 
             verify(bookProgressEventProducer, never()).send(any(), any(), any());
         }

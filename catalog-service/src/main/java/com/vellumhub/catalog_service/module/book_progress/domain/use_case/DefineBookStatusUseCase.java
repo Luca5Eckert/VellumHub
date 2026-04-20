@@ -4,6 +4,7 @@ import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundEx
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressConflictException;
 import com.vellumhub.catalog_service.module.book_progress.domain.event.CreateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
@@ -32,7 +33,7 @@ public class DefineBookStatusUseCase {
                 ));
 
         if (bookProgressRepository.existsByUserIdAndBookIdAndIsActive(command.userId(), command.bookId() )) {
-            throw new BookProgressDomainException(
+            throw new BookProgressConflictException(
                     "User already has this book marked as READING"
             );
         }

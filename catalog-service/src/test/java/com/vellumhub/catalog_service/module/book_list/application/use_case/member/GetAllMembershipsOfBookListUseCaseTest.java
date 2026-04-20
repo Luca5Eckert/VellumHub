@@ -33,17 +33,14 @@ class GetAllMembershipsOfBookListUseCaseTest {
     @Test
     @DisplayName("Should return all memberships when user has read permission")
     void shouldReturnAllMembershipsSuccessfully() {
-        // Arrange
         var ownerId = UUID.randomUUID();
         var bookList = BookList.create("Cookbooks", "Food", TypeBookList.PUBLIC, ownerId, List.of());
         var query = new GetAllMembershipOfBookListQuery(bookList.getId(), ownerId);
 
         when(bookListRepository.findById(any())).thenReturn(Optional.of(bookList));
 
-        // Act
         var result = useCase.execute(query);
 
-        // Assert
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getUserId()).isEqualTo(ownerId);
     }
@@ -51,7 +48,6 @@ class GetAllMembershipsOfBookListUseCaseTest {
     @Test
     @DisplayName("Should throw exception when attempting to read private list without permission")
     void shouldThrowExceptionWhenNoReadPermission() {
-        // Arrange
         var ownerId = UUID.randomUUID();
         var strangerId = UUID.randomUUID();
         var bookList = BookList.create("Diary", "Personal", TypeBookList.PRIVATE, ownerId, List.of());
@@ -59,9 +55,8 @@ class GetAllMembershipsOfBookListUseCaseTest {
 
         when(bookListRepository.findById(any())).thenReturn(Optional.of(bookList));
 
-        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(query))
                 .isInstanceOf(BookListDomainException.class)
-                .hasMessage("User don't have permission to read this book list");
+                .hasMessage("User doesn't have permission to read this book list");
     }
 }

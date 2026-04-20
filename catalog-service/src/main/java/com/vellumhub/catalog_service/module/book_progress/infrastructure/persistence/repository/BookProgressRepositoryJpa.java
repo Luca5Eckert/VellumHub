@@ -19,5 +19,5 @@ public interface BookProgressRepositoryJpa extends JpaRepository<BookProgress, L
 
     List<BookProgress> findAllByUserIdAndReadingStatus(UUID userId, ReadingStatus status);
 
-    boolean existsByUserIdAndBookIdAndIsActive(UUID userId, UUID bookId);
+    boolean existsByUserIdAndBookIdAndIsActiveTrue(UUID userId, UUID bookId);
 }

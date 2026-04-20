@@ -22,13 +22,13 @@ class BookListTest {
     @DisplayName("Creation Rules")
     class CreationTests {
         @Test
-        @DisplayName("Should initialize list with owner as ADMIN member")
+        @DisplayName("Should initialize the list with the owner as OWNER")
         void shouldInitializeCorrectly() {
             var bookList = BookList.create("Title", "Desc", TypeBookList.PRIVATE, ownerId, new ArrayList<>());
 
             assertThat(bookList.getUserOwner()).isEqualTo(ownerId);
             assertThat(bookList.getMemberships()).hasSize(1);
-            assertThat(bookList.getMemberships().get(0).getRole()).isEqualTo(MembershipRole.ADMIN);
+            assertThat(bookList.getMemberships().get(0).getRole()).isEqualTo(MembershipRole.OWNER);
         }
     }
 

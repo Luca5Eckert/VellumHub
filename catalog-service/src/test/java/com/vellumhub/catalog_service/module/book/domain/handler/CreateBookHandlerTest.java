@@ -17,14 +17,15 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -53,7 +54,6 @@ class CreateBookHandlerTest {
         @Test
         @DisplayName("Should successfully create book, map genres and publish event")
         void shouldCreateBookSuccessfully() {
-            // Given
             var command = new CreateBookCommand(
                     "The Hobbit", "A great adventure", 1937, "J.R.R. Tolkien", "123456789",
                     310, "Allen & Unwin", "http://cover.url", Set.of("Fantasy", "Adventure")
@@ -70,11 +70,15 @@ class CreateBookHandlerTest {
 
             given(genreRepository.findByName("Fantasy")).willReturn(Optional.of(fantasyGenre));
             given(genreRepository.findByName("Adventure")).willReturn(Optional.of(adventureGenre));
+            UUID generatedBookId = UUID.randomUUID();
+            doAnswer(invocation -> {
+                Book savedBook = invocation.getArgument(0);
+                ReflectionTestUtils.setField(savedBook, "id", generatedBookId);
+                return null;
+            }).when(bookRepository).save(any(Book.class));
 
-            // When
             createBookHandler.execute(command);
 
-            // Then
             var bookCaptor = ArgumentCaptor.forClass(Book.class);
             then(bookRepository).should().save(bookCaptor.capture());
 
@@ -87,11 +91,12 @@ class CreateBookHandlerTest {
             var eventCaptor = ArgumentCaptor.forClass(CreateBookEvent.class);
             then(bookEventProducer).should().send(
                     eq("created-book"),
-                    anyString(), // Key usually maps to bookId, which is null until DB generates it
+                    eq(generatedBookId.toString()),
                     eventCaptor.capture()
             );
 
             CreateBookEvent capturedEvent = eventCaptor.getValue();
+            assertThat(capturedEvent.bookId()).isEqualTo(generatedBookId);
             assertThat(capturedEvent.title()).isEqualTo("The Hobbit");
             assertThat(capturedEvent.author()).isEqualTo("J.R.R. Tolkien");
             assertThat(capturedEvent.genres()).containsExactlyInAnyOrder("Fantasy", "Adventure");
@@ -105,7 +110,6 @@ class CreateBookHandlerTest {
         @Test
         @DisplayName("Should throw InvalidBookException when command is null")
         void shouldThrowExceptionWhenCommandIsNull() {
-            // When / Then
             assertThatThrownBy(() -> createBookHandler.execute(null))
                     .isInstanceOf(InvalidBookException.class)
                     .hasMessageContaining("Command cannot be null");
@@ -118,7 +122,6 @@ class CreateBookHandlerTest {
         @Test
         @DisplayName("Should throw InvalidBookException when book already exists")
         void shouldThrowExceptionWhenBookAlreadyExists() {
-            // Given
             var command = new CreateBookCommand(
                     "Existing Title", "Desc", 2024, "Author", "ISBN",
                     100, "Publisher", "url", Set.of("Sci-Fi")
@@ -127,12 +130,10 @@ class CreateBookHandlerTest {
             given(bookRepository.existByTitleAndAuthorAndIsbn("Existing Title", "Author", "ISBN"))
                     .willReturn(true);
 
-            // When / Then
             assertThatThrownBy(() -> createBookHandler.execute(command))
                     .isInstanceOf(InvalidBookException.class)
                     .hasMessageContaining("already exists");
 
-            // Integrity checks
             then(genreRepository).shouldHaveNoInteractions();
             then(bookRepository).should(never()).save(any());
             then(bookEventProducer).shouldHaveNoInteractions();
@@ -141,7 +142,6 @@ class CreateBookHandlerTest {
         @Test
         @DisplayName("Should throw BookRequestDomainException when genre does not exist")
         void shouldThrowExceptionWhenGenreNotFound() {
-            // Given
             var command = new CreateBookCommand(
                     "Title", "Desc", 2024, "Author", "ISBN",
                     100, "Publisher", "url", Set.of("Unknown Genre")
@@ -152,12 +152,10 @@ class CreateBookHandlerTest {
 
             given(genreRepository.findByName("Unknown Genre")).willReturn(Optional.empty());
 
-            // When / Then
             assertThatThrownBy(() -> createBookHandler.execute(command))
                     .isInstanceOf(BookRequestDomainException.class)
                     .hasMessageContaining("Genre not found: Unknown Genre");
 
-            // Integrity checks
             then(bookRepository).should(never()).save(any());
             then(bookEventProducer).shouldHaveNoInteractions();
         }

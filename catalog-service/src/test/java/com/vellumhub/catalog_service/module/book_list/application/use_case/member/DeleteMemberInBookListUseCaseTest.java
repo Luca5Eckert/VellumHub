@@ -35,7 +35,6 @@ class DeleteMemberInBookListUseCaseTest {
     @Test
     @DisplayName("Should successfully delete a member when user has permission")
     void shouldDeleteMemberSuccessfully() {
-        // Arrange
         var ownerId = UUID.randomUUID();
         var memberId = UUID.randomUUID();
         var bookList = BookList.create("Fantasy List", "Desc", TypeBookList.PUBLIC, ownerId, List.of());
@@ -44,10 +43,8 @@ class DeleteMemberInBookListUseCaseTest {
         var command = new DeleteMemberInBookListCommand(ownerId, memberId, bookList.getId());
         when(bookListRepository.findById(any())).thenReturn(Optional.of(bookList));
 
-        // Act
         useCase.execute(command);
 
-        // Assert
         verify(bookListRepository).save(bookList);
         assertThat(bookList.isMember(memberId)).isFalse();
     }
@@ -55,14 +52,12 @@ class DeleteMemberInBookListUseCaseTest {
     @Test
     @DisplayName("Should throw exception when attempting to delete the owner")
     void shouldThrowExceptionWhenTryingToRemoveOwner() {
-        // Arrange
         var ownerId = UUID.randomUUID();
         var bookList = BookList.create("Fantasy List", "Desc", TypeBookList.PUBLIC, ownerId, List.of());
         var command = new DeleteMemberInBookListCommand(ownerId, ownerId, bookList.getId());
 
         when(bookListRepository.findById(any())).thenReturn(Optional.of(bookList));
 
-        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(command))
                 .isInstanceOf(BookListDomainException.class)
                 .hasMessage("Owner can't be removed from the book list");
@@ -71,7 +66,6 @@ class DeleteMemberInBookListUseCaseTest {
     @Test
     @DisplayName("Should throw exception when user lacks permission to delete members")
     void shouldThrowExceptionWhenUserLacksPermission() {
-        // Arrange
         var ownerId = UUID.randomUUID();
         var viewerId = UUID.randomUUID();
         var targetMemberId = UUID.randomUUID();
@@ -79,12 +73,11 @@ class DeleteMemberInBookListUseCaseTest {
         bookList.addMember(viewerId, MembershipRole.VIEWER);
         bookList.addMember(targetMemberId, MembershipRole.VIEWER);
 
-        var command = new DeleteMemberInBookListCommand(bookList.getId(), viewerId, targetMemberId);
+        var command = new DeleteMemberInBookListCommand(viewerId, targetMemberId, bookList.getId());
         when(bookListRepository.findById(any())).thenReturn(Optional.of(bookList));
 
-        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(command))
                 .isInstanceOf(BookListDomainException.class)
-                .hasMessage("User don't have permission to delete member from this book list");
+                .hasMessage("User doesn't have permission to delete a member from this book list");
     }
 }

@@ -46,8 +46,6 @@ class DefineBookStatusUseCaseTest {
         userId = UUID.randomUUID();
         bookId = UUID.randomUUID();
         book = mock(Book.class);
-        when(book.getId()).thenReturn(bookId);
-        when(book.getPageCount()).thenReturn(300);
     }
 
     @Nested
@@ -127,6 +125,7 @@ class DefineBookStatusUseCaseTest {
             when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
             when(bookProgressRepository.existsByUserIdAndBookIdAndIsActive(userId, bookId))
                     .thenReturn(false);
+            when(book.getPageCount()).thenReturn(300);
 
             CreateBookProgressEvent event = useCase.execute(command);
 
@@ -135,13 +134,11 @@ class DefineBookStatusUseCaseTest {
         }
 
         @Test
-        void shouldNotCheckForDuplicateReadingWhenStatusIsNotReading() {
+        void shouldAllowWantToReadStatusWhenBookExists() {
             DefineBookStatusCommand command = new DefineBookStatusCommand(
                     userId, bookId, ReadingStatus.WANT_TO_READ, 0, null, null
             );
             when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
-            when(bookProgressRepository.existsByUserIdAndBookIdAndIsActive(userId, bookId))
-                    .thenReturn(false);
 
             assertThatNoException().isThrownBy(() -> useCase.execute(command));
         }

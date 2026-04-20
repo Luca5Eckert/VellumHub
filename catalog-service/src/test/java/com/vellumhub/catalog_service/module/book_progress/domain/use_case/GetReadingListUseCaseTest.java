@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class GetReadingListUseCaseTest {
@@ -32,7 +31,6 @@ class GetReadingListUseCaseTest {
 
     private BookProgress readingProgress(UUID userId, int currentPage) {
         Book book = mock(Book.class);
-        when(book.getPageCount()).thenReturn(300);
         return BookProgress.create(userId, book, currentPage, ReadingStatus.READING, OffsetDateTime.now(), null);
     }
 

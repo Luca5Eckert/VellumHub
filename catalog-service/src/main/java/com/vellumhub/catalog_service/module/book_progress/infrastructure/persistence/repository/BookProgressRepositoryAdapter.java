@@ -52,6 +52,6 @@ public class BookProgressRepositoryAdapter implements BookProgressRepository {
 
     @Override
     public boolean existsByUserIdAndBookIdAndIsActive(UUID userId, UUID bookId) {
-        return bookProgressRepositoryJpa.existsByUserIdAndBookIdAndIsActive(userId, bookId);
+        return bookProgressRepositoryJpa.existsByUserIdAndBookIdAndIsActiveTrue(userId, bookId);
     }
 }

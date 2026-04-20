@@ -3,11 +3,14 @@ package com.vellumhub.catalog_service.share.exception;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotExistException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressConflictException;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -118,7 +121,52 @@ public class GlobalExceptionHandler {
                 .status(status.value())
                 .error("Book Progress Error")
                 .message(ex.getMessage())
-                .details(List.of("Business rule violation in book domain"))
+                .details(List.of("Business rule violation in book progress domain"))
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build());
+    }
+
+    @ExceptionHandler(BookProgressConflictException.class)
+    public ResponseEntity<ApiResponseError> handleBookProgressConflictException(
+            BookProgressConflictException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.CONFLICT;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value())
+                .error("Book Progress Conflict")
+                .message(ex.getMessage())
+                .details(List.of("The requested operation conflicts with the current book progress state"))
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build());
+    }
+
+    @ExceptionHandler(BookProgressNotFoundException.class)
+    public ResponseEntity<ApiResponseError> handleBookProgressNotFoundException(
+            BookProgressNotFoundException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value())
+                .error("Book Progress Not Found")
+                .message(ex.getMessage())
+                .details(List.of("The requested book progress resource was not found"))
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponseError> handleAccessDeniedException(
+            AccessDeniedException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.FORBIDDEN;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value())
+                .error("Access Denied")
+                .message("You do not have permission to access this resource")
+                .details(List.of("The authenticated user is not authorized to perform this operation"))
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
