@@ -36,15 +36,14 @@ public class ReadingSessionEntry {
     @ManyToOne(fetch = FetchType.EAGER)
     private BookSnapshot bookSnapshot;
 
-    @Enumerated(EnumType.STRING)
-    private ReadingSessionType readingSessionType;
+    private String type;
 
     private Instant timestamp;
 
-    public static ReadingSessionEntry create(UUID bookProgressId, BookSnapshot bookSnapshot, UUID userId, ReadingSessionType type, int pageRead) {
+    public static ReadingSessionEntry create(UUID bookProgressId, BookSnapshot bookSnapshot, UUID userId, String type, int pageRead) {
         return ReadingSessionEntry.builder()
                 .readingSessionId(bookProgressId)
-                .readingSessionType(type)
+                .type(type)
                 .userId(userId)
                 .bookSnapshot(bookSnapshot)
                 .pageRead(pageRead)
