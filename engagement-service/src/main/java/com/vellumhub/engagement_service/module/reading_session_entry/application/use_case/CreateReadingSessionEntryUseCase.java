@@ -4,10 +4,8 @@ import com.vellumhub.engagement_service.module.book_snapshot.domain.exception.Bo
 import com.vellumhub.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
 import com.vellumhub.engagement_service.module.book_snapshot.domain.port.BookSnapshotRepository;
 import com.vellumhub.engagement_service.module.reading_session_entry.application.command.CreateReadingSessionEntryCommand;
-import com.vellumhub.engagement_service.module.reading_session_entry.domain.event.CreateReadingSessionEvent;
 import com.vellumhub.engagement_service.module.reading_session_entry.domain.model.ReadingSessionEntry;
 import com.vellumhub.engagement_service.module.reading_session_entry.domain.port.ReadingSessionEntryRepository;
-import com.vellumhub.engagement_service.module.reading_session_entry.domain.port.ReadingSessionEventPublisher;
 import com.vellumhub.engagement_service.share.port.RequestContext;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -21,13 +19,11 @@ public class CreateReadingSessionEntryUseCase {
     private final BookSnapshotRepository bookSnapshotRepository;
 
     private final RequestContext requestContext;
-    private final ReadingSessionEventPublisher<String, CreateReadingSessionEvent> eventPublisher;
 
-    public CreateReadingSessionEntryUseCase(ReadingSessionEntryRepository readingSessionEntryRepository, BookSnapshotRepository bookSnapshotRepository, RequestContext requestContext, ReadingSessionEventPublisher<String, CreateReadingSessionEvent> eventPublisher) {
+    public CreateReadingSessionEntryUseCase(ReadingSessionEntryRepository readingSessionEntryRepository, BookSnapshotRepository bookSnapshotRepository, RequestContext requestContext) {
         this.readingSessionEntryRepository = readingSessionEntryRepository;
         this.bookSnapshotRepository = bookSnapshotRepository;
         this.requestContext = requestContext;
-        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -38,20 +34,14 @@ public class CreateReadingSessionEntryUseCase {
         UUID userId = requestContext.getUserId();
 
         var readingSessionEntry = ReadingSessionEntry.create(
+                command.bookProgressId(),
                 bookSnapshot,
                 userId,
-                command.readingSessionType(),
+                command.type(),
                 command.pageRead()
         );
 
         readingSessionEntryRepository.save(readingSessionEntry);
-
-        var event = CreateReadingSessionEvent.of(readingSessionEntry);
-        eventPublisher.publish(
-                "create-reading-session-entry",
-                event.bookId().toString(),
-                event
-        );
     }
 
 }
