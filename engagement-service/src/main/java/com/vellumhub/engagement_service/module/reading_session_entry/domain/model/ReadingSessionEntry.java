@@ -19,6 +19,8 @@ public class ReadingSessionEntry {
     @Id
     private Long id;
 
+    private UUID readingSessionId;
+
     @Column(
             nullable = false,
             name = "user_id"
@@ -39,8 +41,9 @@ public class ReadingSessionEntry {
 
     private Instant timestamp;
 
-    public static ReadingSessionEntry create(BookSnapshot bookSnapshot, UUID userId, ReadingSessionType type, int pageRead) {
+    public static ReadingSessionEntry create(UUID bookProgressId, BookSnapshot bookSnapshot, UUID userId, ReadingSessionType type, int pageRead) {
         return ReadingSessionEntry.builder()
+                .readingSessionId(bookProgressId)
                 .readingSessionType(type)
                 .userId(userId)
                 .bookSnapshot(bookSnapshot)
