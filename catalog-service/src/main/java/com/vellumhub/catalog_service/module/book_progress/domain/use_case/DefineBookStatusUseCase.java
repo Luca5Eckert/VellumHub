@@ -50,6 +50,7 @@ public class DefineBookStatusUseCase {
         bookProgressRepository.save(bookProgress);
 
         return new CreateBookProgressEvent(
+                bookProgress.getId(),
                 command.userId(),
                 command.bookId(),
                 bookProgress.getReadingStatus().name(),
