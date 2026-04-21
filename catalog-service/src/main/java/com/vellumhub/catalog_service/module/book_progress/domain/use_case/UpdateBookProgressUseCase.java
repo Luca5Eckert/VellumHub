@@ -33,6 +33,7 @@ public class UpdateBookProgressUseCase {
           bookProgressRepository.save(bookProgress);
 
           return new UpdateBookProgressEvent(
+                  bookProgress.getId(),
                   command.userId(),
                   command.bookId(),
                   bookProgress.getReadingStatus().name(),
