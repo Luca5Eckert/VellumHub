@@ -41,9 +41,11 @@ class DefineBookStatusHandlerTest {
 
     private UUID userId;
     private UUID bookId;
+    private UUID bookProgressId;
 
     @BeforeEach
     void setUp() {
+        bookProgressId = UUID.randomUUID();
         userId = UUID.randomUUID();
         bookId = UUID.randomUUID();
     }
@@ -55,7 +57,7 @@ class DefineBookStatusHandlerTest {
         void shouldBuildCommandFromRequestAndDelegateToUseCase() {
             OffsetDateTime startedAt = OffsetDateTime.now();
             BookStatusRequest request = new BookStatusRequest(ReadingStatus.READING, 10, startedAt, null);
-            CreateBookProgressEvent event = new CreateBookProgressEvent(userId, bookId, "READING", 10);
+            CreateBookProgressEvent event = new CreateBookProgressEvent(bookProgressId, userId, bookId, "READING", 10);
 
             when(defineBookStatusUseCase.execute(any())).thenReturn(event);
 
@@ -76,7 +78,7 @@ class DefineBookStatusHandlerTest {
         @Test
         void shouldPublishEventWithUserIdAsKeyToConfiguredTopic() {
             BookStatusRequest request = new BookStatusRequest(ReadingStatus.READING, 0, null, null);
-            CreateBookProgressEvent event = new CreateBookProgressEvent(userId, bookId, "READING", 0);
+            CreateBookProgressEvent event = new CreateBookProgressEvent(bookProgressId, userId, bookId, "READING", 0);
 
             when(defineBookStatusUseCase.execute(any())).thenReturn(event);
 

@@ -34,12 +34,11 @@ class CreateBookSnapshotUseCaseTest {
 
         when(bookSnapshotRepository.findById(bookId)).thenReturn(Optional.empty());
 
-        createBookSnapshotUseCase.execute(new CreateBookSnapshotCommand(bookId, 320));
+        createBookSnapshotUseCase.execute(new CreateBookSnapshotCommand(bookId));
 
         ArgumentCaptor<BookSnapshot> captor = ArgumentCaptor.forClass(BookSnapshot.class);
         verify(bookSnapshotRepository).save(captor.capture());
         assertThat(captor.getValue().getBookId()).isEqualTo(bookId);
-        assertThat(captor.getValue().getPageCount()).isEqualTo(320);
     }
 
     @Test
@@ -48,13 +47,11 @@ class CreateBookSnapshotUseCaseTest {
         UUID bookId = UUID.randomUUID();
         BookSnapshot existing = new BookSnapshot();
         existing.setBookId(bookId);
-        existing.setPageCount(100);
 
         when(bookSnapshotRepository.findById(bookId)).thenReturn(Optional.of(existing));
 
-        createBookSnapshotUseCase.execute(new CreateBookSnapshotCommand(bookId, 250));
+        createBookSnapshotUseCase.execute(new CreateBookSnapshotCommand(bookId));
 
         verify(bookSnapshotRepository).save(existing);
-        assertThat(existing.getPageCount()).isEqualTo(250);
     }
 }
