@@ -1,5 +1,6 @@
 package com.vellumhub.engagement_service.module.reading_session_entry.infrastructure.event;
 
+import com.vellumhub.engagement_service.module.reading_session_entry.infrastructure.kafka.publisher.KafkaReadingSessionEventPublisher;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

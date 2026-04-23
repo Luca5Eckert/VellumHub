@@ -1,4 +1,4 @@
-package com.vellumhub.engagement_service.module.reading_session_entry.infrastructure.event;
+package com.vellumhub.engagement_service.module.reading_session_entry.infrastructure.kafka.publisher;
 
 import com.vellumhub.engagement_service.module.reading_session_entry.domain.port.ReadingSessionEventPublisher;
 import lombok.extern.slf4j.Slf4j;
