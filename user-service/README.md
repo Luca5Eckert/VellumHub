@@ -79,10 +79,16 @@ Config keys:
 - `JWT_EXPIRATION_MS` (milliseconds, minimum `60000`)
 - `GOOGLE_CLIENT_ID`
 
-Generate a secure local secret with:
+Generate a secure local secret with OpenSSL:
 
 ```bash
 openssl rand -base64 32
+```
+
+On Windows PowerShell without OpenSSL, generate the same kind of Base64 key with:
+
+```powershell
+$bytes = New-Object byte[] 32; $rng = New-Object System.Security.Cryptography.RNGCryptoServiceProvider; $rng.GetBytes($bytes); [Convert]::ToBase64String($bytes); $rng.Dispose()
 ```
 
 ---

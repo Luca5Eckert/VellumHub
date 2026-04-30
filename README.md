@@ -676,7 +676,19 @@ GOOGLE_CLIENT_ID=your_google_client_id
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 ```
 
-Generate `JWT_KEY` with `openssl rand -base64 32`. `JWT_EXPIRATION_MS` is expressed in milliseconds.
+Generate `JWT_KEY` with OpenSSL:
+
+```bash
+openssl rand -base64 32
+```
+
+On Windows PowerShell without OpenSSL, generate the same kind of Base64 key with:
+
+```powershell
+$bytes = New-Object byte[] 32; $rng = New-Object System.Security.Cryptography.RNGCryptoServiceProvider; $rng.GetBytes($bytes); [Convert]::ToBase64String($bytes); $rng.Dispose()
+```
+
+`JWT_EXPIRATION_MS` is expressed in milliseconds.
 
 ### Start All Services
 
