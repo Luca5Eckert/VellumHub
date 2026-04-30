@@ -4,9 +4,11 @@ import com.vellumhub.engagement_service.share.exception.UserNotAuthenticatedExce
 import com.vellumhub.engagement_service.share.port.RequestContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+@Component
 public class JwtRequestContext implements RequestContext {
 
     @Override
