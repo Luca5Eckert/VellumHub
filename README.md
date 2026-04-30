@@ -670,11 +670,13 @@ The HNSW index provides sub-linear query time for approximate nearest-neighbor s
 ```env
 POSTGRES_USER=your_user
 POSTGRES_PASSWORD=your_password
-JWT_KEY=your_jwt_secret
-JWT_EXPIRATION=86400000
+JWT_KEY=base64_encoded_secret_at_least_32_bytes
+JWT_EXPIRATION_MS=604800000
 GOOGLE_CLIENT_ID=your_google_client_id
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 ```
+
+Generate `JWT_KEY` with `openssl rand -base64 32`. `JWT_EXPIRATION_MS` is expressed in milliseconds.
 
 ### Start All Services
 

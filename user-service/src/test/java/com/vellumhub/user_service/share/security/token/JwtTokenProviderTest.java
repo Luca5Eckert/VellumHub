@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JwtTokenProviderTest {
 
@@ -49,6 +50,33 @@ class JwtTokenProviderTest {
                 .containsExactlyInAnyOrder("ROLE_USER", "ROLE_ADMIN");
         assertThat(claims.getExpiration()).isAfter(new Date());
         assertThat(claims.getIssuedAt()).isBeforeOrEqualTo(new Date());
+    }
+
+    @Test
+    @DisplayName("Should reject JWT expiration below one minute")
+    void shouldRejectJwtExpirationBelowOneMinute() {
+        assertThatThrownBy(() -> new JwtTokenProvider(SECRET_KEY, 59_999))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("jwt.expiration-ms")
+                .hasMessageContaining("60000");
+    }
+
+    @Test
+    @DisplayName("Should reject JWT secret that is not Base64 encoded")
+    void shouldRejectJwtSecretThatIsNotBase64Encoded() {
+        assertThatThrownBy(() -> new JwtTokenProvider("not-a-base64-secret!", EXPIRATION_MS))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("jwt.secret")
+                .hasMessageContaining("Base64");
+    }
+
+    @Test
+    @DisplayName("Should reject JWT secret shorter than 32 decoded bytes")
+    void shouldRejectJwtSecretShorterThanThirtyTwoDecodedBytes() {
+        assertThatThrownBy(() -> new JwtTokenProvider("dG9vLXNob3J0", EXPIRATION_MS))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("jwt.secret")
+                .hasMessageContaining("32 bytes");
     }
 
     private Claims parseToken(String token) {

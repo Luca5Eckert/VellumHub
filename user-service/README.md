@@ -75,9 +75,15 @@ GET    /users/me
 
 Config keys:
 
-- `JWT_KEY`
-- `JWT_EXPIRATION`
+- `JWT_KEY` (Base64-encoded secret, minimum 32 decoded bytes)
+- `JWT_EXPIRATION_MS` (milliseconds, minimum `60000`)
 - `GOOGLE_CLIENT_ID`
+
+Generate a secure local secret with:
+
+```bash
+openssl rand -base64 32
+```
 
 ---
 
@@ -130,7 +136,7 @@ docker-compose up -d user-service
 
 - `SPRING_DATASOURCE_*`
 - `KAFKA_BOOTSTRAP_SERVERS`
-- `JWT_KEY`, `JWT_EXPIRATION`
+- `JWT_KEY`, `JWT_EXPIRATION_MS`
 - `GOOGLE_CLIENT_ID`
 
 ---

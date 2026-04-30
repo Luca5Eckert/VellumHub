@@ -47,8 +47,8 @@ if [ ! -f .env ]; then
 # Temporary test values - NOT FOR PRODUCTION USE
 POSTGRES_USER=test_user
 POSTGRES_PASSWORD=dummy_password_for_validation_only
-JWT_KEY=temporary-test-jwt-secret-key-for-validation-purposes-only
-JWT_EXPIRATION=86400000
+JWT_KEY=VGhpcy1pcy1hLXZlcnktc2VjdXJlLWJhc2U2NC1zZWNyZXQ=
+JWT_EXPIRATION_MS=86400000
 ENVEOF
     TEMP_ENV_CREATED=true
 fi
