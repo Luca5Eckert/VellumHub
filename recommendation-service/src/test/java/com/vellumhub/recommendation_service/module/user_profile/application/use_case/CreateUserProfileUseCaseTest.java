@@ -13,6 +13,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +28,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("CreateUserProfileUseCase")
 class CreateUserProfileUseCaseTest {
 
@@ -52,6 +55,7 @@ class CreateUserProfileUseCaseTest {
         for (int i = 0; i < 384; i++) {
             vectors[i] = (float) Math.random();
         }
+        when(userProfileRepository.findById(any(UUID.class))).thenReturn(java.util.Optional.empty());
     }
 
     @Nested
@@ -92,7 +96,18 @@ class CreateUserProfileUseCaseTest {
             useCase.execute(command);
 
             verify(userProfileRepository).save(captor.capture());
-            assertThat(captor.getValue().getProfileVector()).isEqualTo(vectors);
+            // The vector is normalized after learning, so we check that it has unit magnitude
+            float[] savedVector = captor.getValue().getProfileVector();
+            double magnitude = calculateMagnitude(savedVector);
+            assertThat(magnitude).isCloseTo(1.0, org.assertj.core.api.Assertions.within(1e-5));
+        }
+        
+        private double calculateMagnitude(float[] vector) {
+            double sumOfSquares = 0.0;
+            for (float v : vector) {
+                sumOfSquares += v * v;
+            }
+            return Math.sqrt(sumOfSquares);
         }
 
         @Test
@@ -158,7 +173,8 @@ class CreateUserProfileUseCaseTest {
                     .isInstanceOf(RuntimeException.class)
                     .hasMessage("Embedding service unavailable");
 
-            verifyNoInteractions(userProfileRepository);
+            // findById is called before provider throws, but save should not be called
+            verify(userProfileRepository, never()).save(any(UserProfile.class));
         }
 
         @Test
@@ -185,7 +201,8 @@ class CreateUserProfileUseCaseTest {
                 useCase.execute(command);
             } catch (RuntimeException ignored) {}
 
-            verifyNoInteractions(userProfileRepository);
+            // findById is called before provider throws, but save should not be called
+            verify(userProfileRepository, never()).save(any(UserProfile.class));
         }
 
         @Test

@@ -12,6 +12,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -52,9 +53,11 @@ public class UserProfile {
     }
 
     public static UserProfile create(UUID userId) {
+        float[] vector = new float[384];
+        Arrays.fill(vector, 0.5f);
         return new UserProfile(
                 userId,
-                new float[384],
+                vector,
                 new HashSet<>(),
                 0.0,
                 Instant.now(),
