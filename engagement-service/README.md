@@ -1,48 +1,51 @@
-# ⭐ Engagement Service
+# Engagement Service
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x-green)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
-[![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-black)](https://kafka.apache.org/)
-[![Swagger](https://img.shields.io/badge/OpenAPI-3.0-brightgreen)](https://swagger.io/specification/)
+[![Kafka](https://img.shields.io/badge/Kafka-producer%20%2F%20consumer-black)](https://kafka.apache.org/)
+[![OpenAPI](https://img.shields.io/badge/OpenAPI-Springdoc-brightgreen)](https://springdoc.org/)
 
-The **Engagement Service** captures interaction signals from readers and publishes these signals to power recommendation profile updates.
+The Engagement Service exists to capture what readers do with books: ratings, reactions, and reading-progress history derived from catalog events.
 
-It also maintains a local `book_snapshot` model from catalog events to reduce synchronous coupling.
+It turns user behavior into durable engagement records and Kafka signals that recommendation can learn from.
 
----
+## Why This Service Exists
 
-## Table of Contents
+- Own reader feedback such as ratings and reactions.
+- Publish recommendation-relevant interaction events.
+- Maintain local book snapshots from catalog events.
+- Store replicated reading progress history from catalog progress events.
+- Keep engagement workflows independent from synchronous catalog lookups.
 
-- [Service Role in VellumHub](#service-role-in-vellumhub)
-- [Domain Modules](#domain-modules)
-- [HTTP API Surface](#http-api-surface)
-- [Event Contract](#event-contract)
-- [Data Ownership](#data-ownership)
-- [Security Rules](#security-rules)
-- [Observability and API Docs](#observability-and-api-docs)
-- [Quick Start](#quick-start)
+## What It Owns
 
----
+| Concern | Owned here |
+|---|---|
+| Ratings | User rating creation, update, delete, and lookup |
+| Reactions | User reaction lifecycle and lookup |
+| Book snapshots | Local book copy populated from catalog events |
+| Reading history | Reading session/progress entries consumed from Kafka |
+| Database | `engagement_db` |
+| Engagement events | `created-rating`, `user-reaction-changed` |
 
-## Service Role in VellumHub
+## What It Does Not Own
 
-- Captures explicit feedback (`rating`, `reaction`)
-- Publishes recommendation-relevant interaction events
-- Replicates catalog deltas locally via ECST consumers
+- Book source-of-truth data.
+- Current reading progress writes.
+- User identity or JWT issuing.
+- Recommendation ranking or vector learning.
 
----
+Catalog owns current reading progress. Engagement stores the replicated history/projection that lets interaction workflows avoid synchronous catalog dependency.
 
 ## Domain Modules
 
 | Module | Responsibility |
 |---|---|
-| `rating` | CRUD/query of ratings with filters and pagination |
-| `reaction` | User reaction lifecycle and lookup |
-| `reading_session_entry` | Reading session event publishing |
-| `book_snapshot` | Local copy of book records from catalog events |
-
----
+| `rating` | Rating commands, queries, persistence, and `created-rating` publication |
+| `reaction` | Reaction lifecycle and `user-reaction-changed` publication |
+| `book_snapshot` | Local copy of catalog book state |
+| `reading_session_entry` | Kafka-driven reading progress history entries |
 
 ## HTTP API Surface
 
@@ -50,7 +53,6 @@ Base paths:
 
 - `/rating`
 - `/reactions`
-- `/reading-session-entries`
 
 Representative endpoints:
 
@@ -66,75 +68,92 @@ POST   /reactions
 PUT    /reactions/{id}
 GET    /reactions/{id}
 GET    /reactions
-
-POST   /reading-session-entries
 ```
 
----
+Reading session entries are currently populated by Kafka consumers, not by a public REST controller.
+
+Through the gateway, engagement routes are exposed under:
+
+```http
+/api/v1/engagement/**
+```
 
 ## Event Contract
 
 Produced topics:
 
-- `created-rating`
-- `user-reaction-changed`
-- reading-session topic(s) from `reading_session_entry`
+| Topic | Trigger | Consumer |
+|---|---|---|
+| `created-rating` | New rating | `recommendation-service` |
+| `user-reaction-changed` | New or updated reaction | `recommendation-service` |
 
 Consumed topics:
 
-- `created-book`
-- `updated-book`
-- `deleted-book`
+| Topic | Producer | Local use |
+|---|---|---|
+| `created-book` | Catalog | Create/update local book snapshot |
+| `deleted-book` | Catalog | Remove local book snapshot |
+| `create-reading-progress` | Catalog | Create reading progress history entry |
+| `update-reading-progress` | Catalog contract hardening target | Update reading progress history entry |
 
-Kafka retry and DLT processing are configured in `share/config/KafkaRetryConfig`.
-
----
+Kafka retry and DLT handling are centralized in `share/config/KafkaRetryConfig`.
 
 ## Data Ownership
 
-Primary DB: `engagement_db`.
+Primary database: `engagement_db`.
 
-Core persisted domains include ratings, reactions, and local book snapshot state used in engagement workflows.
+Core persisted concepts:
 
----
+- ratings;
+- reactions;
+- book snapshots;
+- reading session/progress history entries.
+
+Engagement data is behavioral. It should not become the source of truth for catalog metadata or recommendation vectors.
 
 ## Security Rules
 
-- JWT authentication required
-- User context extracted server-side for write operations
-- Ownership checks in update/delete interaction operations
-
----
+- JWT authentication required for protected endpoints.
+- User context is extracted server-side for write operations.
+- Ownership checks apply to update/delete interaction operations.
 
 ## Observability and API Docs
 
-- Actuator: `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`
-- Swagger UI: `/swagger-ui/index.html`
-- OpenAPI: `/v3/api-docs`
+| Resource | Path |
+|---|---|
+| Swagger UI | `/swagger-ui/index.html` |
+| OpenAPI JSON | `/v3/api-docs` |
+| Health | `/actuator/health` |
+| Metrics | `/actuator/metrics` |
+| Prometheus | `/actuator/prometheus` |
 
----
+## Run Locally
 
-## Quick Start
-
-### Run locally
+Standalone:
 
 ```bash
 cd engagement-service
 ./mvnw spring-boot:run
 ```
 
-### Run via Docker Compose
+Windows PowerShell:
 
-```bash
-docker-compose up -d engagement-service
+```powershell
+cd engagement-service
+.\mvnw.cmd spring-boot:run
 ```
 
-### Configuration highlights
+With Docker Compose from the repository root:
 
-- `SPRING_DATASOURCE_*`
-- `KAFKA_BOOTSTRAP_SERVERS`
-- `JWT_KEY`
+```bash
+docker-compose up -d engagement-service postgres-engagement kafka
+```
 
----
+## Verify
 
-See [root README](../README.md) for full event backbone context.
+```powershell
+cd engagement-service
+.\mvnw.cmd test
+```
+
+For the platform event backbone and known Kafka contract hardening work, see the [root README](../README.md).

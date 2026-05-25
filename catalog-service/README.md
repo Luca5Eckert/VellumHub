@@ -1,50 +1,49 @@
-# 📚 Catalog Service
+# Catalog Service
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x-green)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
-[![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-black)](https://kafka.apache.org/)
-[![Swagger](https://img.shields.io/badge/OpenAPI-3.0-brightgreen)](https://swagger.io/specification/)
+[![Kafka](https://img.shields.io/badge/Kafka-producer-black)](https://kafka.apache.org/)
+[![OpenAPI](https://img.shields.io/badge/OpenAPI-Springdoc-brightgreen)](https://springdoc.org/)
 
-The **Catalog Service** owns the full catalog domain: books, requests, user book lists/memberships, and reading progress.
+The Catalog Service exists to be the source of truth for books and current reading state.
 
-It is a write-source service that emits catalog and progress events consumed by downstream read models.
+It owns catalog writes and publishes book/progress events so downstream services can build local read models without sharing the catalog database.
 
----
+## Why This Service Exists
 
-## Table of Contents
+- Own book records, metadata, covers, and ISBN-based creation.
+- Manage community book requests and admin approval.
+- Own user book lists and memberships.
+- Own current reading progress/status for a user and a book.
+- Emit catalog events used by recommendation and engagement projections.
 
-- [Service Role in VellumHub](#service-role-in-vellumhub)
-- [Domain Modules](#domain-modules)
-- [HTTP API Surface](#http-api-surface)
-- [Event Contract](#event-contract)
-- [Data Ownership](#data-ownership)
-- [Security Rules](#security-rules)
-- [Observability and API Docs](#observability-and-api-docs)
-- [Quick Start](#quick-start)
+## What It Owns
 
----
+| Concern | Owned here |
+|---|---|
+| Books | CRUD, search/pagination, ISBN creation, bulk lookup, covers |
+| Book requests | User submission and admin approval |
+| Book lists | User-curated lists, members, roles, add/remove books |
+| Current reading state | Reading status, current page, reading list |
+| Database | `catalog_db` |
+| Catalog events | Book lifecycle and reading progress events |
 
-## Service Role in VellumHub
+## What It Does Not Own
 
-- System of record for catalog entities
-- Publishes book lifecycle events (`created-book`, `updated-book`, `deleted-book`)
-- Publishes reading interaction updates (`updated-progress`)
-- Supplies data mirrored by Recommendation and Engagement services through ECST
-
----
+- User identity or JWT issuing.
+- Ratings and reactions.
+- Recommendation ranking or user profile vectors.
 
 ## Domain Modules
 
 | Module | Responsibility |
 |---|---|
-| `book` | Core CRUD, ISBN-based creation, bulk retrieval, cover upload/retrieval |
-| `book_request` | Community submission and admin approval flow |
-| `book_list` | Curated lists, filters, and add/remove books |
-| `book_list/membership` | Membership and role management inside lists |
-| `book_progress` | User reading status/page progress lifecycle |
-
----
+| `book` | Book aggregate, CRUD, ISBN provider integration, cover handling |
+| `book_request` | Community request and approval workflow |
+| `book_list` | Lists, filters, member roles, and book membership |
+| `book_progress` | Current reading status and current-page lifecycle |
+| `files/books` | Local cover file access |
 
 ## HTTP API Surface
 
@@ -93,72 +92,88 @@ POST   /book-progress/{bookId}/status
 PUT    /book-progress/{bookId}/progress
 DELETE /book-progress/{bookId}
 GET    /book-progress/reading-list
+
+GET    /files/books/{filename}
 ```
 
----
+Through the gateway, catalog routes are exposed under:
+
+```http
+/api/v1/catalog/**
+```
 
 ## Event Contract
 
 Produced Kafka topics:
 
-- `created-book`
-- `updated-book`
-- `deleted-book`
-- `updated-progress`
+| Topic | Trigger | Downstream use |
+|---|---|---|
+| `created-book` | Book creation or request approval | Recommendation book features, engagement book snapshot |
+| `updated-book` | Book update | Recommendation feature/metadata refresh |
+| `deleted-book` | Book deletion | Recommendation cleanup, engagement snapshot cleanup |
+| `create-reading-progress` | Reading status/progress initialization | Engagement reading history |
+| `updated-reading-progress` | Current page/progress update | Recommendation profile learning |
 
-Downstream usage:
-
-- Recommendation Service: update `book_features`, profile learning inputs, recommendation denormalized state
-- Engagement Service: update local `book_snapshot`
-
----
+The reading-progress topic names are part of the current Kafka contract hardening tracked in the root README.
 
 ## Data Ownership
 
-Primary DB: `catalog_db`.
+Primary database: `catalog_db`.
 
-Core aggregates include books, requests, lists/memberships, and user progress tracking. Other services should consume catalog truth via API/events (no shared DB contracts).
+Core aggregates:
 
----
+- books;
+- genres;
+- book requests;
+- book lists;
+- list memberships;
+- current book progress.
+
+Downstream services should consume catalog truth through HTTP or Kafka events, not through shared database access.
 
 ## Security Rules
 
-- JWT required for protected endpoints
-- `ADMIN` required for mutating book catalog and request approval
-- User-scoped flows for list membership and reading progress
-
----
+- JWT required for protected catalog flows.
+- Admin-only operations for catalog mutation and request approval.
+- User-scoped access for lists, memberships, and reading progress.
 
 ## Observability and API Docs
 
-- Actuator: `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`
-- Swagger UI: `/swagger-ui/index.html`
-- OpenAPI: `/v3/api-docs`
+| Resource | Path |
+|---|---|
+| Swagger UI | `/swagger-ui/index.html` |
+| OpenAPI JSON | `/v3/api-docs` |
+| Health | `/actuator/health` |
+| Metrics | `/actuator/metrics` |
+| Prometheus | `/actuator/prometheus` |
 
----
+## Run Locally
 
-## Quick Start
-
-### Run locally
+Standalone:
 
 ```bash
 cd catalog-service
 ./mvnw spring-boot:run
 ```
 
-### Run via Docker Compose
+Windows PowerShell:
 
-```bash
-docker-compose up -d catalog-service
+```powershell
+cd catalog-service
+.\mvnw.cmd spring-boot:run
 ```
 
-### Configuration highlights
+With Docker Compose from the repository root:
 
-- `SERVER_PORT` (default `8080`)
-- `SPRING_DATASOURCE_*`
-- `KAFKA_BOOTSTRAP_SERVERS`
-- `JWT_KEY`
+```bash
+docker-compose up -d catalog-service postgres-catalog kafka
+```
 
----
+## Verify
 
-See [root README](../README.md) for cross-service topology.
+```powershell
+cd catalog-service
+.\mvnw.cmd test
+```
+
+For full platform topology and event flow, see the [root README](../README.md).

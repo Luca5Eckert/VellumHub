@@ -72,16 +72,18 @@ graph TB
     Engagement --> EngagementDb[(engagement_db\nPostgreSQL)]
     Recommendation --> RecommendationDb[(recommendation_db\nPostgreSQL + pgvector)]
 
-    User --> Kafka[(Kafka)]
-    Catalog --> Kafka
-    Engagement --> Kafka
+    User -->|preferences| Kafka[(Kafka Event Backbone\n\nbook lifecycle topics\nreading progress topics\nrating/reaction topics\nuser preference topics)]
+    Catalog -->|book + progress events| Kafka
+    Engagement -->|rating + reaction events| Kafka
 
-    Kafka --> Engagement
-    Kafka --> Recommendation
-    Kafka --> Dlt[Dead Letter Topics\n*-dlt]
+    Kafka -->|book snapshots| Engagement
+    Kafka -->|features + profile learning| Recommendation
+    Kafka -->|exhausted retries| Dlt[Dead Letter Topics\n*-dlt]
+
+    style Kafka fill:#111827,color:#ffffff,stroke:#f59e0b,stroke-width:4px,font-size:18px
 ```
 
-All public HTTP traffic is intended to enter through the gateway. The downstream services still validate JWTs in their own security configurations, so the gateway is an ingress boundary rather than the only security boundary.
+All public HTTP traffic is intended to enter through the gateway. Downstream services still validate JWTs in their own security configurations, so the gateway is an ingress boundary rather than the only security boundary.
 
 The recommendation query path is local to the recommendation service. It serves from its own read models and does not synchronously call the catalog, engagement, or user services at recommendation serving time. Existing Feign-related configuration in `recommendation-service` is legacy cleanup debt, not an active query-time dependency.
 
@@ -293,15 +295,13 @@ When running multiple services directly, set distinct `SERVER_PORT` values yours
 
 ## Verification Commands
 
-Use these commands to check the repository shape and the currently documented test state.
-
 Render and inspect the Docker Compose topology:
 
 ```bash
 docker compose config --services
 ```
 
-Run the suites that were last verified as passing:
+Run the suites with recorded passing local runs:
 
 ```powershell
 cd gateway-service
