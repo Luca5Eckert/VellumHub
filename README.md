@@ -1,671 +1,225 @@
-# 📖 VellumHub
+# VellumHub
+
+VellumHub is the backend infrastructure of a social reading platform: users discover books, track reading progress, rate titles, and receive personalized recommendations, served by independent services that communicate through Kafka events.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x%20%2F%204.0.x-green)](https://spring.io/projects/spring-boot)
-[![Spring WebFlux](https://img.shields.io/badge/Spring%20WebFlux-Reactive-brightgreen)](https://docs.spring.io/spring-framework/reference/web/webflux.html)
+[![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud-Gateway-blue)](https://spring.io/projects/spring-cloud-gateway)
+[![Kafka](https://img.shields.io/badge/Kafka-event--driven-black)](https://kafka.apache.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
-[![pgvector](https://img.shields.io/badge/pgvector-enabled-blue)](https://github.com/pgvector/pgvector)
-[![Redis](https://img.shields.io/badge/Redis-7-red)](https://redis.io/)
-[![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-black)](https://kafka.apache.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![pgvector](https://img.shields.io/badge/pgvector-HNSW-blue)](https://github.com/pgvector/pgvector)
+[![Redis](https://img.shields.io/badge/Redis-rate%20limit-red)](https://redis.io/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://www.docker.com/)
 
-**VellumHub** is a backend engineering reference platform built entirely on the JVM, designed around production patterns: a reactive API Gateway, event-driven recommendation state via Kafka (ECST), pgvector similarity search with LangChain4j embeddings, resilient consumers with retry and Dead Letter Topic handling, and a cold-start strategy seeded from user preferences declared at registration.
+VellumHub is a JVM microservices platform for book discovery, built to demonstrate distributed-system design through a reactive gateway, service-owned databases, Kafka event-carried state transfer, and pgvector-based recommendation read models.
 
-This README is architecture-first and evidence-driven — every major design decision is grounded in code references, SQL, and system diagrams.
+It is written as a backend engineering reference project: the goal is not just to expose CRUD endpoints, but to show how identity, catalog ownership, reader engagement, asynchronous replication, vector ranking, gateway security, and operational hardening fit together in one system.
 
----
+## At a Glance
 
-## Table of Contents
+| Dimension | Current evidence |
+|---|---|
+| Application services | 5: gateway, user, catalog, engagement, recommendation |
+| Docker Compose topology | 13 services including Kafka, Zookeeper, Redis, Kafka UI, and four PostgreSQL databases |
+| Codebase size | 393 main Java files and 90 test Java files |
+| API surface | 15 controllers across user, catalog, engagement, and recommendation services |
+| Application layer | 44 use case classes across domain/application modules |
+| Kafka integration | 14 Kafka listener classes across engagement and recommendation services |
+| Recommendation model | 384-dimensional embeddings, HNSW cosine index, 200-candidate ANN pool |
+| Recommendation latency (local) | Historical local benchmark: ~80-120 ms in-JVM pgvector vs ~300-500 ms with the previous Python sidecar |
+| Local test evidence | Gateway and catalog suites have recorded passing local runs |
 
-- [System Design (v3.0)](#system-design-v30)
-- [Architecture Evolution (v1 → v2 → v3)](#architecture-evolution-v1--v2--v3)
-- [API Gateway](#api-gateway)
-- [AI & Vector Pipeline](#ai--vector-pipeline)
-- [Cold-Start Strategy](#cold-start-strategy)
-- [Event-Driven Backbone (ECST)](#event-driven-backbone-ecst)
-- [Kafka Resilience (Retry + DLT)](#kafka-resilience-retry--dlt)
-- [Testing Strategy](#testing-strategy)
-- [Service Modules](#service-modules)
-- [Active API Documentation (Swagger/OpenAPI)](#active-api-documentation-swaggeropenapi)
-- [Observability](#observability)
-- [Database and pgvector Design](#database-and-pgvector-design)
-- [Quick Start](#quick-start)
-- [Roadmap and Future Enhancements](#roadmap-and-future-enhancements)
+## Contents
 
----
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Service Map](#service-map)
+- [Core Flows](#core-flows)
+- [Recommendation Engine](#recommendation-engine)
+- [Kafka Event Contracts](#kafka-event-contracts)
+- [Gateway and Security](#gateway-and-security)
+- [Running Locally](#running-locally)
+- [Quality Evidence](#quality-evidence)
+- [Roadmap](#roadmap)
 
-## System Design (v3.0)
+## Overview
 
-The platform is organized into four layers: Gateway, Microservices, Messaging, and Databases. All external traffic enters through the API Gateway, which handles authentication, rate limiting, and reactive proxying before forwarding requests to downstream services.
+VellumHub demonstrates:
+
+- **Distributed ownership:** each service owns its domain model and database.
+- **Event-carried state transfer:** downstream services build local read models from Kafka events instead of querying source services in their critical paths.
+- **Recommendation architecture:** the recommendation service stores local `book_features`, `user_profiles`, and `recommendations` data, with pgvector similarity search over `vector(384)` embeddings.
+- **Gateway control plane:** Spring Cloud Gateway WebFlux enforces route-level JWT authentication and Redis-backed rate limiting before traffic reaches internal services.
+- **Kafka resilience:** recommendation and engagement consumers use Spring Kafka retry topics and Dead Letter Topic handling for unrecoverable events.
+- **Operational visibility:** services expose Actuator health, metrics, and Prometheus endpoints; Kafka UI is included for local topic and consumer inspection.
+
+The current architecture is best described as a mature v3 platform moving through v4 reliability hardening: contracts, schema evolution, outbox, idempotency, tracing, and integration testing are now the focus.
+
+## Architecture
 
 ```mermaid
 graph TB
-    subgraph Clients
-      U[User / Client]
-    end
+    Client[Client] --> Gateway[Gateway Service\nSpring Cloud Gateway + WebFlux]
+    Gateway --> Redis[(Redis\nrate-limit state)]
 
-    subgraph Gateway Layer
-      GW[API Gateway\nSpring WebFlux + Redis]
-    end
+    Gateway --> User[User Service]
+    Gateway --> Catalog[Catalog Service]
+    Gateway --> Engagement[Engagement Service]
+    Gateway --> Recommendation[Recommendation Service]
 
-    subgraph Microservices
-      US[User Service]
-      CS[Catalog Service]
-      ES[Engagement Service]
-      RS[Recommendation Service]
-    end
+    User --> UserDb[(user_db\nPostgreSQL)]
+    Catalog --> CatalogDb[(catalog_db\nPostgreSQL)]
+    Engagement --> EngagementDb[(engagement_db\nPostgreSQL)]
+    Recommendation --> RecommendationDb[(recommendation_db\nPostgreSQL + pgvector)]
 
-    subgraph Messaging
-      K[Kafka\ncreated-book / updated-book / deleted-book\ncreated-rating / create_user_preference\nupdated-progress / user-reaction-changed]
-      DLT[Dead Letter Topics\n*-dlt]
-    end
+    User --> Kafka[(Kafka)]
+    Catalog --> Kafka
+    Engagement --> Kafka
 
-    subgraph Databases
-      UDB[(user_db\nPostgreSQL)]
-      CDB[(catalog_db\nPostgreSQL)]
-      EDB[(engagement_db\nPostgreSQL)]
-      RDB[(recommendation_db\nPostgreSQL + pgvector)]
-      REDIS[(Redis\nRate Limit State)]
-    end
-
-    U --> GW
-
-    GW -->|Auth Check + Rate Limit| US
-    GW -->|Auth Check + Rate Limit| CS
-    GW -->|Auth Check + Rate Limit| ES
-    GW -->|Auth Check + Rate Limit| RS
-
-    GW --> REDIS
-
-    US --> UDB
-    CS --> CDB
-    ES --> EDB
-    RS --> RDB
-
-    CS --> K
-    ES --> K
-    US --> K
-    K --> RS
-    K -->|retries exhausted| DLT
+    Kafka --> Engagement
+    Kafka --> Recommendation
+    Kafka --> Dlt[Dead Letter Topics\n*-dlt]
 ```
 
-The **Recommendation Service** operates as an event-fed local read model with three internal tables:
+All public HTTP traffic is intended to enter through the gateway. The downstream services still validate JWTs in their own security configurations, so the gateway is an ingress boundary rather than the only security boundary.
 
-- `book_features` — 384-dim L2-normalized embeddings per book, used for ANN search
-- `user_profiles` — incrementally updated preference vectors per user
-- `recommendations` — pre-joined book metadata via ECST for low-latency response assembly
+The recommendation query path is local to the recommendation service. It serves from its own read models and does not synchronously call the catalog, engagement, or user services at recommendation serving time. Existing Feign-related configuration in `recommendation-service` is legacy cleanup debt, not an active query-time dependency.
 
----
+## Service Map
 
-## Architecture Evolution (v1 → v2 → v3)
-
-### v1 — External ML Service
-
-The initial version relied on an external Python ML service in the critical recommendation path. Every request required a synchronous call to this service, introducing latency, operational coupling, and a single point of failure.
-
-**Characteristics:**
-- ML called synchronously per recommendation request
-- Multiple network hops on every query
-- High operational surface area (Python + JVM)
-- No event-driven state updates
-
----
-
-### v2 — In-JVM Vector Search + ECST
-
-Recommendation computation moved entirely into the JVM. PostgreSQL + pgvector replaced the external ML service, and Kafka was formalized as the state propagation backbone using the **Event-Carried State Transfer (ECST)** pattern.
-
-However, the vector space was **genre-based with 13 fixed dimensions** — one per genre. The embedding space was too coarse to distinguish books within the same genre, there was no semantic model, and vectors were not normalized.
-
-**Key improvements over v1:**
-- Latency dropped from ~300–500ms to ~80–120ms by eliminating the external ML hop
-- Cosine similarity via pgvector's `<=>` operator with an HNSW index
-- User profiles built incrementally from rating events
-- Kafka consumers keep `book_features`, `user_profiles`, and `recommendations` updated asynchronously — zero cross-service calls at query time (ECST)
-
-**Limitations:**
-- 13-dimensional genre vectors too coarse for nuanced similarity
-- No semantic embedding model — vectors manually constructed
-- No vector normalization — cosine scores poorly calibrated
-- No gateway layer — services directly exposed
-- No Kafka retry or DLT — consumer failures were silent or stalled offsets
-- No cold-start strategy — new users received no meaningful recommendations
-
----
-
-### v3 — API Gateway + LangChain4j Embeddings + L2 Normalization + Kafka Resilience + Cold-Start
-
-The current version addresses every limitation from v2.
-
-**API Gateway (Spring WebFlux):** Single controlled entry point with JWT validation and per-route rate limiting via Redis. Downstream services still validate JWT in their own `SecurityConfig` classes (defense in depth).
-
-**Embedding Pipeline:** Replaced 13-dim genre vectors with LangChain4j's `AllMiniLmL6V2EmbeddingModel`, producing **384-dimensional dense vectors**. L2 normalization applied before persistence projects every vector onto the unit sphere, making cosine scores directly comparable regardless of magnitude.
-
-**Cold-Start Strategy:** On registration, the User Service captures genre preferences and a free-text `about` field, publishing a `create_user_preference` event. The Recommendation Service seeds the user's profile vector from this data using the same embedding pipeline — users get meaningful results from their very first request. If no profile exists at query time, the service falls back to a pure popularity ranking.
-
-**Kafka Resilience:** All consumers are covered by a single `RetryTopicConfiguration` with 3 attempts and 3-second fixed backoff. Spring Kafka's non-blocking retry mechanism commits the original offset immediately, so partitions are never stalled. Events exhausting retries are forwarded to `*-dlt` topics and captured by a centralized DLT listener.
-
-**Event Contract Evolution:** Core catalog events (`created-book`, `updated-book`, `deleted-book`) exist since the beginning of the system. Newer recommendation-learning signals are `updated-progress` and `user-reaction-changed`, in addition to `created-rating` and `create_user_preference`.
-
-```mermaid
-graph LR
-  V1["v1\nExternal ML Service\n~300–500ms"]
-  V2["v2\npgvector + ECST\n13-dim genre vectors\n~80–120ms"]
-  V3["v3\nAPI Gateway + LangChain4j 384-dim\nL2 Normalization + Retry + DLT\nCold-Start via User Preferences"]
-
-  V1 --> V2 --> V3
-```
-
----
-
-## API Gateway
-
-The gateway is the exclusive entry point for all external traffic, built on **Spring Boot + Spring WebFlux** for a non-blocking, reactive request pipeline.
-
-### Responsibilities
-
-| Concern | Implementation |
-|---|---|
-| **Request routing** | Path-prefix proxying to downstream services |
-| **Authentication** | JWT validation (signature + expiry) before forwarding |
-| **Rate limiting** | Per-route limits enforced via Redis shared state |
-| **Reactive I/O** | WebFlux — threads never blocked on downstream I/O |
-
-### Routing Map
-
-| Path Prefix | Upstream Service |
-|---|---|
-| `/api/v1/users/**` | `user-service:8080` |
-| `/api/v1/auth/**` | `user-service:8080` |
-| `/api/v1/catalog/**` | `catalog-service:8080` |
-| `/api/v1/engagement/**` | `engagement-service:8080` |
-| `/api/v1/recommendations/**` | `recommendation-service:8080` |
-
-> Swagger UI paths (`/swagger-ui/**`, `/v3/api-docs/**`) bypass the gateway intentionally — they are served directly on each service's port for local development without requiring authentication.
-
-### Rate Limiting
-
-Rate limit state lives in Redis (`redis-gateway`), keeping the gateway stateless and horizontally scalable.
-
-### Auth Flow
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant GW as API Gateway
-    participant Redis
-    participant SVC as Downstream Service
-
-    Client->>GW: HTTP Request + Bearer Token
-    GW->>GW: Validate JWT (signature + expiry)
-    alt Token invalid
-        GW-->>Client: 401 Unauthorized
-    else Token valid
-        GW->>Redis: Check rate limit for route
-        alt Rate limit exceeded
-            GW-->>Client: 429 Too Many Requests
-        else Within limit
-            GW->>SVC: Forward request (user context in headers)
-            SVC-->>GW: Response
-            GW-->>Client: Response
-        end
-    end
-```
-
----
-
-## AI & Vector Pipeline
-
-### Embedding Model
-
-The Recommendation Service uses LangChain4j's `AllMiniLmL6V2EmbeddingModel` to generate 384-dimensional dense vectors per book. Books with similar themes, writing style, or subject matter cluster together in the vector space regardless of genre label.
-
-```java
-// recommendation-service/.../config/EmbeddingConfig.java
-@Bean
-public EmbeddingModel embeddingModel() {
-    return new AllMiniLmL6V2EmbeddingModel();
-}
-```
-
-Both `book_features` and `user_profiles` share the same 384-dimensional space, enabling direct cosine similarity between a user's preference vector and any book embedding:
-
-```java
-// BookFeature.java
-@Column(name = "embedding", columnDefinition = "vector(384)")
-private float[] embedding;
-
-// UserProfile.java
-@Column(columnDefinition = "vector(384)")
-private float[] profileVector = new float[384];
-```
-
-### L2 Normalization
-
-All embedding vectors are L2-normalized before persistence. This projects every vector onto the unit sphere so cosine similarity scores are directly comparable across the entire catalog — without normalization, vectors with larger magnitudes would dominate scores regardless of semantic relevance.
-
-This applies to both book embeddings (on `created-book` / `updated-book` events) and user profile vectors after every update.
-
-### User Profile Update Logic
-
-User preference vectors are updated incrementally on each rating event:
-
-1. **Map rating to weight** — classified as `DETRACTOR` (-5), `NEUTRAL` (+1), or `PROMOTER` (+5) relative to the previous rating for that book
-2. **Apply delta with learning rate** — the book's embedding is added to the profile vector, scaled by weight × `0.1f`
-3. **L2 normalize** — the updated vector is re-normalized to maintain calibrated cosine similarity
-
-```java
-int adjustmentWeight = getWeightAdjustment(newStars, oldStars, isNewRating);
-this.profileVector[i] += (bookEmbedding[i] * adjustmentWeight * learningRate);
-this.normalizeVector(sumOfSquares); // L2 normalization
-```
-
-### Recommendation Retrieval Path
-
-Candidate retrieval is a three-stage SQL pipeline executed as a single native query:
-
-```sql
-WITH user_data AS (
-    -- Stage 1: isolate user vector and already-interacted books
-    SELECT
-        profile_vector,
-        COALESCE(interacted_book_ids, '{}'::uuid[]) AS interacted_ids
-    FROM user_profiles
-    WHERE user_id = :userId
-),
-candidates AS (
-    -- Stage 2: ANN candidate generation via HNSW index (top 200)
-    SELECT
-        b.book_id,
-        b.popularity_score,
-        (b.embedding <=> u.profile_vector) AS vector_dist
-    FROM book_features b
-    CROSS JOIN user_data u
-    WHERE b.book_id <> ALL(u.interacted_ids)
-    ORDER BY b.embedding <=> u.profile_vector ASC
-    LIMIT 200
-)
--- Stage 3: re-rank with popularity blend (70% semantic / 30% popularity)
-SELECT c.book_id
-FROM candidates c
-ORDER BY
-    (c.vector_dist * 0.7) + ((1 - COALESCE(c.popularity_score, 0)) * 0.3) ASC
-LIMIT :limit OFFSET :offset
-```
-
-The 70/30 split is an initial heuristic — semantic relevance is the primary signal, with popularity acting as a diversity and tie-breaking factor. Already-interacted books are excluded at the query level via `<> ALL(interacted_ids)`, keeping results fresh without post-processing.
-
----
-
-## Cold-Start Strategy
-
-A new user has no rating history, so without intervention their `profileVector` would produce meaningless recommendations. VellumHub addresses this in two stages.
-
-**Stage 1 — Preference-seeded profile (at registration):**
-
-During registration, the User Service collects genre preferences and a free-text `about` field:
-
-```java
-// user-service/.../UserPreference.java
-@Entity
-@Table(name = "user_preferences")
-public class UserPreference {
-    @ElementCollection
-    @CollectionTable(name = "user_preference_genres")
-    private List<String> genres;
-
-    private String about;
-}
-```
-
-A `create_user_preference` event is published. The Recommendation Service consumes it and seeds the user's profile vector using the same LangChain4j embedding pipeline:
-
-```java
-// CreateUserProfileUseCase.java
-@Transactional
-public void execute(CreatedUserProfileCommand command) {
-    var userProfile = userProfileRepository.findById(command.userId())
-            .orElseGet(() -> UserProfile.create(command.userId()));
-
-    var vectors = profileProvider.of(command.genres(), command.about());
-    userProfile.applyVectorLearning(vectors, 0.5f);
-
-    userProfileRepository.save(userProfile);
-}
-```
-
-This ensures every user has a meaningful profile vector from their first login, before any rating is submitted.
-
-**Stage 2 — Popularity fallback (if no profile exists at query time):**
-
-If no user profile is found — for example, due to event delivery delay or a first-request race condition — the service falls back to a pure popularity ranking:
-
-```sql
-SELECT b.book_id
-FROM book_features b
-ORDER BY b.popularity_score DESC
-LIMIT :limit OFFSET :offset
-```
-
-This guarantees a non-empty, sensible response in all edge cases.
-
----
-
-## Event-Driven Backbone (ECST)
-
-VellumHub uses **Event-Carried State Transfer (ECST)**: Kafka events carry full or partial entity state, allowing consumers to update local read models without querying the producing service. The Recommendation Service never calls Catalog, Engagement, or User Service APIs at query time.
-
-### Topic Contract
-
-| Topic | Producer | Consumer | Payload |
-|---|---|---|---|
-| `created-book` | Catalog Service | Recommendation Service | Full book data |
-| `updated-book` | Catalog Service | Recommendation Service | Updated book data |
-| `deleted-book` | Catalog Service | Recommendation Service | Book ID |
-| `created-rating` | Engagement Service | Recommendation Service | `bookId`, `userId`, `stars` |
-| `updated-progress` | Catalog Service | Recommendation Service | Progress data |
-| `user-reaction-changed` | Engagement Service | Recommendation Service | Reaction data |
-| `create_user_preference` | User Service | Recommendation Service | `userId`, `genres`, `about` |
-
-Additional consumer:
-- `engagement-service` also consumes catalog's `created-book` and `deleted-book` to maintain its local `book_snapshot`.
-
-### Learning Loop
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant ES as Engagement Service
-    participant K as Kafka
-    participant RS as Recommendation Service
-    participant DB as recommendation_db
-
-    User->>ES: POST /ratings (bookId, stars)
-    ES->>K: Publish created-rating
-    K->>RS: Deliver CreatedRatingEvent
-    RS->>DB: Fetch book embedding from book_features
-    RS->>DB: Update user_profiles.profileVector (delta + L2 normalize)
-
-    User->>RS: GET /recommendations
-    RS->>DB: ANN query (HNSW) + exclude interacted books
-    RS->>DB: Re-rank: 70% semantic + 30% popularity
-    DB-->>RS: Ranked book IDs
-    RS-->>User: Personalized recommendation list
-```
-
----
-
-## Kafka Resilience (Retry + DLT)
-
-### Problem
-
-In v2, a consumer exception would silently swallow the event or stall the partition offset, leaving the read model in an inconsistent state with no visibility into what failed.
-
-### Solution
-
-All consumers are covered by a single `RetryTopicConfiguration` bean:
-
-```java
-// KafkaRetryConfig.java
-@Bean
-public RetryTopicConfiguration defaultRetryConfig(KafkaTemplate<String, Object> template) {
-    return RetryTopicConfigurationBuilder
-            .newInstance()
-            .maxAttempts(3)
-            .fixedBackOff(3000)
-            .includeTopics(List.of(
-                    "created-book",
-                    "deleted-book",
-                    "updated-book",
-                    "created-rating",
-                    "create_user_preference",
-                    "updated-progress",
-                    "user-reaction-changed"
-            ))
-            .create(template);
-}
-```
-
-`RetryTopicConfiguration` uses Spring Kafka's **non-blocking retry** mechanism: on failure, the message is published to an internal retry topic and the original partition offset is committed immediately. The consumer never stalls the partition while waiting between attempts.
-
-After 3 failed attempts, the event is forwarded to a `*-dlt` topic. A centralized DLT listener captures every unrecoverable failure with full context:
-
-```java
-@KafkaListener(
-        topicPattern = ".*-dlt",
-        groupId = "recommendation-service-dlt-group"
-)
-public void consumeDlt(
-        String payload,
-        @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
-        @Header(KafkaHeaders.ORIGINAL_TOPIC) String originalTopic,
-        @Header(KafkaHeaders.EXCEPTION_MESSAGE) String errorMessage
-) {
-    log.error("CRITICAL FAILURE: Unrecoverable message routed to DLT.");
-    log.error("Original Topic  : {}", originalTopic);
-    log.error("DLT Topic       : {}", topic);
-    log.error("Exception Reason: {}", errorMessage);
-    log.error("Message Payload : {}", payload);
-}
-```
-
-The DLT listener preserves the original topic, exception message, and full payload — enabling manual inspection and targeted reprocessing without redeploying consumers.
-
-```mermaid
-flowchart LR
-    T[Kafka Topic] --> C[Consumer]
-    C -->|success| OK[State Updated\nOffset Committed]
-    C -->|exception| RT[Retry Topic\n3s backoff]
-    RT -->|attempt 2 fails| RT2[Retry Topic]
-    RT2 -->|attempt 3 fails| DLT[topic-name-dlt\nLogged + Inspectable]
-```
-
----
-
-## Testing Strategy
-
-The domain model of the Recommendation Service is covered by unit tests written against `UserProfile` — the core aggregate responsible for vector learning. Tests are organized into four behavioral groups.
-
-### Profile Initialization
-
-Verifies that both construction paths (`new UserProfile(userId)` and `UserProfile.create(userId)`) produce correct default state: zero engagement score, empty interacted book list, and non-null timestamps.
-
-### Engagement Score Accounting
-
-Covers positive, negative, zero, and cumulative adjustment scenarios on `applyUpdate`. The engagement score must reflect the exact sum of all applied weights across multiple updates.
-
-### Interaction Tracking
-
-Verifies that `interactedBookIds` correctly accumulates distinct book IDs, rejects duplicates on repeated interaction with the same book, and tracks multiple distinct books independently.
-
-### Vector Learning and Normalization
-
-This is the most critical group — it tests the mathematical correctness of the learning algorithm.
-
-**The profile vector must have unit magnitude after every update:**
-```java
-@Test
-void shouldProduceUnitMagnitudeVectorAfterUpdate() {
-    UserProfile profile = UserProfile.create(USER_ID);
-    ProfileAdjustment adjustment = new ProfileAdjustment(UUID.randomUUID(), 1.0f, uniformEmbedding(0.5f));
-
-    profile.applyUpdate(adjustment);
-
-    assertThat(magnitude(profile.getProfileVector())).isCloseTo(1.0, within(1e-5));
-}
-
-@Test
-void shouldMaintainUnitMagnitudeAfterMultipleUpdates() {
-    UserProfile profile = UserProfile.create(USER_ID);
-
-    for (int i = 0; i < 10; i++) {
-        profile.applyUpdate(new ProfileAdjustment(UUID.randomUUID(), 1.0f, uniformEmbedding(0.5f)));
-    }
-
-    assertThat(magnitude(profile.getProfileVector())).isCloseTo(1.0, within(1e-5));
-}
-```
-
-**A positive adjustment shifts the vector toward the book's embedding; a negative adjustment shifts it away:**
-```java
-@Test
-void shouldShiftProfileVectorTowardBookEmbeddingOnPositiveAdjustment() {
-    UserProfile profile = UserProfile.create(USER_ID);
-    float[] bookEmbedding = new float[VECTOR_SIZE];
-    bookEmbedding[1] = 1.0f;
-
-    profile.applyUpdate(new ProfileAdjustment(UUID.randomUUID(), 1.0f, bookEmbedding));
-
-    assertThat(profile.getProfileVector()[1]).isGreaterThan(0.0f);
-}
-
-@Test
-void shouldShiftProfileVectorAwayFromBookEmbeddingOnNegativeAdjustment() {
-    UserProfile profile = UserProfile.create(USER_ID);
-    float[] bookEmbedding = new float[VECTOR_SIZE];
-    bookEmbedding[0] = 1.0f;
-    float original = profile.getProfileVector()[0];
-
-    profile.applyUpdate(new ProfileAdjustment(UUID.randomUUID(), -1.0f, bookEmbedding));
-
-    assertThat(profile.getProfileVector()[0]).isLessThanOrEqualTo(original);
-}
-```
-
-**Additional invariants validated:**
-- The book embedding passed in is never mutated by the learning step
-- `lastUpdated` advances after every `applyUpdate`; `createdAt` never changes
-- Dimension mismatch and null embedding both throw `IllegalArgumentException` with a meaningful message
-- A zero vector resulting from a negative adjustment (edge case) does not throw
-
-### What Is Not Covered Yet
-
-Integration tests validating the full Kafka → consumer → DB → query pipeline (including DLT routing and the cold-start flow) are planned via Testcontainers and tracked in the Roadmap.
-
----
-
-## Service Modules
-
-### Catalog Service
-Manages the book catalog. Publishes `created-book`, `updated-book`, and `deleted-book` on all mutations.
-
-| Module | Responsibility |
-|---|---|
-| `book` | Core book entity — CRUD, search, pagination |
-| `book-request` | Community book request management |
-| `book-progress` | Per-user reading progress tracking |
-| `book-list` | User-curated book lists (e.g., "Want to Read") |
-
-### Engagement Service
-Captures user interactions. Maintains a local `book_snapshot` via ECST to avoid cross-service calls at query time.
-
-| Module | Responsibility |
-|---|---|
-| `rating` | User ratings; publishes `created-rating` |
-| `interactions` | General interaction tracking _(in progress)_ |
-| `book_snapshot` | Local book state replica via ECST |
-
-### User Service
-Handles identity, authentication, and user preferences.
-
-| Module | Responsibility |
-|---|---|
-| `users` | User account management |
-| `auth` | JWT issuance, Google OAuth2 integration |
-| `user_preference` | Genre preferences + `about` field; publishes `create_user_preference` to seed the recommendation profile |
-
-### Recommendation Service
-Event-fed local read model. No synchronous calls to other services at query time. All consumers backed by retry + DLT.
-
-| Module | Responsibility |
-|---|---|
-| `book_feature` | 384-dim embeddings per book; updated on `created-book` and `updated-book` events |
-| `user_profile` | Preference vectors updated on `created-rating`, `create_user_preference`, `user-reaction-changed`, and `updated-progress` |
-| `recommendation` | ANN query + popularity fallback at serving time; denormalized metadata via ECST |
-
----
-
-## Active API Documentation (Swagger/OpenAPI)
-
-Swagger/OpenAPI is enabled on all services. The following paths require no authentication:
-`/swagger-ui/**`, `/swagger-ui.html`, `/v3/api-docs/**`
-
-> Access directly on each service's port — these paths bypass the gateway intentionally.
-
-| Service | Swagger UI | OpenAPI JSON |
+| Service | Role | Local details |
 |---|---|---|
-| Gateway | `http://localhost:8080/swagger-ui/index.html` | `http://localhost:8080/v3/api-docs` |
-| User Service | `http://localhost:8084/swagger-ui/index.html` | `http://localhost:8084/v3/api-docs` |
-| Catalog Service | `http://localhost:8081/swagger-ui/index.html` | `http://localhost:8081/v3/api-docs` |
-| Engagement Service | `http://localhost:8083/swagger-ui/index.html` | `http://localhost:8083/v3/api-docs` |
-| Recommendation Service | `http://localhost:8085/swagger-ui/index.html` | `http://localhost:8085/v3/api-docs` |
+| `gateway-service` | Public edge for routing, JWT enforcement, and Redis-backed rate limiting. | [README](gateway-service/README.md) |
+| `user-service` | Identity, authentication, Google login, user management, and preference seeds for cold-start recommendations. | [README](user-service/README.md) |
+| `catalog-service` | Source of truth for books, book requests, book lists, membership, covers, and current reading progress. | [README](catalog-service/README.md) |
+| `engagement-service` | Ratings, reactions, and replicated reading progress history / book snapshots. | [README](engagement-service/README.md) |
+| `recommendation-service` | Event-fed recommendation read model, embeddings, user profile vectors, and ranking. | [README](recommendation-service/README.md) |
 
----
+The root README stays focused on system shape. Endpoint-level inventories live in the service READMEs and OpenAPI pages.
 
-## Observability
+## Core Flows
 
-All services expose **Spring Boot Actuator** endpoints:
+VellumHub is centered around a few end-to-end flows:
 
-- `/actuator/health` — liveness and readiness, used by Docker healthchecks
-- `/actuator/metrics` — JVM, HTTP, and application metrics
-- `/actuator/prometheus` — Prometheus-compatible scrape endpoint
+1. **Registration to cold-start profile:** a user registers with preferences, `user-service` publishes `create_user_preference`, and `recommendation-service` seeds a profile vector before the user has ratings.
+2. **Catalog mutation to local projections:** `catalog-service` owns book state and emits lifecycle events so recommendation and engagement can update local read models without joining through shared databases.
+3. **Reader engagement to learning signal:** ratings, reactions, and reading progress become Kafka signals that adjust user profile vectors inside the recommendation service.
+4. **Recommendation serving:** the gateway routes authenticated traffic to `recommendation-service`, which ranks from local `book_features`, `user_profiles`, and `recommendations` tables without source-service calls in the query path.
 
-Kafka consumer health is monitored via `management.health.kafka.enabled=true`. Health endpoints are whitelisted in each service's security configuration so they remain accessible without authentication.
+Rating feedback is a representative asynchronous flow:
 
-Dead Letter Topics (`*-dlt`) serve as an operational signal: the DLT listener logs every unrecoverable failure with full context (original topic, exception, payload), making consumer error rates visible without requiring distributed tracing infrastructure.
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant G as Gateway
+    participant E as Engagement Service
+    participant K as Kafka
+    participant R as Recommendation Service
 
----
-
-## Database and pgvector Design
-
-Each service owns its own PostgreSQL instance — no shared databases. The Recommendation Service uses the `pgvector/pgvector:pg15` image to enable the `vector` extension.
-
-```sql
--- Bootstrapped via docker-entrypoint-initdb.d
-CREATE EXTENSION IF NOT EXISTS vector;
-
-CREATE TABLE IF NOT EXISTS book_features (
-    book_id          UUID PRIMARY KEY,
-    embedding        vector(384),
-    popularity_score DOUBLE PRECISION,
-    last_updated     TIMESTAMP WITH TIME ZONE NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS user_profiles (
-    user_id                UUID PRIMARY KEY,
-    profile_vector         vector(384),
-    interacted_book_ids    uuid[],
-    total_engagement_score DOUBLE PRECISION,
-    created_at             TIMESTAMP WITH TIME ZONE NOT NULL,
-    last_updated           TIMESTAMP WITH TIME ZONE NOT NULL
-);
-
--- HNSW index for approximate nearest-neighbor cosine similarity
-CREATE INDEX IF NOT EXISTS idx_book_embedding_hnsw
-ON book_features
-USING hnsw (embedding vector_cosine_ops);
+    U->>G: POST /api/v1/engagement/rating
+    G->>G: Validate JWT + apply route rate limit
+    G->>E: Forward request
+    E->>E: Persist rating
+    E->>K: Publish created-rating
+    K->>R: Deliver created-rating
+    R->>R: Update user_profile vector
 ```
 
-### Index Strategy
+## Recommendation Engine
 
-| Property | Value |
+The recommendation service consumes catalog and interaction events and maintains local projection tables:
+
+| Table | Purpose |
 |---|---|
-| Index type | `hnsw` |
-| Operator class | `vector_cosine_ops` |
-| Query operator | `<=>` (cosine distance) |
-| ANN candidate pool | 200 (re-ranked to final page) |
+| `book_features` | Book embedding and popularity state, stored as `vector(384)`. |
+| `user_profiles` | Per-user preference vector, interacted book IDs, and engagement score. |
+| `recommendations` | Denormalized book metadata used to assemble responses without a source-service call. |
 
-The HNSW index provides sub-linear query time for approximate nearest-neighbor search. Combined with the 200-candidate pool and the 70/30 re-ranking step, this keeps recommendation latency low as the catalog scales.
+The embedding pipeline uses LangChain4j's in-process `AllMiniLmL6V2EmbeddingModel`, which runs in the JVM and produces 384-dimensional vectors. Book and profile vectors are L2-normalized before being used for cosine-distance ranking.
 
----
+The ranking path is implemented with PostgreSQL + pgvector:
 
-## Quick Start
+- `book_features.embedding` uses `vector(384)`.
+- `idx_book_embedding_hnsw` uses HNSW with `vector_cosine_ops`.
+- The native query retrieves an ANN candidate pool of 200 books.
+- Already-interacted books are filtered at query time.
+- Candidates are re-ranked with a 70% semantic / 30% popularity blend.
+- If a user profile is missing, the service falls back to popularity ranking.
+
+Historical local benchmark notes in this repository describe the move from an external Python ML sidecar to in-JVM pgvector ranking as a latency improvement from roughly 300-500 ms to 80-120 ms. Treat those numbers as project-local measurements, not a published production SLA.
+
+## Kafka Event Contracts
+
+VellumHub uses Kafka as the state propagation backbone. Producers publish business events; consumers maintain local projections from those events.
+
+### Current Topics
+
+| Topic | Producer | Consumer(s) |
+|---|---|---|
+| `created-book` | Catalog | Recommendation, Engagement book snapshot |
+| `updated-book` | Catalog | Recommendation |
+| `deleted-book` | Catalog | Recommendation, Engagement book snapshot |
+| `created-rating` | Engagement | Recommendation user profile learning |
+| `user-reaction-changed` | Engagement | Recommendation user profile learning |
+| `create_user_preference` | User | Recommendation cold-start profile seed |
+| `create-reading-progress` | Catalog | Engagement reading history |
+| `updated-reading-progress` | Catalog | Recommendation user profile learning |
+
+### Current Reliability Hardening
+
+The implemented system already uses Kafka for local projections and recommendation learning. The remaining work is to make topic contracts impossible to drift silently:
+
+| Problem | Producer publishes | Consumer/config expects | Tracked by |
+|---|---|---|---|
+| Reading progress create topic naming | `create-reading-progress` | `created-reading-progress` in recommendation | [#199](https://github.com/Luca5Eckert/VellumHub/issues/199) |
+| Reading progress update topic naming | `updated-reading-progress` | `update-reading-progress` in engagement | [#199](https://github.com/Luca5Eckert/VellumHub/issues/199) |
+| Retry topic coverage | reading-progress topic names | `updated-progress` in recommendation retry config | [#199](https://github.com/Luca5Eckert/VellumHub/issues/199) |
+| Topic name ownership | annotations/properties/tests/docs | single contract source | [#199](https://github.com/Luca5Eckert/VellumHub/issues/199) |
+
+This work is tracked by [issue #199](https://github.com/Luca5Eckert/VellumHub/issues/199): centralize Kafka topic contracts, align producers/consumers/retry config, and add tests that catch contract drift automatically.
+
+## Kafka Resilience
+
+Recommendation and engagement consumers use Spring Kafka retry topic configuration:
+
+- fixed 3-second backoff;
+- max 3 attempts;
+- retry topic forwarding instead of local try/catch swallowing;
+- centralized `.*-dlt` listeners for exhausted messages.
+
+Dead Letter Topic logs include the original topic, DLT topic, exception message, and payload. This gives the project a basic operational recovery point before adding richer tracing, outbox, and replay tooling.
+
+## Gateway and Security
+
+The gateway is built with Spring Cloud Gateway on WebFlux and Project Reactor. It routes public prefixes to internal services and applies request limiting through Redis.
+
+| Public prefix | Internal target |
+|---|---|
+| `/api/v1/auth/**` | `user-service` |
+| `/api/v1/users/**` | `user-service` |
+| `/api/v1/catalog/**` | `catalog-service` |
+| `/api/v1/engagement/**` | `engagement-service` |
+| `/api/v1/recommendations/**` | `recommendation-service` |
+
+Current route quotas:
+
+| Route group | Replenish rate | Burst capacity | Key strategy |
+|---|---:|---:|---|
+| Auth/User flows | 5 | 10 | IP |
+| Catalog/Engagement | 30 | 60 | User/principal/IP fallback |
+| Recommendations | 20 | 40 | User/principal/IP fallback |
+
+Current operational security hardening still includes removing unsafe production defaults, reducing overly verbose gateway TRACE logging, and tightening Actuator detail exposure in production profiles.
+
+## Running Locally
 
 ### Prerequisites
 
 - Docker and Docker Compose
-- A `.env` file with:
+- Java 21
+- A `.env` file based on [.env.example](.env.example)
+
+Required environment shape:
 
 ```env
 POSTGRES_USER=your_user
@@ -676,61 +230,196 @@ GOOGLE_CLIENT_ID=your_google_client_id
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 ```
 
-Generate `JWT_KEY` with OpenSSL:
+Generate a local Base64 JWT key:
 
 ```bash
 openssl rand -base64 32
 ```
 
-On Windows PowerShell without OpenSSL, generate the same kind of Base64 key with:
+Windows PowerShell alternative:
 
 ```powershell
 $bytes = New-Object byte[] 32; $rng = New-Object System.Security.Cryptography.RNGCryptoServiceProvider; $rng.GetBytes($bytes); [Convert]::ToBase64String($bytes); $rng.Dispose()
 ```
 
-`JWT_EXPIRATION_MS` is expressed in milliseconds.
-
-### Start All Services
+### Start the Stack
 
 ```bash
 docker-compose up -d
 ```
 
-### Service Endpoints
+The compose file defines 13 services:
 
-| Service | External Port |
+- `gateway-service`
+- `user-service`
+- `catalog-service`
+- `engagement-service`
+- `recommendation-service`
+- `postgres-user`
+- `postgres-catalog`
+- `postgres-engagement`
+- `postgres-recommendation`
+- `redis-gateway`
+- `zookeeper`
+- `kafka`
+- `kafka-ui`
+
+The compose configuration currently publishes:
+
+| Component | URL |
 |---|---|
-| API Gateway (entry point) | `http://localhost:8080` |
+| API Gateway | `http://localhost:8080` |
 | Kafka UI | `http://localhost:8090` |
-| User Service (direct) | `http://localhost:8084` |
-| Catalog Service (direct) | `http://localhost:8081` |
-| Engagement Service (direct) | `http://localhost:8083` |
-| Recommendation Service (direct) | `http://localhost:8085` |
 
-> All traffic should go through the gateway on `:8080`. Direct ports are for local development and Swagger access only.
+Application services run inside the Docker network on port `8080`. Direct host access to downstream services is a development workflow, not the default compose exposure.
 
-### Infrastructure Dependencies
+### Run a Service Directly
 
-```
-Redis (rate limit state)  → API Gateway
-PostgreSQL ×4             → catalog, engagement, user, recommendation services
-pgvector (pg15 image)     → recommendation_db only
-Zookeeper + Kafka         → catalog, engagement, user, recommendation services
+Each service has its own Maven wrapper:
+
+```bash
+cd catalog-service
+./mvnw spring-boot:run
 ```
 
----
+On Windows PowerShell:
 
-## Roadmap and Future Enhancements
+```powershell
+cd catalog-service
+.\mvnw.cmd spring-boot:run
+```
 
-| Area | Description |
+When running multiple services directly, set distinct `SERVER_PORT` values yourself to avoid local port conflicts.
+
+## Verification Commands
+
+Use these commands to check the repository shape and the currently documented test state.
+
+Render and inspect the Docker Compose topology:
+
+```bash
+docker compose config --services
+```
+
+Run the suites that were last verified as passing:
+
+```powershell
+cd gateway-service
+.\mvnw.cmd test
+
+cd ..\catalog-service
+.\mvnw.cmd test
+```
+
+Run all service test commands during broad local verification:
+
+```powershell
+foreach ($service in 'gateway-service','catalog-service','user-service','engagement-service','recommendation-service') {
+    Push-Location $service
+    .\mvnw.cmd test
+    Pop-Location
+}
+```
+
+Use the full loop when you want a complete local signal before publishing a change.
+
+## API Docs and Ports
+
+Springdoc OpenAPI is configured in the domain services. For direct service runs, open these paths on the service port you assigned:
+
+| Service | Swagger UI | OpenAPI JSON |
+|---|---|---|
+| User | `/swagger-ui/index.html` | `/v3/api-docs` |
+| Catalog | `/swagger-ui/index.html` | `/v3/api-docs` |
+| Engagement | `/swagger-ui/index.html` | `/v3/api-docs` |
+| Recommendation | `/swagger-ui/index.html` | `/v3/api-docs` |
+
+The gateway currently exposes Actuator endpoints, not a Springdoc UI, and its route prefixes are the public API surface. Service-local Swagger pages are for development and inspection.
+
+## Observability
+
+Services expose Spring Boot Actuator endpoints:
+
+- `/actuator/health`
+- `/actuator/info`
+- `/actuator/metrics`
+- `/actuator/prometheus`
+
+Kafka UI is available at `http://localhost:8090` when the compose stack is running. Additional Kafka monitoring notes live in [docs/KAFKA_MONITORING.md](docs/KAFKA_MONITORING.md), though the code-level topic inventory above is newer than parts of that document.
+
+## Quality Evidence
+
+### Static Footprint
+
+These numbers were recalculated from the current local checkout.
+
+| Service | Main Java | Test Java | Controllers | Kafka listeners | Use cases |
+|---|---:|---:|---:|---:|---:|
+| `gateway-service` | 3 | 1 | 0 | 0 | 0 |
+| `user-service` | 58 | 15 | 3 | 0 | 1 |
+| `catalog-service` | 158 | 34 | 7 | 0 | 20 |
+| `engagement-service` | 96 | 10 | 3 | 5 | 12 |
+| `recommendation-service` | 78 | 30 | 2 | 9 | 11 |
+| **Total** | **393** | **90** | **15** | **14** | **44** |
+
+### What the Tests Target
+
+The current test suite is strongest around domain behavior and adapter boundaries:
+
+- `catalog-service`: book lifecycle, book requests, book lists, memberships, reading progress, handlers, use cases, and controller behavior.
+- `recommendation-service`: user profile vector learning, embedding providers, recommendation use cases, Kafka consumers, mappers, repository adapters, and controller responses.
+- `user-service`: auth flows, user handlers/controllers, password validation, security helpers, and user preference event publication.
+- `engagement-service`: rating use cases, request context, book snapshot use cases, and reading-session event publishing/consumption paths.
+- `gateway-service`: Spring application/gateway configuration smoke coverage.
+
+The next quality step is integration coverage for real Kafka/PostgreSQL behavior with Testcontainers, especially retry/DLT, topic contracts, idempotency, and projection updates.
+
+### Recorded Passing Test Runs
+
+Latest recorded passing local verification in this workspace was performed on 2026-05-25.
+
+| Service | Command | Status |
+|---|---|---|
+| `gateway-service` | `.\mvnw.cmd test` | Passing: 1 test, 0 failures, 0 errors. |
+| `catalog-service` | `.\mvnw.cmd test` | Passing: 142 tests, 0 failures, 0 errors. |
+
+### Current Quality Bar
+
+- Every service has its own Maven wrapper and Dockerfile.
+- Unit and slice tests cover domain models, use cases, controllers, Kafka consumers, mappers, and repository adapters in the strongest-covered services.
+- Kafka retry/DLT behavior is implemented in engagement and recommendation, but end-to-end retry/DLT verification still needs Testcontainers coverage.
+- Docker Compose defines service healthchecks for gateway, databases, Redis, Kafka, and application services.
+- Actuator, metrics, Prometheus endpoints, and Kafka UI provide local operational inspection.
+- Coverage percentage is not claimed because no local JaCoCo configuration or generated coverage report was found during inspection.
+- Docker Compose configuration rendered successfully during local inspection, but a full `docker-compose up` health verification was not part of this README pass.
+
+## Roadmap
+
+VellumHub is a mature v3 platform moving through v4 reliability hardening. The five-service topology, Kafka event backbone, gateway JWT enforcement, service-owned databases, and pgvector recommendation model are in place. The current focus is correctness and operational resilience: contract tests, idempotent consumers, transactional outbox, distributed tracing, safer schema migration, and stronger integration testing.
+
+| Area | Current direction |
 |---|---|
-| **Integration Testing** | Testcontainers suite validating the full Kafka → consumer → DB pipeline, DLT routing, cold-start flow, and pgvector ANN queries end-to-end |
-| **Distributed Tracing** | Micrometer Tracing or Zipkin for cross-service request visibility |
-| **CI/CD** | Full Java 21 support in pipeline runners for automated Maven test execution |
-| **Interactions Module** | Complete `interactions` in Engagement Service for richer engagement signals beyond ratings |
-| **Gateway Observability** | Per-route latency and rate-limit dashboards via Prometheus + Grafana |
-| **DLT Reprocessing** | Operator-triggered replay of DLT events after root cause resolution |
+| Kafka contracts | Centralize topic names, align producers/consumers/retry configs, and add contract tests ([#199](https://github.com/Luca5Eckert/VellumHub/issues/199)). |
+| Consumer idempotency | Add `processed_events` handling for at-least-once Kafka delivery ([#200](https://github.com/Luca5Eckert/VellumHub/issues/200)). |
+| Transactional outbox | Persist catalog and engagement changes with outgoing events atomically ([#201](https://github.com/Luca5Eckert/VellumHub/issues/201), [#202](https://github.com/Luca5Eckert/VellumHub/issues/202)). |
+| Distributed tracing | Propagate correlation IDs through gateway, HTTP calls, Kafka headers, and logs ([#204](https://github.com/Luca5Eckert/VellumHub/issues/204)). |
+| Database migrations | Replace production `ddl-auto=update` behavior with Flyway migrations and validation ([#205](https://github.com/Luca5Eckert/VellumHub/issues/205)). |
+| Operational security | Harden Actuator exposure, secret defaults, and production logging ([#206](https://github.com/Luca5Eckert/VellumHub/issues/206)). |
+| Integration tests | Add Testcontainers coverage for PostgreSQL, Kafka, retry/DLT, and projection flows ([#207](https://github.com/Luca5Eckert/VellumHub/issues/207)). |
 
----
+## Why These Choices
 
-**VellumHub** — Reactive gateway, event-driven state, vector-native recommendations, resilient consumers. Built entirely on the JVM.
+- **Service-owned databases:** keeps domain ownership explicit and avoids hidden coupling through shared tables.
+- **ECST over synchronous reads:** lets recommendation and engagement serve from local state in critical paths while accepting eventual consistency.
+- **pgvector in PostgreSQL:** keeps vector search close to relational metadata, transactions, joins, and local Docker workflows.
+- **HNSW cosine search:** gives approximate nearest-neighbor retrieval for dense embeddings with a practical speed/recall tradeoff.
+- **In-process embeddings:** avoids a separate ML sidecar in the request path and keeps the platform fully JVM-based.
+- **Retry + DLT:** makes event processing failures visible and inspectable instead of silently losing state transitions.
+
+## Design References
+
+- [GitHub README guidance](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes)
+- [Spring Kafka retry topic configuration](https://docs.spring.io/spring-kafka/reference/retrytopic/retry-config.html)
+- [Spring Cloud Gateway reference](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/)
+- [LangChain4j in-process embeddings](https://docs.langchain4j.dev/integrations/embedding-models/in-process/)
+- [pgvector HNSW and cosine search](https://github.com/pgvector/pgvector)
