@@ -54,7 +54,7 @@ public class CreateUserPreferenceUseCase {
                 userPreference.getAbout()
         );
 
-        kafkaTemplate.send("create_user_preference", createUserPreferenceEvent.userId().toString(), createUserPreferenceEvent);
+        kafkaTemplate.send("created-user-preference", createUserPreferenceEvent.userId().toString(), createUserPreferenceEvent);
 
     }
 

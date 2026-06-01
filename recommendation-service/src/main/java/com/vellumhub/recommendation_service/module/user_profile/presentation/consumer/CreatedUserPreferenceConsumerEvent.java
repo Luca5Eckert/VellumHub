@@ -19,7 +19,7 @@ public class CreatedUserPreferenceConsumerEvent {
     }
 
     @KafkaListener(
-            topics = "create_user_preference",
+            topics = "created-user-preference",
             groupId = "recommendation_service_group"
     )
     public void consume(@Payload CreatedUserPreferenceEvent event) {
