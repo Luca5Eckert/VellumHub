@@ -1,0 +1,27 @@
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE IF NOT EXISTS tb_users (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    active BOOLEAN DEFAULT TRUE,
+    version BIGINT,
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    deleted_at TIMESTAMP WITH TIME ZONE
+);
+
+INSERT INTO tb_users (id, name, email, password, role, active, version, created_at, updated_at)
+VALUES (
+    gen_random_uuid(),
+    'Admin Master',
+    'admin@mrs.com',
+    '$2a$10$ArVoaRe2ih4.VVwrbrKUqORa2Kh7IfRa3I0Z5RBQGGJaNrkCjQBXG',
+    'ADMIN',
+    true,
+    1,
+    NOW(),
+    NOW()
+) ON CONFLICT (email) DO NOTHING;
