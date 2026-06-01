@@ -63,7 +63,7 @@ services:
 
   # DATABASES LAYER
   postgres-catalog:
-    image: postgres:15-alpine
+    build: ./docker/postgres-catalog
     container_name: postgres-catalog
     restart: unless-stopped
     shm_size: 256mb
@@ -75,7 +75,6 @@ services:
       POSTGRES_DB: catalog_db
     volumes:
       - postgres_catalog_data:/var/lib/postgresql/data
-      - ./scripts/create-genres.sql:/docker-entrypoint-initdb.d/init-admin.sql
     networks:
       - vellum-network
     healthcheck:
@@ -106,7 +105,7 @@ services:
       retries: 10
 
   postgres-user:
-    image: postgres:15-alpine
+    build: ./docker/postgres-user
     container_name: postgres-user
     restart: unless-stopped
     shm_size: 256mb
@@ -118,7 +117,6 @@ services:
       POSTGRES_DB: user_db
     volumes:
       - postgres_user_data:/var/lib/postgresql/data
-      - ./scripts/create-admin-user.sql:/docker-entrypoint-initdb.d/init-admin.sql
     networks:
       - vellum-network
     healthcheck:
@@ -128,7 +126,7 @@ services:
       retries: 10
 
   postgres-recommendation:
-    image: pgvector/pgvector:pg15
+    build: ./docker/postgres-recommendation
     container_name: postgres-recommendation
     restart: unless-stopped
     shm_size: 256mb
@@ -139,7 +137,6 @@ services:
       POSTGRES_DB: recommendation_db
     volumes:
       - postgres_recommendation_data:/var/lib/postgresql/data
-      - ./scripts/create-vector-in-recommendation-db.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - vellum-network
     healthcheck:

@@ -9,10 +9,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.security.Key;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import javax.crypto.SecretKey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -81,12 +81,12 @@ class JwtTokenProviderTest {
 
     private Claims parseToken(String token) {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
-        Key key = Keys.hmacShaKeyFor(keyBytes);
+        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
 
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
+        return Jwts.parser()
+                .verifyWith(key)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
