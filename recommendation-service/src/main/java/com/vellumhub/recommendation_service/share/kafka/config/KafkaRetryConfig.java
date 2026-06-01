@@ -33,7 +33,7 @@ public class KafkaRetryConfig {
                         "updated-book",
                         "created-rating",
                         "create_user_preference",
-                        "updated-progress",
+                        "updated-reading-progress",
                         "user-reaction-changed"
                 ))
                 .create(template);

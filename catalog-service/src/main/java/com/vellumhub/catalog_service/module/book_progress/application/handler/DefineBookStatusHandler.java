@@ -13,7 +13,7 @@ import java.util.UUID;
 @Component
 public class DefineBookStatusHandler {
 
-    private static final String CREATE_READING_PROGRESS_TOPIC = "create-reading-progress";
+    private static final String CREATE_READING_PROGRESS_TOPIC = "created-reading-progress";
 
     private final DefineBookStatusUseCase defineBookStatusUseCase;
     private final BookProgressEventProducer<String, CreateBookProgressEvent> bookProgressEventProducer;
