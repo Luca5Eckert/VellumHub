@@ -80,7 +80,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          secret-key: ${JWT_KEY:dasdasidaidIHDASOHDOASHDPHAsdhashdouahsoduahsoduaoudhaoudhohdouashd}
+          secret-key: ${JWT_KEY_LOCAL:dasdasidaidIHDASOHDOASHDPHAsdhashdouahsoduahsoduaoudhaoudhohdouashd}
 
   data:
     redis:
@@ -107,7 +107,10 @@ management:
       enabled: true
     kafka:
       enabled: true
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
+  metrics:
+    tags:
+      service: ${spring.application.name}
