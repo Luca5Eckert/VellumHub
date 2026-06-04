@@ -232,6 +232,8 @@ GOOGLE_CLIENT_ID=your_google_client_id
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 ```
 
+For the Docker Compose `prod` profile used by the local stack, `JWT_KEY` is required by all five application services. `JWT_EXPIRATION_MS` is also required by `user-service`, and `GOOGLE_CLIENT_ID` is required for Google login support.
+
 Generate a local Base64 JWT key:
 
 ```bash
@@ -344,6 +346,10 @@ Services expose Spring Boot Actuator endpoints:
 - `/actuator/info`
 - `/actuator/metrics`
 - `/actuator/prometheus`
+
+`/actuator/prometheus` is backed by the Micrometer Prometheus registry and exports metrics with a common `service` tag. Health remains publicly reachable for Docker healthchecks. Prometheus is also reachable for local operational scraping, while broader Actuator endpoints such as `info` and `metrics` still require authentication on the application services and gateway.
+
+In the `prod` profile, health details are hidden and the gateway lowers Spring Cloud Gateway logging from local `TRACE` diagnostics to `INFO`.
 
 Kafka UI is available at `http://localhost:8090` when the compose stack is running. Additional Kafka monitoring notes live in [docs/KAFKA_MONITORING.md](docs/KAFKA_MONITORING.md), though the code-level topic inventory above is newer than parts of that document.
 
