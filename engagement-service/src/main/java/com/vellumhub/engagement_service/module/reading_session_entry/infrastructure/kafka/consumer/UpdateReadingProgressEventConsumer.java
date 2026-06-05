@@ -22,7 +22,13 @@ public class UpdateReadingProgressEventConsumer {
             groupId = "engagement-service"
     )
     public void consume(UpdateBookProgressEvent event){
-        log.info("Received UpdateBookProgressEvent: {}", event);
+        log.info(
+                "Received UpdateBookProgressEvent. operation=kafka_consume, topic=updated-reading-progress, event_type=UpdateBookProgressEvent, userId={}, bookId={}, progress={}, page={}",
+                event.userId(),
+                event.bookId(),
+                event.progress(),
+                event.newPage()
+        );
 
         var command = CreateReadingSessionEntryCommand.create(
                 event.userId(),
@@ -31,7 +37,12 @@ public class UpdateReadingProgressEventConsumer {
                 event.newPage()
         );
 
-        log.info("Executing CreateReadingSessionEntryCommand with command: {}", command);
+        log.info(
+                "Executing CreateReadingSessionEntryCommand. operation=create_reading_session_entry, event_type=UpdateBookProgressEvent, userId={}, bookId={}, page={}",
+                event.userId(),
+                event.bookId(),
+                event.newPage()
+        );
 
         createReadingSessionEntryUseCase.execute(command);
 

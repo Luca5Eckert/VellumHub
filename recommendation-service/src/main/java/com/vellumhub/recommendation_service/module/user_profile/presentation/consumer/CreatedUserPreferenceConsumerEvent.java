@@ -23,7 +23,12 @@ public class CreatedUserPreferenceConsumerEvent {
             groupId = "recommendation_service_group"
     )
     public void consume(@Payload CreatedUserPreferenceEvent event) {
-        log.info("Consumed CreatedUserPreferenceEvent: {}", event);
+        log.info(
+                "Consumed CreatedUserPreferenceEvent. operation=kafka_consume, topic=created-user-preference, event_type=CreatedUserPreferenceEvent, userId={}, genreCount={}, aboutPresent={}",
+                event.userId(),
+                event.genres() == null ? 0 : event.genres().size(),
+                event.about() != null && !event.about().isBlank()
+        );
 
         try {
             var command = CreatedUserProfileCommand.of(

@@ -10,6 +10,7 @@ import org.springframework.kafka.retrytopic.RetryTopicConfiguration;
 import org.springframework.kafka.retrytopic.RetryTopicConfigurationBuilder;
 import org.springframework.kafka.support.KafkaHeaders;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Configuration
@@ -41,7 +42,7 @@ public class KafkaRetryConfig {
      */
     @KafkaListener(
             topicPattern = ".*-dlt",
-            groupId = "recommendation-service-dlt-group"
+            groupId = "engagement-service-dlt-group"
     )
     public void consumeDlt(
             String payload,
@@ -50,14 +51,18 @@ public class KafkaRetryConfig {
             @Header(KafkaHeaders.EXCEPTION_MESSAGE) String errorMessage
     ) {
 
-        log.error("CRITICAL FAILURE: Unrecoverable message routed to DLT.");
-        log.error("Original Topic  : {}", originalTopic);
-        log.error("DLT Topic       : {}", topic);
-        log.error("Exception Reason: {}", errorMessage);
-        log.error("Message Payload : {}", payload);
-        log.error("=====================================================");
+        log.error(
+                "Kafka DLT message quarantined. operation=kafka_dlt_quarantine, event_type=kafka_dlt, originalTopic={}, dltTopic={}, error={}, payloadBytes={}",
+                originalTopic,
+                topic,
+                errorMessage,
+                payloadByteLength(payload)
+        );
 
     }
 
+    private int payloadByteLength(String payload) {
+        return payload == null ? 0 : payload.getBytes(StandardCharsets.UTF_8).length;
+    }
 
 }
