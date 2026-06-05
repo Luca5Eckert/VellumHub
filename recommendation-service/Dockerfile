@@ -6,6 +6,14 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 RUN mvn clean package -DskipTests -B
 
+ARG OTEL_JAVA_AGENT_VERSION=2.28.1
+RUN mvn dependency:copy \
+  -Dartifact=io.opentelemetry.javaagent:opentelemetry-javaagent:${OTEL_JAVA_AGENT_VERSION}:jar \
+  -DoutputDirectory=/otel \
+  -Dmdep.stripVersion=true \
+  -Dtransitive=false \
+  -B
+
 FROM eclipse-temurin:21-jre
 
 # Debian-based images don't need gcompat, but we ensure basic tools are there
@@ -16,6 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /otel/opentelemetry-javaagent.jar opentelemetry-javaagent.jar
 
 # Standard Spring Boot healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s \
