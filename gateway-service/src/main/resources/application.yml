@@ -2,6 +2,15 @@ server:
   port: 8080
 
 logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        service: ${spring.application.name}
+        environment: ${VELLUM_ENVIRONMENT:local}
+      rename:
+        logger_name: logger
   level:
     org.springframework.cloud.gateway: TRACE
 
