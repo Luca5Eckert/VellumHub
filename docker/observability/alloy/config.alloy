@@ -1,0 +1,79 @@
+discovery.docker "vellumhub" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "vellumhub_logs" {
+  targets = discovery.docker.vellumhub.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(gateway-service|user-service|catalog-service|engagement-service|recommendation-service)"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "service"
+  }
+
+}
+
+loki.source.docker "vellumhub" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.vellumhub_logs.output
+  forward_to = [loki.process.vellumhub.receiver]
+}
+
+loki.process "vellumhub" {
+  stage.json {
+    expressions = {
+      level   = "level",
+      service = "service",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level   = "level",
+      service = "service",
+    }
+  }
+
+  stage.static_labels {
+    values = {
+      environment = "local",
+    }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}

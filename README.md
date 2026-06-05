@@ -20,8 +20,8 @@ It is written as a backend engineering reference project: the goal is not just t
 | Dimension | Current evidence |
 |---|---|
 | Application services | 5: gateway, user, catalog, engagement, recommendation |
-| Docker Compose topology | 13 services including Kafka, Zookeeper, Redis, Kafka UI, and four PostgreSQL databases |
-| Codebase size | 393 main Java files and 90 test Java files |
+| Docker Compose topology | 13 default services, plus 5 optional observability services behind the `observability` profile |
+| Codebase size | 393 main Java files and 92 test Java files |
 | API surface | 15 controllers across user, catalog, engagement, and recommendation services |
 | Application layer | 44 use case classes across domain/application modules |
 | Kafka integration | 14 Kafka listener classes across engagement and recommendation services |
@@ -51,7 +51,7 @@ VellumHub demonstrates:
 - **Recommendation architecture:** the recommendation service stores local `book_features`, `user_profiles`, and `recommendations` data, with pgvector similarity search over `vector(384)` embeddings.
 - **Gateway control plane:** Spring Cloud Gateway WebFlux enforces route-level JWT authentication and Redis-backed rate limiting before traffic reaches internal services.
 - **Kafka resilience:** recommendation and engagement consumers use Spring Kafka retry topics and Dead Letter Topic handling for unrecoverable events.
-- **Operational visibility:** services expose Actuator health, metrics, and Prometheus endpoints; Kafka UI is included for local topic and consumer inspection.
+- **Operational visibility:** services expose Actuator health, metrics, and Prometheus endpoints; Kafka UI is included for local topic and consumer inspection; the optional observability profile adds Prometheus, Grafana, Loki, Tempo, and Alloy.
 
 The current architecture is best described as a mature v3 platform moving through v4 reliability hardening: contracts, schema evolution, outbox, idempotency, tracing, and integration testing are now the focus.
 
@@ -189,7 +189,7 @@ Recommendation and engagement consumers use Spring Kafka retry topic configurati
 - retry topic forwarding instead of local try/catch swallowing;
 - centralized `.*-dlt` listeners for exhausted messages.
 
-Dead Letter Topic logs include the original topic, DLT topic, exception message, and payload. This gives the project a basic operational recovery point before adding richer tracing, outbox, and replay tooling.
+Dead Letter Topic logs include the original topic, DLT topic, exception message, and payload byte length. They do not print raw payloads by default, which keeps the recovery signal useful without exposing Kafka payload content in logs.
 
 ## Gateway and Security
 
@@ -252,7 +252,7 @@ $bytes = New-Object byte[] 32; $rng = New-Object System.Security.Cryptography.RN
 docker-compose up -d
 ```
 
-The compose file defines 13 services:
+The default compose stack defines 13 services:
 
 - `gateway-service`
 - `user-service`
@@ -276,6 +276,14 @@ The compose configuration currently publishes:
 | Kafka UI | `http://localhost:8090` |
 
 Application services run inside the Docker network on port `8080`. Direct host access to downstream services is a development workflow, not the default compose exposure.
+
+To include the local observability stack, enable the `observability` profile:
+
+```bash
+docker compose --profile observability up -d --build
+```
+
+That profile adds Prometheus, Grafana, Loki, Tempo, and Alloy. Operational details live in [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md).
 
 ### Run a Service Directly
 
@@ -347,11 +355,11 @@ Services expose Spring Boot Actuator endpoints:
 - `/actuator/metrics`
 - `/actuator/prometheus`
 
-`/actuator/prometheus` is backed by the Micrometer Prometheus registry and exports metrics with a common `service` tag. Health remains publicly reachable for Docker healthchecks. Prometheus is also reachable for local operational scraping, while broader Actuator endpoints such as `info` and `metrics` still require authentication on the application services and gateway.
+`/actuator/prometheus` is backed by the Micrometer Prometheus registry and exports metrics with a common `service` tag. Health remains publicly reachable for Docker healthchecks. The observability profile scrapes these endpoints through Prometheus and provisions Grafana with Prometheus, Loki, and Tempo datasources. Broader Actuator endpoints such as `info` and `metrics` still require authentication on the application services and gateway.
 
 In the `prod` profile, health details are hidden and the gateway lowers Spring Cloud Gateway logging from local `TRACE` diagnostics to `INFO`.
 
-Kafka UI is available at `http://localhost:8090` when the compose stack is running. Additional Kafka monitoring notes live in [docs/KAFKA_MONITORING.md](docs/KAFKA_MONITORING.md), though the code-level topic inventory above is newer than parts of that document.
+Kafka UI is available at `http://localhost:8090` when the compose stack is running. The full local observability workflow is documented in [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md), and additional Kafka monitoring notes live in [docs/KAFKA_MONITORING.md](docs/KAFKA_MONITORING.md), though the code-level topic inventory above is newer than parts of that document.
 
 ## Quality Evidence
 
@@ -364,9 +372,9 @@ These numbers were recalculated from the current local checkout.
 | `gateway-service` | 3 | 1 | 0 | 0 | 0 |
 | `user-service` | 58 | 15 | 3 | 0 | 1 |
 | `catalog-service` | 158 | 34 | 7 | 0 | 20 |
-| `engagement-service` | 96 | 10 | 3 | 5 | 12 |
-| `recommendation-service` | 78 | 30 | 2 | 9 | 11 |
-| **Total** | **393** | **90** | **15** | **14** | **44** |
+| `engagement-service` | 96 | 11 | 3 | 5 | 12 |
+| `recommendation-service` | 78 | 31 | 2 | 9 | 11 |
+| **Total** | **393** | **92** | **15** | **14** | **44** |
 
 ### What the Tests Target
 
@@ -395,7 +403,7 @@ Latest recorded passing local verification in this workspace was performed on 20
 - Unit and slice tests cover domain models, use cases, controllers, Kafka consumers, mappers, and repository adapters in the strongest-covered services.
 - Kafka retry/DLT behavior is implemented in engagement and recommendation, but end-to-end retry/DLT verification still needs Testcontainers coverage.
 - Docker Compose defines service healthchecks for gateway, databases, Redis, Kafka, and application services.
-- Actuator, metrics, Prometheus endpoints, and Kafka UI provide local operational inspection.
+- Actuator, metrics, Prometheus endpoints, Kafka UI, and the optional Grafana/Prometheus/Loki/Tempo/Alloy profile provide local operational inspection.
 - Coverage percentage is not claimed because no local JaCoCo configuration or generated coverage report was found during inspection.
 - Docker Compose configuration rendered successfully during local inspection, but a full `docker-compose up` health verification was not part of this README pass.
 
