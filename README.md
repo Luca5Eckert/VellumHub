@@ -51,7 +51,7 @@ VellumHub demonstrates:
 - **Recommendation architecture:** the recommendation service stores local `book_features`, `user_profiles`, and `recommendations` data, with pgvector similarity search over `vector(384)` embeddings.
 - **Gateway control plane:** Spring Cloud Gateway WebFlux enforces route-level JWT authentication and Redis-backed rate limiting before traffic reaches internal services.
 - **Kafka resilience:** recommendation and engagement consumers use Spring Kafka retry topics and Dead Letter Topic handling for unrecoverable events.
-- **Operational visibility:** services expose Actuator health, metrics, and Prometheus endpoints; Kafka UI is included for local topic and consumer inspection; the optional observability profile adds Prometheus, Grafana, Loki, Tempo, and Alloy.
+- **Operational visibility:** services expose Actuator health, metrics, Prometheus endpoints, structured logs, and OpenTelemetry Java Agent traces; Kafka UI is included for local topic and consumer inspection; the optional observability profile adds Prometheus, Grafana, Loki, Tempo, and Alloy.
 
 The current architecture is best described as a mature v3 platform moving through v4 reliability hardening: contracts, schema evolution, outbox, idempotency, tracing, and integration testing are now the focus.
 
@@ -355,7 +355,7 @@ Services expose Spring Boot Actuator endpoints:
 - `/actuator/metrics`
 - `/actuator/prometheus`
 
-`/actuator/prometheus` is backed by the Micrometer Prometheus registry and exports metrics with a common `service` tag. Health remains publicly reachable for Docker healthchecks. The observability profile scrapes these endpoints through Prometheus and provisions Grafana with Prometheus, Loki, and Tempo datasources. Broader Actuator endpoints such as `info` and `metrics` still require authentication on the application services and gateway.
+`/actuator/prometheus` is backed by the Micrometer Prometheus registry and exports metrics with a common `service` tag. Health remains publicly reachable for Docker healthchecks. The observability profile scrapes these endpoints through Prometheus, ships structured Docker logs to Loki, forwards OpenTelemetry Java Agent traces through Alloy to Tempo, and provisions Grafana with Prometheus, Loki, and Tempo datasources. Broader Actuator endpoints such as `info` and `metrics` still require authentication on the application services and gateway.
 
 In the `prod` profile, health details are hidden and the gateway lowers Spring Cloud Gateway logging from local `TRACE` diagnostics to `INFO`.
 
@@ -403,7 +403,7 @@ Latest recorded passing local verification in this workspace was performed on 20
 - Unit and slice tests cover domain models, use cases, controllers, Kafka consumers, mappers, and repository adapters in the strongest-covered services.
 - Kafka retry/DLT behavior is implemented in engagement and recommendation, but end-to-end retry/DLT verification still needs Testcontainers coverage.
 - Docker Compose defines service healthchecks for gateway, databases, Redis, Kafka, and application services.
-- Actuator, metrics, Prometheus endpoints, Kafka UI, and the optional Grafana/Prometheus/Loki/Tempo/Alloy profile provide local operational inspection.
+- Actuator, metrics, Prometheus endpoints, structured logs, OpenTelemetry Java Agent traces, Kafka UI, and the optional Grafana/Prometheus/Loki/Tempo/Alloy profile provide local operational inspection.
 - Coverage percentage is not claimed because no local JaCoCo configuration or generated coverage report was found during inspection.
 - Docker Compose configuration rendered successfully during local inspection, but a full `docker-compose up` health verification was not part of this README pass.
 
@@ -416,7 +416,7 @@ VellumHub is a mature v3 platform moving through v4 reliability hardening. The f
 | Kafka contracts | Centralize topic names, align producers/consumers/retry configs, and add contract tests ([#199](https://github.com/Luca5Eckert/VellumHub/issues/199)). |
 | Consumer idempotency | Add `processed_events` handling for at-least-once Kafka delivery ([#200](https://github.com/Luca5Eckert/VellumHub/issues/200)). |
 | Transactional outbox | Persist catalog and engagement changes with outgoing events atomically ([#201](https://github.com/Luca5Eckert/VellumHub/issues/201), [#202](https://github.com/Luca5Eckert/VellumHub/issues/202)). |
-| Distributed tracing | Propagate correlation IDs through gateway, HTTP calls, Kafka headers, and logs ([#204](https://github.com/Luca5Eckert/VellumHub/issues/204)). |
+| Distributed tracing | Local OpenTelemetry Java Agent tracing is wired to Alloy and Tempo; follow-up work can add manual domain spans or Kafka propagation only where automatic instrumentation is insufficient ([#204](https://github.com/Luca5Eckert/VellumHub/issues/204)). |
 | Database migrations | Replace production `ddl-auto=update` behavior with Flyway migrations and validation ([#205](https://github.com/Luca5Eckert/VellumHub/issues/205)). |
 | Operational security | Harden Actuator exposure, secret defaults, and production logging ([#206](https://github.com/Luca5Eckert/VellumHub/issues/206)). |
 | Integration tests | Add Testcontainers coverage for PostgreSQL, Kafka, retry/DLT, and projection flows ([#207](https://github.com/Luca5Eckert/VellumHub/issues/207)). |

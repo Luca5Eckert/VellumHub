@@ -1,6 +1,6 @@
 # Observability Stack
 
-VellumHub ships a local observability profile for development. It collects application metrics, container logs, and future OTLP traces without depending on external infrastructure.
+VellumHub ships a local observability profile for development. It collects application metrics, container logs, and OTLP traces without depending on external infrastructure.
 
 ## Start The Stack
 
@@ -8,6 +8,7 @@ Render the Compose model before starting it:
 
 ```bash
 docker compose --profile observability config
+
 ```
 
 Start the default application stack plus observability services:
@@ -83,12 +84,49 @@ Dead Letter Topic logs include topic names, exception message, and payload byte 
 
 ## Traces
 
-Tempo is provisioned in Grafana and Alloy includes OTLP receivers that forward traces to Tempo. The Java services are not deeply instrumented in this issue, so `trace_id` and `span_id` appear in logs only when future tracing instrumentation populates MDC or structured log key-value data.
+The five Java service images include the OpenTelemetry Java Agent `v2.28.1`. Docker Compose enables the agent through `JAVA_TOOL_OPTIONS` while preserving the existing heap flags.
 
-Services running inside Docker can send OTLP to:
+Each service sets:
+
+- `OTEL_SERVICE_NAME` to the Docker service name.
+- `OTEL_RESOURCE_ATTRIBUTES=service.namespace=vellumhub,deployment.environment=local`.
+- `OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318`.
+- `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf`.
+- `OTEL_METRICS_EXPORTER=none`.
+- `OTEL_LOGS_EXPORTER=none`.
+- `OTEL_TRACES_SAMPLER=parentbased_traceidratio`.
+- `OTEL_TRACES_SAMPLER_ARG=1.0`.
+
+Metrics and logs export through the OpenTelemetry agent is intentionally disabled. Prometheus/Micrometer remains the metrics path, and structured Docker logs continue to flow through Alloy to Loki.
+
+Services running inside Docker send OTLP to Alloy:
 
 - `http://alloy:4318` for OTLP HTTP
 - `alloy:4317` for OTLP gRPC
+
+Alloy forwards traces to Tempo over OTLP gRPC. Grafana provisions Tempo as the `Tempo` datasource.
+
+To generate a minimal gateway span:
+
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+To generate a gateway-to-service trace, call one of the public gateway routes, for example:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"OTel Local","email":"otel-local@example.com","password":"StrongPass123!"}'
+```
+
+Then open Grafana Explore at `http://localhost:3002`, select `Tempo`, and search by service name such as `gateway-service` or `catalog-service`. Tempo can also be queried directly:
+
+```bash
+curl "http://localhost:3200/api/search?tags=service.name%3Dgateway-service&limit=20"
+```
+
+HTTP server/client spans and JDBC spans are expected when the Java agent supports the Spring, Reactor Netty, servlet, JDBC, Hikari, and PostgreSQL versions in the running service. Kafka producer-to-consumer correlation is best-effort with automatic instrumentation; if a Kafka flow appears as separate traces, keep that as a follow-up for manual propagation or targeted Kafka instrumentation.
 
 ## Sensitive Data Checks
 
@@ -115,4 +153,4 @@ The expected behavior is:
 | `docker/observability/tempo/tempo.yml` | Local Tempo trace storage and OTLP receiver config. |
 | `docker/observability/alloy/config.alloy` | Docker log collection, Loki forwarding, and OTLP-to-Tempo forwarding. |
 
-Dashboards, alerts, business metrics, and deep tracing instrumentation are intentionally outside this issue.
+Dashboards, alerts, business metrics, and manual domain spans are intentionally outside this issue.
