@@ -5,6 +5,15 @@ networks:
   vellum-network:
     driver: bridge
 
+x-otel-java-env: &otel-java-env
+  OTEL_RESOURCE_ATTRIBUTES: service.namespace=vellumhub,deployment.environment=local
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
+  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  OTEL_METRICS_EXPORTER: none
+  OTEL_LOGS_EXPORTER: none
+  OTEL_TRACES_SAMPLER: parentbased_traceidratio
+  OTEL_TRACES_SAMPLER_ARG: "1.0"
+
 services:
 
   # GATEWAY LAYER
@@ -16,9 +25,11 @@ services:
       - "8080:8080"
     env_file: .env
     environment:
+      <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -javaagent:/app/opentelemetry-javaagent.jar"
+      OTEL_SERVICE_NAME: gateway-service
       SPRING_DATA_REDIS_HOST: redis-gateway
       SPRING_DATA_REDIS_PORT: 6379
       USER_SERVICE_URL: http://user-service:8080
@@ -321,9 +332,11 @@ services:
     restart: on-failure
     env_file: .env
     environment:
+      <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -javaagent:/app/opentelemetry-javaagent.jar"
+      OTEL_SERVICE_NAME: catalog-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-catalog:5432/catalog_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
@@ -351,9 +364,11 @@ services:
     restart: on-failure
     env_file: .env
     environment:
+      <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -javaagent:/app/opentelemetry-javaagent.jar"
+      OTEL_SERVICE_NAME: engagement-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-engagement:5432/engagement_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
@@ -381,9 +396,11 @@ services:
     restart: on-failure
     env_file: .env
     environment:
+      <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -javaagent:/app/opentelemetry-javaagent.jar"
+      OTEL_SERVICE_NAME: user-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/user_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
@@ -413,10 +430,12 @@ services:
     restart: on-failure
     env_file: .env
     environment:
+      <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
       SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
-      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -javaagent:/app/opentelemetry-javaagent.jar"
+      OTEL_SERVICE_NAME: recommendation-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-recommendation:5432/recommendation_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
