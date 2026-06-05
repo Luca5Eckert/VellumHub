@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: gateway-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - gateway-service:8080
+
+  - job_name: user-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - user-service:8080
+
+  - job_name: catalog-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - catalog-service:8080
+
+  - job_name: engagement-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - engagement-service:8080
+
+  - job_name: recommendation-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - recommendation-service:8080

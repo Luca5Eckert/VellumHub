@@ -27,6 +27,7 @@ services:
       RECOMMENDATION_SERVICE_URL: http://recommendation-service:8080
       JWT_KEY: ${JWT_KEY}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      VELLUM_ENVIRONMENT: local
     networks:
       - vellum-network
     depends_on:
@@ -209,6 +210,110 @@ services:
       kafka:
         condition: service_healthy
 
+  # OBSERVABILITY LAYER
+  prometheus:
+    image: prom/prometheus:v3.12.0
+    container_name: prometheus
+    restart: unless-stopped
+    profiles:
+      - observability
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.enable-lifecycle
+    networks:
+      - vellum-network
+
+  grafana:
+    image: grafana/grafana:13.0.1
+    container_name: grafana
+    restart: unless-stopped
+    profiles:
+      - observability
+    ports:
+      - "3002:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - vellum-network
+    depends_on:
+      prometheus:
+        condition: service_started
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+
+  loki:
+    image: grafana/loki:3.7.2
+    container_name: loki
+    restart: unless-stopped
+    profiles:
+      - observability
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./docker/observability/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    command:
+      - -config.file=/etc/loki/loki.yml
+    networks:
+      - vellum-network
+
+  tempo:
+    image: grafana/tempo:2.10.5
+    container_name: tempo
+    restart: unless-stopped
+    profiles:
+      - observability
+    ports:
+      - "3200:3200"
+    volumes:
+      - ./docker/observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo_data:/var/tempo
+    command:
+      - -config.file=/etc/tempo/tempo.yml
+    networks:
+      - vellum-network
+
+  alloy:
+    image: grafana/alloy:v1.16.1
+    container_name: alloy
+    restart: unless-stopped
+    profiles:
+      - observability
+    ports:
+      - "12345:12345"
+    volumes:
+      - ./docker/observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy_data:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    networks:
+      - vellum-network
+    depends_on:
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+
   # MICROSERVICES LAYER
   catalog-service:
     build: ./catalog-service
@@ -225,6 +330,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_KEY: ${JWT_KEY}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      VELLUM_ENVIRONMENT: local
     networks:
       - vellum-network
     depends_on:
@@ -254,6 +360,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_KEY: ${JWT_KEY}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      VELLUM_ENVIRONMENT: local
     networks:
       - vellum-network
     depends_on:
@@ -285,6 +392,7 @@ services:
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      VELLUM_ENVIRONMENT: local
     networks:
       - vellum-network
     depends_on:
@@ -315,6 +423,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_KEY: ${JWT_KEY}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      VELLUM_ENVIRONMENT: local
     networks:
       - vellum-network
     depends_on:
@@ -338,3 +447,8 @@ volumes:
   kafka_data:
   zookeeper_data:
   zookeeper_log:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  tempo_data:
+  alloy_data:
