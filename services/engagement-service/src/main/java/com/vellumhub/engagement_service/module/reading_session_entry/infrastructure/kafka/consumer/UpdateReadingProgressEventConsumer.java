@@ -3,6 +3,8 @@ package com.vellumhub.engagement_service.module.reading_session_entry.infrastruc
 import com.vellumhub.engagement_service.module.reading_session_entry.application.command.CreateReadingSessionEntryCommand;
 import com.vellumhub.engagement_service.module.reading_session_entry.application.use_case.CreateReadingSessionEntryUseCase;
 import com.vellumhub.engagement_service.module.reading_session_entry.infrastructure.kafka.event.UpdateBookProgressEvent;
+import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -11,10 +13,16 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class UpdateReadingProgressEventConsumer {
 
-    private final CreateReadingSessionEntryUseCase createReadingSessionEntryUseCase;
+    private static final String TOPIC = "updated-reading-progress";
+    private static final String EVENT_TYPE = "UpdateBookProgressEvent";
+    private static final String CONSUMER_GROUP = "engagement-service";
 
-    public UpdateReadingProgressEventConsumer(CreateReadingSessionEntryUseCase createReadingSessionEntryUseCase) {
+    private final CreateReadingSessionEntryUseCase createReadingSessionEntryUseCase;
+    private final VellumHubMetrics metrics;
+
+    public UpdateReadingProgressEventConsumer(CreateReadingSessionEntryUseCase createReadingSessionEntryUseCase, VellumHubMetrics metrics) {
         this.createReadingSessionEntryUseCase = createReadingSessionEntryUseCase;
+        this.metrics = metrics;
     }
 
     @KafkaListener(
@@ -22,6 +30,7 @@ public class UpdateReadingProgressEventConsumer {
             groupId = "engagement-service"
     )
     public void consume(UpdateBookProgressEvent event){
+        Timer.Sample sample = metrics.startKafkaProcessing();
         log.info(
                 "Received UpdateBookProgressEvent. operation=kafka_consume, topic=updated-reading-progress, event_type=UpdateBookProgressEvent, userId={}, bookId={}, progress={}, page={}",
                 event.userId(),
@@ -44,7 +53,15 @@ public class UpdateReadingProgressEventConsumer {
                 event.newPage()
         );
 
-        createReadingSessionEntryUseCase.execute(command);
+        try {
+            createReadingSessionEntryUseCase.execute(command);
+            metrics.recordKafkaConsumed(TOPIC, EVENT_TYPE, CONSUMER_GROUP);
+            metrics.recordKafkaProcessingDuration(sample, TOPIC, EVENT_TYPE, CONSUMER_GROUP, "success");
+        } catch (RuntimeException ex) {
+            metrics.recordKafkaConsumeFailed(TOPIC, EVENT_TYPE, CONSUMER_GROUP);
+            metrics.recordKafkaProcessingDuration(sample, TOPIC, EVENT_TYPE, CONSUMER_GROUP, "failure");
+            throw ex;
+        }
 
         log.info("Finished processing UpdateBookProgressEvent for userId: {}, bookId: {}", event.userId(), event.bookId());
     }

@@ -1,6 +1,7 @@
 package com.vellumhub.engagement_service.module.rating.infrastructure.producer;
 
 import com.vellumhub.engagement_service.module.rating.domain.port.EventProducer;
+import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -13,9 +14,11 @@ import java.util.concurrent.CompletableFuture;
 public class KafkaEventProducer<K, V> implements EventProducer<K, V> {
 
     private final KafkaTemplate<K, V> kafkaTemplate;
+    private final VellumHubMetrics metrics;
 
-    public KafkaEventProducer(KafkaTemplate<K, V> kafkaTemplate) {
+    public KafkaEventProducer(KafkaTemplate<K, V> kafkaTemplate, VellumHubMetrics metrics) {
         this.kafkaTemplate = kafkaTemplate;
+        this.metrics = metrics;
     }
 
     @Override
@@ -26,8 +29,10 @@ public class KafkaEventProducer<K, V> implements EventProducer<K, V> {
 
         future.whenComplete((result, ex) -> {
             if (ex == null) {
+                metrics.recordKafkaPublished(topic, value);
                 handleSuccess(topic, key, result);
             } else {
+                metrics.recordKafkaPublishFailed(topic, value);
                 handleFailure(topic, key, ex);
             }
         });

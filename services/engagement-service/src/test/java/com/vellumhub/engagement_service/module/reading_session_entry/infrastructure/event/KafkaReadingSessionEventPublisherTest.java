@@ -1,6 +1,8 @@
 package com.vellumhub.engagement_service.module.reading_session_entry.infrastructure.event;
 
 import com.vellumhub.engagement_service.module.reading_session_entry.infrastructure.kafka.publisher.KafkaReadingSessionEventPublisher;
+import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,10 @@ class KafkaReadingSessionEventPublisherTest {
     @Test
     @DisplayName("Should send event using kafka template")
     void shouldSendEventUsingKafkaTemplate() {
-        KafkaReadingSessionEventPublisher<String, Object> publisher = new KafkaReadingSessionEventPublisher<>(kafkaTemplate);
+        KafkaReadingSessionEventPublisher<String, Object> publisher = new KafkaReadingSessionEventPublisher<>(
+                kafkaTemplate,
+                new VellumHubMetrics(new SimpleMeterRegistry())
+        );
         SendResult<String, Object> sendResult = mock(SendResult.class);
         RecordMetadata recordMetadata = mock(RecordMetadata.class);
 
@@ -45,7 +50,10 @@ class KafkaReadingSessionEventPublisherTest {
     @Test
     @DisplayName("Should swallow asynchronous send failures without throwing")
     void shouldSwallowAsyncFailure() {
-        KafkaReadingSessionEventPublisher<String, Object> publisher = new KafkaReadingSessionEventPublisher<>(kafkaTemplate);
+        KafkaReadingSessionEventPublisher<String, Object> publisher = new KafkaReadingSessionEventPublisher<>(
+                kafkaTemplate,
+                new VellumHubMetrics(new SimpleMeterRegistry())
+        );
 
         when(kafkaTemplate.send("reading-session-started", "book", "payload"))
                 .thenReturn(CompletableFuture.failedFuture(new RuntimeException("boom")));

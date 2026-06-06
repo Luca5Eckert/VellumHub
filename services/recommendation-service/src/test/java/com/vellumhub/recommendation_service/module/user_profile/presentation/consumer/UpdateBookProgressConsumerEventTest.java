@@ -3,6 +3,7 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateBookProgressCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateBookProgressUseCase;
 import com.vellumhub.recommendation_service.module.user_profile.presentation.event.UpdateBookProgressEvent;
+import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +25,9 @@ class UpdateBookProgressConsumerEventTest {
 
     @Mock
     private UpdateBookProgressUseCase updateBookProgressUseCase;
+
+    @Mock
+    private VellumHubMetrics metrics;
 
     @InjectMocks
     private UpdateBookProgressConsumerEvent updateBookProgressConsumerEvent;

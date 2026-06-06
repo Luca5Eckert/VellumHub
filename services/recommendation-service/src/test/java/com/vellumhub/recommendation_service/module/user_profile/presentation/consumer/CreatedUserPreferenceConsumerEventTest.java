@@ -3,6 +3,7 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 import com.vellumhub.recommendation_service.module.user_profile.application.command.CreatedUserProfileCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.CreateUserProfileUseCase;
 import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedUserPreferenceEvent;
+import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +26,9 @@ class CreatedUserPreferenceConsumerEventTest {
 
     @Mock
     private CreateUserProfileUseCase createUserProfileUseCase;
+
+    @Mock
+    private VellumHubMetrics metrics;
 
     @InjectMocks
     private CreatedUserPreferenceConsumerEvent createdUserPreferenceConsumerEvent;
