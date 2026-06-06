@@ -1,0 +1,88 @@
+{
+  "uid": "vellumhub-kafka-flow",
+  "title": "Kafka Flow",
+  "tags": ["vellumhub", "kafka", "events"],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Published Events",
+      "description": "Future business metric from #210.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_producer_events_total[5m])) or vector(0)", "legendFormat": "{{service}} {{topic}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "eps" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Consumed Events",
+      "description": "Future business metric from #210.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_consumer_events_total[5m])) or vector(0)", "legendFormat": "{{service}} {{topic}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "eps" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Publication and Consumption Failures",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_producer_failures_total[5m])) or vector(0)", "legendFormat": "publish {{service}} {{topic}}" },
+        { "refId": "B", "expr": "sum by (service, topic) (rate(vellumhub_kafka_consumer_failures_total[5m])) or vector(0)", "legendFormat": "consume {{service}} {{topic}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "eps" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Consumer Lag",
+      "description": "Uses Micrometer Kafka client lag metrics when available.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "max by (job) (kafka_consumer_fetch_manager_records_lag_max{job=~\".*-service\"}) or vector(0)", "legendFormat": "{{job}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 5,
+      "type": "logs",
+      "title": "DLT Logs",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        { "refId": "A", "expr": "{environment=\"local\"} |= \"DLT\"" }
+      ],
+      "options": { "showLabels": true, "showTime": true, "wrapLogMessage": true }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "DLT Metrics",
+      "description": "Future DLT counter from #210.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_dlt_events_total[5m])) or vector(0)", "legendFormat": "{{service}} {{topic}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "eps" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    }
+  ]
+}

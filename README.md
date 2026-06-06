@@ -359,7 +359,7 @@ Services expose Spring Boot Actuator endpoints:
 
 In the `prod` profile, health details are hidden and the gateway lowers Spring Cloud Gateway logging from local `TRACE` diagnostics to `INFO`.
 
-Kafka UI is available at `http://localhost:8090` when the compose stack is running. The full local observability workflow is documented in [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md), and additional Kafka monitoring notes live in [docs/KAFKA_MONITORING.md](docs/KAFKA_MONITORING.md), though the code-level topic inventory above is newer than parts of that document.
+Kafka UI is available at `http://localhost:8090` when the compose stack is running. The full local observability workflow is documented in [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md), operational incident guides live in [docs/OBSERVABILITY_RUNBOOKS.md](docs/OBSERVABILITY_RUNBOOKS.md), and additional Kafka monitoring notes live in [docs/KAFKA_MONITORING.md](docs/KAFKA_MONITORING.md), though the code-level topic inventory above is newer than parts of that document.
 
 ## Quality Evidence
 

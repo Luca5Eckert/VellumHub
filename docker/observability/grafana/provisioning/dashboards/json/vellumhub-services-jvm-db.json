@@ -1,0 +1,106 @@
+{
+  "uid": "vellumhub-services-jvm-db",
+  "title": "Services JVM and DB",
+  "tags": ["vellumhub", "jvm", "database"],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "type": "query",
+        "label": "Service",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(up{job=~\".*-service\"}, job)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": { "selected": true, "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Heap Usage",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum by (job) (jvm_memory_used_bytes{job=~\"$service\",area=\"heap\"})", "legendFormat": "used {{job}}" },
+        { "refId": "B", "expr": "sum by (job) (jvm_memory_max_bytes{job=~\"$service\",area=\"heap\"})", "legendFormat": "max {{job}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "CPU Usage",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "process_cpu_usage{job=~\"$service\"}", "legendFormat": "process {{job}}" },
+        { "refId": "B", "expr": "system_cpu_usage{job=~\"$service\"}", "legendFormat": "system {{job}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "GC Pause Rate and Max",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum by (job) (rate(jvm_gc_pause_seconds_count{job=~\"$service\"}[5m]))", "legendFormat": "pauses/s {{job}}" },
+        { "refId": "B", "expr": "max by (job) (jvm_gc_pause_seconds_max{job=~\"$service\"})", "legendFormat": "max {{job}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Threads",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "jvm_threads_live_threads{job=~\"$service\"}", "legendFormat": "live {{job}}" },
+        { "refId": "B", "expr": "jvm_threads_daemon_threads{job=~\"$service\"}", "legendFormat": "daemon {{job}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Hikari Pool Active / Idle / Pending",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum by (job) (hikaricp_connections_active{job=~\"$service\"})", "legendFormat": "active {{job}}" },
+        { "refId": "B", "expr": "sum by (job) (hikaricp_connections_idle{job=~\"$service\"})", "legendFormat": "idle {{job}}" },
+        { "refId": "C", "expr": "sum by (job) (hikaricp_connections_pending{job=~\"$service\"})", "legendFormat": "pending {{job}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Hikari Acquire Time",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum by (job) (rate(hikaricp_connections_acquire_seconds_sum{job=~\"$service\"}[5m])) / clamp_min(sum by (job) (rate(hikaricp_connections_acquire_seconds_count{job=~\"$service\"}[5m])), 0.001)", "legendFormat": "avg {{job}}" },
+        { "refId": "B", "expr": "max by (job) (hikaricp_connections_acquire_seconds_max{job=~\"$service\"})", "legendFormat": "max {{job}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    }
+  ]
+}
