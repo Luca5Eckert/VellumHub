@@ -132,7 +132,7 @@ curl http://localhost:8080/actuator/health
 
 **Likely Causes:** Service container unhealthy, wrong network/service name, Actuator endpoint not exposed, application startup failure, or Prometheus scrape config mismatch.
 
-**First Actions:** Confirm the container is running, inspect its healthcheck, call `/actuator/prometheus` from inside the Docker network if needed, and compare service names with `docker/observability/prometheus/prometheus.yml`.
+**First Actions:** Confirm the container is running, inspect its healthcheck, call `/actuator/prometheus` from inside the Docker network if needed, and compare service names with `infra/observability/prometheus/prometheus.yml`.
 
 **Escalate When:** The service starts but Prometheus still cannot scrape it, or multiple services disappear at once.
 
@@ -156,6 +156,6 @@ curl http://localhost:12345/-/ready
 
 **Likely Causes:** Alloy cannot read Docker socket, Loki is unhealthy, service logs are not JSON, service label extraction changed, or the container name is not covered by Alloy discovery.
 
-**First Actions:** Confirm Alloy and Loki readiness, check Alloy logs for Docker discovery errors, verify the app emits JSON logs, and compare container names with `docker/observability/alloy/config.alloy`.
+**First Actions:** Confirm Alloy and Loki readiness, check Alloy logs for Docker discovery errors, verify the app emits JSON logs, and compare container names with `infra/observability/alloy/config.alloy`.
 
 **Escalate When:** Loki receives no logs from any service, Alloy cannot access Docker socket, or labels are missing after a logging configuration change.

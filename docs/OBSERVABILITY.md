@@ -34,7 +34,7 @@ docker compose --profile observability down
 | Alloy | `http://localhost:12345` | Collector UI and pipeline status. |
 | Kafka UI | `http://localhost:8090` | Topic and consumer-group inspection. |
 
-Grafana datasources are provisioned from `docker/observability/grafana/provisioning/datasources/datasources.yml`:
+Grafana datasources are provisioned from `infra/observability/grafana/provisioning/datasources/datasources.yml`:
 
 - `Prometheus`
 - `Loki`
@@ -42,7 +42,7 @@ Grafana datasources are provisioned from `docker/observability/grafana/provision
 
 ## Dashboards
 
-Grafana dashboards are provisioned automatically from `docker/observability/grafana/provisioning/dashboards/`.
+Grafana dashboards are provisioned automatically from `infra/observability/grafana/provisioning/dashboards/`.
 
 Provisioned dashboards:
 
@@ -81,7 +81,7 @@ Validate target health in Prometheus:
 
 ## Alerts
 
-Initial alert rules are versioned in `docker/observability/prometheus/rules/vellumhub-alerts.yml` and loaded by Prometheus through `rule_files`.
+Initial alert rules are versioned in `infra/observability/prometheus/rules/vellumhub-alerts.yml` and loaded by Prometheus through `rule_files`.
 
 The initial rules are conservative local-development defaults:
 
@@ -197,14 +197,14 @@ The expected behavior is:
 
 | File | Purpose |
 |---|---|
-| `docker/observability/prometheus/prometheus.yml` | Prometheus scrape jobs. |
-| `docker/observability/prometheus/rules/vellumhub-alerts.yml` | Initial local alert rules. |
-| `docker/observability/grafana/provisioning/datasources/datasources.yml` | Grafana datasource provisioning. |
-| `docker/observability/grafana/provisioning/dashboards/dashboards.yml` | Grafana dashboard provider. |
-| `docker/observability/grafana/provisioning/dashboards/json/*.json` | Provisioned Grafana dashboards. |
-| `docker/observability/loki/loki.yml` | Local single-node Loki storage. |
-| `docker/observability/tempo/tempo.yml` | Local Tempo trace storage and OTLP receiver config. |
-| `docker/observability/alloy/config.alloy` | Docker log collection, Loki forwarding, and OTLP-to-Tempo forwarding. |
+| `infra/observability/prometheus/prometheus.yml` | Prometheus scrape jobs. |
+| `infra/observability/prometheus/rules/vellumhub-alerts.yml` | Initial local alert rules. |
+| `infra/observability/grafana/provisioning/datasources/datasources.yml` | Grafana datasource provisioning. |
+| `infra/observability/grafana/provisioning/dashboards/dashboards.yml` | Grafana dashboard provider. |
+| `infra/observability/grafana/provisioning/dashboards/json/*.json` | Provisioned Grafana dashboards. |
+| `infra/observability/loki/loki.yml` | Local single-node Loki storage. |
+| `infra/observability/tempo/tempo.yml` | Local Tempo trace storage and OTLP receiver config. |
+| `infra/observability/alloy/config.alloy` | Docker log collection, Loki forwarding, and OTLP-to-Tempo forwarding. |
 | `docs/OBSERVABILITY_RUNBOOKS.md` | Operational investigation guides linked from alerts. |
 
 Business metrics and manual domain spans are intentionally outside this issue.

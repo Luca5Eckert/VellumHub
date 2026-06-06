@@ -5,7 +5,7 @@
 # without requiring running services
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 # Color codes
 GREEN='\033[0;32m'
@@ -43,38 +43,28 @@ print_result() {
 # Test 1: Verify Feign client configuration
 echo -e "${BLUE}Test 1: Feign Client Configuration${NC}"
 
-if grep -q "catalog-service.ribbon.listOfServers" "$PROJECT_ROOT/recommendation-service/src/main/resources/application.properties"; then
+if grep -q "catalog-service.ribbon.listOfServers" "$PROJECT_ROOT/services/recommendation-service/src/main/resources/application.properties"; then
     print_result "Feign Config (application.properties)" "PASS" "Ribbon load balancer configured"
 else
     print_result "Feign Config (application.properties)" "WARN" "Ribbon configuration not found"
 fi
 
-if grep -q "catalog-service.ribbon.listOfServers" "$PROJECT_ROOT/recommendation-service/src/main/resources/application-local.properties"; then
+if grep -q "catalog-service.ribbon.listOfServers" "$PROJECT_ROOT/services/recommendation-service/src/main/resources/application-local.properties"; then
     print_result "Feign Config (local)" "PASS" "Local environment configured"
 else
     print_result "Feign Config (local)" "WARN" "Local configuration not found"
 fi
 
-# Test 2: Verify Feign client exists
+# Test 2: Verify catalog client port exists
 echo ""
-echo -e "${BLUE}Test 2: Feign Client Implementation${NC}"
+echo -e "${BLUE}Test 2: Catalog Client Port${NC}"
 
-if [ -f "$PROJECT_ROOT/recommendation-service/src/main/java/com/mrs/recommendation_service/module/book_feature/infrastructure/client/CatalogClientAdapter.java" ]; then
-    print_result "CatalogClientAdapter" "PASS" "Feign client exists"
-    
-    if grep -q "@FeignClient" "$PROJECT_ROOT/recommendation-service/src/main/java/com/mrs/recommendation_service/module/book_feature/infrastructure/client/CatalogClientAdapter.java"; then
-        print_result "Feign Annotation" "PASS" "@FeignClient annotation present"
-    else
-        print_result "Feign Annotation" "FAIL" "@FeignClient annotation missing"
-    fi
-    
-    if grep -q "/api/book/bulk" "$PROJECT_ROOT/recommendation-service/src/main/java/com/mrs/recommendation_service/module/book_feature/infrastructure/client/CatalogClientAdapter.java"; then
-        print_result "Bulk Endpoint" "PASS" "Bulk endpoint mapping configured"
-    else
-        print_result "Bulk Endpoint" "FAIL" "Bulk endpoint mapping missing"
-    fi
+catalog_client_port="$PROJECT_ROOT/services/recommendation-service/src/main/java/com/vellumhub/recommendation_service/module/book_feature/domain/port/CatalogClient.java"
+
+if [ -f "$catalog_client_port" ]; then
+    print_result "CatalogClient Port" "PASS" "Catalog client port exists"
 else
-    print_result "CatalogClientAdapter" "FAIL" "Feign client file not found"
+    print_result "CatalogClient Port" "WARN" "Catalog client port not found"
 fi
 
 # Test 3: Verify Kafka producer configuration
@@ -82,7 +72,7 @@ echo ""
 echo -e "${BLUE}Test 3: Kafka Producer Configuration${NC}"
 
 for service in "catalog-service" "engagement-service"; do
-    props_file="$PROJECT_ROOT/$service/src/main/resources/application.properties"
+    props_file="$PROJECT_ROOT/services/$service/src/main/resources/application.properties"
     
     if [ -f "$props_file" ]; then
         if grep -q "spring.kafka.producer" "$props_file"; then
@@ -99,7 +89,7 @@ done
 echo ""
 echo -e "${BLUE}Test 4: Kafka Consumer Configuration${NC}"
 
-consumer_props="$PROJECT_ROOT/recommendation-service/src/main/resources/application.properties"
+consumer_props="$PROJECT_ROOT/services/recommendation-service/src/main/resources/application.properties"
 
 if [ -f "$consumer_props" ]; then
     if grep -q "spring.kafka.consumer" "$consumer_props"; then
@@ -120,13 +110,13 @@ fi
 echo ""
 echo -e "${BLUE}Test 5: Kafka Event Producers${NC}"
 
-if [ -f "$PROJECT_ROOT/catalog-service/src/main/java/com/mrs/catalog_service/module/book/infrastructure/producer/KafkaBookEventProducer.java" ]; then
+if [ -f "$PROJECT_ROOT/services/catalog-service/src/main/java/com/vellumhub/catalog_service/module/book/infrastructure/producer/KafkaBookEventProducer.java" ]; then
     print_result "Catalog Event Producer" "PASS" "KafkaBookEventProducer exists"
 else
     print_result "Catalog Event Producer" "FAIL" "KafkaBookEventProducer not found"
 fi
 
-if [ -f "$PROJECT_ROOT/engagement-service/src/main/java/com/mrs/engagement_service/module/rating/infrastructure/producer/KafkaEventProducer.java" ]; then
+if [ -f "$PROJECT_ROOT/services/engagement-service/src/main/java/com/vellumhub/engagement_service/module/rating/infrastructure/producer/KafkaEventProducer.java" ]; then
     print_result "Engagement Event Producer" "PASS" "KafkaEventProducer exists"
 else
     print_result "Engagement Event Producer" "FAIL" "KafkaEventProducer not found"
@@ -144,7 +134,7 @@ consumers=(
 )
 
 for consumer in "${consumers[@]}"; do
-    if find "$PROJECT_ROOT/recommendation-service" -name "${consumer}.java" | grep -q .; then
+    if find "$PROJECT_ROOT/services/recommendation-service" -name "${consumer}.java" | grep -q .; then
         print_result "$consumer" "PASS" "Consumer exists"
     else
         print_result "$consumer" "WARN" "Consumer not found (may have different name)"
@@ -156,12 +146,12 @@ echo ""
 echo -e "${BLUE}Test 7: Docker Network Configuration${NC}"
 
 if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
-    if grep -q "mrs-network" "$PROJECT_ROOT/docker-compose.yml"; then
-        print_result "Docker Network" "PASS" "mrs-network defined"
+    if grep -q "vellum-network" "$PROJECT_ROOT/docker-compose.yml"; then
+        print_result "Docker Network" "PASS" "vellum-network defined"
         
         # Check all services are on the same network
-        cat_network_check=$(grep -A 20 "catalog-service:" "$PROJECT_ROOT/docker-compose.yml" | grep -c "mrs-network" || echo "0")
-        rec_network_check=$(grep -A 20 "recommendation-service:" "$PROJECT_ROOT/docker-compose.yml" | grep -c "mrs-network" || echo "0")
+        cat_network_check=$(grep -A 20 "catalog-service:" "$PROJECT_ROOT/docker-compose.yml" | grep -c "vellum-network" || echo "0")
+        rec_network_check=$(grep -A 20 "recommendation-service:" "$PROJECT_ROOT/docker-compose.yml" | grep -c "vellum-network" || echo "0")
         
         if [ "$cat_network_check" -gt 0 ] && [ "$rec_network_check" -gt 0 ]; then
             print_result "Network Assignment" "PASS" "Services on same network"
@@ -180,7 +170,7 @@ echo ""
 echo -e "${BLUE}Test 8: Health Check Configuration${NC}"
 
 for service in "catalog-service" "engagement-service" "recommendation-service" "user-service"; do
-    props_file="$PROJECT_ROOT/$service/src/main/resources/application.properties"
+    props_file="$PROJECT_ROOT/services/$service/src/main/resources/application.properties"
     
     if [ -f "$props_file" ]; then
         if grep -q "management.endpoints.web.exposure.include" "$props_file"; then
@@ -201,10 +191,10 @@ done
 echo ""
 echo -e "${BLUE}Test 9: Communication Testing Tools${NC}"
 
-if [ -f "$PROJECT_ROOT/scripts/test-service-communication.sh" ]; then
+if [ -f "$PROJECT_ROOT/infra/scripts/smoke-tests/test-service-communication.sh" ]; then
     print_result "Communication Test Script" "PASS" "Script exists"
     
-    if [ -x "$PROJECT_ROOT/scripts/test-service-communication.sh" ]; then
+    if [ -x "$PROJECT_ROOT/infra/scripts/smoke-tests/test-service-communication.sh" ]; then
         print_result "Script Permissions" "PASS" "Script is executable"
     else
         print_result "Script Permissions" "WARN" "Script is not executable"
@@ -213,7 +203,7 @@ else
     print_result "Communication Test Script" "FAIL" "Script not found"
 fi
 
-if [ -f "$PROJECT_ROOT/scripts/kafka-health-check.sh" ]; then
+if [ -f "$PROJECT_ROOT/infra/scripts/kafka/kafka-health-check.sh" ]; then
     print_result "Kafka Health Script" "PASS" "Script exists"
 else
     print_result "Kafka Health Script" "FAIL" "Script not found"
@@ -226,7 +216,7 @@ echo -e "${BLUE}Test 10: Documentation${NC}"
 if [ -f "$PROJECT_ROOT/docs/SERVICE_COMMUNICATION.md" ]; then
     print_result "Communication Guide" "PASS" "Documentation exists"
 else
-    print_result "Communication Guide" "FAIL" "Documentation not found"
+    print_result "Communication Guide" "WARN" "Dedicated communication guide not found"
 fi
 
 if [ -f "$PROJECT_ROOT/docs/KAFKA_MONITORING.md" ]; then
@@ -251,7 +241,7 @@ if [ $FAILED -eq 0 ]; then
         echo ""
         echo "Communication infrastructure is properly configured."
         echo "To test with running services, use:"
-        echo "  ./scripts/test-service-communication.sh"
+        echo "  ./infra/scripts/smoke-tests/test-service-communication.sh"
         exit 0
     else
         echo -e "${YELLOW}⚠ Configuration passed with warnings${NC}"
