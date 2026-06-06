@@ -9,12 +9,14 @@ import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
+import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -44,8 +46,20 @@ class CreateBookHandlerTest {
     @Mock
     private BookEventProducer<String, CreateBookEvent> bookEventProducer;
 
-    @InjectMocks
     private CreateBookHandler createBookHandler;
+
+    private SimpleMeterRegistry meterRegistry;
+
+    @BeforeEach
+    void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        createBookHandler = new CreateBookHandler(
+                bookRepository,
+                genreRepository,
+                bookEventProducer,
+                new VellumHubMetrics(meterRegistry)
+        );
+    }
 
     @Nested
     @DisplayName("Success Scenarios")
@@ -100,6 +114,7 @@ class CreateBookHandlerTest {
             assertThat(capturedEvent.title()).isEqualTo("The Hobbit");
             assertThat(capturedEvent.author()).isEqualTo("J.R.R. Tolkien");
             assertThat(capturedEvent.genres()).containsExactlyInAnyOrder("Fantasy", "Adventure");
+            assertThat(booksCreatedCount()).isEqualTo(1.0);
         }
     }
 
@@ -159,5 +174,13 @@ class CreateBookHandlerTest {
             then(bookRepository).should(never()).save(any());
             then(bookEventProducer).shouldHaveNoInteractions();
         }
+    }
+
+    private double booksCreatedCount() {
+        return meterRegistry.get(VellumHubMetrics.BOOKS_CREATED)
+                .tag("operation", "book_creation")
+                .tag("result", "success")
+                .counter()
+                .count();
     }
 }

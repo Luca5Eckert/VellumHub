@@ -7,6 +7,7 @@ import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookP
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
+import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +30,9 @@ class UpdateBookProgressUseCaseTest {
 
     @Mock
     private BookProgressRepository bookProgressRepository;
+
+    @Mock
+    private VellumHubMetrics vellumHubMetrics;
 
     @InjectMocks
     private UpdateBookProgressUseCase useCase;

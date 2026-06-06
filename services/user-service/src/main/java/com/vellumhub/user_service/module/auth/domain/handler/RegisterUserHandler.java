@@ -3,6 +3,7 @@ package com.vellumhub.user_service.module.auth.domain.handler;
 import com.vellumhub.user_service.module.auth.domain.exception.AuthDomainException;
 import com.vellumhub.user_service.module.user.domain.UserEntity;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
+import com.vellumhub.user_service.share.metrics.VellumHubMetrics;
 import org.passay.PasswordData;
 import org.passay.PasswordValidator;
 import org.passay.RuleResult;
@@ -16,11 +17,13 @@ public class RegisterUserHandler {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
+    private final VellumHubMetrics metrics;
 
-    public RegisterUserHandler(UserRepository userRepository, PasswordEncoder passwordEncoder, PasswordValidator passwordValidator) {
+    public RegisterUserHandler(UserRepository userRepository, PasswordEncoder passwordEncoder, PasswordValidator passwordValidator, VellumHubMetrics metrics) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordValidator = passwordValidator;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -38,6 +41,7 @@ public class RegisterUserHandler {
         userEntity.setPassword(passwordEncoder.encode(rawPassword));
 
         userRepository.save(userEntity);
+        metrics.recordBusinessCounter(VellumHubMetrics.USERS_CREATED, "user_registration", "success");
     }
 
     private void validatePassword(String password) {

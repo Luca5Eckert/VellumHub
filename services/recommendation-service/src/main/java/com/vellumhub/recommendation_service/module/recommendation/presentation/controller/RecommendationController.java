@@ -4,6 +4,7 @@ import com.vellumhub.recommendation_service.module.recommendation.presentation.d
 import com.vellumhub.recommendation_service.module.recommendation.presentation.mapper.RecommendationMapper;
 import com.vellumhub.recommendation_service.module.recommendation.application.use_case.GetRecommendationsUseCase;
 import com.vellumhub.recommendation_service.module.recommendation.application.command.GetRecommendationsCommand;
+import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.recommendation_service.share.provider.UserAuthenticationProvider;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,11 +32,13 @@ public class RecommendationController {
     private final RecommendationMapper mapper;
 
     private final GetRecommendationsUseCase getRecommendationsUseCase;
+    private final VellumHubMetrics metrics;
 
-    public RecommendationController(UserAuthenticationProvider userAuthenticationProvider, RecommendationMapper mapper, GetRecommendationsUseCase getRecommendationsUseCase) {
+    public RecommendationController(UserAuthenticationProvider userAuthenticationProvider, RecommendationMapper mapper, GetRecommendationsUseCase getRecommendationsUseCase, VellumHubMetrics metrics) {
         this.userAuthenticationProvider = userAuthenticationProvider;
         this.mapper = mapper;
         this.getRecommendationsUseCase = getRecommendationsUseCase;
+        this.metrics = metrics;
     }
     /**
      * Returns recommendations for the authenticated user.
@@ -70,6 +73,7 @@ public class RecommendationController {
                 .map(mapper::toResponse)
                 .toList();
 
+        metrics.recordBusinessCounter(VellumHubMetrics.RECOMMENDATIONS_REQUESTED, "recommendation_request", "success");
         return ResponseEntity.ok(response);
     }
 }

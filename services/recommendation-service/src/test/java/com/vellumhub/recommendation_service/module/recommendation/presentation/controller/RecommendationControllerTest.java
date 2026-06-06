@@ -6,12 +6,14 @@ import com.vellumhub.recommendation_service.module.recommendation.domain.model.R
 import com.vellumhub.recommendation_service.module.recommendation.presentation.dto.RecommendationResponse;
 import com.vellumhub.recommendation_service.module.recommendation.presentation.mapper.RecommendationMapper;
 import com.vellumhub.recommendation_service.share.provider.UserAuthenticationProvider;
+import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -36,11 +38,23 @@ class RecommendationControllerTest {
     @Mock
     private GetRecommendationsUseCase getRecommendationsUseCase;
 
-    @InjectMocks
     private RecommendationController controller;
+
+    private SimpleMeterRegistry meterRegistry;
 
     @Captor
     private ArgumentCaptor<GetRecommendationsCommand> commandCaptor;
+
+    @BeforeEach
+    void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        controller = new RecommendationController(
+                userAuthenticationProvider,
+                mapper,
+                getRecommendationsUseCase,
+                new VellumHubMetrics(meterRegistry)
+        );
+    }
 
     private Recommendation buildRecommendation(UUID bookId, String title) {
         return Recommendation.builder()
@@ -71,6 +85,7 @@ class RecommendationControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).hasSize(1);
         assertThat(response.getBody().get(0).title()).isEqualTo("Book A");
+        assertThat(recommendationRequestsCount()).isEqualTo(1.0);
     }
 
     @Test
@@ -120,5 +135,13 @@ class RecommendationControllerTest {
 
         assertThat(response.getBody()).hasSize(2);
         verify(mapper, times(2)).toResponse(any());
+    }
+
+    private double recommendationRequestsCount() {
+        return meterRegistry.get(VellumHubMetrics.RECOMMENDATIONS_REQUESTED)
+                .tag("operation", "recommendation_request")
+                .tag("result", "success")
+                .counter()
+                .count();
     }
 }

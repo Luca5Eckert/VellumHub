@@ -5,6 +5,7 @@ import com.vellumhub.engagement_service.module.reaction.domain.event.ReactionCha
 import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
 import com.vellumhub.engagement_service.module.reaction.domain.port.EventProducer;
 import com.vellumhub.engagement_service.module.reaction.domain.port.ReactionRepository;
+import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,10 +14,12 @@ public class UpdateReactionUseCase {
 
     private final ReactionRepository reactionRepository;
     private final EventProducer<String, ReactionChangedEvent> eventProducer;
+    private final VellumHubMetrics metrics;
 
-    public UpdateReactionUseCase(ReactionRepository reactionRepository, EventProducer<String, ReactionChangedEvent> eventProducer) {
+    public UpdateReactionUseCase(ReactionRepository reactionRepository, EventProducer<String, ReactionChangedEvent> eventProducer, VellumHubMetrics metrics) {
         this.reactionRepository = reactionRepository;
         this.eventProducer = eventProducer;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -31,6 +34,7 @@ public class UpdateReactionUseCase {
         var event = ReactionChangedEvent.from(reaction);
 
         eventProducer.send("user-reaction-changed", event.userId().toString(), event);
+        metrics.recordBusinessCounter(VellumHubMetrics.REACTIONS_CHANGED, "reaction_update", "success");
     }
 
 }
