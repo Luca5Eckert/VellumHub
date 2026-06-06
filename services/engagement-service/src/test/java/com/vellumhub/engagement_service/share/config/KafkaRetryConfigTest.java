@@ -1,5 +1,7 @@
 package com.vellumhub.engagement_service.share.config;
 
+import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.system.CapturedOutput;
@@ -12,7 +14,7 @@ class KafkaRetryConfigTest {
 
     @Test
     void dltLoggingDoesNotExposeRawPayload(CapturedOutput output) {
-        KafkaRetryConfig config = new KafkaRetryConfig();
+        KafkaRetryConfig config = new KafkaRetryConfig(new VellumHubMetrics(new SimpleMeterRegistry()));
 
         config.consumeDlt(
                 "{\"password\":\"secret\",\"token\":\"full.jwt.value\"}",
@@ -30,5 +32,19 @@ class KafkaRetryConfigTest {
                 .doesNotContain("secret")
                 .doesNotContain("full.jwt.value")
                 .doesNotContain("Message Payload");
+    }
+
+    @Test
+    void dltConsumerCountsQuarantinedEvents() {
+        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        KafkaRetryConfig config = new KafkaRetryConfig(new VellumHubMetrics(meterRegistry));
+
+        config.consumeDlt("{}", "created-book-dlt", "created-book", "boom");
+
+        assertThat(meterRegistry.get("vellumhub.kafka.dlt.events")
+                .tag("topic", "created-book")
+                .tag("consumer_group", "engagement-service-dlt-group")
+                .counter()
+                .count()).isEqualTo(1.0);
     }
 }

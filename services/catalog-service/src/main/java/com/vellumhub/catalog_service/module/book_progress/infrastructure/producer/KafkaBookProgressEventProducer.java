@@ -1,6 +1,7 @@
 package com.vellumhub.catalog_service.module.book_progress.infrastructure.producer;
 
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressEventProducer;
+import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -14,9 +15,11 @@ import java.util.concurrent.CompletableFuture;
 public class KafkaBookProgressEventProducer<K, V> implements BookProgressEventProducer<K, V> {
 
     private final KafkaTemplate<K, V> kafkaTemplate;
+    private final VellumHubMetrics metrics;
 
-    public KafkaBookProgressEventProducer(KafkaTemplate<K, V> kafkaTemplate) {
+    public KafkaBookProgressEventProducer(KafkaTemplate<K, V> kafkaTemplate, VellumHubMetrics metrics) {
         this.kafkaTemplate = kafkaTemplate;
+        this.metrics = metrics;
     }
 
     @Override
@@ -27,6 +30,7 @@ public class KafkaBookProgressEventProducer<K, V> implements BookProgressEventPr
 
         future.whenComplete((result, ex) -> {
             if (ex != null) {
+                metrics.recordKafkaPublishFailed(topic, value);
                 log.error(
                         "Failed to send event to Kafka — topic: {}, key: {}, reason: {}",
                         topic, key, ex.getMessage(), ex
@@ -34,6 +38,7 @@ public class KafkaBookProgressEventProducer<K, V> implements BookProgressEventPr
                 handleSendFailure(topic, key, value, ex);
             } else {
                 RecordMetadata metadata = result.getRecordMetadata();
+                metrics.recordKafkaPublished(topic, value);
                 log.info(
                         "Event successfully sent to Kafka — topic: {}, partition: {}, offset: {}, key: {}",
                         metadata.topic(), metadata.partition(), metadata.offset(), key

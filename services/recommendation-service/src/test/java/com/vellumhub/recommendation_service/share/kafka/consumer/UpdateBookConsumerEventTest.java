@@ -4,6 +4,7 @@ import com.vellumhub.recommendation_service.module.book_feature.application.comm
 import com.vellumhub.recommendation_service.module.book_feature.application.use_case.UpdateBookFeatureUseCase;
 import com.vellumhub.recommendation_service.module.recommendation.application.command.UpdateRecommendationCommand;
 import com.vellumhub.recommendation_service.module.recommendation.application.use_case.UpdateRecommendationUseCase;
+import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.recommendation_service.share.kafka.event.UpdateBookEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,9 @@ class UpdateBookConsumerEventTest {
 
     @Mock
     private UpdateRecommendationUseCase updateRecommendationUseCase;
+
+    @Mock
+    private VellumHubMetrics metrics;
 
     @InjectMocks
     private UpdateBookConsumerEvent updateBookConsumerEvent;

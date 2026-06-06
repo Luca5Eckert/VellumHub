@@ -7,15 +7,17 @@ import com.vellumhub.user_service.module.user_preference.application.command.Cre
 import com.vellumhub.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
 import com.vellumhub.user_service.module.user_preference.domain.model.UserPreference;
 import com.vellumhub.user_service.module.user_preference.domain.port.UserPreferenceRepository;
+import com.vellumhub.user_service.share.metrics.VellumHubMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,8 +40,8 @@ class CreateUserPreferenceUseCaseTest {
     @Mock
     private KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate;
 
-    @InjectMocks
     private CreateUserPreferenceUseCase createUserPreferenceUseCase;
+    private SimpleMeterRegistry meterRegistry;
 
     private UUID userId;
     private UserEntity user;
@@ -50,6 +52,13 @@ class CreateUserPreferenceUseCaseTest {
         userId = UUID.randomUUID();
         user = mock(UserEntity.class);
         command = new CreateUserPreferenceCommand(userId, List.of("FANTASY", "SCIENCE_FICTION"), "I love sci-fi books");
+        meterRegistry = new SimpleMeterRegistry();
+        createUserPreferenceUseCase = new CreateUserPreferenceUseCase(
+                userPreferenceRepository,
+                userRepository,
+                kafkaTemplate,
+                new VellumHubMetrics(meterRegistry)
+        );
     }
 
     @Test
@@ -68,6 +77,7 @@ class CreateUserPreferenceUseCaseTest {
         when(user.getId()).thenReturn(userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        stubKafkaSendSuccess();
 
         createUserPreferenceUseCase.execute(command);
 
@@ -92,6 +102,7 @@ class CreateUserPreferenceUseCaseTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.of(existing));
+        stubKafkaSendSuccess();
 
         createUserPreferenceUseCase.execute(command);
 
@@ -109,10 +120,11 @@ class CreateUserPreferenceUseCaseTest {
         when(user.getId()).thenReturn(userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        stubKafkaSendSuccess();
 
         createUserPreferenceUseCase.execute(command);
 
-        verify(kafkaTemplate).send(eq("create_user_preference"), eq(userId.toString()), any(CreateUserPreferenceEvent.class));
+        verify(kafkaTemplate).send(eq("created-user-preference"), eq(userId.toString()), any(CreateUserPreferenceEvent.class));
     }
 
     @Test
@@ -120,6 +132,7 @@ class CreateUserPreferenceUseCaseTest {
         when(user.getId()).thenReturn(userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        stubKafkaSendSuccess();
 
         createUserPreferenceUseCase.execute(command);
 
@@ -137,6 +150,7 @@ class CreateUserPreferenceUseCaseTest {
         when(user.getId()).thenReturn(userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        stubKafkaSendSuccess();
 
         var inOrder = inOrder(userPreferenceRepository, kafkaTemplate);
 
@@ -144,5 +158,26 @@ class CreateUserPreferenceUseCaseTest {
 
         inOrder.verify(userPreferenceRepository).save(any());
         inOrder.verify(kafkaTemplate).send(any(), any(), any());
+    }
+
+    @Test
+    void execute_shouldCountSuccessfulKafkaPublication() {
+        when(user.getId()).thenReturn(userId);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        stubKafkaSendSuccess();
+
+        createUserPreferenceUseCase.execute(command);
+
+        assertThat(meterRegistry.get("vellumhub.kafka.events.published")
+                .tag("topic", "created-user-preference")
+                .tag("event_type", "CreateUserPreferenceEvent")
+                .counter()
+                .count()).isEqualTo(1.0);
+    }
+
+    private void stubKafkaSendSuccess() {
+        when(kafkaTemplate.send(any(), any(), any(CreateUserPreferenceEvent.class)))
+                .thenReturn(CompletableFuture.completedFuture(null));
     }
 }

@@ -1,11 +1,9 @@
 package com.vellumhub.catalog_service.module.book.infrastructure.producer;
 
 import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
+import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
@@ -17,9 +15,11 @@ import java.util.concurrent.CompletableFuture;
 public class KafkaBookEventProducer<K, V> implements BookEventProducer<K, V> {
 
     private final KafkaTemplate<K, V> kafkaTemplate;
+    private final VellumHubMetrics metrics;
 
-    public KafkaBookEventProducer(KafkaTemplate<K, V> kafkaTemplate) {
+    public KafkaBookEventProducer(KafkaTemplate<K, V> kafkaTemplate, VellumHubMetrics metrics) {
         this.kafkaTemplate = kafkaTemplate;
+        this.metrics = metrics;
     }
 
     @Override
@@ -30,6 +30,7 @@ public class KafkaBookEventProducer<K, V> implements BookEventProducer<K, V> {
 
         future.whenComplete((result, ex) -> {
             if (ex != null) {
+                metrics.recordKafkaPublishFailed(topic, value);
                 log.error(
                         "Failed to send event to Kafka — topic: {}, key: {}, reason: {}",
                         topic, key, ex.getMessage(), ex
@@ -37,6 +38,7 @@ public class KafkaBookEventProducer<K, V> implements BookEventProducer<K, V> {
                 handleSendFailure(topic, key, value, ex);
             } else {
                 RecordMetadata metadata = result.getRecordMetadata();
+                metrics.recordKafkaPublished(topic, value);
                 log.info(
                         "Event successfully sent to Kafka — topic: {}, partition: {}, offset: {}, key: {}",
                         metadata.topic(), metadata.partition(), metadata.offset(), key

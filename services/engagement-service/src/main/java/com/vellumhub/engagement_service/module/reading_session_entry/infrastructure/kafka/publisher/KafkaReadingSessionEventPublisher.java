@@ -1,6 +1,7 @@
 package com.vellumhub.engagement_service.module.reading_session_entry.infrastructure.kafka.publisher;
 
 import com.vellumhub.engagement_service.module.reading_session_entry.domain.port.ReadingSessionEventPublisher;
+import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -14,9 +15,11 @@ import java.util.concurrent.CompletableFuture;
 public class KafkaReadingSessionEventPublisher<K, E> implements ReadingSessionEventPublisher<K, E> {
 
     private final KafkaTemplate<K, E> kafkaTemplate;
+    private final VellumHubMetrics metrics;
 
-    public KafkaReadingSessionEventPublisher(KafkaTemplate<K, E> kafkaTemplate) {
+    public KafkaReadingSessionEventPublisher(KafkaTemplate<K, E> kafkaTemplate, VellumHubMetrics metrics) {
         this.kafkaTemplate = kafkaTemplate;
+        this.metrics = metrics;
     }
 
     @Override
@@ -27,6 +30,7 @@ public class KafkaReadingSessionEventPublisher<K, E> implements ReadingSessionEv
 
         future.whenComplete((result, ex) -> {
             if (ex != null) {
+                metrics.recordKafkaPublishFailed(topic, event);
                 log.error(
                         "Failed to send event to Kafka — topic: {}, key: {}, reason: {}",
                         topic, key, ex.getMessage(), ex
@@ -34,6 +38,7 @@ public class KafkaReadingSessionEventPublisher<K, E> implements ReadingSessionEv
                 handleSendFailure(topic, key, event, ex);
             } else {
                 RecordMetadata metadata = result.getRecordMetadata();
+                metrics.recordKafkaPublished(topic, event);
                 log.info(
                         "Event successfully sent to Kafka — topic: {}, partition: {}, offset: {}, key: {}",
                         metadata.topic(), metadata.partition(), metadata.offset(), key

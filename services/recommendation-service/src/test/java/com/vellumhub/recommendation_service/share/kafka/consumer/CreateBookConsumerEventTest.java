@@ -3,13 +3,15 @@ package com.vellumhub.recommendation_service.share.kafka.consumer;
 import com.vellumhub.recommendation_service.module.book_feature.application.use_case.CreateBookFeatureUseCase;
 import com.vellumhub.recommendation_service.module.recommendation.application.command.CreateRecommendationCommand;
 import com.vellumhub.recommendation_service.module.recommendation.application.use_case.CreateRecommendationUseCase;
+import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.recommendation_service.share.kafka.event.CreateBookEvent;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,11 +32,21 @@ class CreateBookConsumerEventTest {
     @Mock
     private CreateRecommendationUseCase createRecommendationUseCase;
 
-    @InjectMocks
     private CreateBookConsumerEvent createBookConsumerEvent;
+    private SimpleMeterRegistry meterRegistry;
 
     @Captor
     private ArgumentCaptor<CreateRecommendationCommand> commandCaptor;
+
+    @BeforeEach
+    void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        createBookConsumerEvent = new CreateBookConsumerEvent(
+                createBookFeatureUseCase,
+                createRecommendationUseCase,
+                new VellumHubMetrics(meterRegistry)
+        );
+    }
 
     private CreateBookEvent buildEvent() {
         return new CreateBookEvent(
@@ -89,5 +101,52 @@ class CreateBookConsumerEventTest {
                 .hasMessage("Embedding error");
 
         verify(createRecommendationUseCase, never()).execute(any());
+    }
+
+    @Test
+    @DisplayName("Should count successful consumption and processing duration")
+    void shouldCountSuccessfulConsumptionAndDuration() {
+        CreateBookEvent event = buildEvent();
+
+        createBookConsumerEvent.listen(event);
+
+        assertThat(meterRegistry.get("vellumhub.kafka.events.consumed")
+                .tag("topic", "created-book")
+                .tag("event_type", "CreateBookEvent")
+                .tag("consumer_group", "recommendation-service")
+                .counter()
+                .count()).isEqualTo(1.0);
+        assertThat(meterRegistry.get("vellumhub.kafka.event.processing.duration")
+                .tag("topic", "created-book")
+                .tag("event_type", "CreateBookEvent")
+                .tag("consumer_group", "recommendation-service")
+                .tag("result", "success")
+                .timer()
+                .count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should count failed consumption and processing duration")
+    void shouldCountFailedConsumptionAndDuration() {
+        CreateBookEvent event = buildEvent();
+        doThrow(new RuntimeException("Embedding error")).when(createBookFeatureUseCase).execute(event);
+
+        assertThatThrownBy(() -> createBookConsumerEvent.listen(event))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Embedding error");
+
+        assertThat(meterRegistry.get("vellumhub.kafka.events.consume.failed")
+                .tag("topic", "created-book")
+                .tag("event_type", "CreateBookEvent")
+                .tag("consumer_group", "recommendation-service")
+                .counter()
+                .count()).isEqualTo(1.0);
+        assertThat(meterRegistry.get("vellumhub.kafka.event.processing.duration")
+                .tag("topic", "created-book")
+                .tag("event_type", "CreateBookEvent")
+                .tag("consumer_group", "recommendation-service")
+                .tag("result", "failure")
+                .timer()
+                .count()).isEqualTo(1);
     }
 }

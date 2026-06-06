@@ -3,6 +3,8 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateBookProgressCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateBookProgressUseCase;
 import com.vellumhub.recommendation_service.module.user_profile.presentation.event.UpdateBookProgressEvent;
+import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -11,10 +13,16 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class CreateBookProgressConsumerEvent {
 
-    private final UpdateBookProgressUseCase updateBookProgressUseCase;
+    private static final String TOPIC = "created-reading-progress";
+    private static final String EVENT_TYPE = "UpdateBookProgressEvent";
+    private static final String CONSUMER_GROUP = "recommendation-service";
 
-    public CreateBookProgressConsumerEvent(UpdateBookProgressUseCase updateBookProgressUseCase) {
+    private final UpdateBookProgressUseCase updateBookProgressUseCase;
+    private final VellumHubMetrics metrics;
+
+    public CreateBookProgressConsumerEvent(UpdateBookProgressUseCase updateBookProgressUseCase, VellumHubMetrics metrics) {
         this.updateBookProgressUseCase = updateBookProgressUseCase;
+        this.metrics = metrics;
     }
 
     @KafkaListener(
@@ -24,6 +32,7 @@ public class CreateBookProgressConsumerEvent {
     public void consume(
             UpdateBookProgressEvent event
     ) {
+        Timer.Sample sample = metrics.startKafkaProcessing();
 
         log.info("Event received: Create book progress. UserId={}, BookId={}, Progress={}",
                 event.userId(),
@@ -39,7 +48,15 @@ public class CreateBookProgressConsumerEvent {
                 event.newPage()
         );
 
-        updateBookProgressUseCase.execute(command);
+        try {
+            updateBookProgressUseCase.execute(command);
+            metrics.recordKafkaConsumed(TOPIC, EVENT_TYPE, CONSUMER_GROUP);
+            metrics.recordKafkaProcessingDuration(sample, TOPIC, EVENT_TYPE, CONSUMER_GROUP, "success");
+        } catch (RuntimeException ex) {
+            metrics.recordKafkaConsumeFailed(TOPIC, EVENT_TYPE, CONSUMER_GROUP);
+            metrics.recordKafkaProcessingDuration(sample, TOPIC, EVENT_TYPE, CONSUMER_GROUP, "failure");
+            throw ex;
+        }
 
         log.info("Book progress update event processed successfully. UserId={}, BookId={}",
                 event.userId(),

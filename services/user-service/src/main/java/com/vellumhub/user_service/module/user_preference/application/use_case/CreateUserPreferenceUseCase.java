@@ -7,6 +7,7 @@ import com.vellumhub.user_service.module.user_preference.application.command.Cre
 import com.vellumhub.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
 import com.vellumhub.user_service.module.user_preference.domain.model.UserPreference;
 import com.vellumhub.user_service.module.user_preference.domain.port.UserPreferenceRepository;
+import com.vellumhub.user_service.share.metrics.VellumHubMetrics;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,11 +25,13 @@ public class CreateUserPreferenceUseCase {
     private final UserRepository userRepository;
 
     private final KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate;
+    private final VellumHubMetrics metrics;
 
-    public CreateUserPreferenceUseCase(UserPreferenceRepository userPreferenceRepository, UserRepository userRepository, KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate) {
+    public CreateUserPreferenceUseCase(UserPreferenceRepository userPreferenceRepository, UserRepository userRepository, KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate, VellumHubMetrics metrics) {
         this.userPreferenceRepository = userPreferenceRepository;
         this.userRepository = userRepository;
         this.kafkaTemplate = kafkaTemplate;
+        this.metrics = metrics;
     }
 
     /**
@@ -54,7 +57,14 @@ public class CreateUserPreferenceUseCase {
                 userPreference.getAbout()
         );
 
-        kafkaTemplate.send("created-user-preference", createUserPreferenceEvent.userId().toString(), createUserPreferenceEvent);
+        kafkaTemplate.send("created-user-preference", createUserPreferenceEvent.userId().toString(), createUserPreferenceEvent)
+                .whenComplete((result, ex) -> {
+                    if (ex == null) {
+                        metrics.recordKafkaPublished("created-user-preference", createUserPreferenceEvent);
+                    } else {
+                        metrics.recordKafkaPublishFailed("created-user-preference", createUserPreferenceEvent);
+                    }
+                });
 
     }
 

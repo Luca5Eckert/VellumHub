@@ -1,5 +1,6 @@
 package com.vellumhub.recommendation_service.share.kafka.config;
 
+import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import org.springframework.messaging.handler.annotation.Header;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +17,14 @@ import java.util.List;
 @Configuration
 @Slf4j
 public class KafkaRetryConfig {
+
+    private static final String DLT_CONSUMER_GROUP = "recommendation-service-dlt-group";
+
+    private final VellumHubMetrics metrics;
+
+    public KafkaRetryConfig(VellumHubMetrics metrics) {
+        this.metrics = metrics;
+    }
 
     /**
      * Defines a default retry configuration for Kafka listeners in the application.
@@ -57,6 +66,7 @@ public class KafkaRetryConfig {
             @Header(KafkaHeaders.EXCEPTION_MESSAGE) String errorMessage
     ) {
 
+        metrics.recordKafkaDlt(originalTopic, DLT_CONSUMER_GROUP);
         log.error(
                 "Kafka DLT message quarantined. operation=kafka_dlt_quarantine, event_type=kafka_dlt, originalTopic={}, dltTopic={}, error={}, payloadBytes={}",
                 originalTopic,

@@ -3,6 +3,8 @@ package com.vellumhub.engagement_service.module.book_snapshot.presentation.consu
 import com.vellumhub.engagement_service.module.book_snapshot.application.command.DeleteBookSnapshotCommand;
 import com.vellumhub.engagement_service.module.book_snapshot.application.use_case.DeleteBookSnapshotUseCase;
 import com.vellumhub.engagement_service.module.book_snapshot.presentation.event.DeleteBookEvent;
+import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -11,10 +13,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class DeleteBookEventConsumer {
 
-    private final DeleteBookSnapshotUseCase deleteBookSnapshotUseCase;
+    private static final String TOPIC = "deleted-book";
+    private static final String EVENT_TYPE = "DeleteBookEvent";
+    private static final String CONSUMER_GROUP = "engagement-service";
 
-    public DeleteBookEventConsumer(DeleteBookSnapshotUseCase deleteBookSnapshotUseCase) {
+    private final DeleteBookSnapshotUseCase deleteBookSnapshotUseCase;
+    private final VellumHubMetrics metrics;
+
+    public DeleteBookEventConsumer(DeleteBookSnapshotUseCase deleteBookSnapshotUseCase, VellumHubMetrics metrics) {
         this.deleteBookSnapshotUseCase = deleteBookSnapshotUseCase;
+        this.metrics = metrics;
     }
 
     @KafkaListener(
@@ -22,10 +30,19 @@ public class DeleteBookEventConsumer {
             groupId = "${kafka.group-id}"
     )
     public void consume(DeleteBookEvent event) {
+        Timer.Sample sample = metrics.startKafkaProcessing();
         log.info("DeleteBookEvent received for bookId: {}", event.bookId());
 
-        var command = new DeleteBookSnapshotCommand(event.bookId());
-        deleteBookSnapshotUseCase.execute(command);
+        try {
+            var command = new DeleteBookSnapshotCommand(event.bookId());
+            deleteBookSnapshotUseCase.execute(command);
+            metrics.recordKafkaConsumed(TOPIC, EVENT_TYPE, CONSUMER_GROUP);
+            metrics.recordKafkaProcessingDuration(sample, TOPIC, EVENT_TYPE, CONSUMER_GROUP, "success");
+        } catch (RuntimeException ex) {
+            metrics.recordKafkaConsumeFailed(TOPIC, EVENT_TYPE, CONSUMER_GROUP);
+            metrics.recordKafkaProcessingDuration(sample, TOPIC, EVENT_TYPE, CONSUMER_GROUP, "failure");
+            throw ex;
+        }
 
         log.info("Book snapshot successfully deleted for bookId: {}", event.bookId());
 
