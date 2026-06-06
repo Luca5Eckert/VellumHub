@@ -5,11 +5,13 @@ import com.vellumhub.user_service.module.auth.domain.handler.RegisterUserHandler
 import com.vellumhub.user_service.module.user.domain.RoleUser;
 import com.vellumhub.user_service.module.user.domain.UserEntity;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
+import com.vellumhub.user_service.share.metrics.VellumHubMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.passay.PasswordData;
@@ -33,8 +35,20 @@ class RegisterUserHandlerTest {
     @Mock
     private PasswordValidator passwordValidator;
 
-    @InjectMocks
     private RegisterUserHandler registerUserHandler;
+
+    private SimpleMeterRegistry meterRegistry;
+
+    @BeforeEach
+    void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        registerUserHandler = new RegisterUserHandler(
+                userRepository,
+                passwordEncoder,
+                passwordValidator,
+                new VellumHubMetrics(meterRegistry)
+        );
+    }
 
     @Test
     @DisplayName("Should register user when data is valid")
@@ -62,6 +76,7 @@ class RegisterUserHandlerTest {
 
         UserEntity savedUser = userCaptor.getValue();
         assertEquals("encodedPassword", savedUser.getPassword());
+        assertEquals(1.0, usersCreatedCount("user_registration"));
     }
 
     @Test
@@ -148,5 +163,13 @@ class RegisterUserHandlerTest {
         verify(userRepository).save(userCaptor.capture());
 
         assertEquals(encodedPassword, userCaptor.getValue().getPassword());
+    }
+
+    private double usersCreatedCount(String operation) {
+        return meterRegistry.get(VellumHubMetrics.USERS_CREATED)
+                .tag("operation", operation)
+                .tag("result", "success")
+                .counter()
+                .count();
     }
 }

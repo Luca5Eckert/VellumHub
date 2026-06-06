@@ -10,6 +10,7 @@ import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
 import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequest;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
+import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -43,6 +44,9 @@ class UpdateBookHandlerTest {
 
     @Mock
     private BookEventProducer<String, UpdateBookEvent> bookEventProducer;
+
+    @Mock
+    private VellumHubMetrics vellumHubMetrics;
 
     @InjectMocks
     private UpdateBookHandler updateBookHandler;

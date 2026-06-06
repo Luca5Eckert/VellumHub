@@ -4,6 +4,7 @@ import com.vellumhub.catalog_service.module.book.domain.event.DeleteBookEvent;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotExistException;
 import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,10 +15,12 @@ public class DeleteBookHandler {
 
     private final BookRepository bookRepository;
     private final BookEventProducer<String, DeleteBookEvent> bookEventProducer;
+    private final VellumHubMetrics metrics;
 
-    public DeleteBookHandler(BookRepository bookRepository, BookEventProducer<String, DeleteBookEvent> bookEventProducer) {
+    public DeleteBookHandler(BookRepository bookRepository, BookEventProducer<String, DeleteBookEvent> bookEventProducer, VellumHubMetrics metrics) {
         this.bookRepository = bookRepository;
         this.bookEventProducer = bookEventProducer;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -29,6 +32,7 @@ public class DeleteBookHandler {
         DeleteBookEvent deleteMediaEvent = new DeleteBookEvent(bookId);
 
         bookEventProducer.send("deleted-book", bookId.toString(), deleteMediaEvent);
+        metrics.recordBusinessCounter(VellumHubMetrics.BOOKS_DELETED, "book_deletion", "success");
     }
 
 

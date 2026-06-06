@@ -9,6 +9,7 @@ import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
 import com.vellumhub.catalog_service.module.book.domain.event.CreateBookEvent;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
+import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,14 +22,17 @@ public class CreateBookHandler {
     private final BookRepository bookRepository;
     private final GenreRepository genreRepository;
     private final BookEventProducer<String, CreateBookEvent> bookEventProducer;
+    private final VellumHubMetrics metrics;
 
     public CreateBookHandler(
             BookRepository bookRepository,
             GenreRepository genreRepository,
-            BookEventProducer<String, CreateBookEvent> bookEventProducer) {
+            BookEventProducer<String, CreateBookEvent> bookEventProducer,
+            VellumHubMetrics metrics) {
         this.bookRepository = bookRepository;
         this.genreRepository = genreRepository;
         this.bookEventProducer = bookEventProducer;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -54,6 +58,7 @@ public class CreateBookHandler {
         bookRepository.save(book);
 
         publishEvent(book);
+        metrics.recordBusinessCounter(VellumHubMetrics.BOOKS_CREATED, "book_creation", "success");
     }
 
     private void verifyUniquenessPolicy(CreateBookCommand command) {

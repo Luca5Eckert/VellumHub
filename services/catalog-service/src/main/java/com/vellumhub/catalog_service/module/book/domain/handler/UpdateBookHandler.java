@@ -10,6 +10,7 @@ import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
+import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,14 +24,17 @@ public class UpdateBookHandler {
     private final BookRepository bookRepository;
     private final GenreRepository genreRepository;
     private final BookEventProducer<String, UpdateBookEvent> bookEventProducer;
+    private final VellumHubMetrics metrics;
 
     public UpdateBookHandler(
             BookRepository bookRepository,
             GenreRepository genreRepository,
-            BookEventProducer<String, UpdateBookEvent> bookEventProducer) {
+            BookEventProducer<String, UpdateBookEvent> bookEventProducer,
+            VellumHubMetrics metrics) {
         this.bookRepository = bookRepository;
         this.genreRepository = genreRepository;
         this.bookEventProducer = bookEventProducer;
+        this.metrics = metrics;
     }
 
     /**
@@ -72,6 +76,7 @@ public class UpdateBookHandler {
         );
 
         bookEventProducer.send("updated-book", book.getId().toString(), updateBookEvent);
+        metrics.recordBusinessCounter(VellumHubMetrics.BOOKS_UPDATED, "book_update", "success");
     }
 
     /**

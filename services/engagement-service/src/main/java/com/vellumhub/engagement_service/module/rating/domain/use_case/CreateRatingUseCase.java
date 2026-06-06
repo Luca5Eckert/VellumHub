@@ -6,6 +6,7 @@ import com.vellumhub.engagement_service.module.rating.domain.exception.RatingAlr
 import com.vellumhub.engagement_service.module.rating.domain.exception.RatingDomainException;
 import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
 import com.vellumhub.engagement_service.module.rating.domain.port.RatingRepository;
+import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -15,10 +16,12 @@ public class CreateRatingUseCase {
 
     private final RatingRepository ratingRepository;
     private final BookSnapshotRepository bookSnapshotRepository;
+    private final VellumHubMetrics metrics;
 
-    public CreateRatingUseCase(RatingRepository ratingRepository, BookSnapshotRepository bookSnapshotRepository) {
+    public CreateRatingUseCase(RatingRepository ratingRepository, BookSnapshotRepository bookSnapshotRepository, VellumHubMetrics metrics) {
         this.ratingRepository = ratingRepository;
         this.bookSnapshotRepository = bookSnapshotRepository;
+        this.metrics = metrics;
     }
 
     public Rating execute(CreateRatingCommand command) {
@@ -36,7 +39,9 @@ public class CreateRatingUseCase {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        return ratingRepository.save(rating);
+        Rating savedRating = ratingRepository.save(rating);
+        metrics.recordBusinessCounter(VellumHubMetrics.RATINGS_CREATED, "rating_creation", "success");
+        return savedRating;
     }
 
 }

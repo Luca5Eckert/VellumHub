@@ -4,10 +4,12 @@ import com.vellumhub.user_service.module.user.domain.UserEntity;
 import com.vellumhub.user_service.module.user.domain.exception.UserNotUniqueException;
 import com.vellumhub.user_service.module.user.domain.handler.CreateUserHandler;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
+import com.vellumhub.user_service.share.metrics.VellumHubMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,8 +27,19 @@ class CreateUserHandlerTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    @InjectMocks
     private CreateUserHandler createUserHandler;
+
+    private SimpleMeterRegistry meterRegistry;
+
+    @BeforeEach
+    void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        createUserHandler = new CreateUserHandler(
+                userRepository,
+                passwordEncoder,
+                new VellumHubMetrics(meterRegistry)
+        );
+    }
 
     @Test
     @DisplayName("Deve salvar usuário com sucesso quando os dados forem válidos")
@@ -46,6 +59,7 @@ class CreateUserHandlerTest {
         verify(userRepository, times(1)).save(user);
         verify(passwordEncoder, times(1)).encode("rawPassword");
         assertEquals("encodedPassword", user.getPassword());
+        assertEquals(1.0, usersCreatedCount("admin_user_creation"));
     }
 
     @Test
@@ -63,5 +77,13 @@ class CreateUserHandlerTest {
                 .hasMessage("User is not unique.");
 
         verify(userRepository, never()).save(any());
+    }
+
+    private double usersCreatedCount(String operation) {
+        return meterRegistry.get(VellumHubMetrics.USERS_CREATED)
+                .tag("operation", operation)
+                .tag("result", "success")
+                .counter()
+                .count();
     }
 }

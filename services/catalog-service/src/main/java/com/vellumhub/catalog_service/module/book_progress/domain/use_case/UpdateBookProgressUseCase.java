@@ -7,15 +7,18 @@ import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookP
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
+import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UpdateBookProgressUseCase {
 
      private final BookProgressRepository bookProgressRepository;
+     private final VellumHubMetrics metrics;
 
-     public UpdateBookProgressUseCase(BookProgressRepository bookProgressRepository) {
+     public UpdateBookProgressUseCase(BookProgressRepository bookProgressRepository, VellumHubMetrics metrics) {
           this.bookProgressRepository = bookProgressRepository;
+          this.metrics = metrics;
      }
 
      public UpdateBookProgressEvent execute(UpdateBookProgressCommand command){
@@ -31,6 +34,7 @@ public class UpdateBookProgressUseCase {
           bookProgress.update(bookProgress.getReadingStatus(), command.currentPage());
 
           bookProgressRepository.save(bookProgress);
+          metrics.recordBusinessCounter(VellumHubMetrics.READING_PROGRESS_UPDATED, "reading_progress_update", "success");
 
           return new UpdateBookProgressEvent(
                   bookProgress.getId(),

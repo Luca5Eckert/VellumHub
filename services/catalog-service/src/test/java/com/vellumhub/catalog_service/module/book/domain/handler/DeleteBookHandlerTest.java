@@ -4,6 +4,7 @@ import com.vellumhub.catalog_service.module.book.domain.event.DeleteBookEvent;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotExistException;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
+import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +26,9 @@ class DeleteBookHandlerTest {
 
     @Mock
     private BookEventProducer<String, DeleteBookEvent> bookEventProducer;
+
+    @Mock
+    private VellumHubMetrics vellumHubMetrics;
 
     @InjectMocks
     private DeleteBookHandler deleteMediaHandler;
