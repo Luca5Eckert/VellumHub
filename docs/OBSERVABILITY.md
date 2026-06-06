@@ -52,7 +52,7 @@ Provisioned dashboards:
 - `Kafka Flow`
 - `Recommendation Health`
 
-The dashboards use the provisioned `Prometheus`, `Loki`, and `Tempo` datasources. Panels based on metrics that are not implemented yet, such as custom Kafka/business counters from `#210`, use tolerant queries and remain empty or zero until those metrics exist.
+The dashboards use the provisioned `Prometheus`, `Loki`, and `Tempo` datasources. Panels based on custom Kafka and business metrics use tolerant queries and remain empty or zero until local traffic emits those series.
 
 Validate dashboards locally:
 
@@ -79,6 +79,46 @@ Validate target health in Prometheus:
 2. Confirm the jobs `gateway-service`, `user-service`, `catalog-service`, `engagement-service`, and `recommendation-service` are present.
 3. When the application services are healthy, each target should show `UP`.
 
+### Custom Kafka And Business Metrics
+
+Issue `#210` adds custom Micrometer metrics in `user-service`, `catalog-service`, `engagement-service`, and `recommendation-service`. Micrometer dotted names are exported by Prometheus with underscores and counter suffixes.
+
+Kafka metrics:
+
+- `vellumhub_kafka_events_published_total`
+- `vellumhub_kafka_events_publish_failed_total`
+- `vellumhub_kafka_events_consumed_total`
+- `vellumhub_kafka_events_consume_failed_total`
+- `vellumhub_kafka_event_processing_duration_seconds_count`
+- `vellumhub_kafka_event_processing_duration_seconds_sum`
+- `vellumhub_kafka_dlt_events_total`
+
+Business metrics:
+
+- `vellumhub_users_created_total`
+- `vellumhub_books_created_total`
+- `vellumhub_books_updated_total`
+- `vellumhub_books_deleted_total`
+- `vellumhub_reading_progress_updated_total`
+- `vellumhub_ratings_created_total`
+- `vellumhub_reactions_changed_total`
+- `vellumhub_recommendations_requested_total`
+- `vellumhub_recommendations_generated_total`
+- `vellumhub_recommendation_empty_results_total`
+- `vellumhub_recommendation_generation_duration_seconds_count`
+- `vellumhub_recommendation_generation_duration_seconds_sum`
+
+Custom metric labels are intentionally low-cardinality. The `service` label comes from each service's `management.metrics.tags.service` configuration. Kafka metrics also use `topic`, `event_type`, `consumer_group`, and `result` where applicable. Business metrics use `operation` and `result`.
+
+Useful Prometheus API checks after generating local traffic:
+
+```bash
+curl "http://localhost:9090/api/v1/query?query=vellumhub_kafka_events_published_total"
+curl "http://localhost:9090/api/v1/query?query=vellumhub_kafka_dlt_events_total"
+curl "http://localhost:9090/api/v1/query?query=vellumhub_recommendations_generated_total"
+curl "http://localhost:9090/api/v1/query?query=vellumhub_recommendation_generation_duration_seconds_count"
+```
+
 ## Alerts
 
 Initial alert rules are versioned in `infra/observability/prometheus/rules/vellumhub-alerts.yml` and loaded by Prometheus through `rule_files`.
@@ -104,7 +144,7 @@ curl http://localhost:9090/api/v1/rules
 curl http://localhost:9090/alerts
 ```
 
-Each alert annotation points to [OBSERVABILITY_RUNBOOKS.md](OBSERVABILITY_RUNBOOKS.md). Alerts for future metrics remain inactive until those metrics are emitted.
+Each alert annotation points to [OBSERVABILITY_RUNBOOKS.md](OBSERVABILITY_RUNBOOKS.md). Custom-metric alerts remain inactive until local traffic emits the relevant series.
 
 ## Logs
 
@@ -207,4 +247,4 @@ The expected behavior is:
 | `infra/observability/alloy/config.alloy` | Docker log collection, Loki forwarding, and OTLP-to-Tempo forwarding. |
 | `docs/OBSERVABILITY_RUNBOOKS.md` | Operational investigation guides linked from alerts. |
 
-Business metrics and manual domain spans are intentionally outside this issue.
+Manual domain spans remain outside this issue; metrics continue to use Prometheus/Micrometer.
