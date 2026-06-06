@@ -151,6 +151,21 @@
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
+				<executions>
+					<execution>
+						<id>default-testCompile</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>testCompile</goal>
+						</goals>
+						<configuration>
+							<compileSourceRoots>
+								<compileSourceRoot>${project.basedir}/src/main/java</compileSourceRoot>
+								<compileSourceRoot>${project.basedir}/src/test/java</compileSourceRoot>
+							</compileSourceRoots>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
