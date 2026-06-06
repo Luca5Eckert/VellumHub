@@ -92,7 +92,7 @@ The recommendation query path is local to the recommendation service. It serves 
 | Service | Role | Local details |
 |---|---|---|
 | `gateway-service` | Public edge for routing, JWT enforcement, and Redis-backed rate limiting. | [README](gateway-service/README.md) |
-| `user-service` | Identity, authentication, Google login, user management, and preference seeds for cold-start recommendations. | [README](user-service/README.md) |
+| `user-service` | Identity, authentication, Google login, user management, and preference seeds for cold-start recommendations. | [README](services/user-service/README.md) |
 | `catalog-service` | Source of truth for books, book requests, book lists, membership, covers, and current reading progress. | [README](catalog-service/README.md) |
 | `engagement-service` | Ratings, reactions, and replicated reading progress history / book snapshots. | [README](engagement-service/README.md) |
 | `recommendation-service` | Event-fed recommendation read model, embeddings, user profile vectors, and ranking. | [README](recommendation-service/README.md) |

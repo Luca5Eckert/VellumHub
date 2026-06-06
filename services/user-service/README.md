@@ -153,4 +153,4 @@ cd user-service
 .\mvnw.cmd test
 ```
 
-For gateway routes and full system flow, see the [root README](../README.md).
+For gateway routes and full system flow, see the [root README](../../README.md).
