@@ -41,7 +41,7 @@ docker compose logs --tail=200 recommendation-service
 curl http://localhost:9090/api/v1/query?query=up%7Bjob%3D%22recommendation-service%22%7D
 ```
 
-**Likely Causes:** Missing projection data from Kafka, pgvector query slowness, exhausted Hikari pool, embedding/profile data drift, or future business metrics not yet instrumented.
+**Likely Causes:** Missing projection data from Kafka, pgvector query slowness, exhausted Hikari pool, embedding/profile data drift, or no local traffic emitted for the recommendation business metrics yet.
 
 **First Actions:** Check recommendation-service health, DB pool pending connections, recommendation errors, and Kafka Flow for missed or failed consumer signals. If business metrics are absent, inspect logs and Kafka UI.
 
