@@ -84,7 +84,7 @@ class DefineBookStatusHandlerTest {
 
             handler.handle(request, userId, bookId);
 
-            verify(bookProgressEventProducer).send("create-reading-progress", userId.toString(), event);
+            verify(bookProgressEventProducer).send("created-reading-progress", userId.toString(), event);
         }
 
         @Test

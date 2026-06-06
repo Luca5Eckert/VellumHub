@@ -15,7 +15,8 @@ public class CreateBookSnapshotUseCase {
     }
 
     public void execute(CreateBookSnapshotCommand command) {
-        var bookSnapshot = new BookSnapshot(command.bookId());
+        var bookSnapshot = bookSnapshotRepository.findById(command.bookId())
+                .orElseGet(() -> new BookSnapshot(command.bookId()));
 
         bookSnapshotRepository.save(bookSnapshot);
     }
