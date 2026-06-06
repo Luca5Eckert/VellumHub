@@ -1,0 +1,91 @@
+{
+  "uid": "vellumhub-recommendation-health",
+  "title": "Recommendation Health",
+  "tags": ["vellumhub", "recommendation"],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Recommendation HTTP Requests",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum by (uri, status) (rate(http_server_requests_seconds_count{job=\"recommendation-service\"}[5m]))", "legendFormat": "{{status}} {{uri}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Recommendation Latency",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "histogram_quantile(0.95, sum by (le, uri) (rate(http_server_requests_seconds_bucket{job=\"recommendation-service\"}[5m]))) or max by (uri) (http_server_requests_seconds_max{job=\"recommendation-service\"})", "legendFormat": "p95 {{uri}}" },
+        { "refId": "B", "expr": "histogram_quantile(0.99, sum by (le, uri) (rate(http_server_requests_seconds_bucket{job=\"recommendation-service\"}[5m])))", "legendFormat": "p99 {{uri}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Generated, Empty, and Popularity Fallback Results",
+      "description": "Future business metrics from #210.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(vellumhub_recommendations_generated_total[5m])) or vector(0)", "legendFormat": "generated" },
+        { "refId": "B", "expr": "sum(rate(vellumhub_recommendation_empty_results_total[5m])) or vector(0)", "legendFormat": "empty" },
+        { "refId": "C", "expr": "sum(rate(vellumhub_recommendation_popularity_fallback_total[5m])) or vector(0)", "legendFormat": "popularity fallback" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "eps" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Recommendation Generation Duration",
+      "description": "Future timer metric from #210.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(vellumhub_recommendation_generation_seconds_sum[5m])) / clamp_min(sum(rate(vellumhub_recommendation_generation_seconds_count[5m])), 0.001) or vector(0)", "legendFormat": "avg generation" },
+        { "refId": "B", "expr": "histogram_quantile(0.95, sum by (le) (rate(vellumhub_recommendation_generation_seconds_bucket[5m]))) or vector(0)", "legendFormat": "p95 generation" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    },
+    {
+      "id": 5,
+      "type": "logs",
+      "title": "Recommendation Errors",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        { "refId": "A", "expr": "{service=\"recommendation-service\", level=\"ERROR\"}" }
+      ],
+      "options": { "showLabels": true, "showTime": true, "wrapLogMessage": true }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Recommendation DB Pool",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "hikaricp_connections_active{job=\"recommendation-service\"}", "legendFormat": "active" },
+        { "refId": "B", "expr": "hikaricp_connections_idle{job=\"recommendation-service\"}", "legendFormat": "idle" },
+        { "refId": "C", "expr": "hikaricp_connections_pending{job=\"recommendation-service\"}", "legendFormat": "pending" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
+    }
+  ]
+}

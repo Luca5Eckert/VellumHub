@@ -40,6 +40,29 @@ Grafana datasources are provisioned from `docker/observability/grafana/provision
 - `Loki`
 - `Tempo`
 
+## Dashboards
+
+Grafana dashboards are provisioned automatically from `docker/observability/grafana/provisioning/dashboards/`.
+
+Provisioned dashboards:
+
+- `VellumHub Overview`
+- `Gateway and HTTP`
+- `Services JVM and DB`
+- `Kafka Flow`
+- `Recommendation Health`
+
+The dashboards use the provisioned `Prometheus`, `Loki`, and `Tempo` datasources. Panels based on metrics that are not implemented yet, such as custom Kafka/business counters from `#210`, use tolerant queries and remain empty or zero until those metrics exist.
+
+Validate dashboards locally:
+
+```bash
+docker compose --profile observability up -d grafana prometheus loki tempo alloy
+curl -u admin:admin http://localhost:3002/api/search?folderIds=0
+```
+
+Open `http://localhost:3002/dashboards` and select the `VellumHub` folder.
+
 ## Metrics
 
 Prometheus scrapes these targets on the Docker network:
@@ -55,6 +78,33 @@ Validate target health in Prometheus:
 1. Open `http://localhost:9090/targets`.
 2. Confirm the jobs `gateway-service`, `user-service`, `catalog-service`, `engagement-service`, and `recommendation-service` are present.
 3. When the application services are healthy, each target should show `UP`.
+
+## Alerts
+
+Initial alert rules are versioned in `docker/observability/prometheus/rules/vellumhub-alerts.yml` and loaded by Prometheus through `rule_files`.
+
+The initial rules are conservative local-development defaults:
+
+- `GatewayUnavailable` (`P1`)
+- `GatewayHigh5xxRate` (`P1`)
+- `GatewayHighP95Latency` (`P2`)
+- `PrometheusTargetDown` (`P2`)
+- `HikariPendingConnections` (`P2`)
+- `JvmHeapNearLimit` (`P3`)
+- `KafkaDltEventsDetected` (`P1`)
+- `KafkaConsumerLagHigh` (`P2`)
+- `KafkaPublishFailures` (`P2`)
+- `RecommendationEmptyResultsHigh` (`P2`)
+
+Validate alert rules locally:
+
+```bash
+docker compose --profile observability config
+curl http://localhost:9090/api/v1/rules
+curl http://localhost:9090/alerts
+```
+
+Each alert annotation points to [OBSERVABILITY_RUNBOOKS.md](OBSERVABILITY_RUNBOOKS.md). Alerts for future metrics remain inactive until those metrics are emitted.
 
 ## Logs
 
@@ -148,9 +198,13 @@ The expected behavior is:
 | File | Purpose |
 |---|---|
 | `docker/observability/prometheus/prometheus.yml` | Prometheus scrape jobs. |
+| `docker/observability/prometheus/rules/vellumhub-alerts.yml` | Initial local alert rules. |
 | `docker/observability/grafana/provisioning/datasources/datasources.yml` | Grafana datasource provisioning. |
+| `docker/observability/grafana/provisioning/dashboards/dashboards.yml` | Grafana dashboard provider. |
+| `docker/observability/grafana/provisioning/dashboards/json/*.json` | Provisioned Grafana dashboards. |
 | `docker/observability/loki/loki.yml` | Local single-node Loki storage. |
 | `docker/observability/tempo/tempo.yml` | Local Tempo trace storage and OTLP receiver config. |
 | `docker/observability/alloy/config.alloy` | Docker log collection, Loki forwarding, and OTLP-to-Tempo forwarding. |
+| `docs/OBSERVABILITY_RUNBOOKS.md` | Operational investigation guides linked from alerts. |
 
-Dashboards, alerts, business metrics, and manual domain spans are intentionally outside this issue.
+Business metrics and manual domain spans are intentionally outside this issue.

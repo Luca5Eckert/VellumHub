@@ -1,0 +1,124 @@
+groups:
+  - name: vellumhub-initial-alerts
+    interval: 30s
+    rules:
+      - alert: GatewayUnavailable
+        expr: up{job="gateway-service"} == 0
+        for: 1m
+        labels:
+          severity: P1
+          service: gateway-service
+        annotations:
+          summary: "Gateway is unavailable to Prometheus."
+          description: "Prometheus cannot scrape gateway-service for at least one minute."
+          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#gateway-unavailable-or-5xx-high"
+
+      - alert: PrometheusTargetDown
+        expr: up{job=~".*-service"} == 0
+        for: 2m
+        labels:
+          severity: P2
+        annotations:
+          summary: "A VellumHub application target is down."
+          description: "Prometheus target {{ $labels.job }} is down."
+          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#prometheus-target-down"
+
+      - alert: GatewayHigh5xxRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{job="gateway-service",status=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(http_server_requests_seconds_count{job="gateway-service"}[5m])), 0.001)
+          > 0.05
+        for: 5m
+        labels:
+          severity: P1
+          service: gateway-service
+        annotations:
+          summary: "Gateway 5xx ratio is above 5%."
+          description: "Gateway is returning a sustained elevated 5xx ratio."
+          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#gateway-unavailable-or-5xx-high"
+
+      - alert: GatewayHighP95Latency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(http_server_requests_seconds_bucket{job="gateway-service"}[5m]))
+          ) > 2
+        for: 10m
+        labels:
+          severity: P2
+          service: gateway-service
+        annotations:
+          summary: "Gateway p95 latency is above 2 seconds."
+          description: "Gateway request latency stayed above the initial conservative threshold."
+          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#gateway-unavailable-or-5xx-high"
+
+      - alert: HikariPendingConnections
+        expr: sum by (job) (hikaricp_connections_pending{job=~".*-service"}) > 0
+        for: 5m
+        labels:
+          severity: P2
+        annotations:
+          summary: "Hikari pending connections detected."
+          description: "Service {{ $labels.job }} has sustained pending database connections."
+          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#database-saturated-or-hikari-exhausted"
+
+      - alert: JvmHeapNearLimit
+        expr: |
+          (
+            sum by (job) (jvm_memory_used_bytes{job=~".*-service",area="heap"})
+            /
+            clamp_min(sum by (job) (jvm_memory_max_bytes{job=~".*-service",area="heap"}), 1)
+          ) > 0.85
+        for: 10m
+        labels:
+          severity: P3
+        annotations:
+          summary: "JVM heap usage is near the configured maximum."
+          description: "Service {{ $labels.job }} is above 85% heap usage for a sustained period."
+          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#database-saturated-or-hikari-exhausted"
+
+      - alert: KafkaDltEventsDetected
+        expr: increase(vellumhub_kafka_dlt_events_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: P1
+        annotations:
+          summary: "A Kafka event reached a Dead Letter Topic."
+          description: "DLT events were observed in the last five minutes."
+          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#event-sent-to-dlt"
+
+      - alert: KafkaConsumerLagHigh
+        expr: max by (job) (kafka_consumer_fetch_manager_records_lag_max{job=~".*-service"}) > 1000
+        for: 10m
+        labels:
+          severity: P2
+        annotations:
+          summary: "Kafka consumer lag is above the initial threshold."
+          description: "Service {{ $labels.job }} has Kafka consumer lag above 1000."
+          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#kafka-consumer-lag-high"
+
+      - alert: KafkaPublishFailures
+        expr: increase(vellumhub_kafka_producer_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: P2
+        annotations:
+          summary: "Kafka publish failures detected."
+          description: "One or more Kafka publish failures were counted in the last five minutes."
+          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#kafka-consumer-lag-high"
+
+      - alert: RecommendationEmptyResultsHigh
+        expr: |
+          sum(rate(vellumhub_recommendation_empty_results_total[10m]))
+          /
+          clamp_min(sum(rate(vellumhub_recommendation_requests_total[10m])), 0.001)
+          > 0.30
+        for: 15m
+        labels:
+          severity: P2
+          service: recommendation-service
+        annotations:
+          summary: "Recommendation empty-result ratio is high."
+          description: "More than 30% of recommendation requests returned empty results."
+          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#recommendation-slow-or-empty"
