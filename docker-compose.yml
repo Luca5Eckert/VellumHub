@@ -18,7 +18,7 @@ services:
 
   # GATEWAY LAYER
   gateway-service:
-    build: ./gateway-service
+    build: ./services/gateway-service
     container_name: gateway-service
     restart: on-failure
     ports:
@@ -75,7 +75,7 @@ services:
 
   # DATABASES LAYER
   postgres-catalog:
-    build: ./docker/postgres-catalog
+    build: ./infra/docker/postgres-catalog
     container_name: postgres-catalog
     restart: unless-stopped
     shm_size: 256mb
@@ -117,7 +117,7 @@ services:
       retries: 10
 
   postgres-user:
-    build: ./docker/postgres-user
+    build: ./infra/docker/postgres-user
     container_name: postgres-user
     restart: unless-stopped
     shm_size: 256mb
@@ -138,7 +138,7 @@ services:
       retries: 10
 
   postgres-recommendation:
-    build: ./docker/postgres-recommendation
+    build: ./infra/docker/postgres-recommendation
     container_name: postgres-recommendation
     restart: unless-stopped
     shm_size: 256mb
@@ -231,8 +231,8 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./docker/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./docker/observability/prometheus/rules:/etc/prometheus/rules:ro
+      - ./infra/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/observability/prometheus/rules:/etc/prometheus/rules:ro
       - prometheus_data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -258,7 +258,7 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "false"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./docker/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
     networks:
       - vellum-network
     depends_on:
@@ -278,7 +278,7 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./docker/observability/loki/loki.yml:/etc/loki/loki.yml:ro
+      - ./infra/observability/loki/loki.yml:/etc/loki/loki.yml:ro
       - loki_data:/loki
     command:
       - -config.file=/etc/loki/loki.yml
@@ -294,7 +294,7 @@ services:
     ports:
       - "3200:3200"
     volumes:
-      - ./docker/observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - ./infra/observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
       - tempo_data:/var/tempo
     command:
       - -config.file=/etc/tempo/tempo.yml
@@ -310,7 +310,7 @@ services:
     ports:
       - "12345:12345"
     volumes:
-      - ./docker/observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - ./infra/observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - alloy_data:/var/lib/alloy/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command:
@@ -328,7 +328,7 @@ services:
 
   # MICROSERVICES LAYER
   catalog-service:
-    build: ./catalog-service
+    build: ./services/catalog-service
     container_name: catalog-service
     restart: on-failure
     env_file: .env
@@ -360,7 +360,7 @@ services:
       start_period: 60s
 
   engagement-service:
-    build: ./engagement-service
+    build: ./services/engagement-service
     container_name: engagement-service
     restart: on-failure
     env_file: .env
@@ -392,7 +392,7 @@ services:
       start_period: 60s
 
   user-service:
-    build: services/user-service
+    build: ./services/user-service
     container_name: user-service
     restart: on-failure
     env_file: .env
@@ -426,7 +426,7 @@ services:
       start_period: 60s
 
   recommendation-service:
-    build: ./recommendation-service
+    build: ./services/recommendation-service
     container_name: recommendation-service
     restart: on-failure
     env_file: .env

@@ -66,13 +66,13 @@ Each service exposes health endpoints that include Kafka connectivity status.
 
 ### 3. Kafka Health Check Script
 
-**Location:** `scripts/kafka-health-check.sh`
+**Location:** `infra/scripts/kafka/kafka-health-check.sh`
 
 A shell script for quick verification of Kafka status from the command line.
 
 **Usage:**
 ```bash
-./scripts/kafka-health-check.sh
+./infra/scripts/kafka/kafka-health-check.sh
 ```
 
 **What it checks:**
@@ -177,7 +177,7 @@ docker logs kafka
 ### Services Can't Connect to Kafka
 
 1. Check service health endpoint
-2. Verify Kafka is healthy: `./scripts/kafka-health-check.sh`
+2. Verify Kafka is healthy: `./infra/scripts/kafka/kafka-health-check.sh`
 3. Check service logs:
 ```bash
 docker logs catalog-service | grep -i kafka

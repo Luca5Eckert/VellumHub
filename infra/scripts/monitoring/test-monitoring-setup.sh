@@ -9,7 +9,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 echo "========================================="
 echo "Kafka Monitoring Setup Test"
@@ -126,7 +126,7 @@ echo "Test 6: Checking Spring Boot actuator configurations..."
 
 services=("catalog-service" "engagement-service" "recommendation-service" "user-service")
 for service in "${services[@]}"; do
-    props_file="$PROJECT_ROOT/$service/src/main/resources/application.properties"
+    props_file="$PROJECT_ROOT/services/$service/src/main/resources/application.properties"
     
     if [ -f "$props_file" ]; then
         if grep -q "management.health.kafka.enabled=true" "$props_file" 2>/dev/null; then
@@ -198,7 +198,7 @@ echo "Next steps:"
 echo "1. Start the services: $COMPOSE_CMD up -d"
 echo "2. Access Kafka UI: http://localhost:8090"
 echo "3. Check service health: curl http://localhost:8081/actuator/health"
-echo "4. Run health check: ./scripts/kafka-health-check.sh"
+echo "4. Run health check: ./infra/scripts/kafka/kafka-health-check.sh"
 
 # Clean up temporary .env if created
 if [ "$TEMP_ENV_CREATED" = true ]; then

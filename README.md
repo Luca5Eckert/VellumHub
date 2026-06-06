@@ -91,13 +91,17 @@ The recommendation query path is local to the recommendation service. It serves 
 
 | Service | Role | Local details |
 |---|---|---|
-| `gateway-service` | Public edge for routing, JWT enforcement, and Redis-backed rate limiting. | [README](gateway-service/README.md) |
+| `gateway-service` | Public edge for routing, JWT enforcement, and Redis-backed rate limiting. | [README](services/gateway-service/README.md) |
 | `user-service` | Identity, authentication, Google login, user management, and preference seeds for cold-start recommendations. | [README](services/user-service/README.md) |
-| `catalog-service` | Source of truth for books, book requests, book lists, membership, covers, and current reading progress. | [README](catalog-service/README.md) |
-| `engagement-service` | Ratings, reactions, and replicated reading progress history / book snapshots. | [README](engagement-service/README.md) |
-| `recommendation-service` | Event-fed recommendation read model, embeddings, user profile vectors, and ranking. | [README](recommendation-service/README.md) |
+| `catalog-service` | Source of truth for books, book requests, book lists, membership, covers, and current reading progress. | [README](services/catalog-service/README.md) |
+| `engagement-service` | Ratings, reactions, and replicated reading progress history / book snapshots. | [README](services/engagement-service/README.md) |
+| `recommendation-service` | Event-fed recommendation read model, embeddings, user profile vectors, and ranking. | [README](services/recommendation-service/README.md) |
 
 The root README stays focused on system shape. Endpoint-level inventories live in the service READMEs and OpenAPI pages.
+
+## Repository Layout
+
+Application code lives under `services/`. Local environment definitions, Docker support files, observability configuration, and operational scripts live under `infra/`. Project documentation lives under `docs/`, while root-level files are kept for common entrypoints such as `docker-compose.yml`, `.env.example`, and this README.
 
 ## Core Flows
 
@@ -290,14 +294,14 @@ That profile adds Prometheus, Grafana, Loki, Tempo, and Alloy. Operational detai
 Each service has its own Maven wrapper:
 
 ```bash
-cd catalog-service
+cd services/catalog-service
 ./mvnw spring-boot:run
 ```
 
 On Windows PowerShell:
 
 ```powershell
-cd catalog-service
+cd services/catalog-service
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -314,7 +318,7 @@ docker compose config --services
 Run the suites with recorded passing local runs:
 
 ```powershell
-cd gateway-service
+cd services\gateway-service
 .\mvnw.cmd test
 
 cd ..\catalog-service
@@ -325,7 +329,7 @@ Run all service test commands during broad local verification:
 
 ```powershell
 foreach ($service in 'gateway-service','catalog-service','user-service','engagement-service','recommendation-service') {
-    Push-Location $service
+    Push-Location "services\$service"
     .\mvnw.cmd test
     Pop-Location
 }
