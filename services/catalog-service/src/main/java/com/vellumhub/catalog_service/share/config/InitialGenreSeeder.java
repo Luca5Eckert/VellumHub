@@ -2,6 +2,7 @@ package com.vellumhub.catalog_service.share.config;
 
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.infrastructure.repository.genre.JpaGenreRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -10,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Component
-class InitialGenreSeeder implements ApplicationRunner {
+public class InitialGenreSeeder implements ApplicationRunner {
 
     static final List<String> INITIAL_GENRES = List.of(
             "Science Fiction",
@@ -28,7 +29,8 @@ class InitialGenreSeeder implements ApplicationRunner {
     private final JpaGenreRepository genreRepository;
     private final List<String> initialGenres;
 
-    InitialGenreSeeder(JpaGenreRepository genreRepository) {
+    @Autowired
+    public InitialGenreSeeder(JpaGenreRepository genreRepository) {
         this(genreRepository, INITIAL_GENRES);
     }
 
