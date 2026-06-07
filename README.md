@@ -39,6 +39,7 @@ It is written as a backend engineering reference project: the goal is not just t
 - [Kafka Event Contracts](#kafka-event-contracts)
 - [Gateway and Security](#gateway-and-security)
 - [Running Locally](#running-locally)
+- [Observability](#observability)
 - [Quality Evidence](#quality-evidence)
 - [Roadmap](#roadmap)
 
@@ -352,6 +353,33 @@ The gateway currently exposes Actuator endpoints, not a Springdoc UI, and its ro
 
 ## Observability
 
+VellumHub includes an optional local observability stack for development. It combines service metrics, structured logs, traces, dashboards, alerts, and runbooks so operational behavior can be inspected without external infrastructure.
+
+Enable it with the Docker Compose `observability` profile:
+
+```bash
+docker compose --profile observability up -d --build
+```
+
+Local observability endpoints:
+
+| Component | URL | Purpose |
+|---|---|---|
+| Prometheus | `http://localhost:9090` | Scrapes service metrics from `/actuator/prometheus`. |
+| Grafana | `http://localhost:3002` | Dashboards, Explore, and provisioned datasources. |
+| Loki | `http://localhost:3100` | Stores structured Docker logs collected by Alloy. |
+| Tempo | `http://localhost:3200` | Stores traces sent through Alloy. |
+| Alloy | `http://localhost:12345` | Collects Docker logs and forwards OTLP traces. |
+| Kafka UI | `http://localhost:8090` | Topic and consumer-group inspection. |
+
+Grafana is provisioned with Prometheus, Loki, and Tempo datasources plus these dashboards:
+
+- `VellumHub Overview`
+- `Gateway and HTTP`
+- `Services JVM and DB`
+- `Kafka Flow`
+- `Recommendation Health`
+
 Services expose Spring Boot Actuator endpoints:
 
 - `/actuator/health`
@@ -359,11 +387,44 @@ Services expose Spring Boot Actuator endpoints:
 - `/actuator/metrics`
 - `/actuator/prometheus`
 
-`/actuator/prometheus` is backed by the Micrometer Prometheus registry and exports metrics with a common `service` tag. Health remains publicly reachable for Docker healthchecks. The observability profile scrapes these endpoints through Prometheus, ships structured Docker logs to Loki, forwards OpenTelemetry Java Agent traces through Alloy to Tempo, and provisions Grafana with Prometheus, Loki, and Tempo datasources. Broader Actuator endpoints such as `info` and `metrics` still require authentication on the application services and gateway.
+`/actuator/prometheus` is backed by the Micrometer Prometheus registry and exports metrics with a common `service` tag. Prometheus scrapes the gateway, user, catalog, engagement, and recommendation services on the Docker network. Health remains publicly reachable for Docker healthchecks. Broader Actuator endpoints such as `info` and `metrics` still require authentication on the application services and gateway.
 
 In the `prod` profile, health details are hidden and the gateway lowers Spring Cloud Gateway logging from local `TRACE` diagnostics to `INFO`.
 
-Kafka UI is available at `http://localhost:8090` when the compose stack is running. The full local observability workflow is documented in [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md), operational incident guides live in [docs/OBSERVABILITY_RUNBOOKS.md](docs/OBSERVABILITY_RUNBOOKS.md), and additional Kafka monitoring notes live in [docs/KAFKA_MONITORING.md](docs/KAFKA_MONITORING.md), though the code-level topic inventory above is newer than parts of that document.
+### Custom Metrics
+
+Custom application metrics use the `vellumhub_*` Prometheus prefix. They keep labels intentionally low-cardinality: `service`, `topic`, `event_type`, `consumer_group`, `operation`, and `result`.
+
+Kafka and DLT metrics:
+
+- `vellumhub_kafka_events_published_total`
+- `vellumhub_kafka_events_publish_failed_total`
+- `vellumhub_kafka_events_consumed_total`
+- `vellumhub_kafka_events_consume_failed_total`
+- `vellumhub_kafka_event_processing_duration_seconds_count`
+- `vellumhub_kafka_event_processing_duration_seconds_sum`
+- `vellumhub_kafka_dlt_events_total`
+
+Business metrics:
+
+- `vellumhub_users_total`
+- `vellumhub_books_total`
+- `vellumhub_books_updated_total`
+- `vellumhub_books_deleted_total`
+- `vellumhub_reading_progress_updated_total`
+- `vellumhub_ratings_total`
+- `vellumhub_reactions_changed_total`
+- `vellumhub_recommendations_requested_total`
+- `vellumhub_recommendations_generated_total`
+- `vellumhub_recommendation_empty_results_total`
+- `vellumhub_recommendation_generation_duration_seconds_count`
+- `vellumhub_recommendation_generation_duration_seconds_sum`
+
+The Kafka metrics cover producer success/failure, consumer success/failure, processing duration, and DLT quarantine. Business metrics cover user registration/admin creation, catalog book lifecycle, reading progress updates, ratings, reactions, and recommendation generation. Recommendation metrics distinguish empty results from generated non-empty results.
+
+Structured logs flow from application containers to Loki through Alloy. DLT logs include original topic, DLT topic, exception message, and payload byte length without printing raw Kafka payloads by default. Traces are emitted by the OpenTelemetry Java Agent and forwarded through Alloy to Tempo; metrics and logs intentionally stay on the Micrometer/Prometheus and Docker-log/Loki paths.
+
+The full local observability workflow is documented in [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md), operational incident guides live in [docs/OBSERVABILITY_RUNBOOKS.md](docs/OBSERVABILITY_RUNBOOKS.md), and additional Kafka monitoring notes live in [docs/KAFKA_MONITORING.md](docs/KAFKA_MONITORING.md), though the code-level topic inventory above is newer than parts of that document.
 
 ## Quality Evidence
 
