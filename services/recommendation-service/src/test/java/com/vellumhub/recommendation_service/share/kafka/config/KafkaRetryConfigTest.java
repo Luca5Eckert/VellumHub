@@ -63,4 +63,16 @@ class KafkaRetryConfigTest {
                 .counter()
                 .count()).isEqualTo(1.0);
     }
+
+    @Test
+    void retryTopicDltHandlersAreNotAutoStarted() {
+        KafkaRetryConfig config = new KafkaRetryConfig(new VellumHubMetrics(new SimpleMeterRegistry()));
+
+        var retryConfig = config.defaultRetryConfig("localhost:9092");
+
+        assertThat(retryConfig.getDestinationTopicProperties())
+                .filteredOn(properties -> properties.isDltTopic())
+                .isNotEmpty()
+                .allSatisfy(properties -> assertThat(properties.autoStartDltHandler()).isFalse());
+    }
 }
