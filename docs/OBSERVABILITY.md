@@ -95,18 +95,20 @@ Kafka metrics:
 
 Business metrics:
 
-- `vellumhub_users_created_total`
-- `vellumhub_books_created_total`
+- `vellumhub_users_total` (`operation=user_registration|admin_user_creation`)
+- `vellumhub_books_total` (`operation=book_creation`)
 - `vellumhub_books_updated_total`
 - `vellumhub_books_deleted_total`
 - `vellumhub_reading_progress_updated_total`
-- `vellumhub_ratings_created_total`
+- `vellumhub_ratings_total` (`operation=rating_creation`)
 - `vellumhub_reactions_changed_total`
 - `vellumhub_recommendations_requested_total`
 - `vellumhub_recommendations_generated_total`
 - `vellumhub_recommendation_empty_results_total`
 - `vellumhub_recommendation_generation_duration_seconds_count`
 - `vellumhub_recommendation_generation_duration_seconds_sum`
+
+Prometheus reserves metric-family names ending in `_created`, so Micrometer counters named `vellumhub.users.created`, `vellumhub.books.created`, and `vellumhub.ratings.created` export without that reserved suffix. Use the `operation` label to distinguish the creation flows.
 
 Custom metric labels are intentionally low-cardinality. The `service` label comes from each service's `management.metrics.tags.service` configuration. Kafka metrics also use `topic`, `event_type`, `consumer_group`, and `result` where applicable. Business metrics use `operation` and `result`.
 
