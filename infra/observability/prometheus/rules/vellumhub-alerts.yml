@@ -99,7 +99,7 @@ groups:
           runbook: "docs/OBSERVABILITY_RUNBOOKS.md#kafka-consumer-lag-high"
 
       - alert: KafkaPublishFailures
-        expr: increase(vellumhub_kafka_producer_failures_total[5m]) > 0
+        expr: increase(vellumhub_kafka_events_publish_failed_total[5m]) > 0
         for: 1m
         labels:
           severity: P2
@@ -112,7 +112,7 @@ groups:
         expr: |
           sum(rate(vellumhub_recommendation_empty_results_total[10m]))
           /
-          clamp_min(sum(rate(vellumhub_recommendation_requests_total[10m])), 0.001)
+          clamp_min(sum(rate(vellumhub_recommendations_requested_total[10m])), 0.001)
           > 0.30
         for: 15m
         labels:
