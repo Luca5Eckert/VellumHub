@@ -47,6 +47,8 @@ public class KafkaRetryConfig {
                 .newInstance()
                 .maxAttempts(3)
                 .fixedBackOff(3000)
+                .doNotRetryOnDltFailure()
+                .autoStartDltHandler(false)
                 .includeTopics(List.of(
                         "created-book",
                         "deleted-book"
