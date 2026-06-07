@@ -1,17 +1,27 @@
 package com.vellumhub.recommendation_service.share.kafka.config;
 
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.handler.annotation.Header;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.retrytopic.RetryTopicConfiguration;
 import org.springframework.kafka.retrytopic.RetryTopicConfigurationBuilder;
 import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.kafka.support.serializer.DelegatingByTypeSerializer;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @Slf4j
@@ -27,11 +37,12 @@ public class KafkaRetryConfig {
 
     /**
      * Defines a default retry configuration for Kafka listeners in the application.
-     * @param template the KafkaTemplate used to send messages to retry topics
      * @return a RetryTopicConfiguration that applies to all specified topics with a fixed backoff strategy and a maximum of 3 attempts.
      */
     @Bean
-    public RetryTopicConfiguration defaultRetryConfig(KafkaTemplate<String, Object> template) {
+    public RetryTopicConfiguration defaultRetryConfig(
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers
+    ) {
         return RetryTopicConfigurationBuilder
                 .newInstance()
                 .maxAttempts(3)
@@ -46,7 +57,7 @@ public class KafkaRetryConfig {
                         "updated-reading-progress",
                         "user-reaction-changed"
                 ))
-                .create(template);
+                .create(retryTopicKafkaTemplate(bootstrapServers));
     }
 
     /**
@@ -89,6 +100,22 @@ public class KafkaRetryConfig {
 
     private int payloadByteLength(byte[] payload) {
         return payload == null ? 0 : payload.length;
+    }
+
+    private KafkaTemplate<String, Object> retryTopicKafkaTemplate(String bootstrapServers) {
+        Map<String, Object> properties = Map.of(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+
+        Map<Class<?>, org.apache.kafka.common.serialization.Serializer<?>> delegates = new LinkedHashMap<>();
+        delegates.put(byte[].class, new ByteArraySerializer());
+        delegates.put(String.class, new StringSerializer());
+        delegates.put(Object.class, new JsonSerializer<>());
+
+        ProducerFactory<String, Object> producerFactory = new DefaultKafkaProducerFactory<>(
+                properties,
+                new StringSerializer(),
+                new DelegatingByTypeSerializer(delegates, true)
+        );
+        return new KafkaTemplate<>(producerFactory);
     }
 
 }
