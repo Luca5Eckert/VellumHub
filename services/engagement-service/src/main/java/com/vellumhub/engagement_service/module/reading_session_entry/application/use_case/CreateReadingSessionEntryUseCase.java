@@ -6,11 +6,8 @@ import com.vellumhub.engagement_service.module.book_snapshot.domain.port.BookSna
 import com.vellumhub.engagement_service.module.reading_session_entry.application.command.CreateReadingSessionEntryCommand;
 import com.vellumhub.engagement_service.module.reading_session_entry.domain.model.ReadingSessionEntry;
 import com.vellumhub.engagement_service.module.reading_session_entry.domain.port.ReadingSessionEntryRepository;
-import com.vellumhub.engagement_service.share.port.RequestContext;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 public class CreateReadingSessionEntryUseCase {
@@ -18,12 +15,9 @@ public class CreateReadingSessionEntryUseCase {
     private final ReadingSessionEntryRepository readingSessionEntryRepository;
     private final BookSnapshotRepository bookSnapshotRepository;
 
-    private final RequestContext requestContext;
-
-    public CreateReadingSessionEntryUseCase(ReadingSessionEntryRepository readingSessionEntryRepository, BookSnapshotRepository bookSnapshotRepository, RequestContext requestContext) {
+    public CreateReadingSessionEntryUseCase(ReadingSessionEntryRepository readingSessionEntryRepository, BookSnapshotRepository bookSnapshotRepository) {
         this.readingSessionEntryRepository = readingSessionEntryRepository;
         this.bookSnapshotRepository = bookSnapshotRepository;
-        this.requestContext = requestContext;
     }
 
     @Transactional
@@ -31,12 +25,10 @@ public class CreateReadingSessionEntryUseCase {
         BookSnapshot bookSnapshot = bookSnapshotRepository.findById(command.bookId())
                 .orElseThrow(BookSnapshotNotFoundException::new);
 
-        UUID userId = requestContext.getUserId();
-
         var readingSessionEntry = ReadingSessionEntry.create(
                 command.bookProgressId(),
                 bookSnapshot,
-                userId,
+                command.userId(),
                 command.type(),
                 command.pageRead()
         );

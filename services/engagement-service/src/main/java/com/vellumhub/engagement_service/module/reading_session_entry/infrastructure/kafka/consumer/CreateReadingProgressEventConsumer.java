@@ -40,8 +40,9 @@ public class CreateReadingProgressEventConsumer {
         );
 
         var command = CreateReadingSessionEntryCommand.create(
-                event.userId(),
                 event.bookId(),
+                event.bookProgressId(),
+                event.userId(),
                 event.progress(),
                 event.initPage()
         );

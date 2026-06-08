@@ -5,13 +5,15 @@ import java.util.UUID;
 public record CreateReadingSessionEntryCommand(
     UUID bookId,
     UUID bookProgressId,
+    UUID userId,
     String type,
     int pageRead
 ) {
-    public static CreateReadingSessionEntryCommand create(UUID bookId, UUID bookProgressId, String type, int pageRead) {
+    public static CreateReadingSessionEntryCommand create(UUID bookId, UUID bookProgressId, UUID userId, String type, int pageRead) {
         return new CreateReadingSessionEntryCommand(
                 bookId,
                 bookProgressId,
+                userId,
                 type,
                 pageRead
         );
