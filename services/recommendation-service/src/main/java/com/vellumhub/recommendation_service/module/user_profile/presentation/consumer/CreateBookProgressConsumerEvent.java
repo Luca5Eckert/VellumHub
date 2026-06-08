@@ -2,7 +2,7 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateBookProgressCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateBookProgressUseCase;
-import com.vellumhub.recommendation_service.module.user_profile.presentation.event.UpdateBookProgressEvent;
+import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreateBookProgressEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class CreateBookProgressConsumerEvent {
 
     private static final String TOPIC = "created-reading-progress";
-    private static final String EVENT_TYPE = "UpdateBookProgressEvent";
+    private static final String EVENT_TYPE = "CreateBookProgressEvent";
     private static final String CONSUMER_GROUP = "recommendation-service";
 
     private final UpdateBookProgressUseCase updateBookProgressUseCase;
@@ -30,7 +30,7 @@ public class CreateBookProgressConsumerEvent {
             groupId = "recommendation-service"
     )
     public void consume(
-            UpdateBookProgressEvent event
+            CreateBookProgressEvent event
     ) {
         Timer.Sample sample = metrics.startKafkaProcessing();
 
@@ -44,8 +44,8 @@ public class CreateBookProgressConsumerEvent {
                 event.userId(),
                 event.bookId(),
                 event.progress(),
-                event.oldPage(),
-                event.newPage()
+                0,
+                event.initPage()
         );
 
         try {
