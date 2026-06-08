@@ -1,6 +1,5 @@
 package com.vellumhub.recommendation_service.module.user_profile.application.use_case;
 
-import com.vellumhub.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateBookProgressCommand;
@@ -21,7 +20,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -86,14 +84,14 @@ class UpdateBookProgressUseCaseTest {
     }
 
     @Test
-    void execute_whenBookNotFound_shouldThrowBookFeatureNotFoundException() {
-        when(userProfileRepository.findById(userId)).thenReturn(Optional.of(new UserProfile(userId)));
+    void execute_whenBookNotFound_shouldSkipProfileUpdate() {
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> updateBookProgressUseCase.execute(command))
-                .isInstanceOf(BookFeatureNotFoundException.class);
+        updateBookProgressUseCase.execute(command);
 
+        verify(userProfileRepository, never()).findById(any());
         verify(userProfileRepository, never()).save(any());
+        verify(bookProgressInteraction, never()).toAdjustment(any(), any(), anyInt(), anyInt());
     }
 
     @Test
