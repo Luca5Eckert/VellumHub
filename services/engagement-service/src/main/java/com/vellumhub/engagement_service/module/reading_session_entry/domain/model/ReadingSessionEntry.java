@@ -17,6 +17,7 @@ import java.util.UUID;
 public class ReadingSessionEntry {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private UUID readingSessionId;
