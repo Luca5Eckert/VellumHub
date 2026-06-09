@@ -273,8 +273,6 @@ services:
     image: grafana/loki:3.7.2
     container_name: loki
     restart: unless-stopped
-    profiles:
-      - observability
     ports:
       - "3100:3100"
     volumes:
@@ -289,8 +287,6 @@ services:
     image: grafana/tempo:2.10.5
     container_name: tempo
     restart: unless-stopped
-    profiles:
-      - observability
     ports:
       - "3200:3200"
     volumes:
@@ -305,8 +301,6 @@ services:
     image: grafana/alloy:v1.16.1
     container_name: alloy
     restart: unless-stopped
-    profiles:
-      - observability
     ports:
       - "12345:12345"
     volumes:

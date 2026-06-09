@@ -19,6 +19,11 @@ class DatabaseMigrationConfigurationTest {
     }
 
     @Test
+    void flywayAutoConfigurationIsAvailableOnClasspath() {
+        assertThat(ClassUtils.isPresent("org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration", getClass().getClassLoader())).isTrue();
+    }
+
+    @Test
     void initialFlywayMigrationIsPackaged() throws IOException {
         String migration = readResource("db/migration/V1__create_initial_schema.sql");
 
