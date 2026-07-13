@@ -4,7 +4,7 @@ import com.vellumhub.user_service.module.user.application.exception.UserNotFound
 import com.vellumhub.user_service.module.user.domain.UserEntity;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import com.vellumhub.user_service.module.user_preference.application.command.CreateUserPreferenceCommand;
-import com.vellumhub.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
+import com.vellumhub.kafka.contracts.user.CreateUserPreferenceEvent;
 import com.vellumhub.user_service.module.user_preference.domain.model.UserPreference;
 import com.vellumhub.user_service.module.user_preference.domain.port.UserPreferenceRepository;
 import com.vellumhub.user_service.share.metrics.VellumHubMetrics;
