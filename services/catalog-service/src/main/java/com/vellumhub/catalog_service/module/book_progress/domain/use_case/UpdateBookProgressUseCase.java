@@ -1,13 +1,13 @@
 package com.vellumhub.catalog_service.module.book_progress.domain.use_case;
 
 import com.vellumhub.catalog_service.module.book_progress.domain.command.UpdateBookProgressCommand;
-import com.vellumhub.catalog_service.module.book_progress.domain.event.UpdateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookIsNotBeingReadException;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
+import com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -2,15 +2,16 @@ package com.vellumhub.catalog_service.module.book.domain.handler;
 
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
-import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequest;
-import com.vellumhub.catalog_service.module.book.domain.event.UpdateBookEvent;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.exception.InvalidBookException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequest;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.book.UpdateBookEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,7 +76,7 @@ public class UpdateBookHandler {
                 book.getGenres().stream().map(Genre::getName).toList()
         );
 
-        bookEventProducer.send("updated-book", book.getId().toString(), updateBookEvent);
+        bookEventProducer.send(KafkaTopics.UPDATED_BOOK, book.getId().toString(), updateBookEvent);
         metrics.recordBusinessCounter(VellumHubMetrics.BOOKS_UPDATED, "book_update", "success");
     }
 

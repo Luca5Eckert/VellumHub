@@ -1,6 +1,5 @@
 package com.vellumhub.catalog_service.module.book_request.domain.use_case;
 
-import com.vellumhub.catalog_service.module.book.domain.event.CreateBookEvent;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
@@ -9,6 +8,8 @@ import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
 import com.vellumhub.catalog_service.module.book_request.domain.BookRequest;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import com.vellumhub.catalog_service.module.book_request.domain.port.BookRequestRepository;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Component;
 
@@ -58,7 +59,7 @@ public class ApproveBookRequestUseCase {
                 bookRequest.getGenres().stream().map(Genre::getName).toList()
         );
 
-        producer.send("created-book", book.getId().toString(), createBookEvent);
+        producer.send(KafkaTopics.CREATED_BOOK, book.getId().toString(), createBookEvent);
     }
 
 

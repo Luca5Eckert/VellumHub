@@ -1,6 +1,6 @@
 package com.vellumhub.catalog_service.module.book_request.domain.use_case;
 
-import com.vellumhub.catalog_service.module.book.domain.event.CreateBookEvent;
+import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;

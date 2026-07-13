@@ -1,6 +1,6 @@
 package com.vellumhub.catalog_service.module.book.domain.handler;
 
-import com.vellumhub.catalog_service.module.book.domain.event.DeleteBookEvent;
+import com.vellumhub.kafka.contracts.book.DeleteBookEvent;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotExistException;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;

@@ -4,7 +4,7 @@ import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundEx
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
-import com.vellumhub.catalog_service.module.book_progress.domain.event.CreateBookProgressEvent;
+import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;

@@ -3,10 +3,11 @@ package com.vellumhub.catalog_service.module.book_progress.application.handler;
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookProgressResponse;
 import com.vellumhub.catalog_service.module.book_progress.application.mapper.BookProgressMapper;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.UpdateBookProgressCommand;
-import com.vellumhub.catalog_service.module.book_progress.domain.event.UpdateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressEventProducer;
 import com.vellumhub.catalog_service.module.book_progress.domain.use_case.UpdateBookProgressUseCase;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +33,7 @@ public class UpdateBookProgressHandler {
 
         var event = updateBookProgressUseCase.execute(updateBookProgressCommand);
 
-        bookProgressEventProducer.send("updated-reading-progress", event.userId().toString(), event);
+        bookProgressEventProducer.send(KafkaTopics.UPDATED_READING_PROGRESS, event.userId().toString(), event);
     }
 
 }
