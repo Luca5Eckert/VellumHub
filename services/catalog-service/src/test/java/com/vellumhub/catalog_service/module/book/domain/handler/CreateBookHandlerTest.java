@@ -1,7 +1,7 @@
 package com.vellumhub.catalog_service.module.book.domain.handler;
 
 import com.vellumhub.catalog_service.module.book.application.command.CreateBookCommand;
-import com.vellumhub.catalog_service.module.book.domain.event.CreateBookEvent;
+import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import com.vellumhub.catalog_service.module.book.domain.exception.InvalidBookException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;

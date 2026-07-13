@@ -2,7 +2,7 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateUserProfileWithRatingUseCase;
-import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedRatingEvent;
+import com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

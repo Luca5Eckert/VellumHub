@@ -1,13 +1,16 @@
 # STAGE 1: Build (Keep this the same)
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-COPY src ./src
-RUN mvn clean package -DskipTests -B
+COPY lib/kafka-contracts/pom.xml ./lib/kafka-contracts/pom.xml
+COPY services/recommendation-service/pom.xml ./services/recommendation-service/pom.xml
+COPY lib/kafka-contracts/src ./lib/kafka-contracts/src
+RUN mvn -f lib/kafka-contracts/pom.xml install -DskipTests -B
+RUN mvn -f services/recommendation-service/pom.xml dependency:go-offline -B
+COPY services/recommendation-service/src ./services/recommendation-service/src
+RUN mvn -f services/recommendation-service/pom.xml clean package -DskipTests -B
 
 ARG OTEL_JAVA_AGENT_VERSION=2.28.1
-RUN mvn dependency:copy \
+RUN mvn -f services/recommendation-service/pom.xml dependency:copy \
   -Dartifact=io.opentelemetry.javaagent:opentelemetry-javaagent:${OTEL_JAVA_AGENT_VERSION}:jar \
   -DoutputDirectory=/otel \
   -Dmdep.stripVersion=true \
@@ -23,7 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/services/recommendation-service/target/*.jar app.jar
 COPY --from=build /otel/opentelemetry-javaagent.jar opentelemetry-javaagent.jar
 
 # Standard Spring Boot healthcheck

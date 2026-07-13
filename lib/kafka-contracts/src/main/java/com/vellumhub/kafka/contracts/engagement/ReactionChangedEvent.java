@@ -1,4 +1,4 @@
-package com.vellumhub.recommendation_service.module.user_profile.presentation.event;
+package com.vellumhub.kafka.contracts.engagement;
 
 import java.util.UUID;
 
@@ -7,5 +7,4 @@ public record ReactionChangedEvent(
         UUID bookId,
         String typeReaction
 ) {
-
 }

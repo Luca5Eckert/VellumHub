@@ -2,7 +2,9 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.CreatedUserProfileCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.CreateUserProfileUseCase;
-import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedUserPreferenceEvent;
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.user.CreateUserPreferenceEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
@@ -14,9 +16,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class CreatedUserPreferenceConsumerEvent {
 
-    private static final String TOPIC = "created-user-preference";
-    private static final String EVENT_TYPE = "CreatedUserPreferenceEvent";
-    private static final String CONSUMER_GROUP = "recommendation_service_group";
+    private static final String TOPIC = KafkaTopics.CREATED_USER_PREFERENCE;
+    private static final String EVENT_TYPE = "CreateUserPreferenceEvent";
+    private static final String CONSUMER_GROUP = KafkaConsumerGroups.RECOMMENDATION_USER_PROFILE;
 
     private final CreateUserProfileUseCase createUserProfileUseCase;
     private final VellumHubMetrics metrics;
@@ -27,13 +29,13 @@ public class CreatedUserPreferenceConsumerEvent {
     }
 
     @KafkaListener(
-            topics = "created-user-preference",
-            groupId = "recommendation_service_group"
+            topics = KafkaTopics.CREATED_USER_PREFERENCE,
+            groupId = KafkaConsumerGroups.RECOMMENDATION_USER_PROFILE
     )
-    public void consume(@Payload CreatedUserPreferenceEvent event) {
+    public void consume(@Payload CreateUserPreferenceEvent event) {
         Timer.Sample sample = metrics.startKafkaProcessing();
         log.info(
-                "Consumed CreatedUserPreferenceEvent. operation=kafka_consume, topic=created-user-preference, event_type=CreatedUserPreferenceEvent, userId={}, genreCount={}, aboutPresent={}",
+                "Consumed CreateUserPreferenceEvent. operation=kafka_consume, topic=created-user-preference, event_type=CreateUserPreferenceEvent, userId={}, genreCount={}, aboutPresent={}",
                 event.userId(),
                 event.genres() == null ? 0 : event.genres().size(),
                 event.about() != null && !event.about().isBlank()
@@ -49,13 +51,13 @@ public class CreatedUserPreferenceConsumerEvent {
             metrics.recordKafkaConsumed(TOPIC, EVENT_TYPE, CONSUMER_GROUP);
             metrics.recordKafkaProcessingDuration(sample, TOPIC, EVENT_TYPE, CONSUMER_GROUP, "success");
 
-            log.info("Successfully processed CreatedUserPreferenceEvent for userId: {}", event.userId());
+            log.info("Successfully processed CreateUserPreferenceEvent for userId: {}", event.userId());
 
         } catch (Exception e) {
             metrics.recordKafkaConsumeFailed(TOPIC, EVENT_TYPE, CONSUMER_GROUP);
             metrics.recordKafkaProcessingDuration(sample, TOPIC, EVENT_TYPE, CONSUMER_GROUP, "failure");
-            log.error("Error processing CreatedUserPreferenceEvent: {}", e.getMessage(), e);
-            throw new RuntimeException("Erro ao processar CreatedUserPreferenceEvent", e);
+            log.error("Error processing CreateUserPreferenceEvent: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao processar CreateUserPreferenceEvent", e);
         }
     }
 

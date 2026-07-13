@@ -5,7 +5,7 @@ import com.vellumhub.recommendation_service.module.book_feature.application.use_
 import com.vellumhub.recommendation_service.module.recommendation.application.command.UpdateRecommendationCommand;
 import com.vellumhub.recommendation_service.module.recommendation.application.use_case.UpdateRecommendationUseCase;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
-import com.vellumhub.recommendation_service.share.kafka.event.UpdateBookEvent;
+import com.vellumhub.kafka.contracts.book.UpdateBookEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

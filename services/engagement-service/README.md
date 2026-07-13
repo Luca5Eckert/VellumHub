@@ -93,8 +93,8 @@ Consumed topics:
 |---|---|---|
 | `created-book` | Catalog | Create/update local book snapshot |
 | `deleted-book` | Catalog | Remove local book snapshot |
-| `create-reading-progress` | Catalog | Create reading progress history entry |
-| `update-reading-progress` | Catalog contract hardening target | Update reading progress history entry |
+| `created-reading-progress` | Catalog | Create reading progress history entry |
+| `updated-reading-progress` | Catalog | Update reading progress history entry |
 
 Kafka retry and DLT handling are centralized in `share/config/KafkaRetryConfig`.
 

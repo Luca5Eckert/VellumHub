@@ -79,8 +79,8 @@ Consumed topics:
 | `deleted-book` | Catalog | Remove local recommendation state for the book |
 | `created-rating` | Engagement | Adjust user profile vector from rating signal |
 | `user-reaction-changed` | Engagement | Adjust user profile vector from reaction signal |
-| `create_user_preference` | User | Seed or update cold-start profile vector |
-| `created-reading-progress` | Catalog contract hardening target | Adjust user profile from new progress event |
+| `created-user-preference` | User | Seed or update cold-start profile vector |
+| `created-reading-progress` | Catalog | Adjust user profile from new progress event |
 | `updated-reading-progress` | Catalog | Adjust user profile from progress update |
 
 Retry and Dead Letter Topic handling are centralized in `share/kafka/config/KafkaRetryConfig`.

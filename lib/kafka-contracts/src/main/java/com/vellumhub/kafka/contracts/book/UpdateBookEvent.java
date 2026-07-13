@@ -1,9 +1,9 @@
-package com.vellumhub.engagement_service.module.book_snapshot.presentation.event;
+package com.vellumhub.kafka.contracts.book;
 
 import java.util.List;
 import java.util.UUID;
 
-public record CreateBookEvent(
+public record UpdateBookEvent(
         UUID bookId,
         String title,
         String description,

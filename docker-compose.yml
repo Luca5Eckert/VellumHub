@@ -322,7 +322,9 @@ services:
 
   # MICROSERVICES LAYER
   catalog-service:
-    build: ./services/catalog-service
+    build:
+      context: .
+      dockerfile: services/catalog-service/Dockerfile
     container_name: catalog-service
     restart: on-failure
     env_file: .env
@@ -354,7 +356,9 @@ services:
       start_period: 60s
 
   engagement-service:
-    build: ./services/engagement-service
+    build:
+      context: .
+      dockerfile: services/engagement-service/Dockerfile
     container_name: engagement-service
     restart: on-failure
     env_file: .env
@@ -386,7 +390,9 @@ services:
       start_period: 60s
 
   user-service:
-    build: ./services/user-service
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
     container_name: user-service
     restart: on-failure
     env_file: .env
@@ -420,7 +426,9 @@ services:
       start_period: 60s
 
   recommendation-service:
-    build: ./services/recommendation-service
+    build:
+      context: .
+      dockerfile: services/recommendation-service/Dockerfile
     container_name: recommendation-service
     restart: on-failure
     env_file: .env

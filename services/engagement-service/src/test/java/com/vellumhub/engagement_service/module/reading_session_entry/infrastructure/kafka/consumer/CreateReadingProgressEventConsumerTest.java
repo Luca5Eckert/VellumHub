@@ -2,7 +2,7 @@ package com.vellumhub.engagement_service.module.reading_session_entry.infrastruc
 
 import com.vellumhub.engagement_service.module.reading_session_entry.application.command.CreateReadingSessionEntryCommand;
 import com.vellumhub.engagement_service.module.reading_session_entry.application.use_case.CreateReadingSessionEntryUseCase;
-import com.vellumhub.engagement_service.module.reading_session_entry.infrastructure.kafka.event.CreateBookProgressEvent;
+import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

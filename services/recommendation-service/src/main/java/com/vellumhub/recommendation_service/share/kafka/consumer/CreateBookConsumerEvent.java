@@ -3,8 +3,10 @@ package com.vellumhub.recommendation_service.share.kafka.consumer;
 import com.vellumhub.recommendation_service.module.book_feature.application.use_case.CreateBookFeatureUseCase;
 import com.vellumhub.recommendation_service.module.recommendation.application.command.CreateRecommendationCommand;
 import com.vellumhub.recommendation_service.module.recommendation.application.use_case.CreateRecommendationUseCase;
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
-import com.vellumhub.recommendation_service.share.kafka.event.CreateBookEvent;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -15,9 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class CreateBookConsumerEvent {
 
-    private static final String TOPIC = "created-book";
+    private static final String TOPIC = KafkaTopics.CREATED_BOOK;
     private static final String EVENT_TYPE = "CreateBookEvent";
-    private static final String CONSUMER_GROUP = "recommendation-service";
+    private static final String CONSUMER_GROUP = KafkaConsumerGroups.RECOMMENDATION_SERVICE;
 
     private final CreateBookFeatureUseCase createBookFeatureUseCase;
     private final CreateRecommendationUseCase createRecommendationUseCase;
@@ -31,8 +33,8 @@ public class CreateBookConsumerEvent {
 
 
     @KafkaListener(
-            topics = "created-book",
-            groupId = "recommendation-service"
+            topics = KafkaTopics.CREATED_BOOK,
+            groupId = KafkaConsumerGroups.RECOMMENDATION_SERVICE
     )
     @Transactional
     public void listen(CreateBookEvent event) {

@@ -4,10 +4,11 @@ import com.vellumhub.user_service.module.user.application.exception.UserNotFound
 import com.vellumhub.user_service.module.user.domain.UserEntity;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import com.vellumhub.user_service.module.user_preference.application.command.CreateUserPreferenceCommand;
-import com.vellumhub.user_service.module.user_preference.domain.event.CreateUserPreferenceEvent;
 import com.vellumhub.user_service.module.user_preference.domain.model.UserPreference;
 import com.vellumhub.user_service.module.user_preference.domain.port.UserPreferenceRepository;
 import com.vellumhub.user_service.share.metrics.VellumHubMetrics;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.user.CreateUserPreferenceEvent;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,12 +58,12 @@ public class CreateUserPreferenceUseCase {
                 userPreference.getAbout()
         );
 
-        kafkaTemplate.send("created-user-preference", createUserPreferenceEvent.userId().toString(), createUserPreferenceEvent)
+        kafkaTemplate.send(KafkaTopics.CREATED_USER_PREFERENCE, createUserPreferenceEvent.userId().toString(), createUserPreferenceEvent)
                 .whenComplete((result, ex) -> {
                     if (ex == null) {
-                        metrics.recordKafkaPublished("created-user-preference", createUserPreferenceEvent);
+                        metrics.recordKafkaPublished(KafkaTopics.CREATED_USER_PREFERENCE, createUserPreferenceEvent);
                     } else {
-                        metrics.recordKafkaPublishFailed("created-user-preference", createUserPreferenceEvent);
+                        metrics.recordKafkaPublishFailed(KafkaTopics.CREATED_USER_PREFERENCE, createUserPreferenceEvent);
                     }
                 });
 

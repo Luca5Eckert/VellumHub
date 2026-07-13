@@ -1,8 +1,9 @@
 package com.vellumhub.engagement_service.module.rating.domain.producer;
 
-import com.vellumhub.engagement_service.module.rating.domain.event.CreatedRatingEvent;
 import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
 import com.vellumhub.engagement_service.module.rating.domain.port.EventProducer;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,7 +23,7 @@ public class CreatedRatingEventProducer {
         );
 
         eventProducer.send(
-                "created-rating",
+                KafkaTopics.CREATED_RATING,
                 event.userId().toString(),
                 event
         );

@@ -23,7 +23,7 @@ class KafkaProducerTypeMappingTest {
         String typeMapping = properties.getProperty("spring.kafka.producer.properties.spring.json.type.mapping");
 
         assertThat(typeMapping)
-                .contains("create_rating_event:com.vellumhub.engagement_service.module.rating.domain.event.CreatedRatingEvent")
-                .contains("reaction_changed_event:com.vellumhub.engagement_service.module.reaction.domain.event.ReactionChangedEvent");
+                .contains("create_rating_event:com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent")
+                .contains("reaction_changed_event:com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent");
     }
 }

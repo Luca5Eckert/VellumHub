@@ -4,8 +4,10 @@ import com.vellumhub.recommendation_service.module.book_feature.application.comm
 import com.vellumhub.recommendation_service.module.book_feature.application.use_case.UpdateBookFeatureUseCase;
 import com.vellumhub.recommendation_service.module.recommendation.application.command.UpdateRecommendationCommand;
 import com.vellumhub.recommendation_service.module.recommendation.application.use_case.UpdateRecommendationUseCase;
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.book.UpdateBookEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
-import com.vellumhub.recommendation_service.share.kafka.event.UpdateBookEvent;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -15,9 +17,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class UpdateBookConsumerEvent {
 
-    private static final String TOPIC = "updated-book";
+    private static final String TOPIC = KafkaTopics.UPDATED_BOOK;
     private static final String EVENT_TYPE = "UpdateBookEvent";
-    private static final String CONSUMER_GROUP = "recommendation-service";
+    private static final String CONSUMER_GROUP = KafkaConsumerGroups.RECOMMENDATION_SERVICE;
 
     private final UpdateBookFeatureUseCase updateBookFeatureUseCase;
     private final UpdateRecommendationUseCase updateRecommendationUseCase;
@@ -30,8 +32,8 @@ public class UpdateBookConsumerEvent {
     }
 
     @KafkaListener(
-            topics = "updated-book",
-            groupId = "recommendation-service"
+            topics = KafkaTopics.UPDATED_BOOK,
+            groupId = KafkaConsumerGroups.RECOMMENDATION_SERVICE
     )
     public void execute(UpdateBookEvent event) {
         Timer.Sample sample = metrics.startKafkaProcessing();

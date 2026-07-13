@@ -162,7 +162,7 @@ The root README stays focused on system shape, reliability posture, and local op
 
 ### 1. Registration to cold-start profile
 
-A user registers with genre preferences. `user-service` publishes `create_user_preference`, and `recommendation-service` seeds a profile vector before the user has ratings or reactions.
+A user registers with genre preferences. `user-service` publishes `created-user-preference`, and `recommendation-service` seeds a profile vector before the user has ratings or reactions.
 
 ### 2. Catalog mutation to local projections
 
@@ -228,6 +228,8 @@ Kafka is the state propagation backbone. Producers publish business events; cons
 
 ### Topic inventory
 
+Kafka topic names, type aliases, and cross-service event payloads are centralized in `lib/kafka-contracts`.
+
 | Topic | Producer | Consumer(s) |
 |---|---|---|
 | `created-book` | Catalog | Recommendation, Engagement book snapshot |
@@ -235,20 +237,11 @@ Kafka is the state propagation backbone. Producers publish business events; cons
 | `deleted-book` | Catalog | Recommendation, Engagement book snapshot |
 | `created-rating` | Engagement | Recommendation user profile learning |
 | `user-reaction-changed` | Engagement | Recommendation user profile learning |
-| `create_user_preference` | User | Recommendation cold-start profile seed |
-| `create-reading-progress` | Catalog | Engagement reading history |
+| `created-user-preference` | User | Recommendation cold-start profile seed |
+| `created-reading-progress` | Catalog | Engagement reading history |
 | `updated-reading-progress` | Catalog | Recommendation user profile learning |
 
-### Known contract drift — tracked in [#199](https://github.com/Luca5Eckert/VellumHub/issues/199)
-
-| Issue | Producer publishes | Consumer/config expects |
-|---|---|---|
-| Reading progress create naming | `create-reading-progress` | `created-reading-progress` in recommendation |
-| Reading progress update naming | `updated-reading-progress` | `update-reading-progress` in engagement |
-| Retry topic coverage | reading-progress topic names | `updated-progress` in recommendation retry config |
-| Topic name ownership | annotations, properties, tests, docs | single contract source |
-
-The fix is to centralize Kafka topic contracts, align producers/consumers/retry configuration to one source of truth, and add contract tests that catch drift automatically.
+The contract library keeps producers, consumers, retry configuration, and JSON type mappings aligned to one source of truth.
 
 ---
 

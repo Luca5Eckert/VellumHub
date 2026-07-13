@@ -1,4 +1,4 @@
-package com.vellumhub.catalog_service.module.book_progress.domain.event;
+package com.vellumhub.kafka.contracts.readingprogress;
 
 import java.util.UUID;
 

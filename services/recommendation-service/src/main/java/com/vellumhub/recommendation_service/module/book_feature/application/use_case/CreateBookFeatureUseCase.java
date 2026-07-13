@@ -3,7 +3,7 @@ package com.vellumhub.recommendation_service.module.book_feature.application.use
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.EmbeddingBookProvider;
-import com.vellumhub.recommendation_service.share.kafka.event.CreateBookEvent;
+import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

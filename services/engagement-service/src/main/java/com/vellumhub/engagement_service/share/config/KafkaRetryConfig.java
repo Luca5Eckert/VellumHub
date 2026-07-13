@@ -1,6 +1,8 @@
 package com.vellumhub.engagement_service.share.config;
 
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.kafka.contracts.KafkaTopics;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -27,7 +29,7 @@ import java.util.Map;
 @Slf4j
 public class KafkaRetryConfig {
 
-    private static final String DLT_CONSUMER_GROUP = "engagement-service-dlt-group";
+    private static final String DLT_CONSUMER_GROUP = KafkaConsumerGroups.ENGAGEMENT_SERVICE_DLT;
 
     private final VellumHubMetrics metrics;
 
@@ -50,8 +52,10 @@ public class KafkaRetryConfig {
                 .doNotRetryOnDltFailure()
                 .autoStartDltHandler(false)
                 .includeTopics(List.of(
-                        "created-book",
-                        "deleted-book"
+                        KafkaTopics.CREATED_BOOK,
+                        KafkaTopics.DELETED_BOOK,
+                        KafkaTopics.CREATED_READING_PROGRESS,
+                        KafkaTopics.UPDATED_READING_PROGRESS
                 ))
                 .create(retryTopicKafkaTemplate(bootstrapServers));
     }
@@ -61,8 +65,8 @@ public class KafkaRetryConfig {
      * The topicPattern ".*-dlt" ensures any topic ending with "-dlt" is captured here.
      */
     @KafkaListener(
-            topicPattern = ".*-dlt",
-            groupId = "engagement-service-dlt-group",
+            topicPattern = KafkaTopics.DLT_PATTERN,
+            groupId = KafkaConsumerGroups.ENGAGEMENT_SERVICE_DLT,
             containerFactory = "dltKafkaListenerContainerFactory"
     )
     public void consumeDlt(
@@ -88,8 +92,8 @@ public class KafkaRetryConfig {
         if (originalTopic != null && !originalTopic.isBlank()) {
             return originalTopic;
         }
-        if (dltTopic != null && dltTopic.endsWith("-dlt")) {
-            return dltTopic.substring(0, dltTopic.length() - "-dlt".length());
+        if (dltTopic != null && dltTopic.endsWith(KafkaTopics.DLT_SUFFIX)) {
+            return dltTopic.substring(0, dltTopic.length() - KafkaTopics.DLT_SUFFIX.length());
         }
         return "unknown";
     }

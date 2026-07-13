@@ -1,4 +1,4 @@
-package com.vellumhub.recommendation_service.module.user_profile.presentation.event;
+package com.vellumhub.kafka.contracts.engagement;
 
 import java.util.UUID;
 

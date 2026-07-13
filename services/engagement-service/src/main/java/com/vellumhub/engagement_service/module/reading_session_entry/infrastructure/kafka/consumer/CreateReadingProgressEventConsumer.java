@@ -2,8 +2,10 @@ package com.vellumhub.engagement_service.module.reading_session_entry.infrastruc
 
 import com.vellumhub.engagement_service.module.reading_session_entry.application.command.CreateReadingSessionEntryCommand;
 import com.vellumhub.engagement_service.module.reading_session_entry.application.use_case.CreateReadingSessionEntryUseCase;
-import com.vellumhub.engagement_service.module.reading_session_entry.infrastructure.kafka.event.CreateBookProgressEvent;
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -13,9 +15,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class CreateReadingProgressEventConsumer {
 
-    private static final String TOPIC = "created-reading-progress";
+    private static final String TOPIC = KafkaTopics.CREATED_READING_PROGRESS;
     private static final String EVENT_TYPE = "CreateBookProgressEvent";
-    private static final String CONSUMER_GROUP = "engagement-service";
+    private static final String CONSUMER_GROUP = KafkaConsumerGroups.ENGAGEMENT_SERVICE;
 
     private final CreateReadingSessionEntryUseCase createReadingSessionEntryUseCase;
     private final VellumHubMetrics metrics;
@@ -26,8 +28,8 @@ public class CreateReadingProgressEventConsumer {
     }
 
     @KafkaListener(
-            topics = "created-reading-progress",
-            groupId = "engagement-service"
+            topics = KafkaTopics.CREATED_READING_PROGRESS,
+            groupId = KafkaConsumerGroups.ENGAGEMENT_SERVICE
     )
     public void consume(CreateBookProgressEvent event){
         Timer.Sample sample = metrics.startKafkaProcessing();

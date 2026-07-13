@@ -2,7 +2,9 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateBookProgressCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateBookProgressUseCase;
-import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreateBookProgressEvent;
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
@@ -13,9 +15,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class CreateBookProgressConsumerEvent {
 
-    private static final String TOPIC = "created-reading-progress";
+    private static final String TOPIC = KafkaTopics.CREATED_READING_PROGRESS;
     private static final String EVENT_TYPE = "CreateBookProgressEvent";
-    private static final String CONSUMER_GROUP = "recommendation-service";
+    private static final String CONSUMER_GROUP = KafkaConsumerGroups.RECOMMENDATION_SERVICE;
 
     private final UpdateBookProgressUseCase updateBookProgressUseCase;
     private final VellumHubMetrics metrics;
@@ -26,8 +28,8 @@ public class CreateBookProgressConsumerEvent {
     }
 
     @KafkaListener(
-            topics = "created-reading-progress",
-            groupId = "recommendation-service"
+            topics = KafkaTopics.CREATED_READING_PROGRESS,
+            groupId = KafkaConsumerGroups.RECOMMENDATION_SERVICE
     )
     public void consume(
             CreateBookProgressEvent event

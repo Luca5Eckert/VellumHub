@@ -1,11 +1,12 @@
 package com.vellumhub.engagement_service.module.reaction.application.use_case;
 
 import com.vellumhub.engagement_service.module.reaction.application.command.UpdateReactionCommand;
-import com.vellumhub.engagement_service.module.reaction.domain.event.ReactionChangedEvent;
 import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
 import com.vellumhub.engagement_service.module.reaction.domain.port.EventProducer;
 import com.vellumhub.engagement_service.module.reaction.domain.port.ReactionRepository;
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,9 +32,13 @@ public class UpdateReactionUseCase {
 
         reactionRepository.save(reaction);
 
-        var event = ReactionChangedEvent.from(reaction);
+        var event = new ReactionChangedEvent(
+                reaction.getUserId(),
+                reaction.getBookSnapshot().getBookId(),
+                reaction.getTypeReaction().name()
+        );
 
-        eventProducer.send("user-reaction-changed", event.userId().toString(), event);
+        eventProducer.send(KafkaTopics.USER_REACTION_CHANGED, event.userId().toString(), event);
         metrics.recordBusinessCounter(VellumHubMetrics.REACTIONS_CHANGED, "reaction_update", "success");
     }
 

@@ -2,7 +2,7 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateBookProgressCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateBookProgressUseCase;
-import com.vellumhub.recommendation_service.module.user_profile.presentation.event.UpdateBookProgressEvent;
+import com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class UpdateBookProgressConsumerEventTest {
     void shouldInvokeUseCaseOnProgressEvent() {
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        UpdateBookProgressEvent event = new UpdateBookProgressEvent(userId, bookId, "READING", 0, 50);
+        UpdateBookProgressEvent event = new UpdateBookProgressEvent(UUID.randomUUID(), userId, bookId, "READING", 0, 50);
 
         updateBookProgressConsumerEvent.consume(event);
 
@@ -52,7 +52,7 @@ class UpdateBookProgressConsumerEventTest {
     void shouldPassCorrectDataToUseCase() {
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        UpdateBookProgressEvent event = new UpdateBookProgressEvent(userId, bookId, "COMPLETED", 100, 300);
+        UpdateBookProgressEvent event = new UpdateBookProgressEvent(UUID.randomUUID(), userId, bookId, "COMPLETED", 100, 300);
 
         updateBookProgressConsumerEvent.consume(event);
 
@@ -71,7 +71,7 @@ class UpdateBookProgressConsumerEventTest {
     void shouldPropagateExceptionWhenUseCaseFails() {
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        UpdateBookProgressEvent event = new UpdateBookProgressEvent(userId, bookId, "READING", 0, 10);
+        UpdateBookProgressEvent event = new UpdateBookProgressEvent(UUID.randomUUID(), userId, bookId, "READING", 0, 10);
         doThrow(new RuntimeException("Profile error")).when(updateBookProgressUseCase).execute(any());
 
         assertThatThrownBy(() -> updateBookProgressConsumerEvent.consume(event))

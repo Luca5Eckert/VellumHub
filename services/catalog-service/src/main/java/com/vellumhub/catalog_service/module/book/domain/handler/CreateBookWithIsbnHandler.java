@@ -1,12 +1,13 @@
 package com.vellumhub.catalog_service.module.book.domain.handler;
 
-import com.vellumhub.catalog_service.module.book.domain.event.CreateBookEvent;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
 import com.vellumhub.catalog_service.module.book.domain.port.BookExternalProvider;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,7 +60,7 @@ public class CreateBookWithIsbnHandler {
                 book.getGenres().stream().map(Genre::getName).toList()
         );
 
-        bookEventProducer.send("created-book", createBookEvent.bookId().toString(), createBookEvent);
+        bookEventProducer.send(KafkaTopics.CREATED_BOOK, createBookEvent.bookId().toString(), createBookEvent);
     }
 
 }
