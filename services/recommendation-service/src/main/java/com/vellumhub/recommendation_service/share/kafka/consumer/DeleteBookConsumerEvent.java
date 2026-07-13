@@ -3,8 +3,10 @@ package com.vellumhub.recommendation_service.share.kafka.consumer;
 import com.vellumhub.recommendation_service.module.book_feature.application.use_case.DeleteBookFeatureUseCase;
 import com.vellumhub.recommendation_service.module.recommendation.application.command.DeleteRecommendationCommand;
 import com.vellumhub.recommendation_service.module.recommendation.application.use_case.DeleteRecommendationUseCase;
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.book.DeleteBookEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
-import com.vellumhub.recommendation_service.share.kafka.event.DeleteBookEvent;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -14,9 +16,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class DeleteBookConsumerEvent {
 
-    private static final String TOPIC = "deleted-book";
+    private static final String TOPIC = KafkaTopics.DELETED_BOOK;
     private static final String EVENT_TYPE = "DeleteBookEvent";
-    private static final String CONSUMER_GROUP = "recommendation-service";
+    private static final String CONSUMER_GROUP = KafkaConsumerGroups.RECOMMENDATION_SERVICE;
 
     private final DeleteBookFeatureUseCase deleteBookFeatureUseCase;
     private final DeleteRecommendationUseCase deleteRecommendationUseCase;
@@ -30,8 +32,8 @@ public class DeleteBookConsumerEvent {
 
 
     @KafkaListener(
-            topics = "deleted-book",
-            groupId = "recommendation-service"
+            topics = KafkaTopics.DELETED_BOOK,
+            groupId = KafkaConsumerGroups.RECOMMENDATION_SERVICE
     )
     public void listen(DeleteBookEvent deleteBookEvent) {
         Timer.Sample sample = metrics.startKafkaProcessing();

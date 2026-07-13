@@ -2,7 +2,7 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateBookProgressCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateBookProgressUseCase;
-import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreateBookProgressEvent;
+import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ class CreateBookProgressConsumerEventTest {
     void shouldConsumeCreateProgressPayloadAsInitialProgressUpdate() throws Exception {
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        CreateBookProgressEvent event = new CreateBookProgressEvent(userId, bookId, "READING", 12);
+        CreateBookProgressEvent event = new CreateBookProgressEvent(UUID.randomUUID(), userId, bookId, "READING", 12);
 
         Method consume = CreateBookProgressConsumerEvent.class.getMethod("consume", CreateBookProgressEvent.class);
         consume.invoke(createBookProgressConsumerEvent, event);

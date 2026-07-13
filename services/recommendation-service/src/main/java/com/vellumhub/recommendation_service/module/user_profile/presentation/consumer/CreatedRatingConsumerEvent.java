@@ -2,7 +2,9 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateUserProfileWithRatingCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateUserProfileWithRatingUseCase;
-import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedRatingEvent;
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
@@ -14,9 +16,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class CreatedRatingConsumerEvent {
 
-    private static final String TOPIC = "created-rating";
+    private static final String TOPIC = KafkaTopics.CREATED_RATING;
     private static final String EVENT_TYPE = "CreatedRatingEvent";
-    private static final String CONSUMER_GROUP = "recommendation-service";
+    private static final String CONSUMER_GROUP = KafkaConsumerGroups.RECOMMENDATION_SERVICE;
 
     private final UpdateUserProfileWithRatingUseCase updateUserProfileWithRatingUseCase;
     private final VellumHubMetrics metrics;
@@ -27,8 +29,8 @@ public class CreatedRatingConsumerEvent {
     }
 
     @KafkaListener(
-            topics = "created-rating",
-            groupId = "recommendation-service"
+            topics = KafkaTopics.CREATED_RATING,
+            groupId = KafkaConsumerGroups.RECOMMENDATION_SERVICE
     )
     public void consume(
             @Payload CreatedRatingEvent event

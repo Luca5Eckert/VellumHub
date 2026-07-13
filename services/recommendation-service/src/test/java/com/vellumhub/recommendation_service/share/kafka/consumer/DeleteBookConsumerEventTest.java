@@ -4,7 +4,7 @@ import com.vellumhub.recommendation_service.module.book_feature.application.use_
 import com.vellumhub.recommendation_service.module.recommendation.application.command.DeleteRecommendationCommand;
 import com.vellumhub.recommendation_service.module.recommendation.application.use_case.DeleteRecommendationUseCase;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
-import com.vellumhub.recommendation_service.share.kafka.event.DeleteBookEvent;
+import com.vellumhub.kafka.contracts.book.DeleteBookEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

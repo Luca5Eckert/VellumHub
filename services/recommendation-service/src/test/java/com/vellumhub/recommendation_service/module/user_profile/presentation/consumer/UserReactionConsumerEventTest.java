@@ -2,7 +2,7 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.ReactionChangedCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.ReactionChangedUseCase;
-import com.vellumhub.recommendation_service.module.user_profile.presentation.event.ReactionChangedEvent;
+import com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -4,7 +4,7 @@ import com.vellumhub.recommendation_service.module.book_feature.application.use_
 import com.vellumhub.recommendation_service.module.recommendation.application.command.CreateRecommendationCommand;
 import com.vellumhub.recommendation_service.module.recommendation.application.use_case.CreateRecommendationUseCase;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
-import com.vellumhub.recommendation_service.share.kafka.event.CreateBookEvent;
+import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

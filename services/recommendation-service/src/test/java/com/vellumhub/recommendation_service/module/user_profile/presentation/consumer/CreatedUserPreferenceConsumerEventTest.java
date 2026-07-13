@@ -2,7 +2,7 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.CreatedUserProfileCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.CreateUserProfileUseCase;
-import com.vellumhub.recommendation_service.module.user_profile.presentation.event.CreatedUserPreferenceEvent;
+import com.vellumhub.kafka.contracts.user.CreateUserPreferenceEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class CreatedUserPreferenceConsumerEventTest {
     @DisplayName("Should invoke CreateUserProfileUseCase when user preference event is received")
     void shouldInvokeUseCaseOnPreferenceEvent() {
         UUID userId = UUID.randomUUID();
-        CreatedUserPreferenceEvent event = new CreatedUserPreferenceEvent(userId, List.of("Fantasy", "Sci-Fi"), "Loves epic adventures");
+        CreateUserPreferenceEvent event = new CreateUserPreferenceEvent(userId, List.of("Fantasy", "Sci-Fi"), "Loves epic adventures");
 
         createdUserPreferenceConsumerEvent.consume(event);
 
@@ -53,7 +53,7 @@ class CreatedUserPreferenceConsumerEventTest {
         UUID userId = UUID.randomUUID();
         List<String> genres = List.of("Mystery", "Thriller");
         String about = "Enjoys suspenseful stories";
-        CreatedUserPreferenceEvent event = new CreatedUserPreferenceEvent(userId, genres, about);
+        CreateUserPreferenceEvent event = new CreateUserPreferenceEvent(userId, genres, about);
 
         createdUserPreferenceConsumerEvent.consume(event);
 
@@ -69,7 +69,7 @@ class CreatedUserPreferenceConsumerEventTest {
     @DisplayName("Should wrap and propagate exception when use case fails")
     void shouldWrapExceptionWhenUseCaseFails() {
         UUID userId = UUID.randomUUID();
-        CreatedUserPreferenceEvent event = new CreatedUserPreferenceEvent(userId, List.of("Drama"), "Likes drama");
+        CreateUserPreferenceEvent event = new CreateUserPreferenceEvent(userId, List.of("Drama"), "Likes drama");
         doThrow(new RuntimeException("Embedding service unavailable")).when(createUserProfileUseCase).execute(any());
 
         assertThatThrownBy(() -> createdUserPreferenceConsumerEvent.consume(event))

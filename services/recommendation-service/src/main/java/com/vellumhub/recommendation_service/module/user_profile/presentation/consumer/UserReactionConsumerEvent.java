@@ -2,7 +2,9 @@ package com.vellumhub.recommendation_service.module.user_profile.presentation.co
 
 import com.vellumhub.recommendation_service.module.user_profile.application.command.ReactionChangedCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.ReactionChangedUseCase;
-import com.vellumhub.recommendation_service.module.user_profile.presentation.event.ReactionChangedEvent;
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
@@ -13,9 +15,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class UserReactionConsumerEvent {
 
-    private static final String TOPIC = "user-reaction-changed";
+    private static final String TOPIC = KafkaTopics.USER_REACTION_CHANGED;
     private static final String EVENT_TYPE = "ReactionChangedEvent";
-    private static final String CONSUMER_GROUP = "recommendation-service";
+    private static final String CONSUMER_GROUP = KafkaConsumerGroups.RECOMMENDATION_SERVICE;
 
     private final ReactionChangedUseCase reactionChangedUseCase;
     private final VellumHubMetrics metrics;
@@ -26,8 +28,8 @@ public class UserReactionConsumerEvent {
     }
 
     @KafkaListener(
-            topics = "user-reaction-changed",
-            groupId = "recommendation-service"
+            topics = KafkaTopics.USER_REACTION_CHANGED,
+            groupId = KafkaConsumerGroups.RECOMMENDATION_SERVICE
     )
     public void consume(ReactionChangedEvent event) {
         Timer.Sample sample = metrics.startKafkaProcessing();

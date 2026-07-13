@@ -1,6 +1,8 @@
 package com.vellumhub.recommendation_service.share.kafka.config;
 
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.kafka.contracts.KafkaTopics;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -27,7 +29,7 @@ import java.util.Map;
 @Slf4j
 public class KafkaRetryConfig {
 
-    private static final String DLT_CONSUMER_GROUP = "recommendation-service-dlt-group";
+    private static final String DLT_CONSUMER_GROUP = KafkaConsumerGroups.RECOMMENDATION_SERVICE_DLT;
 
     private final VellumHubMetrics metrics;
 
@@ -50,14 +52,14 @@ public class KafkaRetryConfig {
                 .doNotRetryOnDltFailure()
                 .autoStartDltHandler(false)
                 .includeTopics(List.of(
-                        "created-book",
-                        "deleted-book",
-                        "updated-book",
-                        "created-rating",
-                        "created-user-preference",
-                        "created-reading-progress",
-                        "updated-reading-progress",
-                        "user-reaction-changed"
+                        KafkaTopics.CREATED_BOOK,
+                        KafkaTopics.DELETED_BOOK,
+                        KafkaTopics.UPDATED_BOOK,
+                        KafkaTopics.CREATED_RATING,
+                        KafkaTopics.CREATED_USER_PREFERENCE,
+                        KafkaTopics.CREATED_READING_PROGRESS,
+                        KafkaTopics.UPDATED_READING_PROGRESS,
+                        KafkaTopics.USER_REACTION_CHANGED
                 ))
                 .create(retryTopicKafkaTemplate(bootstrapServers));
     }
@@ -67,8 +69,8 @@ public class KafkaRetryConfig {
      * The topicPattern ".*-dlt" ensures any topic ending with "-dlt" is captured here.
      */
     @KafkaListener(
-            topicPattern = ".*-dlt",
-            groupId = "recommendation-service-dlt-group",
+            topicPattern = KafkaTopics.DLT_PATTERN,
+            groupId = KafkaConsumerGroups.RECOMMENDATION_SERVICE_DLT,
             containerFactory = "dltKafkaListenerContainerFactory"
     )
     public void consumeDlt(
@@ -94,8 +96,8 @@ public class KafkaRetryConfig {
         if (originalTopic != null && !originalTopic.isBlank()) {
             return originalTopic;
         }
-        if (dltTopic != null && dltTopic.endsWith("-dlt")) {
-            return dltTopic.substring(0, dltTopic.length() - "-dlt".length());
+        if (dltTopic != null && dltTopic.endsWith(KafkaTopics.DLT_SUFFIX)) {
+            return dltTopic.substring(0, dltTopic.length() - KafkaTopics.DLT_SUFFIX.length());
         }
         return "unknown";
     }
