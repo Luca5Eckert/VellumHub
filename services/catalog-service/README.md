@@ -111,10 +111,10 @@ Produced Kafka topics:
 | `created-book` | Book creation or request approval | Recommendation book features, engagement book snapshot |
 | `updated-book` | Book update | Recommendation feature/metadata refresh |
 | `deleted-book` | Book deletion | Recommendation cleanup, engagement snapshot cleanup |
-| `create-reading-progress` | Reading status/progress initialization | Engagement reading history |
+| `created-reading-progress` | Reading status/progress initialization | Engagement reading history |
 | `updated-reading-progress` | Current page/progress update | Recommendation profile learning |
 
-The reading-progress topic names are part of the current Kafka contract hardening tracked in the root README.
+Topic names and event payloads are defined in `lib/kafka-contracts`.
 
 ## Data Ownership
 

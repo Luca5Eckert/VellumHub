@@ -15,7 +15,7 @@ It is the system of record for who the user is. It is not the system of record f
 - Register users and authenticate them with email/password or Google token flow.
 - Issue JWTs consumed by the gateway and downstream services.
 - Own user records and user preference data.
-- Publish `create_user_preference` so recommendation can build a cold-start profile vector.
+- Publish `created-user-preference` so recommendation can build a cold-start profile vector.
 
 ## What It Owns
 
@@ -77,9 +77,9 @@ Produced topic:
 
 | Topic | Trigger | Consumer |
 |---|---|---|
-| `create_user_preference` | User preference creation/update during onboarding | `recommendation-service` |
+| `created-user-preference` | User preference creation/update during onboarding | `recommendation-service` |
 
-The topic intentionally uses `snake_case` to preserve the current producer/consumer contract. Recommendation consumes it to create or adjust `user_profiles` for cold-start recommendations.
+Recommendation consumes this topic to create or adjust `user_profiles` for cold-start recommendations. The shared payload and topic contract live in `lib/kafka-contracts`.
 
 ## Authentication Model
 
