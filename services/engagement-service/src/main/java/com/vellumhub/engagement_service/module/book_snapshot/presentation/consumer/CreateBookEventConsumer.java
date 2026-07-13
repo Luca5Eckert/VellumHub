@@ -2,8 +2,10 @@ package com.vellumhub.engagement_service.module.book_snapshot.presentation.consu
 
 import com.vellumhub.engagement_service.module.book_snapshot.application.command.CreateBookSnapshotCommand;
 import com.vellumhub.engagement_service.module.book_snapshot.application.use_case.CreateBookSnapshotUseCase;
-import com.vellumhub.engagement_service.module.book_snapshot.presentation.event.CreateBookEvent;
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -13,9 +15,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class CreateBookEventConsumer {
 
-    private static final String TOPIC = "created-book";
+    private static final String TOPIC = KafkaTopics.CREATED_BOOK;
     private static final String EVENT_TYPE = "CreateBookEvent";
-    private static final String CONSUMER_GROUP = "engagement-service";
+    private static final String CONSUMER_GROUP = KafkaConsumerGroups.ENGAGEMENT_SERVICE;
 
     private final CreateBookSnapshotUseCase createBookSnapshotUseCase;
     private final VellumHubMetrics metrics;
@@ -26,8 +28,8 @@ public class CreateBookEventConsumer {
     }
 
     @KafkaListener(
-            topics = "${kafka.topics.created-book}",
-            groupId = "${kafka.group-id}"
+            topics = KafkaTopics.CREATED_BOOK,
+            groupId = KafkaConsumerGroups.ENGAGEMENT_SERVICE
     )
     public void consume(CreateBookEvent event) {
         Timer.Sample sample = metrics.startKafkaProcessing();

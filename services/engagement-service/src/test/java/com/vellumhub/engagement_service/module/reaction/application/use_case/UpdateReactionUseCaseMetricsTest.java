@@ -2,7 +2,7 @@ package com.vellumhub.engagement_service.module.reaction.application.use_case;
 
 import com.vellumhub.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
 import com.vellumhub.engagement_service.module.reaction.application.command.UpdateReactionCommand;
-import com.vellumhub.engagement_service.module.reaction.domain.event.ReactionChangedEvent;
+import com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent;
 import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
 import com.vellumhub.engagement_service.module.reaction.domain.model.TypeReaction;
 import com.vellumhub.engagement_service.module.reaction.domain.port.EventProducer;
