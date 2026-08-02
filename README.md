@@ -15,7 +15,7 @@ VellumHub is the backend infrastructure of a social reading platform. Users disc
 
 The project is written as a backend engineering reference system. The goal is not merely to expose CRUD endpoints, but to show how identity, catalog ownership, reader engagement, asynchronous replication, vector ranking, gateway security, observability, and reliability hardening fit together in one coherent platform.
 
-The current architecture is a mature v3 platform moving through v4 reliability hardening. The five-service topology, Kafka backbone, gateway JWT enforcement, service-owned databases, and pgvector recommendation model are in place. The active focus is correctness and operational resilience: topic contracts, idempotent consumers, transactional outbox, database migrations, production security, tracing, and integration testing.
+The current architecture is a mature v3 platform moving through v4 reliability hardening. The five-service topology, Kafka backbone, gateway JWT enforcement, service-owned databases, pgvector recommendation model, shared Kafka contracts, and Flyway migration verification are in place. The active focus is correctness under failure: idempotent consumers, transactional outbox, production security, end-to-end observability validation, and distributed integration testing.
 
 ---
 
@@ -71,11 +71,10 @@ The latency numbers are project-local benchmark notes, not production SLAs.
 
 | Area | Current evidence |
 |---|---|
-| Gateway tests | Recorded passing local run |
-| Catalog tests | Recorded passing local run |
-| Gateway suite | 1 test, 0 failures, 0 errors |
-| Catalog suite | 142 tests, 0 failures, 0 errors |
-| Latest recorded passing run | 2026-05-25 |
+| Consolidated Maven suite | 478 tests passing across the repository |
+| Services covered | Gateway, User, Catalog, Engagement, and Recommendation |
+| Database integration | Flyway verified against PostgreSQL and pgvector through Testcontainers |
+| Latest verified passing run | 2026-08-01 |
 
 Coverage percentage is not claimed because no local JaCoCo configuration or generated coverage report was found during inspection.
 
@@ -228,7 +227,7 @@ Kafka is the state propagation backbone. Producers publish business events; cons
 
 ### Topic inventory
 
-Kafka topic names, type aliases, and cross-service event payloads are centralized in `lib/kafka-contracts`.
+Kafka topic names, type aliases, consumer groups, and cross-service event payloads are centralized in `lib/kafka-contracts`.
 
 | Topic | Producer | Consumer(s) |
 |---|---|---|
@@ -241,7 +240,7 @@ Kafka topic names, type aliases, and cross-service event payloads are centralize
 | `created-reading-progress` | Catalog | Engagement reading history |
 | `updated-reading-progress` | Catalog | Recommendation user profile learning |
 
-The contract library keeps producers, consumers, retry configuration, and JSON type mappings aligned to one source of truth.
+The contract library keeps producers, consumers, retry configuration, JSON type mappings, and consumer-group identifiers aligned to one source of truth.
 
 ---
 
@@ -256,7 +255,7 @@ Recommendation and engagement consumers use Spring Kafka retry topic configurati
 
 Dead Letter Topic logs include the original topic, DLT topic, exception message, and payload byte length. They do not print raw payloads by default, keeping the recovery signal useful without exposing Kafka message content in logs.
 
-The implemented system already uses Kafka for local projections and recommendation learning. The remaining work is to make topic contracts impossible to drift silently, then harden consumer idempotency and transactional event publication.
+The implemented system already uses Kafka for local projections and recommendation learning. Shared contracts prevent topic names, payload classes, type aliases, and consumer groups from drifting independently. The remaining reliability work is consumer idempotency, transactional event publication, and real-Kafka verification of retry/DLT and projection flows.
 
 ---
 
@@ -394,19 +393,11 @@ docker compose config --services
 
 ### Run tests
 
-Recorded passing local suites:
+Install the shared Kafka contract library before testing services independently, then run the five service suites:
 
 ```powershell
-cd services\gateway-service
-.\mvnw.cmd test
+.\services\catalog-service\mvnw.cmd -f .\lib\kafka-contracts\pom.xml install
 
-cd ..\catalog-service
-.\mvnw.cmd test
-```
-
-Run all service test commands during broad local verification:
-
-```powershell
 foreach ($service in 'gateway-service','catalog-service','user-service','engagement-service','recommendation-service') {
     Push-Location "services\$service"
     .\mvnw.cmd test
@@ -414,7 +405,7 @@ foreach ($service in 'gateway-service','catalog-service','user-service','engagem
 }
 ```
 
-Use the full loop when you want a complete local signal before publishing a broad change.
+The consolidated local run verified on 2026-08-01 executed **478 Maven tests** across the five application services. The total covers unit, slice, and available PostgreSQL/pgvector Testcontainers tests; it does not claim end-to-end real-Kafka coverage for retry/DLT, idempotency, outbox, or distributed projection flows.
 
 ### API docs and ports
 
@@ -541,20 +532,23 @@ The current test suite is strongest around domain behavior and adapter boundarie
 
 The next quality step is integration coverage for real Kafka/PostgreSQL behavior with Testcontainers, especially retry/DLT, topic contracts, idempotency, and projection updates.
 
-### Recorded passing test runs
+### Recorded passing test run
 
-Latest recorded passing local verification in this workspace was performed on 2026-05-25.
+Latest consolidated local verification was performed on 2026-08-01.
 
-| Service | Command | Status |
-|---|---|---|
-| `gateway-service` | `.\mvnw.cmd test` | Passing: 1 test, 0 failures, 0 errors |
-| `catalog-service` | `.\mvnw.cmd test` | Passing: 142 tests, 0 failures, 0 errors |
+| Scope | Result |
+|---|---|
+| Five application services | 478 Maven tests passing |
+| PostgreSQL-owning services | Flyway startup and schema validation tested with PostgreSQL Testcontainers |
+| Recommendation database | pgvector extension and HNSW indexes verified through Testcontainers |
 
 ### Current quality bar
 
+- The five application service suites execute a consolidated total of 478 Maven tests.
 - Every service has its own Maven wrapper and Dockerfile.
 - Unit and slice tests cover domain models, use cases, controllers, Kafka consumers, mappers, and repository adapters in the strongest-covered services.
-- Kafka retry/DLT behavior is implemented in engagement and recommendation, but end-to-end retry/DLT verification still needs Testcontainers coverage.
+- Database-owning services validate Flyway migrations against real PostgreSQL containers; recommendation also validates pgvector and HNSW indexes.
+- Kafka retry/DLT behavior is implemented in engagement and recommendation, but end-to-end retry/DLT verification still needs real-Kafka Testcontainers coverage.
 - Docker Compose defines service healthchecks for gateway, databases, Redis, Kafka, and application services.
 - Actuator, metrics, Prometheus endpoints, structured logs, OpenTelemetry Java Agent traces, Kafka UI, and the optional Grafana/Prometheus/Loki/Tempo/Alloy profile provide local operational inspection.
 - Coverage percentage is not claimed because no local JaCoCo configuration or generated coverage report was found during inspection.
@@ -568,13 +562,14 @@ VellumHub is currently focused on correctness and operational resilience. The ne
 
 | Area | Goal | Issue |
 |---|---|---|
-| Kafka contracts | Centralize topic names, align producers/consumers/retry configs, and add drift-detection tests | [#199](https://github.com/Luca5Eckert/VellumHub/issues/199) |
+| Kafka contracts | Completed: centralized topic names, payloads, type aliases, consumer groups, and drift-detection tests | [#199](https://github.com/Luca5Eckert/VellumHub/issues/199) |
 | Consumer idempotency | Add `processed_events` handling for at-least-once Kafka delivery | [#200](https://github.com/Luca5Eckert/VellumHub/issues/200) |
 | Transactional outbox | Persist catalog and engagement changes atomically with outgoing events | [#201](https://github.com/Luca5Eckert/VellumHub/issues/201), [#202](https://github.com/Luca5Eckert/VellumHub/issues/202) |
 | Distributed tracing | Add manual domain spans or Kafka propagation where automatic OTEL instrumentation is insufficient | [#204](https://github.com/Luca5Eckert/VellumHub/issues/204) |
-| Database migrations | Replace production `ddl-auto=update` behavior with Flyway migrations and validation | [#205](https://github.com/Luca5Eckert/VellumHub/issues/205) |
+| Database migrations | Completed: Flyway migrations and runtime schema validation against PostgreSQL/pgvector | [#205](https://github.com/Luca5Eckert/VellumHub/issues/205) |
 | Operational security | Harden Actuator exposure, secret defaults, and production logging | [#206](https://github.com/Luca5Eckert/VellumHub/issues/206) |
-| Integration tests | Add Testcontainers coverage for PostgreSQL, Kafka, retry/DLT, and projection flows | [#207](https://github.com/Luca5Eckert/VellumHub/issues/207) |
+| Integration tests | Add real-Kafka Testcontainers coverage for retry/DLT, idempotency, outbox, and projection flows | [#207](https://github.com/Luca5Eckert/VellumHub/issues/207) |
+| Observability validation | Validate metrics, logs, traces, dashboards, and alerts through executable end-to-end scenarios | [#214](https://github.com/Luca5Eckert/VellumHub/issues/214) |
 
 ---
 
