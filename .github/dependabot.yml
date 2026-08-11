@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /lib/kafka-contracts
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /services/catalog-service
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /services/engagement-service
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /services/gateway-service
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /services/recommendation-service
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /services/user-service
+    schedule:
+      interval: weekly
