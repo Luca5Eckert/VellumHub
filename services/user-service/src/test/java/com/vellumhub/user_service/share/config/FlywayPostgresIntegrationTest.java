@@ -67,18 +67,18 @@ class FlywayPostgresIntegrationTest {
     }
 
     private static Map<String, Object> runtimeProperties() {
-        return Map.of(
-                "spring.datasource.url", POSTGRES.getJdbcUrl(),
-                "spring.datasource.username", POSTGRES.getUsername(),
-                "spring.datasource.password", POSTGRES.getPassword(),
-                "spring.kafka.bootstrap-servers", "localhost:65535",
-                "spring.kafka.listener.auto-startup", "false",
-                "spring.kafka.admin.fail-fast", "false",
-                "management.health.kafka.enabled", "false",
-                "jwt.secret", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=",
-                "jwt.expiration-ms", "3600000",
-                "google.client.id", "test-client-id",
-                "server.port", "0");
+        return Map.ofEntries(
+                Map.entry("spring.datasource.url", POSTGRES.getJdbcUrl()),
+                Map.entry("spring.datasource.username", POSTGRES.getUsername()),
+                Map.entry("spring.datasource.password", POSTGRES.getPassword()),
+                Map.entry("spring.kafka.bootstrap-servers", "localhost:65535"),
+                Map.entry("spring.kafka.listener.auto-startup", "false"),
+                Map.entry("spring.kafka.admin.fail-fast", "false"),
+                Map.entry("management.health.kafka.enabled", "false"),
+                Map.entry("jwt.secret", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM="),
+                Map.entry("jwt.expiration-ms", "3600000"),
+                Map.entry("google.client.id", "test-client-id"),
+                Map.entry("server.port", "0"));
     }
 
     private boolean tableExists(JdbcTemplate jdbcTemplate, String table) {
