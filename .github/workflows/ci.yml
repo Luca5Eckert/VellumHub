@@ -1,0 +1,14 @@
+name: Pull request validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    uses: ./.github/workflows/verify-images.yml
+    with:
+      publish: false
