@@ -114,7 +114,7 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState,redis
+          include: '*'
   health:
     livenessState:
       enabled: true
