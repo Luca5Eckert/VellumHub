@@ -10,5 +10,3 @@ permissions:
 jobs:
   verify:
     uses: ./.github/workflows/verify-images.yml
-    with:
-      publish: false
