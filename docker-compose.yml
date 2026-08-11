@@ -30,7 +30,7 @@ services:
       <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar"
+      JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: gateway-service
       SPRING_DATA_REDIS_HOST: redis-gateway
       SPRING_DATA_REDIS_PORT: 6379
@@ -334,7 +334,7 @@ services:
       <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar"
+      JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: catalog-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-catalog:5432/catalog_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
@@ -368,7 +368,7 @@ services:
       <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar"
+      JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: engagement-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-engagement:5432/engagement_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
@@ -402,7 +402,7 @@ services:
       <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar"
+      JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: user-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/user_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
@@ -439,7 +439,7 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
       SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
-      JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar"
+      JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: recommendation-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-recommendation:5432/recommendation_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
