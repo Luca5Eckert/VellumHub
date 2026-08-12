@@ -22,9 +22,15 @@ The `main` tag is published as a convenience only. Deployments must reference th
 
 Configure branch protection for `main` in GitHub with these required checks:
 
-- `Maven verify`
-- the five `Build and scan` matrix entries
+- `verify / Maven verify`
+- `verify / Build and scan gateway-service`
+- `verify / Build and scan user-service`
+- `verify / Build and scan catalog-service`
+- `verify / Build and scan engagement-service`
+- `verify / Build and scan recommendation-service`
 - `Analyze Java`
+
+The `verify /` prefix is part of the check name because `Pull request validation` invokes `verify-images.yml` as a reusable workflow through the parent job named `verify`. Branch protection must use the complete check names exactly as GitHub publishes them; requiring the inner job names without this prefix leaves the checks permanently in `Expected` state.
 
 Require branches to be up to date before merge and restrict direct pushes to `main` according to the repository's maintainer policy. GitHub branch protection is repository configuration and cannot be versioned in this repository.
 
