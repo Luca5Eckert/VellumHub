@@ -76,7 +76,7 @@ class FlywayPostgresIntegrationTest {
                 "spring.kafka.listener.auto-startup", "false",
                 "spring.kafka.admin.fail-fast", "false",
                 "management.health.kafka.enabled", "false",
-                "jwt.secret", "test-secret-test-secret-test-secret-test-secret",
+                "jwt.secret", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=",
                 "server.port", "0");
     }
 
