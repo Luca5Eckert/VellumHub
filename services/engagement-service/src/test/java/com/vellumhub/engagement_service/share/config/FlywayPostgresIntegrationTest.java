@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Testcontainers
 @ActiveProfiles("prod")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FlywayPostgresIntegrationTest {
 
@@ -62,7 +62,7 @@ class FlywayPostgresIntegrationTest {
     private static ConfigurableApplicationContext startApplication() {
         return new SpringApplicationBuilder(EngagementServiceApplication.class)
                 .profiles("prod")
-                .web(WebApplicationType.NONE)
+                .web(WebApplicationType.SERVLET)
                 .properties(runtimeProperties())
                 .run();
     }
