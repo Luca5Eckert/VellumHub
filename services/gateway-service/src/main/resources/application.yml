@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
 
 logging:
   structured:
@@ -89,7 +90,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          secret-key: ${JWT_KEY_LOCAL:dasdasidaidIHDASOHDOASHDPHAsdhashdouahsoduahsoduaoudhaoudhohdouashd}
+          secret-key: ${JWT_KEY}
 
   data:
     redis:
@@ -103,12 +104,17 @@ management:
   endpoints:
     web:
       exposure:
-        include: "health,info,metrics,prometheus"
+        include: "health,prometheus"
   endpoint:
     health:
-      show-details: always
+      show-details: never
       probes:
         enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: '*'
   health:
     livenessState:
       enabled: true
@@ -123,3 +129,6 @@ management:
   metrics:
     tags:
       service: ${spring.application.name}
+
+  lifecycle:
+    timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:30s}

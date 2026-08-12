@@ -1,0 +1,14 @@
+.git
+.github
+.idea
+.env
+.env.*
+!.env.example
+**/target
+**/.mvn
+**/*.log
+docs
+infra
+README.md
+docker-compose.yml
+maven-local-settings.xml

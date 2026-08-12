@@ -1,0 +1,70 @@
+name: Verify application artifacts
+
+on:
+  workflow_call:
+
+jobs:
+  maven-verify:
+    name: Maven verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Confirm Docker for Testcontainers
+        run: docker info
+      - name: Verify reactor and integration tests
+        run: mvn -B -ntp clean verify
+
+  build-and-scan:
+    name: Build and scan ${{ matrix.service }}
+    needs: maven-verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: gateway-service
+            image: vellumhub-gateway
+            dockerfile: services/gateway-service/Dockerfile
+          - service: user-service
+            image: vellumhub-user
+            dockerfile: services/user-service/Dockerfile
+          - service: catalog-service
+            image: vellumhub-catalog
+            dockerfile: services/catalog-service/Dockerfile
+          - service: engagement-service
+            image: vellumhub-engagement
+            dockerfile: services/engagement-service/Dockerfile
+          - service: recommendation-service
+            image: vellumhub-recommendation
+            dockerfile: services/recommendation-service/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          load: true
+          push: false
+          tags: local/${{ matrix.image }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=${{ matrix.service }}
+      - name: Scan image for fixable critical vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: local/${{ matrix.image }}:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: CRITICAL

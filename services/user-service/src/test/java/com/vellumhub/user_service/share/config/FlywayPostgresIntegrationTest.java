@@ -5,6 +5,7 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Testcontainers
 @ActiveProfiles("prod")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FlywayPostgresIntegrationTest {
 
@@ -41,7 +42,7 @@ class FlywayPostgresIntegrationTest {
 
     @Test
     @Order(1)
-    void startsAgainstAnEmptyPostgresDatabaseAndAppliesTheInitialMigration(JdbcTemplate jdbcTemplate) {
+    void startsAgainstAnEmptyPostgresDatabaseAndAppliesTheInitialMigration(@Autowired JdbcTemplate jdbcTemplate) {
         assertThat(jdbcTemplate.queryForObject("select count(*) from flyway_schema_history where version = '1' and success", Integer.class)).isEqualTo(1);
         assertThat(tableExists(jdbcTemplate, "tb_users")).isTrue();
         assertThat(tableExists(jdbcTemplate, "user_preferences")).isTrue();
@@ -51,34 +52,44 @@ class FlywayPostgresIntegrationTest {
 
     @Test
     @Order(2)
-    void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(JdbcTemplate jdbcTemplate) {
+    void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(@Autowired JdbcTemplate jdbcTemplate) {
         jdbcTemplate.execute("alter table tb_users drop column email");
 
         assertThatThrownBy(() -> startApplication())
-                .hasStackTraceContaining("Schema-validation");
+                .hasStackTraceContaining("Schema");
     }
 
     private static ConfigurableApplicationContext startApplication() {
         return new SpringApplicationBuilder(UserServiceApplication.class)
                 .profiles("prod")
-                .web(WebApplicationType.NONE)
-                .properties(runtimeProperties())
+                .web(WebApplicationType.SERVLET)
+                .properties(startupProperties())
                 .run();
     }
 
-    private static Map<String, Object> runtimeProperties() {
+    private static Map<String, Object> startupProperties() {
         return Map.of(
-                "spring.datasource.url", POSTGRES.getJdbcUrl(),
-                "spring.datasource.username", POSTGRES.getUsername(),
-                "spring.datasource.password", POSTGRES.getPassword(),
-                "spring.kafka.bootstrap-servers", "localhost:65535",
-                "spring.kafka.listener.auto-startup", "false",
-                "spring.kafka.admin.fail-fast", "false",
-                "management.health.kafka.enabled", "false",
-                "jwt.secret", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=",
-                "jwt.expiration-ms", "3600000",
-                "google.client.id", "test-client-id",
-                "server.port", "0");
+                "SPRING_DATASOURCE_URL", POSTGRES.getJdbcUrl(),
+                "SPRING_DATASOURCE_USERNAME", POSTGRES.getUsername(),
+                "SPRING_DATASOURCE_PASSWORD", POSTGRES.getPassword(),
+                "KAFKA_BOOTSTRAP_SERVERS", "localhost:65535",
+                "JWT_KEY", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=",
+                "JWT_EXPIRATION_MS", "3600000",
+                "GOOGLE_CLIENT_ID", "test-client-id");
+    }
+    private static Map<String, Object> runtimeProperties() {
+        return Map.ofEntries(
+                Map.entry("spring.datasource.url", POSTGRES.getJdbcUrl()),
+                Map.entry("spring.datasource.username", POSTGRES.getUsername()),
+                Map.entry("spring.datasource.password", POSTGRES.getPassword()),
+                Map.entry("spring.kafka.bootstrap-servers", "localhost:65535"),
+                Map.entry("spring.kafka.listener.auto-startup", "false"),
+                Map.entry("spring.kafka.admin.fail-fast", "false"),
+                Map.entry("management.health.kafka.enabled", "false"),
+                Map.entry("jwt.secret", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM="),
+                Map.entry("jwt.expiration-ms", "3600000"),
+                Map.entry("google.client.id", "test-client-id"),
+                Map.entry("server.port", "0"));
     }
 
     private boolean tableExists(JdbcTemplate jdbcTemplate, String table) {

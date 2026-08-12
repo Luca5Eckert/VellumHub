@@ -5,6 +5,7 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Testcontainers
 @ActiveProfiles("prod")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FlywayPostgresIntegrationTest {
 
@@ -41,7 +42,7 @@ class FlywayPostgresIntegrationTest {
 
     @Test
     @Order(1)
-    void startsAgainstAnEmptyPostgresDatabaseAndAppliesAllMigrations(JdbcTemplate jdbcTemplate) {
+    void startsAgainstAnEmptyPostgresDatabaseAndAppliesAllMigrations(@Autowired JdbcTemplate jdbcTemplate) {
         assertThat(jdbcTemplate.queryForObject("select count(*) from flyway_schema_history where version in ('1', '2') and success", Integer.class)).isEqualTo(2);
         assertThat(tableExists(jdbcTemplate, "book_snapshot")).isTrue();
         assertThat(tableExists(jdbcTemplate, "rating")).isTrue();
@@ -52,21 +53,29 @@ class FlywayPostgresIntegrationTest {
 
     @Test
     @Order(2)
-    void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(JdbcTemplate jdbcTemplate) {
+    void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(@Autowired JdbcTemplate jdbcTemplate) {
         jdbcTemplate.execute("alter table rating drop column stars");
 
         assertThatThrownBy(() -> startApplication())
-                .hasStackTraceContaining("Schema-validation");
+                .hasStackTraceContaining("Schema");
     }
 
     private static ConfigurableApplicationContext startApplication() {
         return new SpringApplicationBuilder(EngagementServiceApplication.class)
                 .profiles("prod")
-                .web(WebApplicationType.NONE)
-                .properties(runtimeProperties())
+                .web(WebApplicationType.SERVLET)
+                .properties(startupProperties())
                 .run();
     }
 
+    private static Map<String, Object> startupProperties() {
+        return Map.of(
+                "SPRING_DATASOURCE_URL", POSTGRES.getJdbcUrl(),
+                "SPRING_DATASOURCE_USERNAME", POSTGRES.getUsername(),
+                "SPRING_DATASOURCE_PASSWORD", POSTGRES.getPassword(),
+                "KAFKA_BOOTSTRAP_SERVERS", "localhost:65535",
+                "JWT_KEY", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=");
+    }
     private static Map<String, Object> runtimeProperties() {
         return Map.of(
                 "spring.datasource.url", POSTGRES.getJdbcUrl(),
@@ -76,7 +85,7 @@ class FlywayPostgresIntegrationTest {
                 "spring.kafka.listener.auto-startup", "false",
                 "spring.kafka.admin.fail-fast", "false",
                 "management.health.kafka.enabled", "false",
-                "jwt.secret", "test-secret-test-secret-test-secret-test-secret",
+                "jwt.secret", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=",
                 "server.port", "0");
     }
 

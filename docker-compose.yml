@@ -18,7 +18,9 @@ services:
 
   # GATEWAY LAYER
   gateway-service:
-    build: ./services/gateway-service
+    build:
+      context: .
+      dockerfile: services/gateway-service/Dockerfile
     container_name: gateway-service
     restart: on-failure
     ports:
@@ -28,7 +30,7 @@ services:
       <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -javaagent:/app/opentelemetry-javaagent.jar"
+      JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: gateway-service
       SPRING_DATA_REDIS_HOST: redis-gateway
       SPRING_DATA_REDIS_PORT: 6379
@@ -36,7 +38,7 @@ services:
       CATALOG_SERVICE_URL: http://catalog-service:8080
       ENGAGEMENT_SERVICE_URL: http://engagement-service:8080
       RECOMMENDATION_SERVICE_URL: http://recommendation-service:8080
-      JWT_KEY: ${JWT_KEY}
+      JWT_KEY: "${JWT_KEY:?JWT_KEY must be set}"
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       VELLUM_ENVIRONMENT: local
     networks:
@@ -53,7 +55,7 @@ services:
       recommendation-service:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health/liveness || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
@@ -332,13 +334,13 @@ services:
       <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -javaagent:/app/opentelemetry-javaagent.jar"
+      JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: catalog-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-catalog:5432/catalog_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JWT_KEY: ${JWT_KEY}
+      JWT_KEY: "${JWT_KEY:?JWT_KEY must be set}"
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       VELLUM_ENVIRONMENT: local
     networks:
@@ -349,7 +351,7 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health/liveness || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
@@ -366,13 +368,13 @@ services:
       <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -javaagent:/app/opentelemetry-javaagent.jar"
+      JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: engagement-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-engagement:5432/engagement_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JWT_KEY: ${JWT_KEY}
+      JWT_KEY: "${JWT_KEY:?JWT_KEY must be set}"
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       VELLUM_ENVIRONMENT: local
     networks:
@@ -383,7 +385,7 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health/liveness || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
@@ -400,13 +402,13 @@ services:
       <<: *otel-java-env
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
-      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -javaagent:/app/opentelemetry-javaagent.jar"
+      JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: user-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/user_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JWT_KEY: ${JWT_KEY}
+      JWT_KEY: "${JWT_KEY:?JWT_KEY must be set}"
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
@@ -419,7 +421,7 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health/liveness || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
@@ -437,13 +439,13 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
       SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
-      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -javaagent:/app/opentelemetry-javaagent.jar"
+      JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: recommendation-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-recommendation:5432/recommendation_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JWT_KEY: ${JWT_KEY}
+      JWT_KEY: "${JWT_KEY:?JWT_KEY must be set}"
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       VELLUM_ENVIRONMENT: local
     networks:
@@ -454,7 +456,7 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health/liveness || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
