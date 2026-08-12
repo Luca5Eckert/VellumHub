@@ -66,10 +66,17 @@ class FlywayPostgresIntegrationTest {
         return new SpringApplicationBuilder(RecommendationServiceApplication.class)
                 .profiles("prod")
                 .web(WebApplicationType.SERVLET)
-                .properties(runtimeProperties())
+                .properties(startupProperties())
                 .run();
     }
 
+    private static Map<String, Object> startupProperties() {
+        return Map.of(
+                "SPRING_DATASOURCE_URL", POSTGRES.getJdbcUrl(),
+                "SPRING_DATASOURCE_USERNAME", POSTGRES.getUsername(),
+                "SPRING_DATASOURCE_PASSWORD", POSTGRES.getPassword(),
+                "JWT_KEY", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=");
+    }
     private static Map<String, Object> runtimeProperties() {
         return Map.of(
                 "spring.datasource.url", POSTGRES.getJdbcUrl(),
