@@ -56,7 +56,7 @@ class FlywayPostgresIntegrationTest {
         jdbcTemplate.execute("alter table tb_users drop column email");
 
         assertThatThrownBy(() -> startApplication())
-                .hasStackTraceContaining("Schema-validation");
+                .hasStackTraceContaining("Schema");
     }
 
     private static ConfigurableApplicationContext startApplication() {

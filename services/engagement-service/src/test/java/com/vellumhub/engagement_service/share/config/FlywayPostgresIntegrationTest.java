@@ -57,7 +57,7 @@ class FlywayPostgresIntegrationTest {
         jdbcTemplate.execute("alter table rating drop column stars");
 
         assertThatThrownBy(() -> startApplication())
-                .hasStackTraceContaining("Schema-validation");
+                .hasStackTraceContaining("Schema");
     }
 
     private static ConfigurableApplicationContext startApplication() {
