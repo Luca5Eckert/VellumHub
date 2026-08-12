@@ -5,6 +5,7 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,7 +43,7 @@ class FlywayPostgresIntegrationTest {
 
     @Test
     @Order(1)
-    void startsAgainstAnEmptyPgvectorDatabaseAndAppliesTheInitialMigration(JdbcTemplate jdbcTemplate) {
+    void startsAgainstAnEmptyPgvectorDatabaseAndAppliesTheInitialMigration(@Autowired JdbcTemplate jdbcTemplate) {
         assertThat(jdbcTemplate.queryForObject("select count(*) from flyway_schema_history where version = '1' and success", Integer.class)).isEqualTo(1);
         assertThat(tableExists(jdbcTemplate, "book_features")).isTrue();
         assertThat(tableExists(jdbcTemplate, "user_profiles")).isTrue();
@@ -54,7 +55,7 @@ class FlywayPostgresIntegrationTest {
 
     @Test
     @Order(2)
-    void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(JdbcTemplate jdbcTemplate) {
+    void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(@Autowired JdbcTemplate jdbcTemplate) {
         jdbcTemplate.execute("alter table recommendations drop column title");
 
         assertThatThrownBy(() -> startApplication())
