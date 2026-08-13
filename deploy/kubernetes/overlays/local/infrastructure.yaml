@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: Service
+metadata: {name: redis}
+spec: {selector: {app: redis}, ports: [{port: 6379, targetPort: redis}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: redis}
+spec:
+  serviceName: redis
+  replicas: 1
+  selector: {matchLabels: {app: redis}}
+  template:
+    metadata: {labels: {app: redis}}
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          ports: [{name: redis, containerPort: 6379}]
+          args: [redis-server, --appendonly, "yes"]
+          resources: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 250m, memory: 256Mi}}
+          volumeMounts: [{name: data, mountPath: /data}]
+  volumeClaimTemplates: [{metadata: {name: data}, spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 1Gi}}}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: kafka}
+spec: {selector: {app: kafka}, ports: [{name: kafka, port: 9092, targetPort: kafka}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: kafka}
+spec:
+  serviceName: kafka
+  replicas: 1
+  selector: {matchLabels: {app: kafka}}
+  template:
+    metadata: {labels: {app: kafka}}
+    spec:
+      containers:
+        - name: kafka
+          image: bitnami/kafka:3.9
+          ports: [{name: kafka, containerPort: 9092}]
+          env:
+            - {name: KAFKA_CFG_NODE_ID, value: "1"}
+            - {name: KAFKA_CFG_PROCESS_ROLES, value: broker,controller}
+            - {name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS, value: 1@kafka-0.kafka:9093}
+            - {name: KAFKA_CFG_LISTENERS, value: PLAINTEXT://:9092,CONTROLLER://:9093}
+            - {name: KAFKA_CFG_ADVERTISED_LISTENERS, value: PLAINTEXT://kafka:9092}
+            - {name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP, value: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT}
+            - {name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES, value: CONTROLLER}
+            - {name: KAFKA_CFG_INTER_BROKER_LISTENER_NAME, value: PLAINTEXT}
+            - {name: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR, value: "1"}
+            - {name: KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR, value: "1"}
+            - {name: KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR, value: "1"}
+            - {name: ALLOW_PLAINTEXT_LISTENER, value: "yes"}
+          resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
+          volumeMounts: [{name: data, mountPath: /bitnami/kafka}]
+  volumeClaimTemplates: [{metadata: {name: data}, spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: user-postgres}
+spec: {selector: {app: user-postgres}, ports: [{port: 5432, targetPort: postgres}]}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: catalog-postgres}
+spec: {selector: {app: catalog-postgres}, ports: [{port: 5432, targetPort: postgres}]}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: engagement-postgres}
+spec: {selector: {app: engagement-postgres}, ports: [{port: 5432, targetPort: postgres}]}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: recommendation-postgres}
+spec: {selector: {app: recommendation-postgres}, ports: [{port: 5432, targetPort: postgres}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: user-postgres}
+spec: &postgresSpec
+  serviceName: user-postgres
+  replicas: 1
+  selector: {matchLabels: {app: user-postgres}}
+  template:
+    metadata: {labels: {app: user-postgres}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports: [{name: postgres, containerPort: 5432}]
+          env: &postgresEnv
+            - {name: POSTGRES_DB, value: user_db}
+            - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_USER}}}
+            - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_PASSWORD}}}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
+          volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
+  volumeClaimTemplates: [{metadata: {name: data}, spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 2Gi}}}}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: catalog-postgres}
+spec:
+  serviceName: catalog-postgres
+  selector: {matchLabels: {app: catalog-postgres}}
+  template:
+    metadata: {labels: {app: catalog-postgres}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_DB, value: catalog_db}
+            - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_USER}}}
+            - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_PASSWORD}}}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
+          volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
+  volumeClaimTemplates: [{metadata: {name: data}, spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 2Gi}}}}]
