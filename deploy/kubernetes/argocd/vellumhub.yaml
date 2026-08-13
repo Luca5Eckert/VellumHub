@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vellumhub
+  namespace: argocd
+  labels: {app.kubernetes.io/part-of: vellumhub}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Luca5Eckert/VellumHub.git
+    targetRevision: main
+    path: deploy/kubernetes/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vellumhub
+  syncPolicy:
+    # Start with manual sync. Enable automated only after a controlled deployment.
+    syncOptions: [CreateNamespace=true, PrunePropagationPolicy=foreground]
