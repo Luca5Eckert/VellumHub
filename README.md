@@ -30,6 +30,8 @@ The current architecture is a mature v3 platform moving through v4 reliability h
 - [Kafka Event Contracts](#kafka-event-contracts)
 - [Kafka Resilience](#kafka-resilience)
 - [Gateway and Security](#gateway-and-security)
+- [CI/CD and GitOps](#cicd-and-gitops)
+- [Kubernetes](#kubernetes)
 - [Running Locally](#running-locally)
 - [Observability](#observability)
 - [Quality and Test Coverage](#quality-and-test-coverage)
@@ -291,6 +293,36 @@ The gateway is built with Spring Cloud Gateway on WebFlux and Project Reactor. I
 
 ---
 
+## CI/CD and GitOps
+
+GitHub Actions validates every change before publication: Maven verification, Testcontainers coverage where available, image build validation, and vulnerability scanning. After a merge to `main`, the publication workflow creates one immutable GHCR image per service, tagged with the commit SHA:
+
+- `ghcr.io/luca5eckert/vellumhub-gateway`
+- `ghcr.io/luca5eckert/vellumhub-user`
+- `ghcr.io/luca5eckert/vellumhub-catalog`
+- `ghcr.io/luca5eckert/vellumhub-engagement`
+- `ghcr.io/luca5eckert/vellumhub-recommendation`
+
+The delivery boundary is Git, not a CI-held cluster credential. A reviewed change to `deploy/kubernetes/overlays/prod/kustomization.yaml` declares the exact SHA (or a digest) to run. Argo CD observes that desired state and reconciles it in the cluster. It starts with manual sync; enable automated `prune` and `selfHeal` only after the first controlled production sync.
+
+The rollback is also Git-based: revert the commit that changes the image version, sync Argo CD, wait for the rolling update, then run the smoke checks. `latest` is never used as a deployment version.
+
+## Kubernetes
+
+Kubernetes manifests live in [`deploy/kubernetes`](deploy/kubernetes). Kustomize keeps application workload definitions separate from stateful infrastructure:
+
+- `base`: namespace `vellumhub`, five hardened Deployments, five internal Services, ingress, ConfigMap interface, probes, and security baseline.
+- `overlays/local`: one replica per application plus in-cluster Redis, KRaft Kafka, four PostgreSQL databases, pgvector, and PVCs.
+- `overlays/prod`: multiple stateless replicas, gateway PDB, and incremental NetworkPolicies; PostgreSQL, Kafka, Redis, and secrets are supplied externally.
+- `argocd`: the pull-based Argo CD `Application` definition.
+
+Only `gateway-service` has an Ingress. All application containers use Spring Boot liveness/readiness endpoints, run as non-root, drop Linux capabilities, use resource requests/limits, and roll out new Pods only after readiness succeeds. The recommendation service has a longer startup window and a higher memory baseline for embedding initialization.
+
+Non-sensitive endpoints are supplied by ConfigMap; `JWT_KEY`, database credentials, and OAuth values are consumed through `vellumhub-secrets` and are not versioned. Kubernetes Secrets are an interface only; production should source them from a managed secret system.
+
+For the supported local-cluster bootstrap, smoke checks, resource rationale, and rollback procedure, see [`deploy/kubernetes/README.md`](deploy/kubernetes/README.md).
+
+---
 ## Running Locally
 
 ### Prerequisites

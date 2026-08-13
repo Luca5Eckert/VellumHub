@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: engagement-postgres}
+spec:
+  serviceName: engagement-postgres
+  replicas: 1
+  selector: {matchLabels: {app: engagement-postgres}}
+  template:
+    metadata: {labels: {app: engagement-postgres}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_DB, value: engagement_db}
+            - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_USER}}}
+            - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_PASSWORD}}}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
+          volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
+  volumeClaimTemplates: [{metadata: {name: data}, spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 2Gi}}}}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: recommendation-postgres}
+spec:
+  serviceName: recommendation-postgres
+  replicas: 1
+  selector: {matchLabels: {app: recommendation-postgres}}
+  template:
+    metadata: {labels: {app: recommendation-postgres}}
+    spec:
+      containers:
+        - name: postgres
+          # pgvector is required by recommendation-service Flyway migrations.
+          image: pgvector/pgvector:pg15
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_DB, value: recommendation_db}
+            - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_USER}}}
+            - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_PASSWORD}}}
+          resources: {requests: {cpu: 150m, memory: 384Mi}, limits: {cpu: 750m, memory: 768Mi}}
+          volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
+  volumeClaimTemplates: [{metadata: {name: data}, spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 3Gi}}}}]

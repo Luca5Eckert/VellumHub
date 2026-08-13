@@ -1,0 +1,19 @@
+# Incremental policy baseline. Restricts ingress to the service namespace, except the public gateway.
+# Egress is kept open until external database/Kafka CIDRs and observability destinations are known.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-vellumhub-internal}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: vellumhub}}}]
+  egress: [{}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-gateway-public-ingress}
+spec:
+  podSelector: {matchLabels: {app.kubernetes.io/name: gateway-service}}
+  policyTypes: [Ingress]
+  ingress: [{}]

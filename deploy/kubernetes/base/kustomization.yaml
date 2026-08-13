@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vellumhub
+resources:
+  - namespace.yaml
+  - config/app-config.yaml
+  - applications.yaml
+  - user.yaml
+  - catalog.yaml
+  - remaining-services.yaml
+  - ingress.yaml
+  - network-policy.yaml

@@ -1,0 +1,13 @@
+# Requires a CNI that enforces NetworkPolicy. DNS egress remains allowed for service discovery.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny, labels: {app.kubernetes.io/part-of: vellumhub}}
+spec: {podSelector: {}, policyTypes: [Ingress, Egress]}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-dns, labels: {app.kubernetes.io/part-of: vellumhub}}
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress: [{to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}}], ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]}]

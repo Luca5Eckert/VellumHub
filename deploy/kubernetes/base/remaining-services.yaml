@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: engagement-service, labels: {app.kubernetes.io/name: engagement-service, app.kubernetes.io/part-of: vellumhub}}
+spec:
+  replicas: 2
+  strategy: {type: RollingUpdate, rollingUpdate: {maxUnavailable: 0, maxSurge: 1}}
+  selector: {matchLabels: {app.kubernetes.io/name: engagement-service}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: engagement-service, app.kubernetes.io/part-of: vellumhub}}
+    spec:
+      terminationGracePeriodSeconds: 35
+      securityContext: {seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: engagement-service
+          image: ghcr.io/luca5eckert/vellumhub-engagement:REPLACE_WITH_IMMUTABLE_TAG
+          ports: [{name: http, containerPort: 8080}]
+          env:
+            - {name: SPRING_PROFILES_ACTIVE, value: prod}
+            - {name: SERVER_PORT, value: "8080"}
+            - {name: SPRING_DATASOURCE_URL, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: ENGAGEMENT_DATASOURCE_URL}}}
+            - {name: KAFKA_BOOTSTRAP_SERVERS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_BOOTSTRAP_SERVERS}}}
+            - {name: VELLUM_ENVIRONMENT, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_ENVIRONMENT}}}
+            - {name: CORS_ALLOWED_ORIGINS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CORS_ALLOWED_ORIGINS}}}
+            - {name: JWT_KEY, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: JWT_KEY}}}
+            - {name: SPRING_DATASOURCE_USERNAME, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_USER}}}
+            - {name: SPRING_DATASOURCE_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_PASSWORD}}}
+          resources: {requests: {cpu: 250m, memory: 640Mi}, limits: {cpu: "1", memory: 1Gi}}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, runAsNonRoot: true, runAsUser: 10001, capabilities: {drop: [ALL]}}
+          startupProbe: {httpGet: {path: /actuator/health/liveness, port: http}, periodSeconds: 5, failureThreshold: 30}
+          livenessProbe: {httpGet: {path: /actuator/health/liveness, port: http}, periodSeconds: 15, failureThreshold: 3}
+          readinessProbe: {httpGet: {path: /actuator/health/readiness, port: http}, periodSeconds: 10, failureThreshold: 3}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: recommendation-service, labels: {app.kubernetes.io/name: recommendation-service, app.kubernetes.io/part-of: vellumhub}}
+spec:
+  replicas: 2
+  strategy: {type: RollingUpdate, rollingUpdate: {maxUnavailable: 0, maxSurge: 1}}
+  selector: {matchLabels: {app.kubernetes.io/name: recommendation-service}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: recommendation-service, app.kubernetes.io/part-of: vellumhub}}
+    spec:
+      terminationGracePeriodSeconds: 60
+      securityContext: {seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: recommendation-service
+          image: ghcr.io/luca5eckert/vellumhub-recommendation:REPLACE_WITH_IMMUTABLE_TAG
+          ports: [{name: http, containerPort: 8080}]
+          env:
+            - {name: SPRING_PROFILES_ACTIVE, value: prod}
+            - {name: SERVER_PORT, value: "8080"}
+            - {name: SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING, value: "true"}
+            - {name: SPRING_DATASOURCE_URL, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: RECOMMENDATION_DATASOURCE_URL}}}
+            - {name: KAFKA_BOOTSTRAP_SERVERS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_BOOTSTRAP_SERVERS}}}
+            - {name: VELLUM_ENVIRONMENT, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_ENVIRONMENT}}}
+            - {name: CORS_ALLOWED_ORIGINS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CORS_ALLOWED_ORIGINS}}}
+            - {name: JWT_KEY, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: JWT_KEY}}}
+            - {name: SPRING_DATASOURCE_USERNAME, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_USER}}}
+            - {name: SPRING_DATASOURCE_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_PASSWORD}}}
+          resources: {requests: {cpu: 500m, memory: 1Gi}, limits: {cpu: "2", memory: 2Gi}}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, runAsNonRoot: true, runAsUser: 10001, capabilities: {drop: [ALL]}}
+          startupProbe: {httpGet: {path: /actuator/health/liveness, port: http}, periodSeconds: 10, failureThreshold: 60}
+          livenessProbe: {httpGet: {path: /actuator/health/liveness, port: http}, periodSeconds: 20, failureThreshold: 3}
+          readinessProbe: {httpGet: {path: /actuator/health/readiness, port: http}, periodSeconds: 15, failureThreshold: 3}

@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - pdb.yaml
+  - network-allow.yaml
+patches:
+  - path: config-patch.yaml
+images:
+  - name: ghcr.io/luca5eckert/vellumhub-gateway
+    newTag: REPLACE_WITH_GIT_SHA
+  - name: ghcr.io/luca5eckert/vellumhub-user
+    newTag: REPLACE_WITH_GIT_SHA
+  - name: ghcr.io/luca5eckert/vellumhub-catalog
+    newTag: REPLACE_WITH_GIT_SHA
+  - name: ghcr.io/luca5eckert/vellumhub-engagement
+    newTag: REPLACE_WITH_GIT_SHA
+  - name: ghcr.io/luca5eckert/vellumhub-recommendation
+    newTag: REPLACE_WITH_GIT_SHA
