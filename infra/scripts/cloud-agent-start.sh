@@ -18,7 +18,10 @@ if sudo docker info >/dev/null 2>&1; then
   echo "==> Docker daemon already running"
 else
   echo "==> Starting the Docker daemon (fuse-overlayfs storage driver)"
-  sudo nohup dockerd >/var/log/dockerd.log 2>&1 &
+  # setsid fully detaches dockerd into its own session so it survives this
+  # start hook returning (a plain `nohup ... &` can still be torn down with the
+  # hook's process group, leaving the boot with no daemon).
+  sudo bash -c 'setsid dockerd >/var/log/dockerd.log 2>&1 </dev/null &'
   for _ in $(seq 1 60); do
     if sudo docker info >/dev/null 2>&1; then
       break
