@@ -2,69 +2,89 @@ package com.vellumhub.gateway_service.config;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.env.YamlPropertySourceLoader;
-import org.springframework.core.env.PropertySource;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.PropertySourcesPropertyResolver;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OpenApiDocumentationConfigurationTest {
 
-    private static final Set<String> EXPECTED_ROUTE_IDS = Set.of(
-            "user-openapi",
-            "catalog-openapi",
-            "engagement-openapi",
-            "recommendation-openapi"
+    private static final Map<String, String> EXPECTED_SWAGGER_DEFINITIONS = Map.of(
+            "User Service", "/docs/user/v3/api-docs",
+            "Catalog Service", "/docs/catalog/v3/api-docs",
+            "Engagement Service", "/docs/engagement/v3/api-docs",
+            "Recommendation Service", "/docs/recommendation/v3/api-docs"
     );
 
-    private static final Set<String> EXPECTED_ROUTE_PATHS = Set.of(
-            "Path=/docs/user/v3/api-docs",
-            "Path=/docs/catalog/v3/api-docs",
-            "Path=/docs/engagement/v3/api-docs",
-            "Path=/docs/recommendation/v3/api-docs"
-    );
-
-    private static final Set<String> EXPECTED_SWAGGER_NAMES = Set.of(
-            "User Service",
-            "Catalog Service",
-            "Engagement Service",
-            "Recommendation Service"
-    );
-
-    private static final Set<String> EXPECTED_SWAGGER_URLS = Set.of(
-            "/docs/user/v3/api-docs",
-            "/docs/catalog/v3/api-docs",
-            "/docs/engagement/v3/api-docs",
-            "/docs/recommendation/v3/api-docs"
+    private static final Map<String, String> EXPECTED_DOCUMENTATION_ROUTES = Map.of(
+            "user-openapi", "Path=/docs/user/v3/api-docs",
+            "catalog-openapi", "Path=/docs/catalog/v3/api-docs",
+            "engagement-openapi", "Path=/docs/engagement/v3/api-docs",
+            "recommendation-openapi", "Path=/docs/recommendation/v3/api-docs"
     );
 
     @Test
     void shouldKeepEveryServiceAvailableInCentralizedOpenApiConfiguration() throws IOException {
-        Set<String> configuredValues = loadApplicationConfigurationValues();
+        PropertySourcesPropertyResolver resolver = loadApplicationConfiguration();
 
-        assertThat(configuredValues)
-                .contains("/docs", "true")
-                .containsAll(EXPECTED_ROUTE_IDS)
-                .containsAll(EXPECTED_ROUTE_PATHS)
-                .containsAll(EXPECTED_SWAGGER_NAMES)
-                .containsAll(EXPECTED_SWAGGER_URLS);
+        assertThat(resolver.getProperty("springdoc.swagger-ui.path"))
+                .isEqualTo("/docs");
+        assertThat(resolver.getProperty(
+                "springdoc.swagger-ui.disable-swagger-default-url",
+                Boolean.class
+        )).isTrue();
+
+        assertThat(readSwaggerDefinitions(resolver))
+                .containsExactlyInAnyOrderEntriesOf(EXPECTED_SWAGGER_DEFINITIONS);
+        assertThat(readDocumentationRoutes(resolver))
+                .containsExactlyInAnyOrderEntriesOf(EXPECTED_DOCUMENTATION_ROUTES);
     }
 
-    @SuppressWarnings("unchecked")
-    private Set<String> loadApplicationConfigurationValues() throws IOException {
+    private PropertySourcesPropertyResolver loadApplicationConfiguration() throws IOException {
         var loader = new YamlPropertySourceLoader();
         var resource = new ClassPathResource("application.yml");
+        var propertySources = new MutablePropertySources();
 
-        return loader.load("application", resource).stream()
-                .map(PropertySource::getSource)
-                .filter(Map.class::isInstance)
-                .map(source -> (Map<String, Object>) source)
-                .flatMap(source -> source.values().stream())
-                .map(String::valueOf)
-                .collect(Collectors.toSet());
+        loader.load("application", resource).forEach(propertySources::addLast);
+        return new PropertySourcesPropertyResolver(propertySources);
+    }
+
+    private Map<String, String> readSwaggerDefinitions(PropertySourcesPropertyResolver resolver) {
+        Map<String, String> definitions = new HashMap<>();
+
+        for (int index = 0; ; index++) {
+            String name = resolver.getProperty("springdoc.swagger-ui.urls[" + index + "].name");
+            if (name == null) {
+                break;
+            }
+
+            String url = resolver.getProperty("springdoc.swagger-ui.urls[" + index + "].url");
+            definitions.put(name, url);
+        }
+
+        return definitions;
+    }
+
+    private Map<String, String> readDocumentationRoutes(PropertySourcesPropertyResolver resolver) {
+        Map<String, String> routes = new HashMap<>();
+
+        for (int index = 0; ; index++) {
+            String prefix = "spring.cloud.gateway.server.webflux.routes[" + index + "]";
+            String id = resolver.getProperty(prefix + ".id");
+            if (id == null) {
+                break;
+            }
+
+            if (EXPECTED_DOCUMENTATION_ROUTES.containsKey(id)) {
+                routes.put(id, resolver.getProperty(prefix + ".predicates[0]"));
+            }
+        }
+
+        return routes;
     }
 }
