@@ -48,8 +48,6 @@ spring:
                     redis-rate-limiter.replenishRate: 5
                     redis-rate-limiter.burstCapacity: 10
 
-
-
             - id: catalogs
               uri: ${CATALOG_SERVICE_URL:http://catalog-service:8080}
               predicates:
@@ -86,6 +84,34 @@ spring:
                     redis-rate-limiter.replenishRate: 20
                     redis-rate-limiter.burstCapacity: 40
 
+            - id: user-openapi
+              uri: ${USER_SERVICE_URL:http://user-service:8080}
+              predicates:
+                - Path=/docs/user/v3/api-docs
+              filters:
+                - StripPrefix=2
+
+            - id: catalog-openapi
+              uri: ${CATALOG_SERVICE_URL:http://catalog-service:8080}
+              predicates:
+                - Path=/docs/catalog/v3/api-docs
+              filters:
+                - StripPrefix=2
+
+            - id: engagement-openapi
+              uri: ${ENGAGEMENT_SERVICE_URL:http://engagement-service:8080}
+              predicates:
+                - Path=/docs/engagement/v3/api-docs
+              filters:
+                - StripPrefix=2
+
+            - id: recommendation-openapi
+              uri: ${RECOMMENDATION_SERVICE_URL:http://recommendation-service:8080}
+              predicates:
+                - Path=/docs/recommendation/v3/api-docs
+              filters:
+                - StripPrefix=2
+
   security:
     oauth2:
       resourceserver:
@@ -98,7 +124,19 @@ spring:
       port: ${SPRING_DATA_REDIS_PORT:6379}
       connect-timeout: 2s
 
-
+springdoc:
+  swagger-ui:
+    path: /docs
+    disable-swagger-default-url: true
+    urls:
+      - name: User Service
+        url: /docs/user/v3/api-docs
+      - name: Catalog Service
+        url: /docs/catalog/v3/api-docs
+      - name: Engagement Service
+        url: /docs/engagement/v3/api-docs
+      - name: Recommendation Service
+        url: /docs/recommendation/v3/api-docs
 
 management:
   endpoints:
