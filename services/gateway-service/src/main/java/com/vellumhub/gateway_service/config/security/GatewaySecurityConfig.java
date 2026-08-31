@@ -27,6 +27,12 @@ public class GatewaySecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/actuator/health/**", "/actuator/prometheus").permitAll()
                         .pathMatchers("/api/v1/auth/**").permitAll()
+                        .pathMatchers(
+                                "/docs",
+                                "/docs/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/swagger-config"
+                        ).permitAll()
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
