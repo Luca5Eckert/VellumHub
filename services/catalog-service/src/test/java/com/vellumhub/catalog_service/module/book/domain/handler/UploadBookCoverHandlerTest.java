@@ -1,5 +1,6 @@
 package com.vellumhub.catalog_service.module.book.domain.handler;
 
+import com.vellumhub.catalog_service.module.book.application.handler.UploadBookCoverHandler;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;

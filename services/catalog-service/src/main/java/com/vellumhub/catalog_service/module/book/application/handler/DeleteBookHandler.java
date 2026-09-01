@@ -1,4 +1,4 @@
-package com.vellumhub.catalog_service.module.book.domain.handler;
+package com.vellumhub.catalog_service.module.book.application.handler;
 
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotExistException;
 import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;

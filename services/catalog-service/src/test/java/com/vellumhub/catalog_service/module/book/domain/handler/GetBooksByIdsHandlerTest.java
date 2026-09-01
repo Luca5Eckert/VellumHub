@@ -1,5 +1,6 @@
 package com.vellumhub.catalog_service.module.book.domain.handler;
 
+import com.vellumhub.catalog_service.module.book.application.handler.get.GetBooksByIdsHandler;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
