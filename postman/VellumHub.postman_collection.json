@@ -1,0 +1,158 @@
+{
+  "info": {
+    "_postman_id": "18d90453-70d7-4f70-8a68-5b341f9bf035",
+    "name": "VellumHub",
+    "description": "Repository seed collection. Run postman/generate.py to regenerate the complete per-service request set from live OpenAPI contracts.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "gatewayUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "bookId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Cross-service workflows",
+      "description": "Manually maintained sequences for behavior that isolated OpenAPI operations do not express.",
+      "item": [
+        {
+          "name": "01 - Login and capture token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "text/plain", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{gatewayUrl}}/api/v1/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login succeeded\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const raw = pm.response.text().trim();",
+                  "  let token = raw;",
+                  "  try { const parsed = pm.response.json(); if (typeof parsed === \"string\") token = parsed; else if (parsed && parsed.token) token = parsed.token; else if (parsed && parsed.accessToken) token = parsed.accessToken; } catch (e) {}",
+                  "  token = String(token).replace(/^\"|\"$/g, \"\").trim();",
+                  "  pm.environment.set(\"token\", token);",
+                  "  pm.collectionVariables.set(\"token\", token);",
+                  "  pm.execution.setNextRequest(\"02 - List books and capture bookId\");",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02 - List books and capture bookId",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": "{{gatewayUrl}}/api/v1/catalog/books?pageNumber=0&pageSize=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Catalog request succeeded\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const payload = pm.response.json();",
+                  "  const books = Array.isArray(payload) ? payload : (Array.isArray(payload.content) ? payload.content : []);",
+                  "  if (books.length > 0 && books[0].id) { pm.environment.set(\"bookId\", books[0].id); pm.collectionVariables.set(\"bookId\", books[0].id); pm.execution.setNextRequest(\"03 - List my ratings\"); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 - List my ratings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": "{{gatewayUrl}}/api/v1/engagement/rating/me?pageNumber=0&pageSize=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Ratings request succeeded\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) pm.execution.setNextRequest(\"04 - Fetch recommendations\");"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 - Fetch recommendations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": "{{gatewayUrl}}/api/v1/recommendations?limit=10&offset=0"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Recommendations request succeeded\", function () { pm.response.to.have.status(200); });",
+                  "pm.execution.setNextRequest(null);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05 - Optional: rate captured book",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "text/plain", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"stars\": {{stars}},\n  \"review\": \"{{review}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{gatewayUrl}}/api/v1/engagement/rating"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "OpenAPI contract discovery",
+      "item": [
+        { "name": "User Service", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{gatewayUrl}}/docs/user/v3/api-docs" }, "response": [] },
+        { "name": "Catalog Service", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{gatewayUrl}}/docs/catalog/v3/api-docs" }, "response": [] },
+        { "name": "Engagement Service", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{gatewayUrl}}/docs/engagement/v3/api-docs" }, "response": [] },
+        { "name": "Recommendation Service", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{gatewayUrl}}/docs/recommendation/v3/api-docs" }, "response": [] }
+      ]
+    }
+  ]
+}
