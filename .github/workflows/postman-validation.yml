@@ -1,0 +1,134 @@
+name: Postman contract validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "postman/**"
+      - ".github/workflows/postman-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile generator
+        run: python -m py_compile postman/generate.py
+
+      - name: Validate JSON artifacts
+        shell: bash
+        run: |
+          python -m json.tool postman/VellumHub.postman_collection.json > /dev/null
+          python -m json.tool postman/VellumHub.local.postman_environment.json > /dev/null
+          python -m json.tool postman/workflows.json > /dev/null
+
+      - name: Verify committed template has no secrets
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          environment = json.loads(
+              Path("postman/VellumHub.local.postman_environment.json").read_text(encoding="utf-8")
+          )
+          values = {entry["key"]: entry.get("value", "") for entry in environment["values"]}
+
+          for key in ("password", "token"):
+              if values.get(key):
+                  raise SystemExit(f"{key} must be empty in the committed Postman environment")
+
+          for path in (
+              Path("postman/VellumHub.postman_collection.json"),
+              Path("postman/workflows.json"),
+          ):
+              payload = path.read_text(encoding="utf-8")
+              if "eyJ" in payload:
+                  raise SystemExit(
+                      f"{path} contains a JWT-like value; committed artifacts must stay secret-free"
+                  )
+
+  contract-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up local environment
+        run: cp .env.example .env
+
+      - name: Start VellumHub
+        run: docker compose up -d --build
+
+      - name: Wait for all OpenAPI contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          contracts=(
+            /docs/user/v3/api-docs
+            /docs/catalog/v3/api-docs
+            /docs/engagement/v3/api-docs
+            /docs/recommendation/v3/api-docs
+          )
+
+          for attempt in $(seq 1 60); do
+            ready=true
+            for path in "${contracts[@]}"; do
+              if ! curl --fail --silent --show-error "http://localhost:8080${path}" > /dev/null; then
+                ready=false
+                break
+              fi
+            done
+
+            if [ "$ready" = true ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "OpenAPI contracts did not become available."
+          docker compose ps
+          exit 1
+
+      - name: Regenerate collection
+        run: |
+          python postman/generate.py \
+            --gateway-url http://localhost:8080 \
+            --output /tmp/VellumHub.postman_collection.json
+
+      - name: Upload regenerated collection
+        uses: actions/upload-artifact@v4
+        with:
+          name: regenerated-postman-collection
+          path: /tmp/VellumHub.postman_collection.json
+
+      - name: Check contract drift
+        shell: bash
+        run: |
+          if ! cmp -s \
+            postman/VellumHub.postman_collection.json \
+            /tmp/VellumHub.postman_collection.json; then
+            echo "::error::The committed Postman collection is out of date with the live OpenAPI contracts."
+            diff -u \
+              postman/VellumHub.postman_collection.json \
+              /tmp/VellumHub.postman_collection.json || true
+            exit 1
+          fi
+
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+
+      - name: Stop VellumHub
+        if: always()
+        run: docker compose down -v --remove-orphans
