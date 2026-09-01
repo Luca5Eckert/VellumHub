@@ -65,7 +65,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up local environment
-        run: cp .env.example .env
+        shell: bash
+        run: |
+          cp .env.example .env
+          # .env.example intentionally contains a non-secret placeholder. The runtime
+          # decodes JWT_KEY as Base64, so CI needs a valid ephemeral HS256 key.
+          sed -i 's|^JWT_KEY=.*|JWT_KEY=dmVsbHVtaHViLXBvc3RtYW4tY2ktc2VjcmV0LWtleS0zMg==|' .env
 
       - name: Start VellumHub
         run: docker compose up -d --build
