@@ -6,9 +6,21 @@ on:
     paths:
       - "postman/**"
       - ".github/workflows/postman-validation.yml"
+      - "docker-compose.yml"
+      - ".env.example"
+      - "services/user-service/src/main/**"
+      - "services/user-service/pom.xml"
+      - "services/catalog-service/src/main/**"
+      - "services/catalog-service/pom.xml"
+      - "services/engagement-service/src/main/**"
+      - "services/engagement-service/pom.xml"
+      - "services/recommendation-service/src/main/**"
+      - "services/recommendation-service/pom.xml"
+      - "services/gateway-service/src/main/resources/application.yml"
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   static:
@@ -61,10 +73,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout PR branch
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
 
       - name: Set up local environment
         shell: bash
@@ -119,22 +129,21 @@ jobs:
           name: regenerated-postman-collection
           path: /tmp/VellumHub.postman_collection.json
 
-      - name: Synchronize generated collection
+      - name: Check contract drift
         shell: bash
         run: |
-          if cmp -s \
+          if ! cmp -s \
             postman/VellumHub.postman_collection.json \
             /tmp/VellumHub.postman_collection.json; then
-            echo "Committed collection is already aligned."
-            exit 0
+            echo "::error::The committed Postman collection is out of date with the live OpenAPI contracts."
+            echo "Run 'python postman/generate.py' with the local stack running and commit the result."
+            diff -u \
+              postman/VellumHub.postman_collection.json \
+              /tmp/VellumHub.postman_collection.json || true
+            exit 1
           fi
 
-          cp /tmp/VellumHub.postman_collection.json postman/VellumHub.postman_collection.json
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add postman/VellumHub.postman_collection.json
-          git commit -m "docs: regenerate Postman collection"
-          git push origin "HEAD:${{ github.head_ref }}"
+          echo "Committed Postman collection is aligned with the live OpenAPI contracts."
 
       - name: Show service logs on failure
         if: failure()
