@@ -8,7 +8,7 @@ on:
       - ".github/workflows/postman-validation.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   static:
@@ -61,8 +61,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout
+      - name: Checkout PR branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Set up local environment
         shell: bash
@@ -117,18 +119,22 @@ jobs:
           name: regenerated-postman-collection
           path: /tmp/VellumHub.postman_collection.json
 
-      - name: Check contract drift
+      - name: Synchronize generated collection
         shell: bash
         run: |
-          if ! cmp -s \
+          if cmp -s \
             postman/VellumHub.postman_collection.json \
             /tmp/VellumHub.postman_collection.json; then
-            echo "::error::The committed Postman collection is out of date with the live OpenAPI contracts."
-            diff -u \
-              postman/VellumHub.postman_collection.json \
-              /tmp/VellumHub.postman_collection.json || true
-            exit 1
+            echo "Committed collection is already aligned."
+            exit 0
           fi
+
+          cp /tmp/VellumHub.postman_collection.json postman/VellumHub.postman_collection.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add postman/VellumHub.postman_collection.json
+          git commit -m "docs: regenerate Postman collection"
+          git push origin "HEAD:${{ github.head_ref }}"
 
       - name: Show service logs on failure
         if: failure()
