@@ -124,7 +124,7 @@ jobs:
             --output /tmp/VellumHub.postman_collection.json
 
       - name: Upload regenerated collection
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: regenerated-postman-collection
           path: /tmp/VellumHub.postman_collection.json
