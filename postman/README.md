@@ -15,7 +15,7 @@ operation cannot describe orchestration between multiple requests.
 
 | File | Purpose |
 |---|---|
-| `VellumHub.postman_collection.json` | Versioned collection. The workflow and contract-discovery folders are usable immediately; running the generator adds the complete request set from the live OpenAPI contracts. |
+| `VellumHub.postman_collection.json` | Versioned collection generated from the current live OpenAPI contracts plus the manual cross-service workflow folder. |
 | `VellumHub.local.postman_environment.json` | Local environment template. Credentials and tokens are deliberately empty. |
 | `workflows.json` | Manually maintained multi-request flows included by the generator. |
 | `generate.py` | Standard-library-only OpenAPI -> Postman v2.1 generator. |
@@ -134,13 +134,25 @@ rather than committing a personal Postman export.
 
 ## Validation
 
-Static CI validates that the generator compiles and all versioned Postman JSON files
-parse successfully. Contract drift requires the running VellumHub stack and is checked
-with:
+The `Postman contract validation` GitHub Actions workflow is intentionally read-only.
+It never regenerates files directly on a PR branch or pushes commits.
 
-```bash
-python postman/generate.py --check
-```
+Static validation:
+
+- compiles `generate.py`;
+- parses the collection, environment, and workflow JSON files;
+- verifies that committed `password` and `token` values are empty;
+- rejects JWT-like values in versioned Postman artifacts.
+
+Live contract validation starts the Docker Compose stack, waits for the four OpenAPI
+documents exposed by the gateway, regenerates the complete collection into a temporary
+file, and fails if that result differs from the committed collection.
+
+The live drift check is triggered by changes to Postman artifacts and by changes that
+can affect HTTP contracts, including service application sources, relevant service
+POMs, Docker Compose inputs, and gateway route configuration. This makes the OpenAPI
+contracts the enforceable source of truth rather than relying only on contributors to
+remember to regenerate manually.
 
 Postman is an exploration and workflow tool here. It does not replace service tests,
 distributed integration tests, or the service-owned OpenAPI contracts.
