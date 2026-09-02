@@ -30,6 +30,32 @@ The gateway resolves each option through a stable documentation route:
 
 The same service URL variables used by normal gateway routing are reused for documentation routing. There is no second discovery mechanism to configure.
 
+## Postman
+
+The repository also versions a Postman collection for manual exploration and authenticated cross-service workflows:
+
+- `postman/VellumHub.postman_collection.json`
+- `postman/VellumHub.local.postman_environment.json`
+- `postman/README.md`
+
+Postman is not an independent API specification. `postman/generate.py` reads the four service-owned OpenAPI documents through the gateway and deterministically regenerates the per-service request folders. Only orchestration that OpenAPI cannot represent well, such as the login-to-recommendation workflow and state capture between requests, is maintained manually in `postman/workflows.json`.
+
+The local environment template contains no credentials or real tokens. The login workflow stores the returned JWT in the local `token` variable so protected requests can inherit Bearer authentication without repeatedly copying tokens.
+
+After changing an HTTP contract, start the local stack and regenerate:
+
+```bash
+python postman/generate.py
+```
+
+To verify the committed artifact without rewriting it:
+
+```bash
+python postman/generate.py --check
+```
+
+See [`postman/README.md`](../postman/README.md) for import instructions, variables, workflow behavior, regeneration rules, and secret-handling guidance.
+
 ## Local workflow
 
 From the repository root:
@@ -74,6 +100,8 @@ The gateway owns only:
 - documentation proxy routes;
 - public access policy for documentation paths.
 
+The Postman generator consumes those contracts but does not own endpoint definitions. If a generated request is wrong, the corresponding OpenAPI contract should be corrected first and the collection regenerated.
+
 The gateway does not merge contracts, copy JSON files, or depend on domain DTOs. A service can evolve its API documentation without modifying another service.
 
 ## Availability behavior
@@ -95,6 +123,8 @@ Existing `/api/v1/**` authentication behavior is unchanged.
 
 Domain services continue applying their existing security configuration and independently expose their own Swagger/OpenAPI endpoints for development and inspection.
 
+The committed Postman environment keeps `password` and `token` empty. CI rejects non-empty committed values for those variables and JWT-like values in versioned Postman artifacts.
+
 ## Springdoc compatibility
 
 The repository currently contains both Spring Boot 3.5.x and Spring Boot 4.0.x services. Springdoc versions follow the corresponding compatibility line:
@@ -113,4 +143,9 @@ The version alignment is documentation infrastructure only; it does not change R
 
 `services/gateway-service/src/test/java/com/vellumhub/gateway_service/config/OpenApiDocumentationConfigurationTest.java` validates that all four service names, gateway aliases, and route IDs remain present in `application.yml`.
 
-The validation is deliberately configuration-focused: it catches accidental removal or renaming without introducing a test-time dependency on all downstream services being available.
+The Postman validation workflow adds two layers:
+
+1. static validation compiles the generator, parses all versioned JSON artifacts, and checks secret hygiene;
+2. live contract validation starts the Docker Compose stack, waits for all four gateway OpenAPI documents, regenerates the collection, and fails if the committed artifact differs.
+
+The drift check is intentionally read-only. CI never rewrites the collection or pushes commits. Changes to the Postman artifacts, service application sources, relevant service POMs, Docker Compose inputs, or the gateway route configuration trigger the validation, so an API change cannot silently leave the versioned collection stale.
