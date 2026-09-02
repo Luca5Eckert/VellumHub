@@ -1,0 +1,161 @@
+{
+  "name": "Cross-service workflows",
+  "description": "Manually maintained sequences for behavior that isolated OpenAPI operations do not express. Run this folder with the local environment selected. The default flow authenticates, captures a catalog book, reads the current user's ratings, and requests recommendations.",
+  "item": [
+    {
+      "name": "01 - Login and capture token",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "text/plain", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{gatewayUrl}}/api/v1/auth/login",
+        "description": "Authenticates with the User Service through the gateway and stores the returned JWT in `token`."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Login succeeded\", function () { pm.response.to.have.status(200); });",
+              "if (pm.response.code === 200) {",
+              "  const raw = pm.response.text().trim();",
+              "  let token = raw;",
+              "  try {",
+              "    const parsed = pm.response.json();",
+              "    if (typeof parsed === \"string\") token = parsed;",
+              "    else if (parsed && parsed.token) token = parsed.token;",
+              "    else if (parsed && parsed.accessToken) token = parsed.accessToken;",
+              "  } catch (e) {}",
+              "  token = String(token).replace(/^\"|\"$/g, \"\").trim();",
+              "  pm.expect(token, \"JWT token\").to.not.be.empty;",
+              "  pm.environment.set(\"token\", token);",
+              "  pm.collectionVariables.set(\"token\", token);",
+              "  pm.execution.setNextRequest(\"02 - List books and capture bookId\");",
+              "}"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "02 - List books and capture bookId",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json", "type": "text" }
+        ],
+        "url": "{{gatewayUrl}}/api/v1/catalog/books?pageNumber=0&pageSize=10",
+        "description": "Loads the first catalog page and stores the first book identifier in `bookId` for optional examples."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Catalog request succeeded\", function () { pm.response.to.have.status(200); });",
+              "if (pm.response.code === 200) {",
+              "  const payload = pm.response.json();",
+              "  const books = Array.isArray(payload) ? payload : (Array.isArray(payload.content) ? payload.content : []);",
+              "  pm.test(\"Catalog contains at least one book\", function () { pm.expect(books.length).to.be.above(0); });",
+              "  if (books.length > 0 && books[0].id) {",
+              "    pm.environment.set(\"bookId\", books[0].id);",
+              "    pm.collectionVariables.set(\"bookId\", books[0].id);",
+              "    pm.execution.setNextRequest(\"03 - List my ratings\");",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "03 - List my ratings",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json", "type": "text" }
+        ],
+        "url": "{{gatewayUrl}}/api/v1/engagement/rating/me?pageNumber=0&pageSize=10",
+        "description": "Exercises the authenticated Engagement Service read path without mutating user state."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Ratings request succeeded\", function () { pm.response.to.have.status(200); });",
+              "if (pm.response.code === 200) pm.execution.setNextRequest(\"04 - Fetch recommendations\");"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "04 - Fetch recommendations",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json", "type": "text" }
+        ],
+        "url": "{{gatewayUrl}}/api/v1/recommendations?limit=10&offset=0",
+        "description": "Requests personalized recommendations after exercising authenticated user, catalog, and engagement paths."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Recommendations request succeeded\", function () { pm.response.to.have.status(200); });",
+              "pm.execution.setNextRequest(null);"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "05 - Optional: rate captured book",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "text/plain", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"stars\": {{stars}},\n  \"review\": \"{{review}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{gatewayUrl}}/api/v1/engagement/rating",
+        "description": "Optional state-changing example. Run manually after a `bookId` is captured. Re-running can conflict if the user already rated the same book."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Rating creation did not fail at the server layer\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+            ]
+          }
+        }
+      ],
+      "response": []
+    }
+  ]
+}
