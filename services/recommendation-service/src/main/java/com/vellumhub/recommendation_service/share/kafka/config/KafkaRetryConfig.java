@@ -29,6 +29,7 @@ import java.util.Map;
 @Slf4j
 public class KafkaRetryConfig {
 
+    private static final int MAX_ATTEMPTS = 3;
     private static final String DLT_CONSUMER_GROUP = KafkaConsumerGroups.RECOMMENDATION_SERVICE_DLT;
 
     private final VellumHubMetrics metrics;
@@ -39,16 +40,20 @@ public class KafkaRetryConfig {
 
     /**
      * Defines a default retry configuration for Kafka listeners in the application.
-     * @return a RetryTopicConfiguration that applies to all specified topics with a fixed backoff strategy and a maximum of 3 attempts.
+     * Production behavior defaults to three attempts with a three-second fixed backoff.
+     * The backoff can be shortened by integration tests without changing retry semantics.
+     *
+     * @return a RetryTopicConfiguration that applies to all specified topics.
      */
     @Bean
     public RetryTopicConfiguration defaultRetryConfig(
-            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
+            @Value("${app.kafka.retry.backoff-ms:3000}") long retryBackoffMs
     ) {
         return RetryTopicConfigurationBuilder
                 .newInstance()
-                .maxAttempts(3)
-                .fixedBackOff(3000)
+                .maxAttempts(MAX_ATTEMPTS)
+                .fixedBackOff(retryBackoffMs)
                 .doNotRetryOnDltFailure()
                 .autoStartDltHandler(false)
                 .includeTopics(List.of(

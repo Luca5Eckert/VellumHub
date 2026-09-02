@@ -99,7 +99,7 @@ Retry and Dead Letter Topic handling are centralized in `share/kafka/config/Kafk
 | Re-ranking | 70% semantic distance, 30% popularity signal |
 | Fallback | Popularity ranking when no profile exists |
 
-The pgvector extension and HNSW index are bootstrapped through `scripts/create-vector-in-recommendation-db.sql` in the root project.
+The pgvector extension and HNSW indexes are managed through Flyway migrations.
 
 ## Data Ownership
 
@@ -127,17 +127,17 @@ The public recommendation endpoint is JWT-protected.
 
 ## Run Locally
 
-Standalone:
+Standalone from the repository root:
 
 ```bash
-cd recommendation-service
+cd services/recommendation-service
 ./mvnw spring-boot:run
 ```
 
 Windows PowerShell:
 
 ```powershell
-cd recommendation-service
+cd services/recommendation-service
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -149,9 +149,24 @@ docker-compose up -d recommendation-service postgres-recommendation kafka
 
 ## Verify
 
+Module tests on Windows:
+
 ```powershell
-cd recommendation-service
+cd services/recommendation-service
 .\mvnw.cmd test
 ```
 
-For end-to-end recommendation flows and platform-level hardening work, see the [root README](../README.md).
+The failure-sensitive Kafka integration suite uses real Kafka and PostgreSQL/pgvector Testcontainers. No local Kafka or PostgreSQL installation is required, but Docker must be running.
+
+From the repository root:
+
+```powershell
+docker info
+mvn -pl services/recommendation-service -am -Dgroups=distributed test
+```
+
+The distributed suite currently proves the `created-book` happy path and the three-attempt retry -> DLT failure path. Idempotency and transactional outbox tests are intentionally deferred until those production guarantees exist.
+
+See [Distributed Integration Testing](../../docs/DISTRIBUTED_TESTING.md) for infrastructure boundaries, CI budget, extension rules, and the planned E2E boundary.
+
+For platform topology and broader hardening work, see the [root README](../../README.md).
