@@ -12,7 +12,7 @@
 
 VellumHub covers the complete reading journey: users create an account, choose literary preferences, discover or request books, organize shared lists, track reading progress, rate and react to titles, and receive recommendations that learn from those interactions.
 
-The platform is also a production-oriented backend engineering reference. Service-owned databases prevent shared-schema coupling, Kafka propagates state between domains, PostgreSQL with pgvector serves recommendations locally, and the operational layer includes centralized API discovery, contract-derived Postman workflows, observability, CI validation, immutable images, Kubernetes, and GitOps delivery.
+The platform is also a production-oriented backend engineering reference built around one central rule: **data stays on the inside; events collaborate on the outside**. Each service protects its current state and invariants in its own database, then publishes immutable facts so other services can build the local state they need. PostgreSQL with pgvector therefore serves recommendations without synchronous fan-out to the source domains.
 
 **Explore:** [Architecture](#architecture) · [API documentation](#explore-the-api) · [Run locally](#run-locally) · [Quality](#verification-strategy) · [Roadmap](#current-status-and-roadmap)
 
@@ -43,26 +43,25 @@ A user's actions form one connected product journey:
 | Engagement | Ratings, current-user rating lookup, rating aggregation, and reactions |
 | Recommendations | Event-fed book projections, user profile learning, ANN retrieval, re-ranking, and popularity fallback |
 
-## System at a Glance
+## Event-Driven Architecture at a Glance
 
-| Dimension | Current footprint |
-|---|---:|
-| Independently deployable application services | 5 |
-| Functional modules | 14 |
-| HTTP operations | 50 |
-| Shared cross-service event payloads | 8 |
-| Kafka listener classes | 14 |
-| Service-owned PostgreSQL databases | 4 |
-| Default Docker Compose services | 13 |
-| Optional observability services | 5 |
-| Provisioned Grafana dashboards | 5 |
-| Kubernetes manifests | 19 |
+VellumHub applies [Data on the Outside versus Data on the Inside](https://queue.acm.org/detail.cfm?id=3415014) at service boundaries and uses [Event-Carried State Transfer](https://martinfowler.com/articles/201701-event-driven.html) where a consumer needs source data to work autonomously.
 
-These figures describe the current default branch and show system shape rather than permanent delivery metrics.
+| Architectural concern | VellumHub's approach |
+|---|---|
+| Data on the inside | Each domain owns a private PostgreSQL database, its mutable current state, business invariants, and local transaction boundary. |
+| Events on the outside | Services publish immutable integration facts through Kafka using eight versioned payload types from `lib/kafka-contracts`. |
+| Event collaboration | User, Catalog, and Engagement publish what happened; Engagement and Recommendation decide independently how those facts affect their own models. |
+| Local projections | Book snapshots, reading history, book features, user vectors, and recommendation response data are materialized where they are consumed. |
+| Query autonomy | Recommendation and replicated engagement flows read local tables instead of synchronously joining or calling the source services. |
+| Consistency model | A service is transactionally consistent inside its boundary; projections across boundaries converge asynchronously. |
+| Failure model | Consumers retry, route exhausted records to dead-letter topics, and expose Kafka/retry/DLT metrics. Atomic state-and-event publication remains planned through transactional outbox. |
+
+The implementation spans **5 application services**, **14 functional modules**, **50 HTTP operations**, **8 shared integration-event payloads**, and **4 service-owned databases**. The numbers provide context; the important property is that each boundary can evolve and serve its queries without sharing tables or requiring a synchronous distributed transaction.
 
 ## Architecture
 
-Every public request enters through the reactive gateway. Each domain service owns its data and still validates JWTs independently. Cross-domain state is replicated through Kafka so engagement and recommendation queries do not depend on synchronous joins across services.
+Every public request enters through the reactive gateway. Each domain service owns its data and still validates JWTs independently. Cross-domain state travels as integration events; consumers translate those external contracts into models they own.
 
 ```mermaid
 graph TB
@@ -78,11 +77,11 @@ graph TB
     Engagement --> EngagementDb[(engagement_db)]
     Recommendation --> RecommendationDb[(recommendation_db<br/>PostgreSQL + pgvector)]
 
-    User --> Kafka[(Kafka)]
-    Catalog --> Kafka
-    Engagement --> Kafka
-    Kafka --> Engagement
-    Kafka --> Recommendation
+    User -->|preferences| Kafka[(Kafka<br/>integration events)]
+    Catalog -->|books and progress| Kafka
+    Engagement -->|ratings and reactions| Kafka
+    Kafka -->|snapshots and history| Engagement
+    Kafka -->|features and profile signals| Recommendation
 ```
 
 ### Service ownership
@@ -155,9 +154,11 @@ The ranking pipeline is:
 
 Historical local measurements for the migration from an external Python ML sidecar to in-process JVM embeddings and pgvector ranking moved recommendation latency from approximately **300–500 ms** to **80–120 ms**. These are project-local benchmark notes, not production SLAs.
 
-## Events and Local Projections
+## Event Collaboration and Local Projections
 
 `lib/kafka-contracts` is the canonical source for topic names, JSON type aliases, consumer groups, and cross-service payloads.
+
+The services collaborate through facts rather than remote commands. A producer announces a completed domain change; each consumer decides how to project it locally. For example, Catalog does not tell Recommendation how to rank a book and Engagement does not tell it how to update a user vector.
 
 | Event topic | Producer | Consumer purpose |
 |---|---|---|
@@ -170,6 +171,8 @@ Historical local measurements for the migration from an external Python ML sidec
 | `created-reading-progress` | Catalog | Create progress history and learn initial progress state |
 | `updated-reading-progress` | Catalog | Update progress history and the recommendation profile |
 
+Book create/update events carry title, description, author, cover, release year, and genres. This is deliberate ECST: Recommendation and Engagement can update their local copies without calling Catalog after every event. Interaction events are narrower because their consumers need the user, book, and signal—not the entire source aggregate.
+
 Consumers use retry topics with three attempts and a fixed three-second production backoff. Exhausted records are routed to `*-dlt` topics, where dedicated listeners record recovery context without logging raw payloads.
 
 ## Reliability and Data Consistency
@@ -177,7 +180,7 @@ Consumers use retry topics with three attempts and a fixed three-second producti
 VellumHub makes its current guarantees and remaining boundaries explicit:
 
 - **Database ownership:** no service reads or writes another service's application tables.
-- **Event-carried state transfer:** consumers build local models for data needed in their own query paths.
+- **Event-carried state transfer:** consumers build local models from the state carried by integration events.
 - **Shared contracts:** producers and consumers compile against the same event payloads and identifiers.
 - **Schema evolution:** Flyway owns PostgreSQL schemas, including pgvector extensions and HNSW indexes.
 - **Retry and recovery:** Kafka retry topics and DLT routing are centralized in engagement and recommendation.
@@ -187,6 +190,8 @@ VellumHub makes its current guarantees and remaining boundaries explicit:
 The current distributed-test pilot proves the `created-book` success path from real Kafka into PostgreSQL/pgvector and a failure path with three listener attempts, DLT delivery, and no partial projection. It mocks only the embedding provider and controlled failure injection; the broker, database, migrations, listener, transaction, serializer, and persistence path remain real.
 
 Consumer idempotency and transactional outbox publication remain planned guarantees. They are not claimed as implemented until their production mechanisms and failure-sensitive tests exist. See [Distributed Integration Testing](docs/DISTRIBUTED_TESTING.md) for the precise boundary and extension rules.
+
+This is not Event Sourcing: PostgreSQL tables remain the systems of record and Kafka carries integration events between services. Nor is every event full-state replication—the payload is shaped around what downstream collaborators need.
 
 ## Explore the API
 
