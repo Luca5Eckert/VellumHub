@@ -1,7 +1,12 @@
 package com.vellumhub.catalog_service.module.book.application.service;
 
 import com.vellumhub.catalog_service.module.book.application.command.CreateBookCommand;
-import com.vellumhub.catalog_service.module.book.domain.handler.*;
+import com.vellumhub.catalog_service.module.book.application.handler.DeleteBookHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.UploadBookCoverHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.create.CreateBookHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.create.CreateBookWithIsbnHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.get.*;
+import com.vellumhub.catalog_service.module.book.application.handler.update.UpdateBookHandler;
 import com.vellumhub.catalog_service.module.book.presentation.dto.*;
 import com.vellumhub.catalog_service.module.book.presentation.mapper.BookMapper;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;

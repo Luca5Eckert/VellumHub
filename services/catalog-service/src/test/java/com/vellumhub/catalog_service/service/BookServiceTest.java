@@ -1,8 +1,12 @@
 package com.vellumhub.catalog_service.service;
 
 import com.vellumhub.catalog_service.module.book.application.command.CreateBookCommand;
+import com.vellumhub.catalog_service.module.book.application.handler.DeleteBookHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.UploadBookCoverHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.get.*;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
-import com.vellumhub.catalog_service.module.book.domain.handler.*;
+import com.vellumhub.catalog_service.module.book.application.handler.create.CreateBookHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.update.UpdateBookHandler;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.presentation.dto.BookCoverResponse;
 import com.vellumhub.catalog_service.module.book.presentation.dto.CreateBookRequest;
