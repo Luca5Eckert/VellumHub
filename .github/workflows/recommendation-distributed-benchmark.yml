@@ -50,13 +50,13 @@ jobs:
       - name: Run distributed recommendation benchmark
         run: >-
           mvn -B -ntp -pl services/recommendation-service -am
-          -Dtest=DistributedRecommendationBenchmarkIT
+          -Dtest=DistributedRecommendationBenchmarkIT,RecommendationFreshnessBenchmarkIT
           -Dsurefire.failIfNoSpecifiedTests=false
           -Dgroups=distributed-benchmark
           -Dbenchmark.profile=${BENCHMARK_PROFILE}
           -Dbenchmark.commitSha=${{ github.event.pull_request.head.sha || github.sha }}
           -Dbenchmark.outputDir=${GITHUB_WORKSPACE}/services/recommendation-service/target/distributed-benchmark/${BENCHMARK_PROFILE}
-          -Dbenchmark.command='mvn -pl services/recommendation-service -am -Dtest=DistributedRecommendationBenchmarkIT -Dsurefire.failIfNoSpecifiedTests=false -Dgroups=distributed-benchmark -Dbenchmark.profile=${BENCHMARK_PROFILE} test'
+          -Dbenchmark.command='mvn -pl services/recommendation-service -am -Dtest=DistributedRecommendationBenchmarkIT,RecommendationFreshnessBenchmarkIT -Dsurefire.failIfNoSpecifiedTests=false -Dgroups=distributed-benchmark -Dbenchmark.profile=${BENCHMARK_PROFILE} test'
           test
 
       - name: Upload benchmark evidence
