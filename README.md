@@ -14,7 +14,7 @@ VellumHub covers the complete reading journey: users create an account, choose l
 
 The platform is also a production-oriented backend engineering reference built around one central rule: **data stays on the inside; events collaborate on the outside**. Each service protects its current state and invariants in its own database, then publishes immutable facts so other services can build the local state they need. PostgreSQL with pgvector therefore serves recommendations without synchronous fan-out to the source domains.
 
-**Explore:** [Architecture](#architecture) · [API documentation](#explore-the-api) · [Run locally](#run-locally) · [Quality](#verification-strategy) · [Roadmap](#current-status-and-roadmap)
+**Explore:** [Measured behavior](#measured-recommendation-behavior) · [Architecture](#architecture) · [API documentation](#explore-the-api) · [Run locally](#run-locally) · [Quality](#verification-strategy) · [Roadmap](#current-status-and-roadmap)
 
 ---
 
@@ -58,6 +58,39 @@ VellumHub applies [Data on the Outside versus Data on the Inside](https://queue.
 | Failure model | Consumers retry, route exhausted records to dead-letter topics, and expose Kafka/retry/DLT metrics. Atomic state-and-event publication remains planned through transactional outbox. |
 
 The implementation spans **5 application services**, **14 functional modules**, **50 HTTP operations**, **8 shared integration-event payloads**, and **4 service-owned databases**. The numbers provide context; the important property is that each boundary can evolve and serve its queries without sharing tables or requiring a synchronous distributed transaction.
+
+## Measured Recommendation Behavior
+
+The architecture deliberately accepts asynchronous convergence between service boundaries so the recommendation query path can stay local. The trade-off is measured directly rather than inferred from component timings.
+
+| Property | Reference evidence |
+|---|---:|
+| Recommendation quality | **0.599 nDCG@10** vs. **0.066** popularity-only |
+| Interaction → visible recommendation | **553–751 ms p95** across two repeated 90-event reference runs |
+| Recommendation read path | **15.98–19.86 ms p95** after local-state convergence |
+| Freshness correctness | **260/260** interactions produced the expected observable ranking change |
+| Read autonomy | **60/60** authenticated reads succeeded with User, Catalog, and Engagement unavailable |
+| Synchronous upstream fan-out | **0** calls after a recommendation request reaches Recommendation |
+
+The end-to-end freshness benchmark measures:
+
+```text
+CreatedRatingEvent publish
+  -> Kafka
+  -> production rating consumer
+  -> user_profiles update
+  -> PostgreSQL/pgvector ranking
+  -> authenticated GET /recommendations
+  -> expected ranking change observed at rank #1
+```
+
+Across two independent controlled reference executions, the 90-event burst measured **553.05 ms** and **751.17 ms p95**. The defensible shorthand is therefore **sub-0.8 s p95 across repeated reference runs**, not a single cherry-picked `553 ms` value. All **260/260** interactions across those runs became observable in recommendations with zero freshness failures.
+
+Once local state had converged, authenticated recommendation reads measured **15.98–19.86 ms p95**. The same benchmark intentionally left User, Catalog, and Engagement unavailable, and **60/60 recommendation reads still succeeded**. That is the concrete payoff of the event-carried local-state design: a bounded consistency window on writes in exchange for a low-latency, autonomous read path.
+
+Recommendation quality is measured separately through a reproducible model-backed offline evaluation over **120 books and 24 profiles**. The current 70/30 semantic+popularity ranker reached **0.599 nDCG@10**, compared with **0.066** for popularity-only. A semantic-only ablation reached **1.000**, making the current popularity weight an explicit tuning target rather than hiding the regression.
+
+These measurements are controlled CI/Testcontainers and offline-evaluation evidence. They are not production SLAs, online A/B-test results, or maximum-throughput claims. See the [Recommendation benchmark guide](services/recommendation-service/benchmark/README.md) for the benchmark boundary and reproduction commands.
 
 ## Architecture
 
@@ -108,7 +141,7 @@ graph TB
 
 ### From registration to a useful cold start
 
-When a user registers with genre preferences, `user-service` publishes `created-user-preference`. The recommendation service converts those preferences into a normalized profile vector, allowing relevant results before ratings or reading history exist.
+When a user registers with genre preferences, `user-service` publishes `created-user-preference`. The recommendation service converts those preferences into a normalized profile vector, allowing relevant results before ratings or reading history exists.
 
 ### From reader feedback to a refined profile
 
@@ -152,7 +185,9 @@ The ranking pipeline is:
 5. Remaining candidates are re-ranked using 70% semantic similarity and 30% popularity.
 6. Users without a profile receive a popularity-based fallback.
 
-Historical local measurements for the migration from an external Python ML sidecar to in-process JVM embeddings and pgvector ranking moved recommendation latency from approximately **300–500 ms** to **80–120 ms**. These are project-local benchmark notes, not production SLAs.
+### Recommendation-path evolution
+
+Historical local measurements for the migration from an external Python ML sidecar to in-process JVM embeddings and pgvector ranking moved recommendation latency from approximately **300–500 ms** to **80–120 ms**. That remains useful implementation-history evidence, but the current distributed reference benchmark above is the stronger performance claim because it separates **interaction-to-recommendation freshness** from the **local recommendation read path** and exercises the real Kafka/PostgreSQL/pgvector boundary.
 
 ## Event Collaboration and Local Projections
 
@@ -185,9 +220,9 @@ VellumHub makes its current guarantees and remaining boundaries explicit:
 - **Schema evolution:** Flyway owns PostgreSQL schemas, including pgvector extensions and HNSW indexes.
 - **Retry and recovery:** Kafka retry topics and DLT routing are centralized in engagement and recommendation.
 - **Defense in depth:** downstream services validate JWTs after traffic passes through the gateway.
-- **Real-boundary verification:** Testcontainers exercises Kafka delivery, retry/DLT, Flyway, PostgreSQL, pgvector, and projection persistence.
+- **Real-boundary verification:** Testcontainers exercises Kafka delivery, retry/DLT, Flyway, PostgreSQL, pgvector, projection persistence, and the authenticated recommendation serving path.
 
-The current distributed-test pilot proves the `created-book` success path from real Kafka into PostgreSQL/pgvector and a failure path with three listener attempts, DLT delivery, and no partial projection. It mocks only the embedding provider and controlled failure injection; the broker, database, migrations, listener, transaction, serializer, and persistence path remain real.
+The distributed benchmark extends the earlier `created-book` pilot by measuring both projection convergence and the user-visible recommendation effect. It uses real Kafka, real PostgreSQL/pgvector, real Flyway migrations, the production rating consumer/profile update path, production ranking SQL, and the authenticated `/recommendations` endpoint. Deterministic fixture embeddings keep model inference outside the architectural freshness boundary.
 
 Consumer idempotency and transactional outbox publication remain planned guarantees. They are not claimed as implemented until their production mechanisms and failure-sensitive tests exist. See [Distributed Integration Testing](docs/DISTRIBUTED_TESTING.md) for the precise boundary and extension rules.
 
@@ -270,7 +305,7 @@ The test portfolio uses the narrowest boundary capable of proving each behavior:
 | Domain and application tests | Business rules, state transitions, ranking signals, and errors |
 | Controller and mapper tests | HTTP status, request/response mapping, authentication context, and delegation |
 | Repository and migration tests | JPA adapters, Flyway, PostgreSQL constraints, pgvector, and HNSW indexes |
-| Distributed integration tests | Real Kafka serialization, listener execution, transactions, retry/DLT, and projections |
+| Distributed integration tests | Real Kafka serialization, listener execution, transactions, retry/DLT, projections, convergence, read autonomy, and recommendation freshness |
 | Configuration and smoke checks | Gateway/OpenAPI drift, Compose topology, health, and service communication |
 
 Run the non-distributed reactor verification:
@@ -279,13 +314,25 @@ Run the non-distributed reactor verification:
 mvn -B -ntp -DexcludedGroups=distributed clean verify
 ```
 
-Run the Recommendation distributed suite with Docker available:
+Run the Recommendation distributed suites with Docker available. Keep the two benchmark suites in separate Maven processes so each distributed Spring/Testcontainers lifecycle remains isolated:
 
 ```bash
-mvn -B -ntp -pl services/recommendation-service -am -Dgroups=distributed test
+mvn -B -ntp -pl services/recommendation-service -am \
+  -Dtest=DistributedRecommendationBenchmarkIT \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -Dgroups=distributed-benchmark \
+  -Dbenchmark.profile=reference \
+  test
+
+mvn -B -ntp -pl services/recommendation-service -am \
+  -Dtest=RecommendationFreshnessBenchmarkIT \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -Dgroups=distributed-benchmark \
+  -Dbenchmark.profile=reference \
+  test
 ```
 
-CI keeps these as separate jobs so application failures remain distinguishable from Kafka or Testcontainers infrastructure failures. Image build and vulnerability scanning depend on both jobs succeeding.
+CI keeps distributed verification separate from the regular reactor checks so application failures remain distinguishable from Kafka or Testcontainers infrastructure failures. The dedicated Recommendation benchmark workflow also uploads raw evidence rather than turning machine-dependent latency percentiles into pass/fail gates.
 
 ## Observability and Delivery
 
@@ -329,6 +376,7 @@ Detailed guides:
 | Central Swagger UI and service-owned OpenAPI | Implemented | [API documentation](docs/api-documentation.md) |
 | Contract-derived Postman collection and workflows | Implemented | [Postman](postman/README.md) |
 | Real Kafka + PostgreSQL/pgvector distributed testing | Recommendation pilot implemented | [#207](https://github.com/Luca5Eckert/VellumHub/issues/207) |
+| Recommendation convergence, read-autonomy, and freshness benchmark | Implemented in PR #286 | [#283](https://github.com/Luca5Eckert/VellumHub/issues/283) |
 | Consumer idempotency | Planned | [#200](https://github.com/Luca5Eckert/VellumHub/issues/200) |
 | Transactional outbox | Planned | [#201](https://github.com/Luca5Eckert/VellumHub/issues/201), [#202](https://github.com/Luca5Eckert/VellumHub/issues/202) |
 | Broader cross-service E2E coverage | Planned | [Distributed testing](docs/DISTRIBUTED_TESTING.md) |
@@ -338,14 +386,15 @@ Detailed guides:
 - **Own data at the domain boundary:** databases are private implementation details of their services.
 - **Replicate for autonomy:** use local projections when critical queries would otherwise require synchronous fan-out.
 - **Centralize contracts, not domains:** Kafka payloads are shared; business models and persistence remain service-owned.
-- **Test real failure boundaries:** use Kafka and PostgreSQL when delivery, transaction, migration, extension, or retry semantics matter.
-- **Keep claims auditable:** separate implemented guarantees from roadmap intentions.
+- **Test real failure boundaries:** use Kafka and PostgreSQL when delivery, transaction, migration, extension, retry, convergence, or serving-autonomy semantics matter.
+- **Keep claims auditable:** separate implemented guarantees from roadmap intentions and report repeated benchmark ranges when run-to-run variance is material.
 - **Deliver immutable state through Git:** deployments reference exact versions instead of mutable `latest` tags.
 
 ## References
 
 - [Service READMEs](services)
 - [Architecture and operational documentation](docs)
+- [Recommendation benchmark](services/recommendation-service/benchmark/README.md)
 - [Kafka contracts](lib/kafka-contracts)
 - [Postman artifacts](postman)
 - [Kubernetes manifests](deploy/kubernetes)
