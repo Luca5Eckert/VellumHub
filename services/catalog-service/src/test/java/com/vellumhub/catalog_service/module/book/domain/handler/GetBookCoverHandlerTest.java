@@ -2,6 +2,7 @@ package com.vellumhub.catalog_service.module.book.domain.handler;
 
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
+import com.vellumhub.catalog_service.module.book.application.handler.get.GetBookCoverHandler;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookCoverStorage;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;

@@ -1,5 +1,6 @@
 package com.vellumhub.catalog_service.module.book.domain.handler;
 
+import com.vellumhub.catalog_service.module.book.application.handler.get.GetBookCoversBulkHandler;
 import com.vellumhub.catalog_service.module.book.presentation.dto.BookCoverResponse;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookCoverStorage;

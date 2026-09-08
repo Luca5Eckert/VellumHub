@@ -1,4 +1,4 @@
-package com.vellumhub.catalog_service.module.book.domain.handler;
+package com.vellumhub.catalog_service.module.book.application.handler.update;
 
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
