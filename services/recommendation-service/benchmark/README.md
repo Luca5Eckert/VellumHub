@@ -87,18 +87,27 @@ The test is specifically about serving already-materialized reads. It does not c
 
 ## Run the reference benchmark
 
-Docker must be available. From the repository root:
+Docker must be available. Run the two distributed suites in separate Maven invocations from the repository root:
 
 ```bash
 mvn -pl services/recommendation-service -am \
-  -Dtest=DistributedRecommendationBenchmarkIT,RecommendationFreshnessBenchmarkIT \
+  -Dtest=DistributedRecommendationBenchmarkIT \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -Dgroups=distributed-benchmark \
+  -Dbenchmark.profile=reference \
+  test
+
+mvn -pl services/recommendation-service -am \
+  -Dtest=RecommendationFreshnessBenchmarkIT \
   -Dsurefire.failIfNoSpecifiedTests=false \
   -Dgroups=distributed-benchmark \
   -Dbenchmark.profile=reference \
   test
 ```
 
-To run the CI-sized harness locally, replace `reference` with `smoke`.
+The suites intentionally run in separate Maven processes because both own distributed Spring/Testcontainers state and use the production Recommendation Kafka consumer group. Process isolation prevents one benchmark suite from contaminating the lifecycle/state observed by the other while preserving the same production boundaries inside each measurement.
+
+To run the CI-sized harness locally, replace `reference` with `smoke` in both commands.
 
 `failIfNoSpecifiedTests=false` is required because `-am` builds `kafka-contracts` first and that module does not contain the selected Recommendation tests.
 
@@ -119,7 +128,7 @@ The original files retain projection/read-autonomy evidence. `recommendation-fre
 
 ## CI and reference evidence
 
-The `Recommendation distributed benchmark` workflow runs `smoke` automatically on relevant pull requests and supports `reference` (or `smoke`) on manual dispatch. The workflow uploads the complete output directory as a versioned GitHub Actions artifact.
+The `Recommendation distributed benchmark` workflow runs `smoke` automatically on relevant pull requests and supports `reference` (or `smoke`) on manual dispatch. It executes projection/read-autonomy and freshness in separate Maven processes and uploads their complete output directory as one versioned GitHub Actions artifact.
 
 CI intentionally has no absolute p95, throughput, capacity, or freshness threshold. It fails only when correctness invariants fail, such as projection loss, unexpected DLT, sustained lag beyond the harness timeout, failed recommendation reads, or an interaction that never becomes visible in the deterministic recommendation ranking.
 
