@@ -1,0 +1,83 @@
+name: Recommendation distributed benchmark
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/kafka-contracts/**'
+      - 'services/recommendation-service/src/main/**'
+      - 'services/recommendation-service/src/test/java/com/vellumhub/recommendation_service/benchmark/**'
+      - 'services/recommendation-service/src/test/java/com/vellumhub/recommendation_service/support/DistributedIntegrationTestSupport.java'
+      - 'services/recommendation-service/benchmark/**'
+      - '.github/workflows/recommendation-distributed-benchmark.yml'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Benchmark profile
+        required: true
+        default: reference
+        type: choice
+        options:
+          - reference
+          - smoke
+
+permissions:
+  contents: read
+
+jobs:
+  distributed-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BENCHMARK_PROFILE: ${{ github.event_name == 'pull_request' && 'smoke' || inputs.profile || 'reference' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Confirm Docker for distributed Testcontainers
+        run: docker info
+
+      - name: Pre-pull benchmark images
+        run: |
+          docker pull pgvector/pgvector:pg15
+          docker pull confluentinc/cp-kafka:7.5.0
+
+      # Keep the two distributed suites in separate Maven processes. Both suites own
+      # static Testcontainers/Spring test state and use the production Kafka consumer
+      # group; running them in one Surefire JVM allows lifecycle/state interference.
+      - name: Run projection convergence and read-autonomy benchmark
+        run: >-
+          mvn -B -ntp -pl services/recommendation-service -am
+          -Dtest=DistributedRecommendationBenchmarkIT
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dgroups=distributed-benchmark
+          -Dbenchmark.profile=${BENCHMARK_PROFILE}
+          -Dbenchmark.commitSha=${{ github.event.pull_request.head.sha || github.sha }}
+          -Dbenchmark.outputDir=${GITHUB_WORKSPACE}/services/recommendation-service/target/distributed-benchmark/${BENCHMARK_PROFILE}
+          -Dbenchmark.command='mvn -pl services/recommendation-service -am -Dtest=DistributedRecommendationBenchmarkIT -Dsurefire.failIfNoSpecifiedTests=false -Dgroups=distributed-benchmark -Dbenchmark.profile=${BENCHMARK_PROFILE} test'
+          test
+
+      - name: Run event-to-recommendation freshness benchmark
+        run: >-
+          mvn -B -ntp -pl services/recommendation-service -am
+          -Dtest=RecommendationFreshnessBenchmarkIT
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dgroups=distributed-benchmark
+          -Dbenchmark.profile=${BENCHMARK_PROFILE}
+          -Dbenchmark.commitSha=${{ github.event.pull_request.head.sha || github.sha }}
+          -Dbenchmark.outputDir=${GITHUB_WORKSPACE}/services/recommendation-service/target/distributed-benchmark/${BENCHMARK_PROFILE}
+          test
+
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recommendation-distributed-benchmark-${{ env.BENCHMARK_PROFILE }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: services/recommendation-service/target/distributed-benchmark/${{ env.BENCHMARK_PROFILE }}/
+          if-no-files-found: error
+          retention-days: 30
