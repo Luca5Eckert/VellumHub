@@ -11,6 +11,7 @@
 
     <modules>
         <module>lib/kafka-contracts</module>
+        <module>lib/distributed-test-support</module>
         <module>services/catalog-service</module>
         <module>services/engagement-service</module>
         <module>services/user-service</module>
