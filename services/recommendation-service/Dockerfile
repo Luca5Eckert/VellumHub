@@ -7,7 +7,7 @@ COPY lib/kafka-contracts/src lib/kafka-contracts/src
 COPY services/recommendation-service/pom.xml services/recommendation-service/pom.xml
 
 RUN mvn -B -ntp -f lib/kafka-contracts/pom.xml install -Dmaven.test.skip=true \
-    && mvn -B -ntp -f services/recommendation-service/pom.xml dependency:go-offline -DexcludeScope=test
+    && mvn -B -ntp -f services/recommendation-service/pom.xml dependency:go-offline -DincludeScope=runtime
 
 COPY services/recommendation-service/src services/recommendation-service/src
 RUN mvn -B -ntp -f services/recommendation-service/pom.xml package -Dmaven.test.skip=true
