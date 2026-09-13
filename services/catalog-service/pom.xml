@@ -108,12 +108,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.vellumhub</groupId>
-			<artifactId>distributed-test-support</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>junit-jupiter</artifactId>
 			<version>${testcontainers.version}</version>
@@ -155,6 +149,25 @@
 		</dependency>
 
 	</dependencies>
+
+	<profiles>
+		<profile>
+			<id>distributed-test-support</id>
+			<activation>
+				<property>
+					<name>!productionImageBuild</name>
+				</property>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>com.vellumhub</groupId>
+					<artifactId>distributed-test-support</artifactId>
+					<version>1.0-SNAPSHOT</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
 
 	<build>
 		<plugins>

@@ -9,10 +9,11 @@ COPY services/catalog-service/pom.xml services/catalog-service/pom.xml
 RUN mvn -B -ntp -f lib/kafka-contracts/pom.xml install -Dmaven.test.skip=true
 
 COPY services/catalog-service/src services/catalog-service/src
-RUN mvn -B -ntp -f services/catalog-service/pom.xml package -Dmaven.test.skip=true
+RUN mvn -B -ntp -f services/catalog-service/pom.xml package -DproductionImageBuild=true -Dmaven.test.skip=true
 
 ARG OTEL_JAVA_AGENT_VERSION=2.28.1
 RUN mvn -B -ntp -f services/catalog-service/pom.xml dependency:copy \
+    -DproductionImageBuild=true \
     -Dartifact=io.opentelemetry.javaagent:opentelemetry-javaagent:${OTEL_JAVA_AGENT_VERSION}:jar \
     -DoutputDirectory=/otel \
     -Dmdep.stripVersion=true \
