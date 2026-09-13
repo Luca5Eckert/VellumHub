@@ -19,7 +19,7 @@ The test verifies:
 
 ### Catalog producer -> Recommendation projection
 
-The Recommendation distributed happy path is a cross-service contract test:
+The cross-service happy path lives in the opt-in `integration-tests/distributed-e2e` module instead of making one deployable service depend on another service artifact:
 
 ```text
 Catalog KafkaBookEventProducer
@@ -29,13 +29,15 @@ Catalog KafkaBookEventProducer
   -> real PostgreSQL/pgvector
 ```
 
-The source service is not fully booted. The test deliberately instantiates the real Catalog producer class with the KafkaTemplate connected to the shared test broker, then boots the real Recommendation Spring context. This keeps the scenario focused on the producer/consumer contract and durable projection instead of turning the test into a full platform journey.
+The source service is not fully booted. The E2E test instantiates the real Catalog producer class with the KafkaTemplate connected to the shared test broker and boots the real Recommendation Spring context. The module depends on both production projects only for the dedicated `test` reactor slice, so normal service packaging remains independent.
+
+Because Catalog and Recommendation both own Flyway migrations beginning at version `V1`, the E2E module copies the Recommendation migrations into a dedicated test-only classpath location and configures Flyway to scan only that location. This prevents unrelated Catalog migrations from leaking into the Recommendation database while still running the production Recommendation schema migrations.
 
 The durable assertions cover `book_features`, the 384-dimensional pgvector embedding, `recommendations`, genres, title, author, and initial popularity.
 
 ### Recommendation retry -> DLT
 
-The failure path still exercises the real Recommendation listener, Kafka retry topics, and DLT routing. A scoped spy failure is injected for one event ID; the test verifies three attempts, observes the DLT record through the shared Kafka probe, inspects the original-topic header, and asserts that no partial projection remains in PostgreSQL.
+The failure path remains service-local in Recommendation and exercises the real Recommendation listener, Kafka retry topics, and DLT routing. A scoped spy failure is injected for one event ID; the test verifies three attempts, observes the DLT record through the shared Kafka probe, inspects the original-topic header, and asserts that no partial projection remains in PostgreSQL.
 
 ## Shared test-support module
 
@@ -46,7 +48,7 @@ The failure path still exercises the real Recommendation listener, Kafka retry t
 - `BookEventFixtures` — stable `CreateBookEvent` fixtures that keep irrelevant event fields out of individual tests;
 - `KafkaProbe` — unique consumer groups, bounded polling, record filtering, and UTF-8 header inspection.
 
-Spring Boot configuration remains service-local. Catalog currently uses Spring Boot 3 while Recommendation uses Spring Boot 4, so pushing `DynamicPropertyRegistry`, application properties, or service-specific beans into the shared module would couple the harness to framework details instead of infrastructure behavior.
+Spring Boot configuration remains context-local. Catalog uses Spring Boot 3 while Recommendation uses Spring Boot 4, so pushing `DynamicPropertyRegistry`, application properties, or service-specific beans into the shared module would couple the harness to framework details instead of infrastructure behavior.
 
 ## Container lifecycle and state isolation
 
@@ -81,7 +83,7 @@ These are failure bounds, not expected steady-state latency targets.
 |---|---|
 | Kafka broker | Real `confluentinc/cp-kafka:7.5.0` Testcontainer |
 | PostgreSQL | Real `pgvector/pgvector:pg15` Testcontainer |
-| Flyway migrations | Real in Recommendation distributed tests |
+| Flyway migrations | Real Recommendation migrations, isolated to the Recommendation test database |
 | Catalog `KafkaBookEventProducer` | Real production class |
 | Kafka serialization / type headers | Real Spring Kafka serializer |
 | Recommendation Kafka listener | Real |
@@ -102,11 +104,13 @@ Prerequisites:
 
 No local Kafka or PostgreSQL installation is required.
 
-Run the full distributed/E2E slice from the repository root:
+Run the complete distributed/E2E slice from the repository root:
 
 ```bash
-mvn -pl services/catalog-service,services/recommendation-service -am -Dgroups=distributed test
+mvn -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -Dgroups=distributed test
 ```
+
+The profile is intentionally opt-in: normal `package`/`verify` builds do not compile the cross-service E2E module and deployable services do not gain service-to-service Maven dependencies.
 
 Run normal reactor verification without Docker-backed distributed scenarios:
 
@@ -114,7 +118,7 @@ Run normal reactor verification without Docker-backed distributed scenarios:
 mvn -DexcludedGroups=distributed clean verify
 ```
 
-A non-filtered Maven test run can execute `@Tag("distributed")` tests and therefore requires Docker.
+A non-filtered Maven test run can execute service-local `@Tag("distributed")` tests and therefore requires Docker.
 
 ## CI execution budget
 
@@ -124,14 +128,14 @@ The distributed job:
 
 1. verifies Docker availability;
 2. pre-pulls Ryuk, Kafka, and pgvector images;
-3. warms reactor dependencies and test compilation;
-4. runs the Catalog and Recommendation distributed modules together;
+3. activates the `distributed-e2e` Maven profile and warms the selected reactor slice;
+4. runs Catalog distributed tests, Recommendation distributed tests, and the dedicated cross-service E2E module through `-am`;
 5. enforces a 75-second post-warm execution budget;
 6. has a five-minute hard job timeout for infrastructure failures.
 
-The 75-second budget accounts for the second real service context while remaining a guard against accidental expansion into a slow platform E2E suite.
+The 75-second budget accounts for the second real service context and cross-service E2E while remaining a guard against accidental expansion into a slow platform E2E suite.
 
-If the post-warm distributed run becomes unstable near the budget, shard by infrastructure cost rather than by arbitrary test count: keep the Kafka-only Catalog producer suite in one job and the Kafka + pgvector Recommendation suite in another. Each shard must retain its own explicit budget.
+If the post-warm distributed run becomes unstable near the budget, shard by infrastructure cost rather than by arbitrary test count: keep the Kafka-only Catalog producer suite in one job and the Kafka + pgvector Recommendation/E2E slice in another. Each shard must retain its own explicit budget.
 
 ## Adding a new distributed scenario
 
@@ -144,8 +148,9 @@ Use the narrowest shared support that matches the boundary:
 5. Prefer durable/external outcomes over implementation call counts.
 6. Use a call-count assertion only when retry cardinality itself is the contract under test.
 7. Use `KafkaProbe` for raw publication, DLT, and header assertions instead of duplicating consumer configuration.
-8. Keep service-specific Spring wiring in that service's test source set.
-9. Do not add another infrastructure dependency until a production guarantee requires it.
+8. Keep service-specific Spring wiring in that service's test source set; keep true cross-service dependency wiring in `integration-tests/distributed-e2e`.
+9. Do not add deployable service-to-service Maven dependencies solely to enable a test.
+10. Do not add another infrastructure dependency until a production guarantee requires it.
 
 ## Troubleshooting
 
@@ -161,8 +166,14 @@ If Kafka records are not observed:
 If Recommendation persistence fails:
 
 - confirm Flyway completed against the pgvector container;
+- for the E2E module, confirm `spring.flyway.locations` resolves only `classpath:recommendation/db/migration`;
+- treat duplicate migration versions from another service as classpath leakage, not as a reason to renumber service-owned migrations;
 - inspect the event consumer error before changing database assertions;
 - keep the deterministic embedding at 384 dimensions so vector-schema failures remain visible.
+
+## Production image builds
+
+Service Dockerfiles intentionally exclude test-scope dependencies during `dependency:go-offline` and use `maven.test.skip=true` for the image packaging stage. CI compiles and executes tests separately before image build/scan. This prevents test-only modules such as `distributed-test-support` from becoming build-time requirements of independently packaged service images.
 
 ## Idempotency and transactional outbox
 

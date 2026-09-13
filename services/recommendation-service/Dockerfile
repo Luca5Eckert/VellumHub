@@ -6,11 +6,11 @@ COPY lib/kafka-contracts/pom.xml lib/kafka-contracts/pom.xml
 COPY lib/kafka-contracts/src lib/kafka-contracts/src
 COPY services/recommendation-service/pom.xml services/recommendation-service/pom.xml
 
-RUN mvn -B -ntp -f lib/kafka-contracts/pom.xml install -DskipTests \
-    && mvn -B -ntp -f services/recommendation-service/pom.xml dependency:go-offline
+RUN mvn -B -ntp -f lib/kafka-contracts/pom.xml install -Dmaven.test.skip=true \
+    && mvn -B -ntp -f services/recommendation-service/pom.xml dependency:go-offline -DexcludeScope=test
 
 COPY services/recommendation-service/src services/recommendation-service/src
-RUN mvn -B -ntp -f services/recommendation-service/pom.xml package -DskipTests
+RUN mvn -B -ntp -f services/recommendation-service/pom.xml package -Dmaven.test.skip=true
 
 ARG OTEL_JAVA_AGENT_VERSION=2.28.1
 RUN mvn -B -ntp -f services/recommendation-service/pom.xml dependency:copy \

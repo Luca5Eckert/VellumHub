@@ -42,12 +42,12 @@ jobs:
           docker pull pgvector/pgvector:pg15
           docker pull confluentinc/cp-kafka:7.5.0
       - name: Warm Maven dependencies and compilation
-        run: mvn -B -ntp -pl services/catalog-service,services/recommendation-service -am -DskipTests test-compile
+        run: mvn -B -ntp -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -DskipTests test-compile
       - name: Run distributed suite within 75 second execution budget
         shell: bash
         run: |
           started_at=$(date +%s)
-          mvn -B -ntp -pl services/catalog-service,services/recommendation-service -am -Dgroups=distributed test
+          mvn -B -ntp -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -Dgroups=distributed test
           elapsed=$(( $(date +%s) - started_at ))
           echo "Distributed integration suite execution: ${elapsed}s"
           if (( elapsed > 75 )); then
