@@ -18,4 +18,13 @@
         <module>services/recommendation-service</module>
         <module>services/gateway-service</module>
     </modules>
+
+    <profiles>
+        <profile>
+            <id>distributed-e2e</id>
+            <modules>
+                <module>integration-tests/distributed-e2e</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>

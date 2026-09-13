@@ -1,7 +1,5 @@
 package com.vellumhub.recommendation_service.share.kafka;
 
-import com.vellumhub.catalog_service.module.book.infrastructure.producer.KafkaBookEventProducer;
-import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import com.vellumhub.recommendation_service.module.book_feature.application.use_case.CreateBookFeatureUseCase;
@@ -9,7 +7,6 @@ import com.vellumhub.recommendation_service.module.book_feature.domain.port.Embe
 import com.vellumhub.recommendation_service.support.DistributedIntegrationTestSupport;
 import com.vellumhub.testing.distributed.BookEventFixtures;
 import com.vellumhub.testing.distributed.KafkaProbe;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -52,8 +49,6 @@ class CreatedBookKafkaFlowIntegrationTest extends DistributedIntegrationTestSupp
     @MockitoSpyBean
     private CreateBookFeatureUseCase createBookFeatureUseCase;
 
-    private KafkaBookEventProducer<String, Object> catalogProducer;
-
     @BeforeEach
     void setUp() {
         jdbcTemplate.update("delete from recommendation_genres");
@@ -64,52 +59,6 @@ class CreatedBookKafkaFlowIntegrationTest extends DistributedIntegrationTestSupp
         Arrays.fill(embedding, 0.25f);
         when(embeddingBookProvider.of(anyString(), anyString(), anyString(), anyList()))
                 .thenReturn(embedding);
-
-        catalogProducer = new KafkaBookEventProducer<>(
-                kafkaTemplate,
-                new VellumHubMetrics(new SimpleMeterRegistry())
-        );
-    }
-
-    @Test
-    void persistsCreatedBookProjectionFromRealCatalogProducerThroughKafkaIntoPgvectorPostgres() {
-        UUID bookId = UUID.randomUUID();
-        CreateBookEvent event = BookEventFixtures.createdBook(bookId);
-
-        catalogProducer.send(KafkaTopics.CREATED_BOOK, bookId.toString(), event);
-
-        await()
-                .atMost(ASYNC_TIMEOUT)
-                .pollInterval(ASYNC_POLL_INTERVAL)
-                .untilAsserted(() -> {
-                    assertThat(countByBookId("book_features", bookId)).isEqualTo(1L);
-                    assertThat(countByBookId("recommendations", bookId)).isEqualTo(1L);
-                    assertThat(jdbcTemplate.queryForObject(
-                            "select vector_dims(embedding) from book_features where book_id = ?",
-                            Integer.class,
-                            bookId
-                    )).isEqualTo(384);
-                    assertThat(jdbcTemplate.queryForObject(
-                            "select popularity_score from book_features where book_id = ?",
-                            Double.class,
-                            bookId
-                    )).isEqualTo(1.0d);
-                    assertThat(jdbcTemplate.queryForObject(
-                            "select title from recommendations where book_id = ?",
-                            String.class,
-                            bookId
-                    )).isEqualTo(event.title());
-                    assertThat(jdbcTemplate.queryForObject(
-                            "select author from recommendations where book_id = ?",
-                            String.class,
-                            bookId
-                    )).isEqualTo(event.author());
-                    assertThat(jdbcTemplate.queryForList(
-                            "select genres from recommendation_genres where recommendation_book_id = ? order by genres",
-                            String.class,
-                            bookId
-                    )).containsExactly("distributed-systems", "testing");
-                });
     }
 
     @Test
