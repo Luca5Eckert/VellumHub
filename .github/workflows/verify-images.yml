@@ -22,7 +22,7 @@ jobs:
         run: mvn -B -ntp -DexcludedGroups=distributed clean verify
 
   distributed-integration:
-    name: Recommendation distributed integration
+    name: Distributed integration + cross-service E2E
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -42,16 +42,16 @@ jobs:
           docker pull pgvector/pgvector:pg15
           docker pull confluentinc/cp-kafka:7.5.0
       - name: Warm Maven dependencies and compilation
-        run: mvn -B -ntp -pl services/recommendation-service -am -DskipTests test-compile
-      - name: Run distributed suite within 45 second execution budget
+        run: mvn -B -ntp -pl services/catalog-service,services/recommendation-service -am -DskipTests test-compile
+      - name: Run distributed suite within 75 second execution budget
         shell: bash
         run: |
           started_at=$(date +%s)
-          mvn -B -ntp -pl services/recommendation-service -am -Dgroups=distributed test
+          mvn -B -ntp -pl services/catalog-service,services/recommendation-service -am -Dgroups=distributed test
           elapsed=$(( $(date +%s) - started_at ))
           echo "Distributed integration suite execution: ${elapsed}s"
-          if (( elapsed > 45 )); then
-            echo "Distributed integration suite exceeded the 45 second execution budget."
+          if (( elapsed > 75 )); then
+            echo "Distributed integration suite exceeded the 75 second execution budget."
             exit 1
           fi
 
