@@ -1,41 +1,18 @@
 package com.vellumhub.recommendation_service.support;
 
+import com.vellumhub.testing.distributed.KafkaPgvectorIntegrationTestSupport;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.kafka.ConfluentKafkaContainer;
-import org.testcontainers.utility.DockerImageName;
 
-import java.time.Duration;
-
-@Testcontainers
-public abstract class DistributedIntegrationTestSupport {
-
-    protected static final Duration ASYNC_TIMEOUT = Duration.ofSeconds(15);
-    protected static final Duration ASYNC_POLL_INTERVAL = Duration.ofMillis(100);
+public abstract class DistributedIntegrationTestSupport extends KafkaPgvectorIntegrationTestSupport {
 
     private static final String JWT_SECRET =
             "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=";
     private static final String PRODUCER_TYPE_MAPPINGS = String.join(",",
             "create_book_event:com.vellumhub.kafka.contracts.book.CreateBookEvent",
             "create_rating_event:com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent"
-    );
-
-    @Container
-    protected static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
-            DockerImageName.parse("pgvector/pgvector:pg15").asCompatibleSubstituteFor("postgres")
-    )
-            .withDatabaseName("recommendation_distributed_test")
-            .withUsername("test")
-            .withPassword("test");
-
-    @Container
-    protected static final ConfluentKafkaContainer KAFKA = new ConfluentKafkaContainer(
-            DockerImageName.parse("confluentinc/cp-kafka:7.5.0")
     );
 
     @DynamicPropertySource
@@ -61,7 +38,6 @@ public abstract class DistributedIntegrationTestSupport {
         registry.add("jwt.secret", () -> JWT_SECRET);
         registry.add("server.port", () -> "0");
 
-        // The distributed benchmark deliberately starts no upstream domain services.
         registry.add("catalog-service.ribbon.listOfServers", () -> "http://127.0.0.1:1");
         registry.add("user-service.ribbon.listOfServers", () -> "http://127.0.0.1:1");
         registry.add("engagement-service.ribbon.listOfServers", () -> "http://127.0.0.1:1");
