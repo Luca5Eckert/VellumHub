@@ -6,8 +6,7 @@ COPY lib/kafka-contracts/pom.xml lib/kafka-contracts/pom.xml
 COPY lib/kafka-contracts/src lib/kafka-contracts/src
 COPY services/catalog-service/pom.xml services/catalog-service/pom.xml
 
-RUN mvn -B -ntp -f lib/kafka-contracts/pom.xml install -Dmaven.test.skip=true \
-    && mvn -B -ntp -f services/catalog-service/pom.xml dependency:go-offline -DincludeScope=runtime
+RUN mvn -B -ntp -f lib/kafka-contracts/pom.xml install -Dmaven.test.skip=true
 
 COPY services/catalog-service/src services/catalog-service/src
 RUN mvn -B -ntp -f services/catalog-service/pom.xml package -Dmaven.test.skip=true
