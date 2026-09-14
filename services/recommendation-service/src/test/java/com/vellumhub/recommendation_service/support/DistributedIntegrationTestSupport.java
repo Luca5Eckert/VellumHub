@@ -1,6 +1,6 @@
 package com.vellumhub.recommendation_service.support;
 
-import com.vellumhub.testing.distributed.KafkaPgvectorIntegrationTestSupport;
+import com.vellumhub.testing.distributed.container.KafkaPgvectorIntegrationTestSupport;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.test.context.DynamicPropertyRegistry;

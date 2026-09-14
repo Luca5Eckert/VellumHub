@@ -1,4 +1,4 @@
-package com.vellumhub.testing.distributed;
+package com.vellumhub.testing.distributed.container;
 
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;

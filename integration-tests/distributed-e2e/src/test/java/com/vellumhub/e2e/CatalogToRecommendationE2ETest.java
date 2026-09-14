@@ -7,7 +7,7 @@ import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import com.vellumhub.recommendation_service.RecommendationServiceApplication;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.EmbeddingBookProvider;
-import com.vellumhub.testing.distributed.BookEventFixtures;
+import com.vellumhub.testing.distributed.fixture.BookEventFixtures;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;

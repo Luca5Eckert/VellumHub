@@ -1,4 +1,4 @@
-package com.vellumhub.testing.distributed;
+package com.vellumhub.testing.distributed.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;

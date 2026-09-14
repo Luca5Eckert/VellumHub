@@ -1,4 +1,4 @@
-package com.vellumhub.testing.distributed;
+package com.vellumhub.testing.distributed.fixture;
 
 import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 

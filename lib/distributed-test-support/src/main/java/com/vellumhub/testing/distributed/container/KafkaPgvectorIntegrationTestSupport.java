@@ -1,4 +1,4 @@
-package com.vellumhub.testing.distributed;
+package com.vellumhub.testing.distributed.container;
 
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
