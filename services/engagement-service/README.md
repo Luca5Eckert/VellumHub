@@ -27,7 +27,7 @@ It turns user behavior into durable engagement records and Kafka signals that re
 | Book snapshots | Local book copy populated from catalog events |
 | Reading history | Reading session/progress entries consumed from Kafka |
 | Database | `engagement_db` |
-| Engagement events | `created-rating`, `user-reaction-changed` |
+| Engagement events | `created-rating`, `updated-rating`, `user-reaction-changed` |
 
 ## What It Does Not Own
 
@@ -42,7 +42,7 @@ Catalog owns current reading progress. Engagement stores the replicated history/
 
 | Module | Responsibility |
 |---|---|
-| `rating` | Rating commands, queries, persistence, and `created-rating` publication |
+| `rating` | Rating commands, queries, persistence, and rating lifecycle event publication |
 | `reaction` | Reaction lifecycle and `user-reaction-changed` publication |
 | `book_snapshot` | Local copy of catalog book state |
 | `reading_session_entry` | Kafka-driven reading progress history entries |
@@ -82,10 +82,15 @@ Through the gateway, engagement routes are exposed under:
 
 Produced topics:
 
-| Topic | Trigger | Consumer |
+| Topic | Trigger | Current downstream status |
 |---|---|---|
-| `created-rating` | New rating | `recommendation-service` |
-| `user-reaction-changed` | New or updated reaction | `recommendation-service` |
+| `created-rating` | Successful new rating | Consumed by `recommendation-service` |
+| `updated-rating` | Successful existing-rating update | Producer contract available; recommendation consumption is issue #189 |
+| `user-reaction-changed` | New or updated reaction | Consumed by `recommendation-service` |
+
+`created-rating` and `updated-rating` carry `eventId`, `occurredAt`, `ratingId`, `userId`, `bookId`, `oldStars`, `newStars`, and `reviewChanged`. Creation uses `oldStars = null` because zero is a valid rating value; update events preserve the real previous and resulting star values.
+
+For field-level semantics and examples, see [Rating Lifecycle Kafka Contracts](../../docs/RATING_EVENT_CONTRACTS.md).
 
 Consumed topics:
 

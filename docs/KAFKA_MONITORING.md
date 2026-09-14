@@ -109,7 +109,10 @@ The system uses the following Kafka topics for event-driven communication:
 | `created-book` | Catalog Service | Recommendation Service | Book creation events |
 | `updated-book` | Catalog Service | Recommendation Service | Book update events |
 | `deleted-book` | Catalog Service | Recommendation Service | Book deletion events |
-| `created-rating` | Engagement Service | Recommendation Service | Rating creation events |
+| `created-rating` | Engagement Service | Recommendation Service | First persisted rating events |
+| `updated-rating` | Engagement Service | Planned in issue #189 | Existing-rating transition events |
+
+The detailed rating payload semantics are documented in [Rating Lifecycle Kafka Contracts](RATING_EVENT_CONTRACTS.md).
 
 ## Monitoring Best Practices
 

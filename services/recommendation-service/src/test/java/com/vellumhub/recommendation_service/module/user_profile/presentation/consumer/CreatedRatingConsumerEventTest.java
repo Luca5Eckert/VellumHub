@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,7 +41,7 @@ class CreatedRatingConsumerEventTest {
     void shouldInvokeUseCaseOnRatingEvent() {
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        CreatedRatingEvent event = new CreatedRatingEvent(userId, bookId, 4);
+        CreatedRatingEvent event = createdRating(userId, bookId, 4);
 
         createdRatingConsumerEvent.consume(event);
 
@@ -48,11 +49,11 @@ class CreatedRatingConsumerEventTest {
     }
 
     @Test
-    @DisplayName("Should pass correct data to UpdateUserProfileWithRatingUseCase")
+    @DisplayName("Should read newStars from the enriched created-rating contract")
     void shouldPassCorrectDataToUseCase() {
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        CreatedRatingEvent event = new CreatedRatingEvent(userId, bookId, 5);
+        CreatedRatingEvent event = createdRating(userId, bookId, 5);
 
         createdRatingConsumerEvent.consume(event);
 
@@ -71,11 +72,24 @@ class CreatedRatingConsumerEventTest {
     void shouldPropagateExceptionWhenUseCaseFails() {
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        CreatedRatingEvent event = new CreatedRatingEvent(userId, bookId, 3);
+        CreatedRatingEvent event = createdRating(userId, bookId, 3);
         doThrow(new RuntimeException("Profile not found")).when(updateUserProfileWithRatingUseCase).execute(any());
 
         assertThatThrownBy(() -> createdRatingConsumerEvent.consume(event))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Profile not found");
+    }
+
+    private CreatedRatingEvent createdRating(UUID userId, UUID bookId, int stars) {
+        return new CreatedRatingEvent(
+                UUID.randomUUID(),
+                Instant.now(),
+                1L,
+                userId,
+                bookId,
+                null,
+                stars,
+                false
+        );
     }
 }

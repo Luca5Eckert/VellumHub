@@ -1,40 +1,41 @@
 package com.vellumhub.engagement_service.module.rating.domain.producer;
 
 import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
+import com.vellumhub.engagement_service.module.rating.domain.model.RatingUpdateResult;
 import com.vellumhub.engagement_service.module.rating.domain.port.EventProducer;
 import com.vellumhub.kafka.contracts.KafkaTopics;
-import com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent;
+import com.vellumhub.kafka.contracts.engagement.UpdatedRatingEvent;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Component
-public class CreatedRatingEventProducer {
+public class UpdatedRatingEventProducer {
 
-    private final EventProducer<String, CreatedRatingEvent> eventProducer;
+    private final EventProducer<String, UpdatedRatingEvent> eventProducer;
 
-    public CreatedRatingEventProducer(EventProducer<String, CreatedRatingEvent> eventProducer) {
+    public UpdatedRatingEventProducer(EventProducer<String, UpdatedRatingEvent> eventProducer) {
         this.eventProducer = eventProducer;
     }
 
-    public void produce(Rating rating) {
-        CreatedRatingEvent event = new CreatedRatingEvent(
+    public void produce(RatingUpdateResult updateResult) {
+        Rating rating = updateResult.rating();
+        UpdatedRatingEvent event = new UpdatedRatingEvent(
                 UUID.randomUUID(),
                 Instant.now(),
                 rating.getId(),
                 rating.getUserId(),
                 rating.getBookId(),
-                null,
+                updateResult.oldStars(),
                 rating.getStars(),
-                false
+                updateResult.reviewChanged()
         );
 
         eventProducer.send(
-                KafkaTopics.CREATED_RATING,
+                KafkaTopics.UPDATED_RATING,
                 event.userId().toString(),
                 event
         );
     }
-
 }

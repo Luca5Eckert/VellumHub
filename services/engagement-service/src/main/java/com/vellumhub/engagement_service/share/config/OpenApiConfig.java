@@ -39,8 +39,11 @@ public class OpenApiConfig {
                                 - Ratings are used by the Recommendation Service for personalized suggestions
                                 
                                 ## Event Publishing
-                                This service publishes events to Apache Kafka for:
-                                - `created-rating`: When a user submits a new rating
+                                This service publishes rating lifecycle events to Apache Kafka:
+                                - `created-rating`: Emitted only after a new rating is persisted
+                                - `updated-rating`: Emitted only after an existing rating update is persisted
+                                - Both contracts carry event metadata, rating identity, previous/resulting stars, and whether the review changed
+                                - The persisted rating/review remains the source of truth in Engagement
                                 
                                 ## Filtering Options
                                 Rating queries support filtering by:
