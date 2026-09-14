@@ -170,7 +170,16 @@ class DistributedRecommendationBenchmarkIT extends DistributedIntegrationTestSup
                 CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(
                         KafkaTopics.CREATED_RATING,
                         userId.toString(),
-                        new CreatedRatingEvent(userId, bookId, 5)
+                        new CreatedRatingEvent(
+                                correlationId,
+                                Instant.parse(event.publishedAt()),
+                                Integer.toUnsignedLong((scenario.id() + ":" + index).hashCode()) + 1L,
+                                userId,
+                                bookId,
+                                null,
+                                5,
+                                false
+                        )
                 );
                 attempts.add(new PublishAttempt(event, future));
             }
@@ -252,7 +261,16 @@ class DistributedRecommendationBenchmarkIT extends DistributedIntegrationTestSup
         kafkaTemplate.send(
                 KafkaTopics.CREATED_RATING,
                 readUserId.toString(),
-                new CreatedRatingEvent(readUserId, books.getFirst(), 5)
+                new CreatedRatingEvent(
+                        deterministicUuid("read-rating-event", 0),
+                        Instant.now(),
+                        1L,
+                        readUserId,
+                        books.getFirst(),
+                        null,
+                        5,
+                        false
+                )
         ).get(5, TimeUnit.SECONDS);
         awaitProjections(List.of(profileSignal));
 
@@ -677,6 +695,10 @@ class DistributedRecommendationBenchmarkIT extends DistributedIntegrationTestSup
 
         long publishedNanos() {
             return publishedNanos;
+        }
+
+        String publishedAt() {
+            return publishedAt;
         }
 
         double latencyMillis() {

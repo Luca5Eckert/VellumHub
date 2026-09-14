@@ -39,13 +39,13 @@ public class CreatedRatingConsumerEvent {
         log.info("Event received: Rating created. UserId={}, BookId={}, Stars={}",
                 event.userId(),
                 event.bookId(),
-                event.stars());
+                event.newStars());
 
         var command = new UpdateUserProfileWithRatingCommand(
                 event.userId(),
                 event.bookId(),
                 0,
-                event.stars(),
+                event.newStars(),
                 false
         );
 

@@ -140,7 +140,16 @@ class RecommendationFreshnessBenchmarkIT extends DistributedIntegrationTestSuppo
                 sends.add(kafkaTemplate.send(
                         KafkaTopics.CREATED_RATING,
                         userId.toString(),
-                        new CreatedRatingEvent(userId, signalBookId, 5)
+                        new CreatedRatingEvent(
+                                deterministicUuid("freshness-rating-event-" + scenario.id(), index),
+                                Instant.now(),
+                                Integer.toUnsignedLong((scenario.id() + ":" + index).hashCode()) + 1L,
+                                userId,
+                                signalBookId,
+                                null,
+                                5,
+                                false
+                        )
                 ));
             }
 
