@@ -1,4 +1,4 @@
-package com.vellumhub.recommendation_service.support;
+package com.vellumhub.e2e.support;
 
 import com.vellumhub.testing.distributed.container.KafkaPgvectorIntegrationTestSupport;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -6,7 +6,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-public abstract class DistributedIntegrationTestSupport extends KafkaPgvectorIntegrationTestSupport {
+public abstract class RecommendationE2ETestSupport extends KafkaPgvectorIntegrationTestSupport {
 
     private static final String JWT_SECRET =
             "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=";
@@ -24,6 +24,7 @@ public abstract class DistributedIntegrationTestSupport extends KafkaPgvectorInt
         registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.flyway.enabled", () -> "true");
+        registry.add("spring.flyway.locations", () -> "classpath:recommendation/db/migration");
 
         registry.add("spring.kafka.bootstrap-servers", KAFKA::getBootstrapServers);
         registry.add("spring.kafka.admin.fail-fast", () -> "true");
