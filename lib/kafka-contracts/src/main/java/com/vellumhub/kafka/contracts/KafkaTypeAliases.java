@@ -7,6 +7,7 @@ public final class KafkaTypeAliases {
     public static final String DELETE_BOOK_EVENT = "delete_book_event";
 
     public static final String CREATE_RATING_EVENT = "create_rating_event";
+    public static final String UPDATE_RATING_EVENT = "update_rating_event";
     public static final String REACTION_CHANGED_EVENT = "reaction_changed_event";
 
     public static final String CREATED_USER_PREFERENCE = "created_user_preference";

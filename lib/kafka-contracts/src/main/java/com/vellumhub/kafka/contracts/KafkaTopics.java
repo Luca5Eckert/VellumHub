@@ -7,6 +7,7 @@ public final class KafkaTopics {
     public static final String DELETED_BOOK = "deleted-book";
 
     public static final String CREATED_RATING = "created-rating";
+    public static final String UPDATED_RATING = "updated-rating";
     public static final String USER_REACTION_CHANGED = "user-reaction-changed";
 
     public static final String CREATED_USER_PREFERENCE = "created-user-preference";

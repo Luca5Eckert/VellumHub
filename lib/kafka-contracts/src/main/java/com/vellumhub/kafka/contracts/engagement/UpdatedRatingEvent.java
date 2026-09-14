@@ -3,7 +3,7 @@ package com.vellumhub.kafka.contracts.engagement;
 import java.time.Instant;
 import java.util.UUID;
 
-public record CreatedRatingEvent(
+public record UpdatedRatingEvent(
         UUID eventId,
         Instant occurredAt,
         Long ratingId,
