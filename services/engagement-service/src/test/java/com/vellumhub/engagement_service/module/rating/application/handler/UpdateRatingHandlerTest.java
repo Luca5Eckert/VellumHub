@@ -5,6 +5,8 @@ import com.vellumhub.engagement_service.module.rating.application.dto.UpdateRati
 import com.vellumhub.engagement_service.module.rating.application.mapper.RatingMapper;
 import com.vellumhub.engagement_service.module.rating.domain.command.UpdateRatingCommand;
 import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
+import com.vellumhub.engagement_service.module.rating.domain.model.RatingUpdateResult;
+import com.vellumhub.engagement_service.module.rating.domain.producer.UpdatedRatingEventProducer;
 import com.vellumhub.engagement_service.module.rating.domain.use_case.UpdateRatingUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,49 +32,61 @@ class UpdateRatingHandlerTest {
     @Mock
     private RatingMapper mapper;
 
+    @Mock
+    private UpdatedRatingEventProducer updatedRatingEventProducer;
+
     @InjectMocks
     private UpdateRatingHandler updateRatingHandler;
 
     @Test
-    @DisplayName("Should return updated rating response successfully")
-    void shouldReturnUpdatedRatingResponse() {
-        // Arrange
+    @DisplayName("Should publish updated-rating and return updated rating response")
+    void shouldPublishUpdatedRatingAndReturnResponse() {
         long ratingId = 1L;
         UpdateRatingRequest request = new UpdateRatingRequest(5, "Amazing!");
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        Rating updatedRating = new Rating(userId, bookId, 5, "Amazing!", LocalDateTime.now());
-        RatingGetResponse expectedResponse = new RatingGetResponse(ratingId, userId, bookId, 5, "Amazing!", LocalDateTime.now());
+        Rating updatedRating = Rating.builder()
+                .id(ratingId)
+                .userId(userId)
+                .bookId(bookId)
+                .stars(5)
+                .review("Amazing!")
+                .timestamp(LocalDateTime.now())
+                .build();
+        RatingUpdateResult updateResult = new RatingUpdateResult(updatedRating, 4, true);
+        RatingGetResponse expectedResponse = new RatingGetResponse(
+                ratingId,
+                userId,
+                bookId,
+                5,
+                "Amazing!",
+                updatedRating.getTimestamp()
+        );
 
-        when(updateRatingUseCase.execute(any(UpdateRatingCommand.class))).thenReturn(updatedRating);
+        when(updateRatingUseCase.execute(any(UpdateRatingCommand.class))).thenReturn(updateResult);
         when(mapper.toGetResponse(updatedRating)).thenReturn(expectedResponse);
 
-        // Act
         RatingGetResponse result = updateRatingHandler.handle(ratingId, request);
 
-        // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.stars()).isEqualTo(5);
-        assertThat(result.review()).isEqualTo("Amazing!");
-        verify(updateRatingUseCase, times(1)).execute(any(UpdateRatingCommand.class));
-        verify(mapper, times(1)).toGetResponse(updatedRating);
+        assertThat(result).isEqualTo(expectedResponse);
+        verify(updateRatingUseCase).execute(any(UpdateRatingCommand.class));
+        verify(updatedRatingEventProducer).produce(updateResult);
+        verify(mapper).toGetResponse(updatedRating);
     }
 
     @Test
-    @DisplayName("Should propagate exception when use case fails")
-    void shouldPropagateExceptionWhenUseCaseFails() {
-        // Arrange
+    @DisplayName("Should not publish updated-rating when update fails")
+    void shouldNotPublishWhenUseCaseFails() {
         long ratingId = 99L;
         UpdateRatingRequest request = new UpdateRatingRequest(4, "Good");
 
         when(updateRatingUseCase.execute(any(UpdateRatingCommand.class)))
                 .thenThrow(new RuntimeException("Rating not found"));
 
-        // Act & Assert
         assertThatThrownBy(() -> updateRatingHandler.handle(ratingId, request))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Rating not found");
 
-        verifyNoInteractions(mapper);
+        verifyNoInteractions(updatedRatingEventProducer, mapper);
     }
 }

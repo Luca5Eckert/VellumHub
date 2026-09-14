@@ -24,6 +24,7 @@ class KafkaProducerTypeMappingTest {
 
         assertThat(typeMapping)
                 .contains("create_rating_event:com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent")
+                .contains("update_rating_event:com.vellumhub.kafka.contracts.engagement.UpdatedRatingEvent")
                 .contains("reaction_changed_event:com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent");
     }
 }
