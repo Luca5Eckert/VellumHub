@@ -74,9 +74,14 @@ Both topics use `userId.toString()` as the Kafka message key. This keeps events 
 
 ## Consumer boundary
 
-Issue #188 establishes the producer-side lifecycle contract. The Recommendation Service currently receives the enriched `created-rating` payload but retains its previous profile-update semantics for compatibility.
+The Recommendation Service treats event type as lifecycle semantics instead of inferring state from rating values:
 
-Consumption of `updated-rating`, correct first-rating semantics, and use of real `oldStars` / `newStars` deltas belong to issue #189.
+- `created-rating` is always a first rating and applies the full weight of its resulting category;
+- `updated-rating` is always a transition and uses the explicit `oldStars` and `newStars` values;
+- updates that remain in the same rating category produce zero vector drift;
+- an `updated-rating` without `oldStars` is invalid and follows the consumer retry/DLT path.
+
+The Recommendation Service remains event-carried-state-transfer based for this flow and does not call Engagement to reconstruct rating state.
 
 ## Delivery guarantee boundary
 

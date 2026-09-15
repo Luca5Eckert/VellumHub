@@ -50,7 +50,8 @@ public class OpenApiConfig {
                                 - `created-book`: Create book feature vectors
                                 - `updated-book`: Update book feature vectors
                                 - `deleted-book`: Remove book feature vectors
-                                - `created-rating`: Update user profile vectors
+                                - `created-rating`: Learn from a first rating
+                                - `updated-rating`: Apply the explicit old-stars to new-stars transition
                                 """)
                         .version("1.0.0")
                         .contact(new Contact()

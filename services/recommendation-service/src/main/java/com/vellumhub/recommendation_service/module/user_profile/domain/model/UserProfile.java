@@ -65,7 +65,6 @@ public class UserProfile {
         );
     }
 
-
     /**
      * Applies the provided profile adjustment to the user's profile by updating the engagement score and applying vector learning based on the book embedding and adjustment weight. The method updates the total engagement score using the weight adjustment and records the interaction with the specified book ID. It then applies vector learning to adjust the user's profile vector based on the book embedding and adjustment weight, followed by normalizing the profile vector to maintain a magnitude of 1.0 for accurate similarity calculations in future recommendations. Finally, it updates the last updated timestamp to reflect the time of the profile update.
      *
@@ -77,7 +76,6 @@ public class UserProfile {
 
         this.lastUpdated = Instant.now();
     }
-
 
     /**
      * Updates the user's total engagement score based on the provided weight adjustment and records the interaction with the specified book ID. The method adds the weight adjustment to the total engagement score and adds the book ID to the set of interacted book IDs, which helps track user interactions for future recommendations.
@@ -93,6 +91,10 @@ public class UserProfile {
     public void applyVectorLearning(float[] bookEmbedding, float adjustmentWeight) {
         if (bookEmbedding == null || bookEmbedding.length != this.profileVector.length) {
             throw new IllegalArgumentException("Book embedding dimension must match the profile vector dimension.");
+        }
+
+        if (adjustmentWeight == 0.0f) {
+            return;
         }
 
         float learningRate = 0.1f;
@@ -119,5 +121,4 @@ public class UserProfile {
             }
         }
     }
-
 }

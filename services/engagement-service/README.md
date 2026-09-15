@@ -85,7 +85,7 @@ Produced topics:
 | Topic | Trigger | Current downstream status |
 |---|---|---|
 | `created-rating` | Successful new rating | Consumed by `recommendation-service` |
-| `updated-rating` | Successful existing-rating update | Producer contract available; recommendation consumption is issue #189 |
+| `updated-rating` | Successful existing-rating update | Consumed by `recommendation-service` |
 | `user-reaction-changed` | New or updated reaction | Consumed by `recommendation-service` |
 
 `created-rating` and `updated-rating` carry `eventId`, `occurredAt`, `ratingId`, `userId`, `bookId`, `oldStars`, `newStars`, and `reviewChanged`. Creation uses `oldStars = null` because zero is a valid rating value; update events preserve the real previous and resulting star values.
