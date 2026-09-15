@@ -1,5 +1,6 @@
 package com.vellumhub.catalog_service.module.book.domain.handler;
 
+import com.vellumhub.catalog_service.module.book.application.handler.update.UpdateBookHandler;
 import com.vellumhub.kafka.contracts.book.UpdateBookEvent;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.exception.InvalidBookException;
