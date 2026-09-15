@@ -61,6 +61,7 @@ public class KafkaRetryConfig {
                         KafkaTopics.DELETED_BOOK,
                         KafkaTopics.UPDATED_BOOK,
                         KafkaTopics.CREATED_RATING,
+                        KafkaTopics.UPDATED_RATING,
                         KafkaTopics.CREATED_USER_PREFERENCE,
                         KafkaTopics.CREATED_READING_PROGRESS,
                         KafkaTopics.UPDATED_READING_PROGRESS,
@@ -126,5 +127,4 @@ public class KafkaRetryConfig {
         );
         return new KafkaTemplate<>(producerFactory);
     }
-
 }

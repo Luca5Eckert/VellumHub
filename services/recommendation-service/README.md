@@ -77,11 +77,14 @@ Consumed topics:
 | `created-book` | Catalog | Create book feature and recommendation metadata |
 | `updated-book` | Catalog | Refresh book feature and recommendation metadata |
 | `deleted-book` | Catalog | Remove local recommendation state for the book |
-| `created-rating` | Engagement | Adjust user profile vector from rating signal |
+| `created-rating` | Engagement | Apply the full category weight for a first rating |
+| `updated-rating` | Engagement | Apply the delta between previous and new rating categories |
 | `user-reaction-changed` | Engagement | Adjust user profile vector from reaction signal |
 | `created-user-preference` | User | Seed or update cold-start profile vector |
 | `created-reading-progress` | Catalog | Adjust user profile from new progress event |
 | `updated-reading-progress` | Catalog | Adjust user profile from progress update |
+
+Rating updates within the same rating category produce a zero adjustment and leave the profile vector unchanged.
 
 Retry and Dead Letter Topic handling are centralized in `share/kafka/config/KafkaRetryConfig`.
 
@@ -165,7 +168,7 @@ docker info
 mvn -pl services/recommendation-service -am -Dgroups=distributed test
 ```
 
-The distributed suite currently proves the `created-book` happy path and the three-attempt retry -> DLT failure path. Idempotency and transactional outbox tests are intentionally deferred until those production guarantees exist.
+The distributed suite covers the `created-book` retry/DLT boundary and the rating lifecycle path from `created-rating` and `updated-rating` into the persisted user profile.
 
 See [Distributed Integration Testing](../../docs/DISTRIBUTED_TESTING.md) for infrastructure boundaries, CI budget, extension rules, and the planned E2E boundary.
 
