@@ -12,7 +12,8 @@ public abstract class DistributedIntegrationTestSupport extends KafkaPgvectorInt
             "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=";
     private static final String PRODUCER_TYPE_MAPPINGS = String.join(",",
             "create_book_event:com.vellumhub.kafka.contracts.book.CreateBookEvent",
-            "create_rating_event:com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent"
+            "create_rating_event:com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent",
+            "update_rating_event:com.vellumhub.kafka.contracts.engagement.UpdatedRatingEvent"
     );
 
     @DynamicPropertySource

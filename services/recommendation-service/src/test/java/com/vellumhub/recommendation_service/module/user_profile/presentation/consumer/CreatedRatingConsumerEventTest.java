@@ -49,7 +49,7 @@ class CreatedRatingConsumerEventTest {
     }
 
     @Test
-    @DisplayName("Should read newStars from the enriched created-rating contract")
+    @DisplayName("Should treat created-rating as a first rating")
     void shouldPassCorrectDataToUseCase() {
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
@@ -64,7 +64,7 @@ class CreatedRatingConsumerEventTest {
         assertThat(command.bookId()).isEqualTo(bookId);
         assertThat(command.newStars()).isEqualTo(5);
         assertThat(command.oldStars()).isEqualTo(0);
-        assertThat(command.isNewRating()).isFalse();
+        assertThat(command.isNewRating()).isTrue();
     }
 
     @Test
