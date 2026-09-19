@@ -90,7 +90,9 @@ Produced topics:
 
 `created-rating` and `updated-rating` carry `eventId`, `occurredAt`, `ratingId`, `userId`, `bookId`, `oldStars`, `newStars`, and `reviewChanged`. Creation uses `oldStars = null` because zero is a valid rating value; update events preserve the real previous and resulting star values.
 
-For field-level semantics and examples, see [Rating Lifecycle Kafka Contracts](../../docs/RATING_EVENT_CONTRACTS.md).
+`user-reaction-changed` carries `eventId`, `occurredAt`, `reactionId`, `userId`, `bookId`, `oldTypeReaction`, and `newTypeReaction`. Creation uses `oldTypeReaction = null`; updates preserve both sides of the transition, including same-value updates for auditability. The legacy `typeReaction` field remains temporarily as a compatibility alias for the resulting state.
+
+For field-level semantics and examples, see [Rating Lifecycle Kafka Contracts](../../docs/RATING_EVENT_CONTRACTS.md) and [Reaction Lifecycle Kafka Contracts](../../docs/REACTION_EVENT_CONTRACTS.md).
 
 Consumed topics:
 
