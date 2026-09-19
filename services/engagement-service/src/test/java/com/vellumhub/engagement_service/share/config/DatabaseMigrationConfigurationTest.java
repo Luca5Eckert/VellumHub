@@ -30,6 +30,17 @@ class DatabaseMigrationConfigurationTest {
     }
 
     @Test
+    void reactionAuditMigrationIsPackaged() throws IOException {
+        String migration = readResource("db/migration/V3__add_reaction_audit_timestamps.sql");
+
+        assertThat(migration)
+                .contains("ADD COLUMN created_at")
+                .contains("ADD COLUMN updated_at")
+                .contains("ALTER COLUMN created_at SET NOT NULL")
+                .contains("ALTER COLUMN updated_at SET NOT NULL");
+    }
+
+    @Test
     void productionProfileValidatesSchemaInsteadOfUpdatingIt() throws IOException {
         Properties properties = loadProperties("application-prod.properties");
 

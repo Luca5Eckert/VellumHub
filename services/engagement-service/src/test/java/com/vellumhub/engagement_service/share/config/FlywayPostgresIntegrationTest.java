@@ -43,12 +43,19 @@ class FlywayPostgresIntegrationTest {
     @Test
     @Order(1)
     void startsAgainstAnEmptyPostgresDatabaseAndAppliesAllMigrations(@Autowired JdbcTemplate jdbcTemplate) {
-        assertThat(jdbcTemplate.queryForObject("select count(*) from flyway_schema_history where version in ('1', '2') and success", Integer.class)).isEqualTo(2);
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from flyway_schema_history where version in ('1', '2', '3') and success",
+                Integer.class
+        )).isEqualTo(3);
         assertThat(tableExists(jdbcTemplate, "book_snapshot")).isTrue();
         assertThat(tableExists(jdbcTemplate, "rating")).isTrue();
         assertThat(tableExists(jdbcTemplate, "reactions")).isTrue();
         assertThat(tableExists(jdbcTemplate, "reading_session_entries")).isTrue();
         assertThat(indexExists(jdbcTemplate, "idx_rating_user_id")).isTrue();
+        assertThat(columnExists(jdbcTemplate, "reactions", "created_at")).isTrue();
+        assertThat(columnExists(jdbcTemplate, "reactions", "updated_at")).isTrue();
+        assertThat(columnIsNullable(jdbcTemplate, "reactions", "created_at")).isFalse();
+        assertThat(columnIsNullable(jdbcTemplate, "reactions", "updated_at")).isFalse();
     }
 
     @Test
@@ -76,6 +83,7 @@ class FlywayPostgresIntegrationTest {
                 "KAFKA_BOOTSTRAP_SERVERS", "localhost:65535",
                 "JWT_KEY", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=");
     }
+
     private static Map<String, Object> runtimeProperties() {
         return Map.of(
                 "spring.datasource.url", POSTGRES.getJdbcUrl(),
@@ -90,10 +98,36 @@ class FlywayPostgresIntegrationTest {
     }
 
     private boolean tableExists(JdbcTemplate jdbcTemplate, String table) {
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("select exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = ?)", Boolean.class, table));
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                "select exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = ?)",
+                Boolean.class,
+                table
+        ));
     }
 
     private boolean indexExists(JdbcTemplate jdbcTemplate, String index) {
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("select exists (select 1 from pg_indexes where schemaname = 'public' and indexname = ?)", Boolean.class, index));
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                "select exists (select 1 from pg_indexes where schemaname = 'public' and indexname = ?)",
+                Boolean.class,
+                index
+        ));
+    }
+
+    private boolean columnExists(JdbcTemplate jdbcTemplate, String table, String column) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                "select exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = ? and column_name = ?)",
+                Boolean.class,
+                table,
+                column
+        ));
+    }
+
+    private boolean columnIsNullable(JdbcTemplate jdbcTemplate, String table, String column) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                "select is_nullable = 'YES' from information_schema.columns where table_schema = 'public' and table_name = ? and column_name = ?",
+                Boolean.class,
+                table,
+                column
+        ));
     }
 }

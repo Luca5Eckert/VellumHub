@@ -5,6 +5,7 @@ import com.vellumhub.engagement_service.module.reaction.domain.exception.Reactio
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -32,19 +33,52 @@ public class Reaction {
     @Column(nullable = false)
     private TypeReaction typeReaction;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
     public static Reaction of(UUID userId, BookSnapshot snapshot, TypeReaction type) {
+        return of(userId, snapshot, type, Instant.now());
+    }
+
+    public static Reaction of(UUID userId, BookSnapshot snapshot, TypeReaction type, Instant occurredAt) {
+        if (type == null) {
+            throw new ReactionException("Type reaction cannot be null");
+        }
+        if (occurredAt == null) {
+            throw new ReactionException("Reaction occurrence time cannot be null");
+        }
+
         return Reaction.builder()
                 .userId(userId)
                 .bookSnapshot(snapshot)
                 .typeReaction(type)
+                .createdAt(occurredAt)
+                .updatedAt(occurredAt)
                 .build();
     }
 
-    public void updateType(TypeReaction typeReaction, UUID userId) {
-        if(typeReaction == null) throw new ReactionException("Type reaction cannot be null");
-        if(!userId.equals(this.userId)) throw new ReactionException("User cannot update reaction of another user");
-
-        this.typeReaction = typeReaction;
+    public TypeReaction updateType(TypeReaction typeReaction, UUID userId) {
+        return updateType(typeReaction, userId, Instant.now());
     }
 
+    public TypeReaction updateType(TypeReaction typeReaction, UUID userId, Instant occurredAt) {
+        if (typeReaction == null) {
+            throw new ReactionException("Type reaction cannot be null");
+        }
+        if (!userId.equals(this.userId)) {
+            throw new ReactionException("User cannot update reaction of another user");
+        }
+        if (occurredAt == null) {
+            throw new ReactionException("Reaction occurrence time cannot be null");
+        }
+
+        TypeReaction oldTypeReaction = this.typeReaction;
+        this.typeReaction = typeReaction;
+        this.updatedAt = occurredAt;
+
+        return oldTypeReaction;
+    }
 }
