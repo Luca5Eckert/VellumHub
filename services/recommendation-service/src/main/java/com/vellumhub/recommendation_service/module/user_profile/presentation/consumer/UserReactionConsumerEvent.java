@@ -1,10 +1,10 @@
 package com.vellumhub.recommendation_service.module.user_profile.presentation.consumer;
 
-import com.vellumhub.recommendation_service.module.user_profile.application.command.ReactionChangedCommand;
-import com.vellumhub.recommendation_service.module.user_profile.application.use_case.ReactionChangedUseCase;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent;
+import com.vellumhub.recommendation_service.module.user_profile.application.command.ReactionChangedCommand;
+import com.vellumhub.recommendation_service.module.user_profile.application.use_case.ReactionChangedUseCase;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
@@ -33,18 +33,30 @@ public class UserReactionConsumerEvent {
     )
     public void consume(ReactionChangedEvent event) {
         Timer.Sample sample = metrics.startKafkaProcessing();
-        log.info("Event received: User reaction changed. UserId={}, BookId={}, Reaction={}",
-                event.userId(),
-                event.bookId(),
-                event.typeReaction());
+        String newTypeReaction = event.resultingTypeReaction();
 
-        var command = ReactionChangedCommand.of(
+        log.info(
+                "Event received: User reaction changed. EventId={}, ReactionId={}, UserId={}, BookId={}, OldReaction={}, NewReaction={}",
+                event.eventId(),
+                event.reactionId(),
                 event.userId(),
                 event.bookId(),
-                event.typeReaction()
+                event.oldTypeReaction(),
+                newTypeReaction
         );
 
         try {
+            if (newTypeReaction == null || newTypeReaction.isBlank()) {
+                throw new IllegalArgumentException("Reaction change event must include a resulting reaction type");
+            }
+
+            var command = ReactionChangedCommand.of(
+                    event.userId(),
+                    event.bookId(),
+                    event.oldTypeReaction(),
+                    newTypeReaction
+            );
+
             reactionChangedUseCase.execute(command);
             metrics.recordKafkaConsumed(TOPIC, EVENT_TYPE, CONSUMER_GROUP);
             metrics.recordKafkaProcessingDuration(sample, TOPIC, EVENT_TYPE, CONSUMER_GROUP, "success");
@@ -54,9 +66,12 @@ public class UserReactionConsumerEvent {
             throw ex;
         }
 
-        log.info("User reaction change event processed successfully. UserId={}, BookId={}",
+        log.info(
+                "User reaction change event processed successfully. EventId={}, ReactionId={}, UserId={}, BookId={}",
+                event.eventId(),
+                event.reactionId(),
                 event.userId(),
-                event.bookId());
+                event.bookId()
+        );
     }
-
 }
