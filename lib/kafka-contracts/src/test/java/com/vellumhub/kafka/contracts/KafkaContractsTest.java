@@ -76,7 +76,7 @@ class KafkaContractsTest {
         assertNotNull(new UpdateBookProgressEvent(progressId, userId, bookId, "READING", 1, 2));
         assertNotNull(new CreatedRatingEvent(eventId, occurredAt, 10L, userId, bookId, null, 5, false));
         assertNotNull(new UpdatedRatingEvent(eventId, occurredAt, 10L, userId, bookId, 3, 5, true));
-        assertNotNull(new ReactionChangedEvent(userId, bookId, "POSITIVE"));
+        assertNotNull(new ReactionChangedEvent(eventId, occurredAt, 20L, userId, bookId, "POSITIVE", "VERY_POSITIVE"));
         assertNotNull(new CreateUserPreferenceEvent(userId, genres, "About"));
     }
 
@@ -106,5 +106,48 @@ class KafkaContractsTest {
         assertNull(event.oldStars());
         assertEquals(4, event.newStars());
         assertEquals(false, event.reviewChanged());
+    }
+
+    @Test
+    void shouldRepresentReactionLifecycleTransition() {
+        UUID eventId = UUID.randomUUID();
+        Instant occurredAt = Instant.parse("2026-09-19T12:00:00Z");
+        UUID userId = UUID.randomUUID();
+        UUID bookId = UUID.randomUUID();
+
+        ReactionChangedEvent event = new ReactionChangedEvent(
+                eventId,
+                occurredAt,
+                24L,
+                userId,
+                bookId,
+                "POSITIVE",
+                "VERY_POSITIVE"
+        );
+
+        assertEquals(eventId, event.eventId());
+        assertEquals(occurredAt, event.occurredAt());
+        assertEquals(24L, event.reactionId());
+        assertEquals(userId, event.userId());
+        assertEquals(bookId, event.bookId());
+        assertEquals("POSITIVE", event.oldTypeReaction());
+        assertEquals("VERY_POSITIVE", event.newTypeReaction());
+        assertEquals("VERY_POSITIVE", event.typeReaction());
+        assertEquals("VERY_POSITIVE", event.resultingTypeReaction());
+    }
+
+    @Test
+    @SuppressWarnings("removal")
+    void shouldKeepLegacyReactionPayloadReadableDuringMigration() {
+        UUID userId = UUID.randomUUID();
+        UUID bookId = UUID.randomUUID();
+
+        ReactionChangedEvent event = new ReactionChangedEvent(userId, bookId, "POSITIVE");
+
+        assertNull(event.eventId());
+        assertNull(event.occurredAt());
+        assertNull(event.reactionId());
+        assertNull(event.oldTypeReaction());
+        assertEquals("POSITIVE", event.resultingTypeReaction());
     }
 }
