@@ -18,8 +18,8 @@ public class SpringReactionRepository implements ReactionRepository {
     }
 
     @Override
-    public void save(Reaction reaction) {
-        jpaReactionRepository.save(reaction);
+    public Reaction save(Reaction reaction) {
+        return jpaReactionRepository.save(reaction);
     }
 
     @Override

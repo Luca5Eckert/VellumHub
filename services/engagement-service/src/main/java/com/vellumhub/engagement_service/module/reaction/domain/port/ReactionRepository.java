@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ReactionRepository {
-    void save(Reaction reaction);
+    Reaction save(Reaction reaction);
 
     Optional<Reaction> findById(Long id);
 
