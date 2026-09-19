@@ -50,33 +50,52 @@ class ReactionChangedUseCaseTest {
         userId = UUID.randomUUID();
         bookId = UUID.randomUUID();
         bookFeature = BookFeature.create(bookId, EMBEDDING, 1.0);
-        command = new ReactionChangedCommand(userId, bookId, Reaction.POSITIVE.name());
+        command = new ReactionChangedCommand(
+                userId,
+                bookId,
+                Reaction.POSITIVE.name(),
+                Reaction.VERY_POSITIVE.name()
+        );
     }
 
     @Test
-    void execute_whenProfileExists_shouldLoadExistingProfile() {
+    void executeWhenProfileExistsShouldLoadExistingProfile() {
         UserProfile existingProfile = new UserProfile(userId);
-        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, Reaction.POSITIVE.adjustmentValue, EMBEDDING);
+        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, 1.5f, EMBEDDING);
 
         when(userProfileRepository.findById(userId)).thenReturn(Optional.of(existingProfile));
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.of(bookFeature));
-        when(reactionBookInteraction.toAdjustment(bookFeature, command.reactionType())).thenReturn(adjustment);
+        when(reactionBookInteraction.toAdjustment(
+                bookFeature,
+                command.oldReactionType(),
+                command.newReactionType()
+        )).thenReturn(adjustment);
 
         reactionChangedUseCase.execute(command);
 
         verify(userProfileRepository).findById(userId);
-        verify(userProfileRepository, never()).save(argThat(p -> !p.getUserId().equals(userId)));
+        verify(userProfileRepository).save(existingProfile);
     }
 
     @Test
-    void execute_whenProfileDoesNotExist_shouldCreateNewProfile() {
+    void executeWhenProfileDoesNotExistShouldCreateNewProfile() {
+        ReactionChangedCommand creation = new ReactionChangedCommand(
+                userId,
+                bookId,
+                null,
+                Reaction.POSITIVE.name()
+        );
         ProfileAdjustment adjustment = new ProfileAdjustment(bookId, Reaction.POSITIVE.adjustmentValue, EMBEDDING);
 
         when(userProfileRepository.findById(userId)).thenReturn(Optional.empty());
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.of(bookFeature));
-        when(reactionBookInteraction.toAdjustment(bookFeature, command.reactionType())).thenReturn(adjustment);
+        when(reactionBookInteraction.toAdjustment(
+                bookFeature,
+                creation.oldReactionType(),
+                creation.newReactionType()
+        )).thenReturn(adjustment);
 
-        reactionChangedUseCase.execute(command);
+        reactionChangedUseCase.execute(creation);
 
         ArgumentCaptor<UserProfile> captor = ArgumentCaptor.forClass(UserProfile.class);
         verify(userProfileRepository).save(captor.capture());
@@ -84,39 +103,60 @@ class ReactionChangedUseCaseTest {
     }
 
     @Test
-    void execute_whenBookNotFound_shouldSkipProfileUpdate() {
+    void executeWhenBookNotFoundShouldSkipProfileUpdate() {
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.empty());
 
         reactionChangedUseCase.execute(command);
 
         verify(userProfileRepository, never()).findById(any());
         verify(userProfileRepository, never()).save(any());
-        verify(reactionBookInteraction, never()).toAdjustment(any(), any());
+        verify(reactionBookInteraction, never()).toAdjustment(any(), any(), any());
     }
 
     @Test
-    void execute_shouldDelegateAdjustmentCalculationToInteraction() {
-        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, Reaction.POSITIVE.adjustmentValue, EMBEDDING);
+    void executeShouldDelegateCompleteTransitionToInteraction() {
+        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, 1.5f, EMBEDDING);
 
         when(userProfileRepository.findById(userId)).thenReturn(Optional.of(new UserProfile(userId)));
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.of(bookFeature));
-        when(reactionBookInteraction.toAdjustment(bookFeature, command.reactionType())).thenReturn(adjustment);
+        when(reactionBookInteraction.toAdjustment(
+                bookFeature,
+                command.oldReactionType(),
+                command.newReactionType()
+        )).thenReturn(adjustment);
 
         reactionChangedUseCase.execute(command);
 
-        verify(reactionBookInteraction).toAdjustment(bookFeature, command.reactionType());
+        verify(reactionBookInteraction).toAdjustment(
+                bookFeature,
+                Reaction.POSITIVE.name(),
+                Reaction.VERY_POSITIVE.name()
+        );
     }
 
     @Test
-    void execute_shouldSaveProfileAfterApplyingAdjustment() {
-        ProfileAdjustment adjustment = new ProfileAdjustment(bookId, Reaction.POSITIVE.adjustmentValue, EMBEDDING);
+    void executeSameValueTransitionShouldPersistZeroDriftProfile() {
+        ReactionChangedCommand unchanged = new ReactionChangedCommand(
+                userId,
+                bookId,
+                Reaction.POSITIVE.name(),
+                Reaction.POSITIVE.name()
+        );
+        UserProfile profile = UserProfile.create(userId);
+        float[] vectorBefore = profile.getProfileVector().clone();
+        ProfileAdjustment zeroAdjustment = new ProfileAdjustment(bookId, 0.0f, EMBEDDING);
 
-        when(userProfileRepository.findById(userId)).thenReturn(Optional.of(new UserProfile(userId)));
+        when(userProfileRepository.findById(userId)).thenReturn(Optional.of(profile));
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.of(bookFeature));
-        when(reactionBookInteraction.toAdjustment(bookFeature, command.reactionType())).thenReturn(adjustment);
+        when(reactionBookInteraction.toAdjustment(
+                bookFeature,
+                unchanged.oldReactionType(),
+                unchanged.newReactionType()
+        )).thenReturn(zeroAdjustment);
 
-        reactionChangedUseCase.execute(command);
+        reactionChangedUseCase.execute(unchanged);
 
-        verify(userProfileRepository).save(any(UserProfile.class));
+        assertThat(profile.getProfileVector()).containsExactly(vectorBefore);
+        verify(userProfileRepository).save(profile);
     }
 }
