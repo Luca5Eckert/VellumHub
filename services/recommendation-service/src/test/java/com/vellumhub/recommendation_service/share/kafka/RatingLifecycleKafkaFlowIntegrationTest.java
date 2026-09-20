@@ -5,6 +5,7 @@ import com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent;
 import com.vellumhub.kafka.contracts.engagement.UpdatedRatingEvent;
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.recommendation_service.module.book_feature.domain.port.BookFeatureRepository;
+import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
 import com.vellumhub.recommendation_service.support.DistributedIntegrationTestSupport;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -66,13 +68,9 @@ class RatingLifecycleKafkaFlowIntegrationTest extends DistributedIntegrationTest
         kafkaTemplate.send(KafkaTopics.CREATED_RATING, userId.toString(), created)
                 .get(5, TimeUnit.SECONDS);
 
-        await()
-                .atMost(ASYNC_TIMEOUT)
-                .pollInterval(ASYNC_POLL_INTERVAL)
-                .untilAsserted(() -> {
-                    var profile = userProfileRepository.findById(userId).orElseThrow();
-                    assertThat(profile.getTotalEngagementScore()).isEqualTo(-5.0);
-                });
+        awaitProfile(userId, profile ->
+                assertThat(profile.getTotalEngagementScore()).isEqualTo(-5.0)
+        );
 
         UpdatedRatingEvent updated = new UpdatedRatingEvent(
                 UUID.randomUUID(),
@@ -88,13 +86,20 @@ class RatingLifecycleKafkaFlowIntegrationTest extends DistributedIntegrationTest
         kafkaTemplate.send(KafkaTopics.UPDATED_RATING, userId.toString(), updated)
                 .get(5, TimeUnit.SECONDS);
 
+        awaitProfile(userId, profile -> {
+            assertThat(profile.getTotalEngagementScore()).isEqualTo(5.0);
+            assertThat(profile.getInteractedBookIds()).containsExactly(bookId);
+        });
+    }
+
+    private void awaitProfile(UUID userId, Consumer<UserProfile> assertion) {
         await()
                 .atMost(ASYNC_TIMEOUT)
                 .pollInterval(ASYNC_POLL_INTERVAL)
                 .untilAsserted(() -> {
-                    var profile = userProfileRepository.findById(userId).orElseThrow();
-                    assertThat(profile.getTotalEngagementScore()).isEqualTo(5.0);
-                    assertThat(profile.getInteractedBookIds()).containsExactly(bookId);
+                    var profile = userProfileRepository.findById(userId);
+                    assertThat(profile).isPresent();
+                    assertion.accept(profile.get());
                 });
     }
 }
