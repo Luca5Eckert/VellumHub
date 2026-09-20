@@ -13,6 +13,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ReactionTest {
 
     @Test
+    void occurrenceTimesShouldMatchPostgresMicrosecondPrecision() {
+        UUID owner = UUID.randomUUID();
+        Reaction reaction = Reaction.of(owner, new BookSnapshot(UUID.randomUUID()),
+                TypeReaction.POSITIVE, Instant.parse("2026-09-19T12:00:00.123456789Z"));
+        Instant createdAt = Instant.parse("2026-09-19T12:00:00.123456Z");
+        assertThat(reaction.getCreatedAt()).isEqualTo(createdAt);
+        assertThat(reaction.getUpdatedAt()).isEqualTo(createdAt);
+
+        reaction.updateType(TypeReaction.NEGATIVE, owner, Instant.parse("2026-09-19T12:01:00.987654999Z"));
+        assertThat(reaction.getCreatedAt()).isEqualTo(createdAt);
+        assertThat(reaction.getUpdatedAt()).isEqualTo(Instant.parse("2026-09-19T12:01:00.987654Z"));
+    }
+
+    @Test
     void creationShouldInitializeAuditTimestampsFromOccurrenceTime() {
         Instant occurredAt = Instant.parse("2026-09-19T12:00:00Z");
 

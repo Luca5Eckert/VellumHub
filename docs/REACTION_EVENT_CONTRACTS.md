@@ -94,7 +94,7 @@ The `reactions` table stores:
 - `created_at`: original creation occurrence time;
 - `updated_at`: latest reaction mutation occurrence time.
 
-Creation publishes `occurredAt = created_at`. Updates publish `occurredAt = updated_at`.
+Creation publishes `occurredAt = created_at`. Updates publish `occurredAt = updated_at`. Occurrence times are truncated to microseconds before persistence and publication to match PostgreSQL `TIMESTAMP(6)` precision.
 
 Rows that existed before the audit migration receive the migration timestamp as their initial backfill value. Historical timestamp precision therefore starts with the migration for those existing rows.
 

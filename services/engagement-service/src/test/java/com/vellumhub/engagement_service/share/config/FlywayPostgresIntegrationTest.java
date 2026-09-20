@@ -19,6 +19,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import org.flywaydb.core.Flyway;
+import java.time.Instant;
+import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -167,6 +169,33 @@ class FlywayPostgresIntegrationTest {
                 owner, occurrence, occurrence);
         assertThat(jdbc.queryForObject("select created_at from reaction_upgrade.reactions where id = 3",
                 OffsetDateTime.class)).isEqualTo(occurrence);
+    }
+
+    @Test
+    @Order(4)
+    void occurrenceMetadataSurvivesJpaRoundTrips(
+            @Autowired ReactionRepository reactions,
+            @Autowired PlatformTransactionManager transactionManager
+    ) {
+        UUID owner = UUID.randomUUID();
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        Reaction saved = transaction.execute(status -> reactions.save(Reaction.of(owner, null,
+                TypeReaction.POSITIVE, Instant.parse("2026-09-19T12:00:00.123456789Z"))));
+        assertThat(saved).isNotNull();
+        Reaction loaded = reactions.findById(saved.getId()).orElseThrow();
+        assertThat(loaded.getCreatedAt()).isEqualTo(saved.getCreatedAt());
+        assertThat(loaded.getUpdatedAt()).isEqualTo(saved.getUpdatedAt());
+
+        Reaction updated = transaction.execute(status -> {
+            Reaction reaction = reactions.findByIdForUpdate(saved.getId()).orElseThrow();
+            reaction.updateType(TypeReaction.NEGATIVE, owner, Instant.parse("2026-09-19T12:01:00.987654999Z"));
+            return reactions.save(reaction);
+        });
+        assertThat(updated).isNotNull();
+        Reaction reloaded = reactions.findById(saved.getId()).orElseThrow();
+        assertThat(reloaded.getCreatedAt()).isEqualTo(saved.getCreatedAt());
+        assertThat(reloaded.getUpdatedAt()).isEqualTo(updated.getUpdatedAt());
+        assertThat(reloaded.getTypeReaction()).isEqualTo(TypeReaction.NEGATIVE);
     }
 
     private static ConfigurableApplicationContext startApplication() {

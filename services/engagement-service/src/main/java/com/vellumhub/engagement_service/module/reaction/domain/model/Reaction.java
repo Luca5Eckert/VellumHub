@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Entity
@@ -51,12 +52,13 @@ public class Reaction {
             throw new ReactionException("Reaction occurrence time cannot be null");
         }
 
+        Instant persistedOccurrence = occurredAt.truncatedTo(ChronoUnit.MICROS);
         return Reaction.builder()
                 .userId(userId)
                 .bookSnapshot(snapshot)
                 .typeReaction(type)
-                .createdAt(occurredAt)
-                .updatedAt(occurredAt)
+                .createdAt(persistedOccurrence)
+                .updatedAt(persistedOccurrence)
                 .build();
     }
 
@@ -77,7 +79,7 @@ public class Reaction {
 
         TypeReaction oldTypeReaction = this.typeReaction;
         this.typeReaction = typeReaction;
-        this.updatedAt = occurredAt;
+        this.updatedAt = occurredAt.truncatedTo(ChronoUnit.MICROS);
 
         return oldTypeReaction;
     }
