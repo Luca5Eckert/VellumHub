@@ -130,10 +130,10 @@ The distributed job:
 2. pre-pulls Ryuk, Kafka, and pgvector images;
 3. activates the `distributed-e2e` Maven profile and warms the selected reactor slice;
 4. runs Catalog distributed tests, Recommendation distributed tests, and the dedicated cross-service E2E module through `-am`;
-5. enforces a 75-second post-warm execution budget;
+5. enforces a 90-second post-warm execution budget;
 6. has a five-minute hard job timeout for infrastructure failures.
 
-The 75-second budget accounts for the second real service context and cross-service E2E while remaining a guard against accidental expansion into a slow platform E2E suite.
+The 90-second budget preserves a bounded post-warm execution gate while allowing normal hosted-runner variance around container startup and Kafka/PostgreSQL scheduling. It remains a guard against accidental expansion into a slow platform E2E suite; the five-minute hard job timeout remains unchanged.
 
 If the post-warm distributed run becomes unstable near the budget, shard by infrastructure cost rather than by arbitrary test count: keep the Kafka-only Catalog producer suite in one job and the Kafka + pgvector Recommendation/E2E slice in another. Each shard must retain its own explicit budget.
 
