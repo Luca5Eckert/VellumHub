@@ -80,8 +80,8 @@ class ReactionLifecycleSerializationTest {
         when(profiles.findById(userId)).thenReturn(Optional.of(profile));
         when(books.findById(bookId)).thenReturn(Optional.empty(),
                 Optional.of(BookFeature.create(bookId, embedding, 1.0)));
-        try (var registry = new SimpleMeterRegistry();
-             var serializer = new JsonSerializer<ReactionChangedEvent>();
+        var registry = new SimpleMeterRegistry();
+        try (var serializer = new JsonSerializer<ReactionChangedEvent>();
              var deserializer = new JsonDeserializer<>(ReactionChangedEvent.class, false)) {
             var consumer = new UserReactionConsumerEvent(
                     new ReactionChangedUseCase(profiles, books, new ReactionBookInteraction()),
@@ -107,6 +107,8 @@ class ReactionLifecycleSerializationTest {
             assertThat(profile.getTotalEngagementScore()).isEqualTo(-0.5);
             assertThat(profile.getInteractedBookIds()).containsExactly(bookId);
             verify(profiles, times(3)).save(profile);
+        } finally {
+            registry.close();
         }
     }
 }
