@@ -7,11 +7,9 @@ import com.vellumhub.recommendation_service.module.user_profile.domain.interacti
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.ProfileAdjustment;
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
 import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
-@Slf4j
 public class ReactionChangedUseCase {
 
     private final UserProfileRepository userProfileRepository;
@@ -36,15 +34,8 @@ public class ReactionChangedUseCase {
      */
     public void execute(ReactionChangedCommand command) {
         BookFeature book = bookFeatureRepository.findById(command.bookId())
-                .orElse(null);
-        if (book == null) {
-            log.warn(
-                    "Skipping reaction profile update because book features are not available yet. UserId={}, BookId={}",
-                    command.userId(),
-                    command.bookId()
-            );
-            return;
-        }
+                .orElseThrow(() -> new IllegalStateException(
+                        "Book features are not available for reaction transition: " + command.bookId()));
 
         UserProfile profile = userProfileRepository.findById(command.userId())
                 .orElseGet(() -> new UserProfile(command.userId()));

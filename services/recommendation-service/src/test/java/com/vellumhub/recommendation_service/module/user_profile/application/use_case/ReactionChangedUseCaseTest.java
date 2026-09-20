@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -103,10 +104,12 @@ class ReactionChangedUseCaseTest {
     }
 
     @Test
-    void executeWhenBookNotFoundShouldSkipProfileUpdate() {
+    void executeWhenBookNotFoundShouldFailForRetryInsteadOfAcknowledgingLostTransition() {
         when(bookFeatureRepository.findById(bookId)).thenReturn(Optional.empty());
 
-        reactionChangedUseCase.execute(command);
+        assertThatThrownBy(() -> reactionChangedUseCase.execute(command))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Book features are not available");
 
         verify(userProfileRepository, never()).findById(any());
         verify(userProfileRepository, never()).save(any());

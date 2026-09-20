@@ -123,6 +123,8 @@ newTypeReaction = typeReaction
 
 Legacy events do not have `eventId`, `occurredAt`, or `reactionId`. Consumer idempotency for enriched events belongs to issue #200, which must define the final handling policy for those legacy messages.
 
+A missing local book feature now fails consumption so the existing retry/DLT pipeline can retain the event. A successful acknowledgement must not discard a delta that later transitions depend on. Retry exhaustion still requires operational recovery; this change does not implement safe replay.
+
 ## Delivery Guarantee Boundary
 
 This contract makes the event self-contained but does not provide atomic publication or idempotent consumption by itself.
