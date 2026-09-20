@@ -79,12 +79,14 @@ Consumed topics:
 | `deleted-book` | Catalog | Remove local recommendation state for the book |
 | `created-rating` | Engagement | Apply the full category weight for a first rating |
 | `updated-rating` | Engagement | Apply the delta between previous and new rating categories |
-| `user-reaction-changed` | Engagement | Adjust user profile vector from reaction signal |
+| `user-reaction-changed` | Engagement | Apply the delta between previous and new reaction weights |
 | `created-user-preference` | User | Seed or update cold-start profile vector |
 | `created-reading-progress` | Catalog | Adjust user profile from new progress event |
 | `updated-reading-progress` | Catalog | Adjust user profile from progress update |
 
-Rating updates within the same rating category produce a zero adjustment and leave the profile vector unchanged.
+Rating updates within the same rating category produce a zero adjustment and leave the profile vector unchanged. Reaction updates follow the same transition rule: Recommendation applies `weight(new) - weight(old)`, while reaction creation applies the full resulting weight. Same-value reaction updates therefore produce zero profile drift.
+
+See [Reaction Lifecycle Kafka Contracts](../../docs/REACTION_EVENT_CONTRACTS.md) for the enriched reaction payload, legacy compatibility, and delivery-guarantee boundary.
 
 Retry and Dead Letter Topic handling are centralized in `share/kafka/config/KafkaRetryConfig`.
 
@@ -168,7 +170,7 @@ docker info
 mvn -pl services/recommendation-service -am -Dgroups=distributed test
 ```
 
-The distributed suite covers the `created-book` retry/DLT boundary and the rating lifecycle path from `created-rating` and `updated-rating` into the persisted user profile.
+The distributed suite covers the `created-book` retry/DLT boundary, the rating lifecycle path, and reaction lifecycle transitions into the persisted user profile.
 
 See [Distributed Integration Testing](../../docs/DISTRIBUTED_TESTING.md) for infrastructure boundaries, CI budget, extension rules, and the planned E2E boundary.
 

@@ -7,14 +7,21 @@ import org.springframework.stereotype.Service;
 @Service
 public class ReactionBookInteraction {
 
-    public ProfileAdjustment toAdjustment(BookFeature bookFeature, String reactionType) {
-        var reaction = Reaction.of(reactionType);
+    public ProfileAdjustment toAdjustment(
+            BookFeature bookFeature,
+            String oldReactionType,
+            String newReactionType
+    ) {
+        Reaction newReaction = Reaction.of(newReactionType);
+        float oldWeight = oldReactionType == null
+                ? 0.0f
+                : Reaction.of(oldReactionType).adjustmentValue;
+        float adjustment = newReaction.adjustmentValue - oldWeight;
 
-        return new ProfileAdjustment(
+        return ProfileAdjustment.of(
                 bookFeature.getBookId(),
-                reaction.adjustmentValue,
+                adjustment,
                 bookFeature.getEmbedding()
         );
     }
-
 }

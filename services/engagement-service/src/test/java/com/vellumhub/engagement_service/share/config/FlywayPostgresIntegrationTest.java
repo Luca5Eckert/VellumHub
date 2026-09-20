@@ -18,7 +18,21 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import org.flywaydb.core.Flyway;
+import java.time.Instant;
+import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
+import java.time.OffsetDateTime;
 import java.util.Map;
+import java.util.UUID;
+import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import com.vellumhub.engagement_service.module.reaction.domain.port.ReactionRepository;
+import com.vellumhub.engagement_service.module.reaction.domain.model.TypeReaction;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import static org.awaitility.Awaitility.await;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -43,21 +57,145 @@ class FlywayPostgresIntegrationTest {
     @Test
     @Order(1)
     void startsAgainstAnEmptyPostgresDatabaseAndAppliesAllMigrations(@Autowired JdbcTemplate jdbcTemplate) {
-        assertThat(jdbcTemplate.queryForObject("select count(*) from flyway_schema_history where version in ('1', '2') and success", Integer.class)).isEqualTo(2);
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from flyway_schema_history where version in ('1', '2', '3', '4') and success",
+                Integer.class
+        )).isEqualTo(4);
         assertThat(tableExists(jdbcTemplate, "book_snapshot")).isTrue();
         assertThat(tableExists(jdbcTemplate, "rating")).isTrue();
         assertThat(tableExists(jdbcTemplate, "reactions")).isTrue();
         assertThat(tableExists(jdbcTemplate, "reading_session_entries")).isTrue();
         assertThat(indexExists(jdbcTemplate, "idx_rating_user_id")).isTrue();
+        assertThat(columnExists(jdbcTemplate, "reactions", "created_at")).isTrue();
+        assertThat(columnExists(jdbcTemplate, "reactions", "updated_at")).isTrue();
+        assertThat(columnIsNullable(jdbcTemplate, "reactions", "created_at")).isFalse();
+        assertThat(columnIsNullable(jdbcTemplate, "reactions", "updated_at")).isFalse();
     }
 
     @Test
-    @Order(2)
+    @Order(99)
     void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(@Autowired JdbcTemplate jdbcTemplate) {
         jdbcTemplate.execute("alter table rating drop column stars");
 
         assertThatThrownBy(() -> startApplication())
                 .hasStackTraceContaining("Schema");
+    }
+
+    @Test
+    @Order(2)
+    void concurrentReactionUpdatesReadTheLastCommittedType(
+            @Autowired JdbcTemplate jdbc,
+            @Autowired ReactionRepository reactions,
+            @Autowired PlatformTransactionManager transactionManager
+    ) throws Exception {
+        UUID owner = UUID.randomUUID();
+        long reactionId = -292L;
+        jdbc.update("insert into reactions (id, user_id, type_reaction, created_at, updated_at) "
+                + "values (?, ?, 'POSITIVE', current_timestamp, current_timestamp)", reactionId, owner);
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        CountDownLatch locked = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var first = executor.submit(() -> transaction.execute(status -> {
+                var reaction = reactions.findByIdForUpdate(reactionId).orElseThrow();
+                locked.countDown();
+                try {
+                    if (!release.await(10, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("Timed out waiting to release reaction lock");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+                TypeReaction previous = reaction.updateType(TypeReaction.VERY_POSITIVE, owner);
+                reactions.save(reaction);
+                return previous;
+            }));
+            assertThat(locked.await(10, TimeUnit.SECONDS)).isTrue();
+            var second = executor.submit(() -> transaction.execute(status -> {
+                var reaction = reactions.findByIdForUpdate(reactionId).orElseThrow();
+                TypeReaction previous = reaction.updateType(TypeReaction.NEGATIVE, owner);
+                reactions.save(reaction);
+                return previous;
+            }));
+            // Observe a real PostgreSQL lock wait, rather than relying on thread timing.
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+                    assertThat(jdbc.queryForObject("select count(*) from pg_stat_activity "
+                            + "where datname = current_database() and wait_event_type = 'Lock' "
+                            + "and query like '%reactions%'", Integer.class)).isPositive());
+            assertThat(second.isDone()).isFalse();
+            release.countDown();
+            assertThat(first.get(10, TimeUnit.SECONDS)).isEqualTo(TypeReaction.POSITIVE);
+            assertThat(second.get(10, TimeUnit.SECONDS)).isEqualTo(TypeReaction.VERY_POSITIVE);
+            assertThat(reactions.findById(reactionId).orElseThrow().getTypeReaction())
+                    .isEqualTo(TypeReaction.NEGATIVE);
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+            executor.awaitTermination(10, TimeUnit.SECONDS);
+            jdbc.update("delete from reactions where id = ?", reactionId);
+        }
+    }
+
+    @Test
+    @Order(3)
+    void upgradesExistingReactionsAndAcceptsLegacyInserts(@Autowired JdbcTemplate jdbc) {
+        String schema = "reaction_upgrade";
+        Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .schemas(schema).defaultSchema(schema).target("2").load().migrate();
+        UUID owner = UUID.randomUUID();
+        jdbc.update("insert into reaction_upgrade.reactions (id, user_id, type_reaction) "
+                + "values (1, ?, 'POSITIVE')", owner);
+
+        Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .schemas(schema).defaultSchema(schema).load().migrate();
+
+        Map<String, Object> migrated = jdbc.queryForMap(
+                "select type_reaction, created_at, updated_at from reaction_upgrade.reactions where id = 1");
+        assertThat(migrated.get("type_reaction")).isEqualTo("POSITIVE");
+        assertThat(migrated.get("created_at")).isNotNull().isEqualTo(migrated.get("updated_at"));
+        // Old binaries omit the new columns; these inserts must survive the rollout.
+        jdbc.update("insert into reaction_upgrade.reactions (id, user_id, type_reaction) "
+                + "values (2, ?, 'NEGATIVE')", owner);
+        assertThat(jdbc.queryForObject("select created_at = updated_at from reaction_upgrade.reactions "
+                + "where id = 2", Boolean.class)).isTrue();
+
+        OffsetDateTime occurrence = OffsetDateTime.parse("2026-09-19T12:00:00.123456Z");
+        jdbc.update("insert into reaction_upgrade.reactions "
+                + "(id, user_id, type_reaction, created_at, updated_at) values (3, ?, 'POSITIVE', ?, ?)",
+                owner, occurrence, occurrence);
+        assertThat(jdbc.queryForObject("select created_at from reaction_upgrade.reactions where id = 3",
+                OffsetDateTime.class)).isEqualTo(occurrence);
+    }
+
+    @Test
+    @Order(4)
+    void occurrenceMetadataSurvivesJpaRoundTrips(
+            @Autowired ReactionRepository reactions,
+            @Autowired PlatformTransactionManager transactionManager
+    ) {
+        UUID owner = UUID.randomUUID();
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        Reaction saved = transaction.execute(status -> reactions.save(Reaction.of(owner, null,
+                TypeReaction.POSITIVE, Instant.parse("2026-09-19T12:00:00.123456789Z"))));
+        assertThat(saved).isNotNull();
+        Reaction loaded = reactions.findById(saved.getId()).orElseThrow();
+        assertThat(loaded.getCreatedAt()).isEqualTo(saved.getCreatedAt());
+        assertThat(loaded.getUpdatedAt()).isEqualTo(saved.getUpdatedAt());
+
+        Reaction updated = transaction.execute(status -> {
+            Reaction reaction = reactions.findByIdForUpdate(saved.getId()).orElseThrow();
+            reaction.updateType(TypeReaction.NEGATIVE, owner, Instant.parse("2026-09-19T12:01:00.987654999Z"));
+            return reactions.save(reaction);
+        });
+        assertThat(updated).isNotNull();
+        Reaction reloaded = reactions.findById(saved.getId()).orElseThrow();
+        assertThat(reloaded.getCreatedAt()).isEqualTo(saved.getCreatedAt());
+        assertThat(reloaded.getUpdatedAt()).isEqualTo(updated.getUpdatedAt());
+        assertThat(reloaded.getTypeReaction()).isEqualTo(TypeReaction.NEGATIVE);
     }
 
     private static ConfigurableApplicationContext startApplication() {
@@ -76,6 +214,7 @@ class FlywayPostgresIntegrationTest {
                 "KAFKA_BOOTSTRAP_SERVERS", "localhost:65535",
                 "JWT_KEY", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=");
     }
+
     private static Map<String, Object> runtimeProperties() {
         return Map.of(
                 "spring.datasource.url", POSTGRES.getJdbcUrl(),
@@ -90,10 +229,36 @@ class FlywayPostgresIntegrationTest {
     }
 
     private boolean tableExists(JdbcTemplate jdbcTemplate, String table) {
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("select exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = ?)", Boolean.class, table));
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                "select exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = ?)",
+                Boolean.class,
+                table
+        ));
     }
 
     private boolean indexExists(JdbcTemplate jdbcTemplate, String index) {
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("select exists (select 1 from pg_indexes where schemaname = 'public' and indexname = ?)", Boolean.class, index));
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                "select exists (select 1 from pg_indexes where schemaname = 'public' and indexname = ?)",
+                Boolean.class,
+                index
+        ));
+    }
+
+    private boolean columnExists(JdbcTemplate jdbcTemplate, String table, String column) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                "select exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = ? and column_name = ?)",
+                Boolean.class,
+                table,
+                column
+        ));
+    }
+
+    private boolean columnIsNullable(JdbcTemplate jdbcTemplate, String table, String column) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                "select is_nullable = 'YES' from information_schema.columns where table_schema = 'public' and table_name = ? and column_name = ?",
+                Boolean.class,
+                table,
+                column
+        ));
     }
 }

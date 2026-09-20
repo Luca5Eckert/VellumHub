@@ -5,7 +5,7 @@ import com.vellumhub.recommendation_service.module.user_profile.domain.model.Pro
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.UUID;
 
@@ -27,54 +27,52 @@ class ReactionBookInteractionTest {
         bookFeature = BookFeature.create(bookId, EMBEDDING, 1.0);
     }
 
-    @Test
-    void toAdjustment_shouldReturnCorrectBookId() {
-        ProfileAdjustment result = reactionBookInteraction.toAdjustment(bookFeature, Reaction.POSITIVE.name());
+    @ParameterizedTest
+    @CsvSource(
+            value = {
+                    "null,VERY_POSITIVE,3.0",
+                    "null,POSITIVE,1.5",
+                    "null,NEGATIVE,-0.5",
+                    "POSITIVE,VERY_POSITIVE,1.5",
+                    "VERY_POSITIVE,POSITIVE,-1.5",
+                    "POSITIVE,NEGATIVE,-2.0",
+                    "NEGATIVE,VERY_POSITIVE,3.5",
+                    "POSITIVE,POSITIVE,0.0",
+                    "NEGATIVE,NEGATIVE,0.0"
+            },
+            nullValues = "null"
+    )
+    void toAdjustmentShouldApplyOnlyReactionTransitionDelta(
+            String oldReactionType,
+            String newReactionType,
+            float expectedAdjustment
+    ) {
+        ProfileAdjustment result = reactionBookInteraction.toAdjustment(
+                bookFeature,
+                oldReactionType,
+                newReactionType
+        );
 
         assertThat(result.bookId()).isEqualTo(bookId);
-    }
-
-    @Test
-    void toAdjustment_shouldReturnCorrectEmbedding() {
-        ProfileAdjustment result = reactionBookInteraction.toAdjustment(bookFeature, Reaction.POSITIVE.name());
-
         assertThat(result.embedding()).isEqualTo(EMBEDDING);
-    }
-
-    @Test
-    void toAdjustment_whenVeryPositive_shouldReturnHighestAdjustment() {
-        ProfileAdjustment result = reactionBookInteraction.toAdjustment(bookFeature, Reaction.VERY_POSITIVE.name());
-
-        assertThat(result.adjustment()).isEqualTo(Reaction.VERY_POSITIVE.adjustmentValue);
-    }
-
-    @Test
-    void toAdjustment_whenPositive_shouldReturnPositiveAdjustment() {
-        ProfileAdjustment result = reactionBookInteraction.toAdjustment(bookFeature, Reaction.POSITIVE.name());
-
-        assertThat(result.adjustment()).isEqualTo(Reaction.POSITIVE.adjustmentValue);
-    }
-
-    @Test
-    void toAdjustment_whenNegative_shouldReturnNegativeAdjustment() {
-        ProfileAdjustment result = reactionBookInteraction.toAdjustment(bookFeature, Reaction.NEGATIVE.name());
-
-        assertThat(result.adjustment()).isEqualTo(Reaction.NEGATIVE.adjustmentValue);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"VERY_POSITIVE", "POSITIVE", "NEGATIVE"})
-    void toAdjustment_shouldMapEachReactionToItsAdjustmentValue(String reactionType) {
-        float expectedAdjustment = Reaction.of(reactionType).adjustmentValue;
-
-        ProfileAdjustment result = reactionBookInteraction.toAdjustment(bookFeature, reactionType);
-
         assertThat(result.adjustment()).isEqualTo(expectedAdjustment);
     }
 
     @Test
-    void toAdjustment_whenInvalidReactionType_shouldThrowException() {
-        assertThatThrownBy(() -> reactionBookInteraction.toAdjustment(bookFeature, "INVALID"))
-                .isInstanceOf(IllegalArgumentException.class);
+    void toAdjustmentShouldRejectInvalidNewReactionType() {
+        assertThatThrownBy(() -> reactionBookInteraction.toAdjustment(
+                bookFeature,
+                Reaction.POSITIVE.name(),
+                "INVALID"
+        )).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void toAdjustmentShouldRejectInvalidPreviousReactionType() {
+        assertThatThrownBy(() -> reactionBookInteraction.toAdjustment(
+                bookFeature,
+                "INVALID",
+                Reaction.POSITIVE.name()
+        )).isInstanceOf(IllegalArgumentException.class);
     }
 }

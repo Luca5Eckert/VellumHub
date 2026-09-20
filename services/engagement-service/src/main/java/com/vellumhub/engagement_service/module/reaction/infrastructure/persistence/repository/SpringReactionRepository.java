@@ -18,13 +18,18 @@ public class SpringReactionRepository implements ReactionRepository {
     }
 
     @Override
-    public void save(Reaction reaction) {
-        jpaReactionRepository.save(reaction);
+    public Reaction save(Reaction reaction) {
+        return jpaReactionRepository.save(reaction);
     }
 
     @Override
     public Optional<Reaction> findById(Long id) {
         return jpaReactionRepository.findById(id);
+    }
+
+    @Override
+    public Optional<Reaction> findByIdForUpdate(Long id) {
+        return jpaReactionRepository.findByIdForUpdate(id);
     }
 
     @Override

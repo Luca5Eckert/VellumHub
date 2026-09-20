@@ -7,9 +7,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ReactionRepository {
-    void save(Reaction reaction);
+    Reaction save(Reaction reaction);
 
     Optional<Reaction> findById(Long id);
+
+    /** Locks the reaction until the caller transaction completes. */
+    Optional<Reaction> findByIdForUpdate(Long id);
 
     List<Reaction> findAllByUserId(UUID userId);
 }

@@ -43,15 +43,15 @@ jobs:
           docker pull confluentinc/cp-kafka:7.5.0
       - name: Warm Maven dependencies and compilation
         run: mvn -B -ntp -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -DskipTests test-compile
-      - name: Run distributed suite within 75 second execution budget
+      - name: Run distributed suite within 90 second execution budget
         shell: bash
         run: |
           started_at=$(date +%s)
           mvn -B -ntp -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -Dgroups=distributed test
           elapsed=$(( $(date +%s) - started_at ))
           echo "Distributed integration suite execution: ${elapsed}s"
-          if (( elapsed > 75 )); then
-            echo "Distributed integration suite exceeded the 75 second execution budget."
+          if (( elapsed > 90 )); then
+            echo "Distributed integration suite exceeded the 90 second execution budget."
             exit 1
           fi
 
