@@ -11,5 +11,8 @@ public interface ReactionRepository {
 
     Optional<Reaction> findById(Long id);
 
+    /** Locks the reaction until the caller transaction completes. */
+    Optional<Reaction> findByIdForUpdate(Long id);
+
     List<Reaction> findAllByUserId(UUID userId);
 }

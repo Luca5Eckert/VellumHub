@@ -34,7 +34,7 @@ public class UpdateReactionUseCase {
 
     @Transactional
     public ReactionUpdateResult execute(UpdateReactionCommand command) {
-        Reaction reaction = reactionRepository.findById(command.interactionId())
+        Reaction reaction = reactionRepository.findByIdForUpdate(command.interactionId())
                 .orElseThrow(() -> new RuntimeException("Reaction not found"));
 
         Instant occurredAt = Instant.now();

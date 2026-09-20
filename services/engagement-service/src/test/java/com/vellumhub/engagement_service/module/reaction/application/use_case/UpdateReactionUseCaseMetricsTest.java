@@ -57,7 +57,7 @@ class UpdateReactionUseCaseMetricsTest {
         long reactionId = 42L;
         Instant createdAt = Instant.parse("2026-09-19T12:00:00Z");
         var reaction = reaction(reactionId, userId, bookId, TypeReaction.POSITIVE, createdAt);
-        when(reactionRepository.findById(reactionId)).thenReturn(Optional.of(reaction));
+        when(reactionRepository.findByIdForUpdate(reactionId)).thenReturn(Optional.of(reaction));
         when(reactionRepository.save(any(Reaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = useCase.execute(new UpdateReactionCommand(userId, reactionId, TypeReaction.VERY_POSITIVE));
@@ -93,7 +93,7 @@ class UpdateReactionUseCaseMetricsTest {
         long reactionId = 43L;
         Instant createdAt = Instant.parse("2026-09-19T12:00:00Z");
         var reaction = reaction(reactionId, userId, bookId, TypeReaction.POSITIVE, createdAt);
-        when(reactionRepository.findById(reactionId)).thenReturn(Optional.of(reaction));
+        when(reactionRepository.findByIdForUpdate(reactionId)).thenReturn(Optional.of(reaction));
         when(reactionRepository.save(any(Reaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         useCase.execute(new UpdateReactionCommand(userId, reactionId, TypeReaction.POSITIVE));

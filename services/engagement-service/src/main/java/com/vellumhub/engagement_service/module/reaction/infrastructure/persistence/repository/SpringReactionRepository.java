@@ -28,6 +28,11 @@ public class SpringReactionRepository implements ReactionRepository {
     }
 
     @Override
+    public Optional<Reaction> findByIdForUpdate(Long id) {
+        return jpaReactionRepository.findByIdForUpdate(id);
+    }
+
+    @Override
     public List<Reaction> findAllByUserId(UUID userId) {
         return jpaReactionRepository.findAllByUserId(userId);
     }
