@@ -18,6 +18,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import org.flywaydb.core.Flyway;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 import java.time.Duration;
@@ -54,9 +56,9 @@ class FlywayPostgresIntegrationTest {
     @Order(1)
     void startsAgainstAnEmptyPostgresDatabaseAndAppliesAllMigrations(@Autowired JdbcTemplate jdbcTemplate) {
         assertThat(jdbcTemplate.queryForObject(
-                "select count(*) from flyway_schema_history where version in ('1', '2', '3') and success",
+                "select count(*) from flyway_schema_history where version in ('1', '2', '3', '4') and success",
                 Integer.class
-        )).isEqualTo(3);
+        )).isEqualTo(4);
         assertThat(tableExists(jdbcTemplate, "book_snapshot")).isTrue();
         assertThat(tableExists(jdbcTemplate, "rating")).isTrue();
         assertThat(tableExists(jdbcTemplate, "reactions")).isTrue();
@@ -132,6 +134,39 @@ class FlywayPostgresIntegrationTest {
             executor.awaitTermination(10, TimeUnit.SECONDS);
             jdbc.update("delete from reactions where id = ?", reactionId);
         }
+    }
+
+    @Test
+    @Order(3)
+    void upgradesExistingReactionsAndAcceptsLegacyInserts(@Autowired JdbcTemplate jdbc) {
+        String schema = "reaction_upgrade";
+        Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .schemas(schema).defaultSchema(schema).target("2").load().migrate();
+        UUID owner = UUID.randomUUID();
+        jdbc.update("insert into reaction_upgrade.reactions (id, user_id, type_reaction) "
+                + "values (1, ?, 'POSITIVE')", owner);
+
+        Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .schemas(schema).defaultSchema(schema).load().migrate();
+
+        Map<String, Object> migrated = jdbc.queryForMap(
+                "select type_reaction, created_at, updated_at from reaction_upgrade.reactions where id = 1");
+        assertThat(migrated.get("type_reaction")).isEqualTo("POSITIVE");
+        assertThat(migrated.get("created_at")).isNotNull().isEqualTo(migrated.get("updated_at"));
+        // Old binaries omit the new columns; these inserts must survive the rollout.
+        jdbc.update("insert into reaction_upgrade.reactions (id, user_id, type_reaction) "
+                + "values (2, ?, 'NEGATIVE')", owner);
+        assertThat(jdbc.queryForObject("select created_at = updated_at from reaction_upgrade.reactions "
+                + "where id = 2", Boolean.class)).isTrue();
+
+        OffsetDateTime occurrence = OffsetDateTime.parse("2026-09-19T12:00:00.123456Z");
+        jdbc.update("insert into reaction_upgrade.reactions "
+                + "(id, user_id, type_reaction, created_at, updated_at) values (3, ?, 'POSITIVE', ?, ?)",
+                owner, occurrence, occurrence);
+        assertThat(jdbc.queryForObject("select created_at from reaction_upgrade.reactions where id = 3",
+                OffsetDateTime.class)).isEqualTo(occurrence);
     }
 
     private static ConfigurableApplicationContext startApplication() {

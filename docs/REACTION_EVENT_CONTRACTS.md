@@ -98,6 +98,10 @@ Creation publishes `occurredAt = created_at`. Updates publish `occurredAt = upda
 
 Rows that existed before the audit migration receive the migration timestamp as their initial backfill value. Historical timestamp precision therefore starts with the migration for those existing rows.
 
+Updates acquire a database write lock on the source reaction until the transaction completes. Concurrent updates therefore capture the last committed reaction type, rather than publishing transitions from a stale state. This does not make database and Kafka publication atomic.
+
+The follow-up V4 migration supplies database defaults for inserts from older application instances during rollout, without changing the V3 migration checksum. New instances still write explicit occurrence times. Old instances do not maintain `updated_at` on mutation; complete audit semantics require finishing the producer rollout. Deploy the transition-aware consumer before the enriched producer, since an old consumer still treats updates as additive interactions.
+
 ## Compatibility
 
 An event produced with the old payload shape:
