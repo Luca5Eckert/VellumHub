@@ -61,6 +61,8 @@ class DefineBookStatusUseCaseTest {
                     .thenReturn(false);
 
             CreateBookProgressEvent event = useCase.execute(command);
+            assertThat(event.eventId()).isNotNull();
+            assertThat(event.occurredAt()).isNotNull();
 
             ArgumentCaptor<BookProgress> captor = ArgumentCaptor.forClass(BookProgress.class);
             verify(bookProgressRepository).save(captor.capture());
@@ -113,6 +115,8 @@ class DefineBookStatusUseCaseTest {
                     .thenReturn(false);
 
             CreateBookProgressEvent event = useCase.execute(command);
+            assertThat(event.eventId()).isNotNull();
+            assertThat(event.occurredAt()).isNotNull();
 
             assertThat(event.initPage()).isEqualTo(42);
         }
@@ -128,6 +132,8 @@ class DefineBookStatusUseCaseTest {
             when(book.getPageCount()).thenReturn(300);
 
             CreateBookProgressEvent event = useCase.execute(command);
+            assertThat(event.eventId()).isNotNull();
+            assertThat(event.occurredAt()).isNotNull();
 
             assertThat(event.progress()).isEqualTo(ReadingStatus.COMPLETED.name());
             assertThat(event.initPage()).isEqualTo(300);

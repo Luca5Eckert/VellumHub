@@ -11,6 +11,9 @@ import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingSt
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
 import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
 import org.springframework.stereotype.Component;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Component
 public class DefineBookStatusUseCase {
@@ -50,6 +53,8 @@ public class DefineBookStatusUseCase {
         bookProgressRepository.save(bookProgress);
 
         return new CreateBookProgressEvent(
+                UUID.randomUUID(),
+                Instant.now().truncatedTo(ChronoUnit.MICROS),
                 bookProgress.getId(),
                 command.userId(),
                 command.bookId(),
