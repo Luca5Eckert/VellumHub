@@ -164,3 +164,14 @@ cd engagement-service
 ```
 
 For the platform event backbone and known Kafka contract hardening work, see the [root README](../README.md).
+
+## Replicated reading provenance
+
+`reading_session_entries` is derived history, not the current reading state. Catalog creates
+`eventId` and `occurredAt`; consumers persist these as `event_id` and `timestamp`. V5 adds a
+nullable event ID and lookup/history indexes. Legacy metadata stays null; processing time
+must never substitute for occurrence time. Deploy migrations before the new application.
+
+The [offline exporter](../../training/README.md) labels these records `REPLICATED_HISTORY`
+and flags incomplete metadata. It reads current state only from Catalog. Duplicate handling
+remains #200; atomic commit/publication remains #201. Metadata alone provides neither guarantee.

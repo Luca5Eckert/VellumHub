@@ -104,3 +104,32 @@ jobs:
           exit-code: '1'
           ignore-unfixed: true
           severity: CRITICAL
+
+  training-export:
+    name: Training exporter + PostgreSQL
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: training_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e 'training[test]'
+      - run: python -m pytest training/tests -q
+        env:
+          TEST_POSTGRES_URL: postgresql://test:test@localhost:5432/training_test

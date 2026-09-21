@@ -398,3 +398,10 @@ Detailed guides:
 - [Kafka contracts](lib/kafka-contracts)
 - [Postman artifacts](postman)
 - [Kubernetes manifests](deploy/kubernetes)
+
+### Offline training data
+
+[`training/`](training/README.md) exports versioned `books.jsonl`, `user_book_signals.jsonl`
+and a hashed manifest. Current reading state comes from Catalog; canonical feedback and
+replicated reading history come from Engagement, with explicit provenance. This prepares
+#193 without changing the direct Catalog → Recommendation event flow.
