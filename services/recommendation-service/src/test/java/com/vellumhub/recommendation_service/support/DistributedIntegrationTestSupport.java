@@ -4,8 +4,11 @@ import com.vellumhub.testing.distributed.container.KafkaPgvectorIntegrationTestS
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertySource;
 
+// Testcontainers restarts inherited containers between classes; cached contexts hold stale ports.
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class DistributedIntegrationTestSupport extends KafkaPgvectorIntegrationTestSupport {
 
     private static final String JWT_SECRET =
