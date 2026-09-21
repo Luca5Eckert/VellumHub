@@ -48,9 +48,9 @@ class CreateReadingSessionEntryUseCaseTest {
         UUID bookProgressId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         BookSnapshot bookSnapshot = new BookSnapshot(bookId);
-        CreateReadingSessionEntryCommand command = CreateReadingSessionEntryCommand.class
-                .getDeclaredConstructor(UUID.class, UUID.class, UUID.class, String.class, int.class)
-                .newInstance(bookId, bookProgressId, userId, "READING", 90);
+        UUID eventId = UUID.randomUUID();
+        var occurredAt = java.time.Instant.parse("2026-09-21T12:00:00.123456Z");
+        var command = CreateReadingSessionEntryCommand.create(bookId, bookProgressId, userId, "READING", 90, eventId, occurredAt);
 
         when(bookSnapshotRepository.findById(bookId)).thenReturn(Optional.of(bookSnapshot));
 
@@ -59,6 +59,8 @@ class CreateReadingSessionEntryUseCaseTest {
         verify(readingSessionEntryRepository).save(entryCaptor.capture());
         ReadingSessionEntry savedEntry = entryCaptor.getValue();
 
+        assertThat(savedEntry.getEventId()).isEqualTo(eventId);
+        assertThat(savedEntry.getTimestamp()).isEqualTo(occurredAt);
         assertThat(savedEntry.getBookSnapshot()).isEqualTo(bookSnapshot);
         assertThat(savedEntry.getReadingSessionId()).isEqualTo(bookProgressId);
         assertThat(savedEntry.getUserId()).isEqualTo(userId);

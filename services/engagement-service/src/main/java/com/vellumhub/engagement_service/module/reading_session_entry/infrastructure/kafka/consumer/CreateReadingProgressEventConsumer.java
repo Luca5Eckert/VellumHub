@@ -46,7 +46,9 @@ public class CreateReadingProgressEventConsumer {
                 event.bookProgressId(),
                 event.userId(),
                 event.progress(),
-                event.initPage()
+                event.initPage(),
+                event.eventId(),
+                event.occurredAt()
         );
 
         log.info(

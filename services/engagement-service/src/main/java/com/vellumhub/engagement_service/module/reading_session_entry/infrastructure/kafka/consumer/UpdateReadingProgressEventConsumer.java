@@ -46,7 +46,9 @@ public class UpdateReadingProgressEventConsumer {
                 event.bookProgressId(),
                 event.userId(),
                 event.progress(),
-                event.newPage()
+                event.newPage(),
+                event.eventId(),
+                event.occurredAt()
         );
 
         log.info(
