@@ -58,13 +58,17 @@ class FlywayPostgresIntegrationTest {
     @Order(1)
     void startsAgainstAnEmptyPostgresDatabaseAndAppliesAllMigrations(@Autowired JdbcTemplate jdbcTemplate) {
         assertThat(jdbcTemplate.queryForObject(
-                "select count(*) from flyway_schema_history where version in ('1', '2', '3', '4') and success",
+                "select count(*) from flyway_schema_history where version in ('1', '2', '3', '4', '5') and success",
                 Integer.class
-        )).isEqualTo(4);
+        )).isEqualTo(5);
         assertThat(tableExists(jdbcTemplate, "book_snapshot")).isTrue();
         assertThat(tableExists(jdbcTemplate, "rating")).isTrue();
         assertThat(tableExists(jdbcTemplate, "reactions")).isTrue();
         assertThat(tableExists(jdbcTemplate, "reading_session_entries")).isTrue();
+        assertThat(columnExists(jdbcTemplate, "reading_session_entries", "event_id")).isTrue();
+        assertThat(columnIsNullable(jdbcTemplate, "reading_session_entries", "event_id")).isTrue();
+        assertThat(indexExists(jdbcTemplate, "idx_reading_session_entries_event_id")).isTrue();
+        assertThat(indexExists(jdbcTemplate, "idx_reading_session_entries_user_book_timestamp")).isTrue();
         assertThat(indexExists(jdbcTemplate, "idx_rating_user_id")).isTrue();
         assertThat(columnExists(jdbcTemplate, "reactions", "created_at")).isTrue();
         assertThat(columnExists(jdbcTemplate, "reactions", "updated_at")).isTrue();

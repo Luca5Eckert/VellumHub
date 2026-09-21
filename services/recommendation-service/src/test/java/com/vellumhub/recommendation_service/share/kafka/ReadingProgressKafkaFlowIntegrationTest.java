@@ -77,6 +77,27 @@ class ReadingProgressKafkaFlowIntegrationTest extends DistributedIntegrationTest
         });
     }
 
+    @Test
+    void missingFeaturesAreSkippedAndThePartitionContinues() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID absentBook = UUID.randomUUID();
+        UUID knownBook = UUID.randomUUID();
+        float[] embedding = new float[384];
+        embedding[0] = 1.0f;
+        bookFeatureRepository.save(BookFeature.create(knownBook, embedding, 1.0));
+        // Explicit same partition makes the valid event a consumption barrier for the missing one.
+        kafkaTemplate.send(KafkaTopics.CREATED_READING_PROGRESS, 0, userId.toString(),
+                new CreateBookProgressEvent(UUID.randomUUID(), Instant.now(), UUID.randomUUID(),
+                        userId, absentBook, "READING", 80)).get(5, TimeUnit.SECONDS);
+        kafkaTemplate.send(KafkaTopics.CREATED_READING_PROGRESS, 0, userId.toString(),
+                new CreateBookProgressEvent(UUID.randomUUID(), Instant.now(), UUID.randomUUID(),
+                        userId, knownBook, "READING", 0)).get(5, TimeUnit.SECONDS);
+        awaitProfile(userId, profile -> {
+            assertThat(profile.getTotalEngagementScore()).isEqualTo(1.0);
+            assertThat(profile.getInteractedBookIds()).containsExactly(knownBook);
+        });
+    }
+
     private void awaitProfile(UUID userId, Consumer<UserProfile> assertion) {
         await()
                 .atMost(ASYNC_TIMEOUT)
