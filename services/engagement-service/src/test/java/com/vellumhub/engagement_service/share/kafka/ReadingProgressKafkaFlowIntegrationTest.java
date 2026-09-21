@@ -31,6 +31,12 @@ import static org.awaitility.Awaitility.await;
         topics = {KafkaTopics.CREATED_READING_PROGRESS, KafkaTopics.UPDATED_READING_PROGRESS})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = {
         "spring.jpa.hibernate.ddl-auto=validate", "spring.flyway.enabled=true",
+        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect",
+        "spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer",
+        "spring.kafka.consumer.value-deserializer=org.springframework.kafka.support.serializer.ErrorHandlingDeserializer",
+        "spring.kafka.consumer.properties.spring.deserializer.value.delegate.class=org.springframework.kafka.support.serializer.JsonDeserializer",
+        "spring.kafka.consumer.properties.spring.json.trusted.packages=com.vellumhub.kafka.contracts.readingprogress",
+        "spring.kafka.consumer.properties.spring.json.type.mapping=create_book_progress_event:com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent,update_book_progress_event:com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent",
         "spring.kafka.consumer.auto-offset-reset=earliest",
         "spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer",
         "spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer",
