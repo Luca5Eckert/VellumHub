@@ -13,6 +13,8 @@ public abstract class DistributedIntegrationTestSupport extends KafkaPgvectorInt
     private static final String PRODUCER_TYPE_MAPPINGS = String.join(",",
             "create_book_event:com.vellumhub.kafka.contracts.book.CreateBookEvent",
             "create_rating_event:com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent",
+            "create_book_progress_event:com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent",
+            "update_book_progress_event:com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent",
             "update_rating_event:com.vellumhub.kafka.contracts.engagement.UpdatedRatingEvent"
     );
 
