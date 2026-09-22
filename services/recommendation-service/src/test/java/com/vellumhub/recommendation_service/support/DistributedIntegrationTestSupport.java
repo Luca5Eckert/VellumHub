@@ -4,8 +4,11 @@ import com.vellumhub.testing.distributed.container.KafkaPgvectorIntegrationTestS
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertySource;
 
+// Testcontainers restarts inherited containers between classes; cached contexts hold stale ports.
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class DistributedIntegrationTestSupport extends KafkaPgvectorIntegrationTestSupport {
 
     private static final String JWT_SECRET =
@@ -13,6 +16,8 @@ public abstract class DistributedIntegrationTestSupport extends KafkaPgvectorInt
     private static final String PRODUCER_TYPE_MAPPINGS = String.join(",",
             "create_book_event:com.vellumhub.kafka.contracts.book.CreateBookEvent",
             "create_rating_event:com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent",
+            "create_book_progress_event:com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent",
+            "update_book_progress_event:com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent",
             "update_rating_event:com.vellumhub.kafka.contracts.engagement.UpdatedRatingEvent"
     );
 

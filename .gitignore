@@ -13,3 +13,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+*.egg-info/
+.pytest_cache/
+/target/training-export/
+/training/.venv/

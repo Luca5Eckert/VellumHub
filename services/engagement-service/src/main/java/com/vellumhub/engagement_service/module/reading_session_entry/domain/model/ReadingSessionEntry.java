@@ -20,6 +20,9 @@ public class ReadingSessionEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "event_id")
+    private UUID eventId;
+
     private UUID readingSessionId;
 
     @Column(
@@ -42,7 +45,13 @@ public class ReadingSessionEntry {
     private Instant timestamp;
 
     public static ReadingSessionEntry create(UUID bookProgressId, BookSnapshot bookSnapshot, UUID userId, String type, int pageRead) {
+        return create(bookProgressId, bookSnapshot, userId, type, pageRead, null, null);
+    }
+
+    public static ReadingSessionEntry create(UUID bookProgressId, BookSnapshot bookSnapshot, UUID userId, String type, int pageRead, UUID eventId, Instant occurredAt) {
         return ReadingSessionEntry.builder()
+                .eventId(eventId)
+                .timestamp(occurredAt)
                 .readingSessionId(bookProgressId)
                 .type(type)
                 .userId(userId)

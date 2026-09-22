@@ -30,7 +30,9 @@ public class CreateReadingSessionEntryUseCase {
                 bookSnapshot,
                 command.userId(),
                 command.type(),
-                command.pageRead()
+                command.pageRead(),
+                command.eventId(),
+                command.occurredAt()
         );
 
         readingSessionEntryRepository.save(readingSessionEntry);

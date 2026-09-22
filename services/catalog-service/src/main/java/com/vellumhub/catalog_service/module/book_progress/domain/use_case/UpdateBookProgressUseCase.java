@@ -9,6 +9,9 @@ import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgr
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent;
 import org.springframework.stereotype.Component;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Component
 public class UpdateBookProgressUseCase {
@@ -37,6 +40,8 @@ public class UpdateBookProgressUseCase {
           metrics.recordBusinessCounter(VellumHubMetrics.READING_PROGRESS_UPDATED, "reading_progress_update", "success");
 
           return new UpdateBookProgressEvent(
+                UUID.randomUUID(),
+                Instant.now().truncatedTo(ChronoUnit.MICROS),
                   bookProgress.getId(),
                   command.userId(),
                   command.bookId(),

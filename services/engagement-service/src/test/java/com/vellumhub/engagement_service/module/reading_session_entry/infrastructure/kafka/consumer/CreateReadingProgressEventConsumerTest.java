@@ -39,13 +39,15 @@ class CreateReadingProgressEventConsumerTest {
         UUID bookProgressId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        CreateBookProgressEvent event = new CreateBookProgressEvent(bookProgressId, userId, bookId, "READING", 12);
+        CreateBookProgressEvent event = new CreateBookProgressEvent(UUID.randomUUID(), java.time.Instant.parse("2026-09-21T12:00:00.123456Z"), bookProgressId, userId, bookId, "READING", 12);
 
         consumer.consume(event);
 
         verify(createReadingSessionEntryUseCase).execute(commandCaptor.capture());
         CreateReadingSessionEntryCommand command = commandCaptor.getValue();
 
+        assertThat(command.eventId()).isEqualTo(event.eventId());
+        assertThat(command.occurredAt()).isEqualTo(event.occurredAt());
         assertThat(command.bookId()).isEqualTo(bookId);
         assertThat(command.bookProgressId()).isEqualTo(bookProgressId);
         assertThat(command.userId()).isEqualTo(userId);

@@ -175,3 +175,13 @@ The distributed suite covers the `created-book` retry/DLT boundary, the rating l
 See [Distributed Integration Testing](../../docs/DISTRIBUTED_TESTING.md) for infrastructure boundaries, CI budget, extension rules, and the planned E2E boundary.
 
 For platform topology and broader hardening work, see the [root README](../../README.md).
+
+## Online updates and offline training inputs
+
+Online profiles consume Catalog's reading-progress events directly; Engagement is not an
+intermediate publisher or synchronous dependency. `eventId`/`occurredAt` enrich provenance
+without changing profile weights. Missing book features still produce a warning and skip.
+
+The separate [offline exporter](../../training/README.md) reads canonical Catalog state and
+Engagement feedback/history into versioned facts for #193. Replicated history never substitutes
+for current Catalog state. This is distinct from the synthetic evaluation harness.

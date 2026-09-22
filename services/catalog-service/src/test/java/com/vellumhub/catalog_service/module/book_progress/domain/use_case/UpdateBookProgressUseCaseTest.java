@@ -62,6 +62,8 @@ class UpdateBookProgressUseCaseTest {
 
         // When
         var result = useCase.execute(command);
+            assertThat(result.eventId()).isNotNull();
+            assertThat(result.occurredAt()).isNotNull();
 
         // Then
         assertThat(result.newPage()).isEqualTo(newPage);
