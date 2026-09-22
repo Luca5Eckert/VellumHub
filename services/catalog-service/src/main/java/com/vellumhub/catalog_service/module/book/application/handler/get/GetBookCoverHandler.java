@@ -1,4 +1,4 @@
-package com.vellumhub.catalog_service.module.book.domain.handler;
+package com.vellumhub.catalog_service.module.book.application.handler.get;
 
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
