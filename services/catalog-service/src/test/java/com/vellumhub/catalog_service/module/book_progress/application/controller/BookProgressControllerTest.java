@@ -41,8 +41,7 @@ class BookProgressControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
     private DefineBookStatusHandler defineBookStatusHandler;
