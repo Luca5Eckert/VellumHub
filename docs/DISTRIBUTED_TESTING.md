@@ -48,7 +48,7 @@ The failure path remains service-local in Recommendation and exercises the real 
 - `BookEventFixtures` — stable `CreateBookEvent` fixtures that keep irrelevant event fields out of individual tests;
 - `KafkaProbe` — unique consumer groups, bounded polling, record filtering, and UTF-8 header inspection.
 
-Spring Boot configuration remains context-local. Catalog uses Spring Boot 3 while Recommendation uses Spring Boot 4, so pushing `DynamicPropertyRegistry`, application properties, or service-specific beans into the shared module would couple the harness to framework details instead of infrastructure behavior.
+Spring Boot configuration remains context-local. Services now align on Spring Boot 4, but pushing `DynamicPropertyRegistry`, application properties, or service-specific beans into the shared module would still couple the harness to application wiring instead of infrastructure behavior.
 
 ## Container lifecycle and state isolation
 
@@ -130,10 +130,10 @@ The distributed job:
 2. pre-pulls Ryuk, Kafka, and pgvector images;
 3. activates the `distributed-e2e` Maven profile and warms the selected reactor slice;
 4. runs Catalog distributed tests, Recommendation distributed tests, and the dedicated cross-service E2E module through `-am`;
-5. enforces a 90-second post-warm execution budget;
+5. enforces a 120-second post-warm execution budget;
 6. has a five-minute hard job timeout for infrastructure failures.
 
-The 90-second budget preserves a bounded post-warm execution gate while allowing normal hosted-runner variance around container startup and Kafka/PostgreSQL scheduling. It remains a guard against accidental expansion into a slow platform E2E suite; the five-minute hard job timeout remains unchanged.
+The 120-second budget preserves a bounded post-warm execution gate while allowing hosted-runner variance and the additional framework startup cost observed after the Spring Boot 4 security upgrade. It remains a guard against accidental expansion into a slow platform E2E suite; the five-minute hard job timeout remains unchanged.
 
 If the post-warm distributed run becomes unstable near the budget, shard by infrastructure cost rather than by arbitrary test count: keep the Kafka-only Catalog producer suite in one job and the Kafka + pgvector Recommendation/E2E slice in another. Each shard must retain its own explicit budget.
 
