@@ -92,6 +92,35 @@ Recommendation quality is measured separately through a reproducible model-backe
 
 These measurements are controlled CI/Testcontainers and offline-evaluation evidence. They are not production SLAs, online A/B-test results, or maximum-throughput claims. See the [Recommendation benchmark guide](services/recommendation-service/benchmark/README.md) for the benchmark boundary and reproduction commands.
 
+## Architectural trade-offs
+
+The architecture is intentionally distributed because the domains do not have the same workload. Catalog is predominantly read-heavy, identity has different access patterns, and Recommendation benefits from independent scaling and a low-latency serving path. The five services therefore deploy and own persistence independently rather than sharing one runtime simply for structural convenience.
+
+### Event collaboration over orchestration
+
+Kafka is the collaboration backbone. Producers publish facts; consumers decide what those facts mean locally. That avoids a central orchestrator knowing every downstream process, at the cost of harder causal tracing, asynchronous failure modes, and stronger observability requirements.
+
+### Local projections over batch refresh or request-time fan-out
+
+Recommendation considered two simpler alternatives:
+
+- periodic/bulk refresh, which would concentrate compute into batches and leave user signals stale between windows;
+- synchronous fetch/fan-out, which would put upstream latency and availability directly on the recommendation request path.
+
+Kafka-fed local projections accept duplicated state and bounded eventual consistency instead. The benchmark above measures the price and payoff of that decision.
+
+### Read-your-write where eventual consistency would be visible
+
+Current reading progress remains canonical in Catalog. Engagement receives the same progress facts asynchronously to preserve chronological history. This deliberately puts eventual consistency on the derived history rather than on the value a user just wrote and expects to read back immediately.
+
+### Durability according to consequence
+
+The project does not claim exactly-once behavior. Outbox/inbox-style guarantees add writes, storage growth, indexing, cleanup, and I/O. For Recommendation, where many small interaction signals continuously update a profile, losing an isolated signal has a different consequence from losing user-visible reading history or an invariant-bearing event. Stronger guarantees are therefore prioritized where the domain consequence justifies their cost.
+
+### Exploration versus relevance in the 70/30 ranker
+
+The 70% semantic / 30% popularity weighting began as a heuristic to avoid trapping users entirely inside their current preference bubble. The controlled evaluation later showed semantic-only outperforming the combined ranker on the reference dataset. The weight was intentionally **not** retuned on that same dataset and then presented as an unbiased improvement; tuning belongs in a separate validation experiment.
+
 ## Architecture
 
 Every public request enters through the reactive gateway. Each domain service owns its data and still validates JWTs independently. Cross-domain state travels as integration events; consumers translate those external contracts into models they own.
@@ -224,7 +253,7 @@ VellumHub makes its current guarantees and remaining boundaries explicit:
 
 The distributed benchmark extends the earlier `created-book` pilot by measuring both projection convergence and the user-visible recommendation effect. It uses real Kafka, real PostgreSQL/pgvector, real Flyway migrations, the production rating consumer/profile update path, production ranking SQL, and the authenticated `/recommendations` endpoint. Deterministic fixture embeddings keep model inference outside the architectural freshness boundary.
 
-Consumer idempotency and transactional outbox publication remain planned guarantees. They are not claimed as implemented until their production mechanisms and failure-sensitive tests exist. See [Distributed Integration Testing](docs/DISTRIBUTED_TESTING.md) for the precise boundary and extension rules.
+Consumer idempotency and transactional outbox publication remain selective hardening work. They are not claimed as implemented until production mechanisms and failure-sensitive tests exist, and their priority depends on the consequence of event loss in each domain rather than treating every signal as equally critical. See [Distributed Integration Testing](docs/DISTRIBUTED_TESTING.md) for the precise boundary and extension rules.
 
 This is not Event Sourcing: PostgreSQL tables remain the systems of record and Kafka carries integration events between services. Nor is every event full-state replication—the payload is shaped around what downstream collaborators need.
 
