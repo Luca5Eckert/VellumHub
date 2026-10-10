@@ -14,14 +14,16 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -44,13 +46,20 @@ class BookControllerTest {
     @MockitoBean
     private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
+    private static RequestPostProcessor adminJwt() {
+        return jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
+    }
+
+    private static RequestPostProcessor userJwt() {
+        return jwt().authorities(new SimpleGrantedAuthority("ROLE_USER"));
+    }
+
     @Nested
     @DisplayName("Security - POST /books requires ADMIN role")
     class SecurityTests {
 
         @Test
         @DisplayName("Should return 403 when authenticated user does not have ADMIN role")
-        @WithMockUser(roles = "USER")
         void shouldReturn403WhenUserNotAdmin() throws Exception {
             String validBody = """
                     {
@@ -67,6 +76,7 @@ class BookControllerTest {
                     """;
 
             mockMvc.perform(post("/books")
+                            .with(userJwt())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(validBody))
                     .andExpect(status().isForbidden());
@@ -74,9 +84,9 @@ class BookControllerTest {
 
         @Test
         @DisplayName("Should return 403 on DELETE when authenticated user does not have ADMIN role")
-        @WithMockUser(roles = "USER")
         void shouldReturn403OnDeleteWhenUserNotAdmin() throws Exception {
-            mockMvc.perform(delete("/books/" + UUID.randomUUID()))
+            mockMvc.perform(delete("/books/" + UUID.randomUUID())
+                            .with(userJwt()))
                     .andExpect(status().isForbidden());
         }
     }
@@ -87,7 +97,6 @@ class BookControllerTest {
 
         @Test
         @DisplayName("Should return 400 when title is blank")
-        @WithMockUser(roles = "ADMIN")
         void shouldReturn400WhenTitleIsBlank() throws Exception {
             String invalidBody = """
                     {
@@ -104,6 +113,7 @@ class BookControllerTest {
                     """;
 
             mockMvc.perform(post("/books")
+                            .with(adminJwt())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidBody))
                     .andExpect(status().isBadRequest());
@@ -111,7 +121,6 @@ class BookControllerTest {
 
         @Test
         @DisplayName("Should return 400 when genres list is empty")
-        @WithMockUser(roles = "ADMIN")
         void shouldReturn400WhenGenresIsEmpty() throws Exception {
             String invalidBody = """
                     {
@@ -128,6 +137,7 @@ class BookControllerTest {
                     """;
 
             mockMvc.perform(post("/books")
+                            .with(adminJwt())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidBody))
                     .andExpect(status().isBadRequest());
@@ -135,7 +145,6 @@ class BookControllerTest {
 
         @Test
         @DisplayName("Should return 400 when author is missing")
-        @WithMockUser(roles = "ADMIN")
         void shouldReturn400WhenAuthorIsMissing() throws Exception {
             String invalidBody = """
                     {
@@ -151,6 +160,7 @@ class BookControllerTest {
                     """;
 
             mockMvc.perform(post("/books")
+                            .with(adminJwt())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidBody))
                     .andExpect(status().isBadRequest());
@@ -163,12 +173,12 @@ class BookControllerTest {
 
         @Test
         @DisplayName("Should return 404 when book is not found by ID")
-        @WithMockUser(roles = "USER")
         void shouldReturn404WhenBookNotFound() throws Exception {
             UUID bookId = UUID.randomUUID();
             given(bookService.get(any(UUID.class))).willThrow(new BookNotFoundException());
 
-            mockMvc.perform(get("/books/" + bookId))
+            mockMvc.perform(get("/books/" + bookId)
+                            .with(userJwt()))
                     .andExpect(status().isNotFound());
         }
     }
@@ -179,7 +189,6 @@ class BookControllerTest {
 
         @Test
         @DisplayName("Should return 201 when ADMIN creates a valid book")
-        @WithMockUser(roles = "ADMIN")
         void shouldReturn201WhenAdminCreatesBook() throws Exception {
             String validBody = """
                     {
@@ -196,6 +205,7 @@ class BookControllerTest {
                     """;
 
             mockMvc.perform(post("/books")
+                            .with(adminJwt())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(validBody))
                     .andExpect(status().isCreated());
