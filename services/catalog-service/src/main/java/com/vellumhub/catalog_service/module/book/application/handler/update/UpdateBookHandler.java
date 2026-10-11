@@ -5,17 +5,18 @@ import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.exception.InvalidBookException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
-import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
-import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
-import com.vellumhub.catalog_service.module.book.application.event.BookEventFactory;
+import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequest;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
+import com.vellumhub.kafka.contracts.KafkaTopics;
+import com.vellumhub.kafka.contracts.book.UpdateBookEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -24,20 +25,17 @@ public class UpdateBookHandler {
 
     private final BookRepository bookRepository;
     private final GenreRepository genreRepository;
-    private final BookChangeWriter bookChangeWriter;
-    private final BookEventFactory events;
+    private final BookEventProducer<String, UpdateBookEvent> bookEventProducer;
     private final VellumHubMetrics metrics;
 
     public UpdateBookHandler(
             BookRepository bookRepository,
             GenreRepository genreRepository,
-            BookChangeWriter bookChangeWriter,
-            BookEventFactory events,
+            BookEventProducer<String, UpdateBookEvent> bookEventProducer,
             VellumHubMetrics metrics) {
         this.bookRepository = bookRepository;
         this.genreRepository = genreRepository;
-        this.bookChangeWriter = bookChangeWriter;
-        this.events = events;
+        this.bookEventProducer = bookEventProducer;
         this.metrics = metrics;
     }
 
@@ -53,8 +51,7 @@ public class UpdateBookHandler {
 
         verifyIfBookAlreadyExists(book, request);
 
-        var before = events.snapshot(book);
-        Set<Genre> resolvedGenres = request.genres() == null ? null : ensureGenresAreValid(request.genres());
+        Set<Genre> resolvedGenres = ensureGenresAreValid(request.genres());
 
         book.update(
                 request.title(),
@@ -68,10 +65,19 @@ public class UpdateBookHandler {
                 resolvedGenres
         );
 
-        if (!before.equals(events.snapshot(book))) {
-            bookRepository.save(book);
-            bookChangeWriter.record(book, BookChangeKind.UPDATED);
-        }
+        bookRepository.save(book);
+
+        UpdateBookEvent updateBookEvent = new UpdateBookEvent(
+                book.getId(),
+                book.getTitle(),
+                book.getDescription(),
+                book.getReleaseYear(),
+                book.getCoverUrl(),
+                book.getAuthor(),
+                book.getGenres().stream().map(Genre::getName).toList()
+        );
+
+        bookEventProducer.send(KafkaTopics.UPDATED_BOOK, book.getId().toString(), updateBookEvent);
         metrics.recordBusinessCounter(VellumHubMetrics.BOOKS_UPDATED, "book_update", "success");
     }
 
@@ -103,10 +109,12 @@ public class UpdateBookHandler {
 
         if (!titleChanged && !isbnChanged) return;
 
-        if (bookRepository.existByTitleAndAuthorAndIsbn(request.title(), request.author(), request.isbn())) {
+        String effectiveTitle = request.title() != null ? request.title() : book.getTitle();
+        String effectiveAuthor = request.author() != null ? request.author() : book.getAuthor();
+        String effectiveIsbn = request.isbn() != null ? request.isbn() : book.getIsbn();
+        if (bookRepository.existByTitleAndAuthorAndIsbn(effectiveTitle, effectiveAuthor, effectiveIsbn)) {
             throw new InvalidBookException("Book with the same title, author and ISBN already exists.");
         }
     }
 
 }
-

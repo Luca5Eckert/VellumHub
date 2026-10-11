@@ -40,6 +40,8 @@ public class OutboxDispatcher {
                         try {
                             store.published(record.eventId(), record.claimToken());
                             published.increment();
+                            log.debug("operation=outbox_kafka_ack, eventId={}, topic={}, attempt={}",
+                                    record.eventId(), record.topic(), record.attempts());
                         } catch (Exception ex) {
                             log.error("Outbox ACK persistence failed; lease will recover. eventId={}", record.eventId(), ex);
                         }
@@ -58,7 +60,8 @@ public class OutboxDispatcher {
         } catch (Exception ex) {
             log.error("Outbox retry persistence failed; lease will recover. eventId={}", record.eventId(), ex);
         }
-        log.warn("Outbox publish failed. eventId={}, attempt={}", record.eventId(), record.attempts(), failure);
+        log.warn("operation=outbox_publish_failed, eventId={}, topic={}, attempt={}",
+                record.eventId(), record.topic(), record.attempts(), failure);
     }
 }
 
