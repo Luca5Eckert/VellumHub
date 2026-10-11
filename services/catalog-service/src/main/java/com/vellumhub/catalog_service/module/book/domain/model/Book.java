@@ -137,7 +137,7 @@ public class Book {
             this.publisher = publisher;
         }
 
-        if (genres != null && !genres.isEmpty()) {
+        if (genres != null) {
             this.genres = new HashSet<>(genres);
         }
     }
