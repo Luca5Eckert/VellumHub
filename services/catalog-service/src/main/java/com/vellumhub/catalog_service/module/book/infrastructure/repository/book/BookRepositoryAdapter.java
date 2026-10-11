@@ -22,7 +22,7 @@ public class BookRepositoryAdapter implements BookRepository {
 
     @Override
     public void save(Book book) {
-        bookRepository.save(book);
+        bookRepository.saveAndFlush(book);
     }
 
     @Override
@@ -70,3 +70,4 @@ public class BookRepositoryAdapter implements BookRepository {
     }
 
 }
+

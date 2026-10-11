@@ -5,6 +5,8 @@ import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundEx
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookCoverStorage;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
+import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +18,12 @@ public class UploadBookCoverHandler {
 
     private final BookCoverStorage bookCoverStorage;
     private final BookRepository bookRepository;
+    private final BookChangeWriter changes;
 
-    public UploadBookCoverHandler(BookCoverStorage bookCoverStorage, BookRepository bookRepository) {
+    public UploadBookCoverHandler(BookCoverStorage bookCoverStorage, BookRepository bookRepository, BookChangeWriter changes) {
         this.bookCoverStorage = bookCoverStorage;
         this.bookRepository = bookRepository;
+        this.changes = changes;
     }
 
     @Transactional
@@ -35,7 +39,9 @@ public class UploadBookCoverHandler {
 
         book.updateCoverUrl(coverUrl);
         bookRepository.save(book);
+        changes.record(book, BookChangeKind.UPDATED);
 
         return coverUrl;
     }
 }
+

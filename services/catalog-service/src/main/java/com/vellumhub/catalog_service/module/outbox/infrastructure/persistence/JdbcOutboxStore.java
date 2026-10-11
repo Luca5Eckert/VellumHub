@@ -35,11 +35,11 @@ public class JdbcOutboxStore implements OutboxStore {
             UPDATE outbox_events e SET status='IN_FLIGHT', claim_token=?,
                attempts=e.attempts+1, lease_until=now() + (? * interval '1 second')
             FROM candidate c WHERE e.event_id=c.event_id
-            RETURNING e.event_id, e.claim_token, e.topic, e.message_key,
+            RETURNING e.event_id, e.claim_token, e.event_type, e.topic, e.message_key,
                       e.payload::text AS payload_text, e.attempts
             """, rs -> rs.next() ? Optional.of(new OutboxRecord(
                 rs.getObject("event_id", UUID.class), rs.getObject("claim_token", UUID.class),
-                rs.getString("topic"), rs.getString("message_key"), rs.getString("payload_text"),
+                rs.getString("event_type"), rs.getString("topic"), rs.getString("message_key"), rs.getString("payload_text"),
                 rs.getInt("attempts"))) : Optional.empty(),
             token, Math.max(1L, lease.toSeconds()));
     }
@@ -66,4 +66,5 @@ public class JdbcOutboxStore implements OutboxStore {
         return value == null ? 0 : value;
     }
 }
+
 

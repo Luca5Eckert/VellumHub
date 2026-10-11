@@ -1,11 +1,10 @@
 package com.vellumhub.catalog_service.module.book.application.handler;
 
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotExistException;
-import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
+import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
+import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
-import com.vellumhub.kafka.contracts.KafkaTopics;
-import com.vellumhub.kafka.contracts.book.DeleteBookEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,27 +14,26 @@ import java.util.UUID;
 public class DeleteBookHandler {
 
     private final BookRepository bookRepository;
-    private final BookEventProducer<String, DeleteBookEvent> bookEventProducer;
+    private final BookChangeWriter bookChangeWriter;
     private final VellumHubMetrics metrics;
 
-    public DeleteBookHandler(BookRepository bookRepository, BookEventProducer<String, DeleteBookEvent> bookEventProducer, VellumHubMetrics metrics) {
+    public DeleteBookHandler(BookRepository bookRepository, BookChangeWriter bookChangeWriter, VellumHubMetrics metrics) {
         this.bookRepository = bookRepository;
-        this.bookEventProducer = bookEventProducer;
+        this.bookChangeWriter = bookChangeWriter;
         this.metrics = metrics;
     }
 
     @Transactional
     public void execute(UUID bookId){
-        if(!bookRepository.existsById(bookId)) throw new BookNotExistException(bookId.toString());
-
-        bookRepository.deleteById(bookId);
-
-        DeleteBookEvent deleteMediaEvent = new DeleteBookEvent(bookId);
-
-        bookEventProducer.send(KafkaTopics.DELETED_BOOK, bookId.toString(), deleteMediaEvent);
+        var book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new BookNotExistException(bookId.toString()));
+        book.markDeleted(java.time.Instant.now());
+        bookRepository.save(book);
+        bookChangeWriter.record(book, BookChangeKind.DELETED);
         metrics.recordBusinessCounter(VellumHubMetrics.BOOKS_DELETED, "book_deletion", "success");
     }
 
 
 
 }
+

@@ -151,6 +151,16 @@ public class Book {
         }
     }
 
+    /**
+     * Soft-delete preserves referential integrity with existing reading history and book lists.
+     * Hibernate's {@code @Version} increments on flush; the tombstone uses that new revision.
+     */
+    public void markDeleted(Instant when) {
+        Objects.requireNonNull(when, "deletedAt");
+        if (deletedAt != null) throw new IllegalStateException("Book already deleted");
+        this.deletedAt = when;
+    }
+
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;
