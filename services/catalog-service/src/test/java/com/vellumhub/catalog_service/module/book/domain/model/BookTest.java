@@ -144,6 +144,12 @@ class BookTest {
         }
     }
 
+    @Test
+    void explicitlyEmptyGenresClearTheCollection() {
+        book.update(null, null, null, null, null, null, null, null, Set.of());
+        assertThat(book.getGenres()).isEmpty();
+    }
+
     @Nested
     @DisplayName("update() - partial update")
     class PartialUpdate {

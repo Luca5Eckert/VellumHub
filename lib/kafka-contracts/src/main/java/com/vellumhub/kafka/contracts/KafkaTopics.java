@@ -6,6 +6,9 @@ public final class KafkaTopics {
     public static final String UPDATED_BOOK = "updated-book";
     public static final String DELETED_BOOK = "deleted-book";
 
+    /** Ordered, full-snapshot Book lifecycle stream (v2). */
+    public static final String BOOK_EVENTS = "book-events";
+
     public static final String CREATED_RATING = "created-rating";
     public static final String UPDATED_RATING = "updated-rating";
     public static final String USER_REACTION_CHANGED = "user-reaction-changed";
@@ -22,4 +25,5 @@ public final class KafkaTopics {
     private KafkaTopics() {
     }
 }
+
 

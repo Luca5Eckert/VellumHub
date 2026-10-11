@@ -2,11 +2,11 @@ package com.vellumhub.catalog_service.module.book.domain.handler;
 
 import com.vellumhub.catalog_service.module.book.application.command.CreateBookCommand;
 import com.vellumhub.catalog_service.module.book.application.handler.create.CreateBookHandler;
-import com.vellumhub.kafka.contracts.book.CreateBookEvent;
+import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
 import com.vellumhub.catalog_service.module.book.domain.exception.InvalidBookException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
-import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
+import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
@@ -45,7 +45,7 @@ class CreateBookHandlerTest {
     private GenreRepository genreRepository;
 
     @Mock
-    private BookEventProducer<String, CreateBookEvent> bookEventProducer;
+    private BookChangeWriter bookChangeWriter;
 
     private CreateBookHandler createBookHandler;
 
@@ -57,7 +57,7 @@ class CreateBookHandlerTest {
         createBookHandler = new CreateBookHandler(
                 bookRepository,
                 genreRepository,
-                bookEventProducer,
+                bookChangeWriter,
                 new VellumHubMetrics(meterRegistry)
         );
     }
@@ -75,10 +75,8 @@ class CreateBookHandlerTest {
             );
 
             var fantasyGenre = mock(Genre.class);
-            given(fantasyGenre.getName()).willReturn("Fantasy");
 
             var adventureGenre = mock(Genre.class);
-            given(adventureGenre.getName()).willReturn("Adventure");
 
             given(bookRepository.existByTitleAndAuthorAndIsbn("The Hobbit", "J.R.R. Tolkien", "123456789"))
                     .willReturn(false);
@@ -103,18 +101,7 @@ class CreateBookHandlerTest {
             assertThat(savedBook.getIsbn()).isEqualTo("123456789");
             assertThat(savedBook.getGenres()).containsExactlyInAnyOrder(fantasyGenre, adventureGenre);
 
-            var eventCaptor = ArgumentCaptor.forClass(CreateBookEvent.class);
-            then(bookEventProducer).should().send(
-                    eq("created-book"),
-                    eq(generatedBookId.toString()),
-                    eventCaptor.capture()
-            );
-
-            CreateBookEvent capturedEvent = eventCaptor.getValue();
-            assertThat(capturedEvent.bookId()).isEqualTo(generatedBookId);
-            assertThat(capturedEvent.title()).isEqualTo("The Hobbit");
-            assertThat(capturedEvent.author()).isEqualTo("J.R.R. Tolkien");
-            assertThat(capturedEvent.genres()).containsExactlyInAnyOrder("Fantasy", "Adventure");
+            then(bookChangeWriter).should().record(savedBook, BookChangeKind.CREATED);
             assertThat(booksCreatedCount()).isEqualTo(1.0);
         }
     }
@@ -132,7 +119,7 @@ class CreateBookHandlerTest {
 
             then(bookRepository).shouldHaveNoInteractions();
             then(genreRepository).shouldHaveNoInteractions();
-            then(bookEventProducer).shouldHaveNoInteractions();
+            then(bookChangeWriter).shouldHaveNoInteractions();
         }
 
         @Test
@@ -152,7 +139,7 @@ class CreateBookHandlerTest {
 
             then(genreRepository).shouldHaveNoInteractions();
             then(bookRepository).should(never()).save(any());
-            then(bookEventProducer).shouldHaveNoInteractions();
+            then(bookChangeWriter).shouldHaveNoInteractions();
         }
 
         @Test
@@ -173,7 +160,7 @@ class CreateBookHandlerTest {
                     .hasMessageContaining("Genre not found: Unknown Genre");
 
             then(bookRepository).should(never()).save(any());
-            then(bookEventProducer).shouldHaveNoInteractions();
+            then(bookChangeWriter).shouldHaveNoInteractions();
         }
     }
 
@@ -185,3 +172,4 @@ class CreateBookHandlerTest {
                 .count();
     }
 }
+

@@ -3,11 +3,10 @@ package com.vellumhub.catalog_service.module.book.application.handler.create;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
-import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
+import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
+import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
 import com.vellumhub.catalog_service.module.book.domain.port.BookExternalProvider;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
-import com.vellumhub.kafka.contracts.KafkaTopics;
-import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,13 +18,13 @@ public class CreateBookWithIsbnHandler {
     private final BookRepository bookRepository;
     private final BookExternalProvider bookExternalProvider;
 
-    private final BookEventProducer<String, CreateBookEvent> bookEventProducer;
+    private final BookChangeWriter bookChangeWriter;
 
 
-    public CreateBookWithIsbnHandler(BookRepository bookRepository, BookExternalProvider bookExternalProvider, BookEventProducer<String, CreateBookEvent> bookEventProducer) {
+    public CreateBookWithIsbnHandler(BookRepository bookRepository, BookExternalProvider bookExternalProvider, BookChangeWriter bookChangeWriter) {
         this.bookRepository = bookRepository;
         this.bookExternalProvider = bookExternalProvider;
-        this.bookEventProducer = bookEventProducer;
+        this.bookChangeWriter = bookChangeWriter;
     }
 
     @Transactional
@@ -39,28 +38,12 @@ public class CreateBookWithIsbnHandler {
                 .orElseThrow(() -> new BookDomainException("Book not found in external provider for ISBN: " + isbn));
 
         bookRepository.save(newBook);
+        bookChangeWriter.record(newBook, BookChangeKind.CREATED);
 
 
 
         return newBook.getId();
     }
 
-    /**
-     * Publishes a CreateBookEvent to notify other parts of the system about the creation of a new book.
-     * @param book The book that was created, used to populate the event data
-     */
-    private void publishEvent(Book book) {
-        CreateBookEvent createBookEvent = new CreateBookEvent(
-                book.getId(),
-                book.getTitle(),
-                book.getDescription(),
-                book.getReleaseYear(),
-                book.getCoverUrl(),
-                book.getAuthor(),
-                book.getGenres().stream().map(Genre::getName).toList()
-        );
-
-        bookEventProducer.send(KafkaTopics.CREATED_BOOK, createBookEvent.bookId().toString(), createBookEvent);
-    }
-
 }
+

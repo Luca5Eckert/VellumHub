@@ -4,13 +4,12 @@ import com.vellumhub.catalog_service.module.book.application.command.CreateBookC
 import com.vellumhub.catalog_service.module.book.domain.exception.InvalidBookException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
-import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
+import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
+import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
-import com.vellumhub.kafka.contracts.KafkaTopics;
-import com.vellumhub.kafka.contracts.book.CreateBookEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,17 +21,17 @@ public class CreateBookHandler {
 
     private final BookRepository bookRepository;
     private final GenreRepository genreRepository;
-    private final BookEventProducer<String, CreateBookEvent> bookEventProducer;
+    private final BookChangeWriter bookChangeWriter;
     private final VellumHubMetrics metrics;
 
     public CreateBookHandler(
             BookRepository bookRepository,
             GenreRepository genreRepository,
-            BookEventProducer<String, CreateBookEvent> bookEventProducer,
+            BookChangeWriter bookChangeWriter,
             VellumHubMetrics metrics) {
         this.bookRepository = bookRepository;
         this.genreRepository = genreRepository;
-        this.bookEventProducer = bookEventProducer;
+        this.bookChangeWriter = bookChangeWriter;
         this.metrics = metrics;
     }
 
@@ -58,7 +57,7 @@ public class CreateBookHandler {
 
         bookRepository.save(book);
 
-        publishEvent(book);
+        bookChangeWriter.record(book, BookChangeKind.CREATED);
         metrics.recordBusinessCounter(VellumHubMetrics.BOOKS_CREATED, "book_creation", "success");
     }
 
@@ -93,21 +92,5 @@ public class CreateBookHandler {
                 .orElseThrow(() -> new BookRequestDomainException("Genre not found: " + name));
     }
 
-    /**
-     * Publishes a CreateBookEvent to notify other parts of the system about the creation of a new book.
-     * @param book The book that was created, used to populate the event data
-     */
-    private void publishEvent(Book book) {
-        CreateBookEvent createBookEvent = new CreateBookEvent(
-                book.getId(),
-                book.getTitle(),
-                book.getDescription(),
-                book.getReleaseYear(),
-                book.getCoverUrl(),
-                book.getAuthor(),
-                book.getGenres().stream().map(Genre::getName).toList()
-        );
-
-        bookEventProducer.send(KafkaTopics.CREATED_BOOK, createBookEvent.bookId().toString(), createBookEvent);
-    }
 }
+

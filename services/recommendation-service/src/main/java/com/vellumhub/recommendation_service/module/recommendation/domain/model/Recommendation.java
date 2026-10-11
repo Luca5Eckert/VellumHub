@@ -25,9 +25,7 @@ public class Recommendation {
     )
     private String title;
 
-    @Column(
-            nullable = false
-    )
+    @Column(length = 1000)
     private String description;
 
     @Column(
@@ -35,9 +33,7 @@ public class Recommendation {
     )
     private int releaseYear;
 
-    @Column(
-            nullable = false
-    )
+    @Column
     private String coverUrl;
 
     @Column(
@@ -70,3 +66,4 @@ public class Recommendation {
     }
 
 }
+

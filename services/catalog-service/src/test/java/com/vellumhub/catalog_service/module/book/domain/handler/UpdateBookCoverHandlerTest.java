@@ -4,6 +4,7 @@ import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundEx
 import com.vellumhub.catalog_service.module.book.application.handler.update.UpdateBookCoverHandler;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +26,9 @@ class UpdateBookCoverHandlerTest {
 
     @Mock
     private BookRepository bookRepository;
+
+    @Mock
+    private BookChangeWriter changes;
 
     @InjectMocks
     private UpdateBookCoverHandler updateBookCoverHandler;
@@ -55,3 +59,4 @@ class UpdateBookCoverHandlerTest {
                 .hasMessageContaining(bookId.toString());
     }
 }
+

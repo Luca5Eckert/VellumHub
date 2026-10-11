@@ -6,6 +6,7 @@ import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundEx
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookCoverStorage;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,9 @@ class UploadBookCoverHandlerTest {
 
     @Mock
     private BookRepository bookRepository;
+
+    @Mock
+    private BookChangeWriter changes;
 
     @InjectMocks
     private UploadBookCoverHandler uploadBookCoverHandler;
@@ -102,3 +106,4 @@ class UploadBookCoverHandlerTest {
         }
     }
 }
+

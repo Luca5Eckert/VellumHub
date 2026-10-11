@@ -1,9 +1,9 @@
 package com.vellumhub.catalog_service.module.book_request.domain.use_case;
 
-import com.vellumhub.kafka.contracts.book.CreateBookEvent;
+import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
-import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
+import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book_request.domain.BookRequest;
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
@@ -42,7 +42,7 @@ class ApproveBookRequestUseCaseTest {
     private BookRepository bookRepository;
 
     @Mock
-    private BookEventProducer<String, CreateBookEvent> producer;
+    private BookChangeWriter changes;
 
     @InjectMocks
     private ApproveBookRequestUseCase approveBookRequestUseCase;
@@ -56,10 +56,8 @@ class ApproveBookRequestUseCaseTest {
         void shouldApproveBookRequestSuccessfully() {
             long requestId = 1L;
             Genre fantasyGenre = mock(Genre.class);
-            given(fantasyGenre.getName()).willReturn("Fantasy");
 
             Genre adventureGenre = mock(Genre.class);
-            given(adventureGenre.getName()).willReturn("Adventure");
 
             Set<Genre> genres = Set.of(fantasyGenre, adventureGenre);
 
@@ -103,16 +101,7 @@ class ApproveBookRequestUseCaseTest {
 
             then(bookRequestRepository).should().deleteById(requestId);
 
-            ArgumentCaptor<CreateBookEvent> eventCaptor = ArgumentCaptor.forClass(CreateBookEvent.class);
-            then(producer).should().send(eq("created-book"), eq(generatedBookId.toString()), eventCaptor.capture());
-
-            CreateBookEvent capturedEvent = eventCaptor.getValue();
-            assertThat(capturedEvent.bookId()).isEqualTo(generatedBookId);
-            assertThat(capturedEvent.title()).isEqualTo("The Hobbit");
-            assertThat(capturedEvent.releaseYear()).isEqualTo(1937);
-            assertThat(capturedEvent.coverUrl()).isEqualTo("http://cover.com/hobbit.jpg");
-            assertThat(capturedEvent.author()).isEqualTo("J.R.R. Tolkien");
-            assertThat(capturedEvent.genres()).containsExactlyInAnyOrder("Fantasy", "Adventure");
+            then(changes).should().record(bookToSave, BookChangeKind.CREATED);
         }
     }
 
@@ -132,7 +121,8 @@ class ApproveBookRequestUseCaseTest {
 
             then(bookRepository).shouldHaveNoInteractions();
             then(bookRequestRepository).should(never()).deleteById(anyLong());
-            then(producer).shouldHaveNoInteractions();
+            then(changes).shouldHaveNoInteractions();
         }
     }
 }
+

@@ -1029,7 +1029,7 @@
                     "books"
                   ]
                 },
-                "description": "Creates a new book in the catalog. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `create`.",
+                "description": "Persists a canonical Book and its durable change notification atomically. Other services update their local projections asynchronously. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `create`.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"title\": \"string\",\n  \"description\": \"string\",\n  \"releaseYear\": 0,\n  \"coverUrl\": \"string\",\n  \"author\": \"string\",\n  \"isbn\": \"{{isbn}}\",\n  \"pageCount\": 0,\n  \"publisher\": \"string\",\n  \"genres\": [\n    \"string\"\n  ]\n}",
@@ -1156,7 +1156,7 @@
                     "isbn"
                   ]
                 },
-                "description": "Creates a new book in the catalog by fetching details from an external API using the provided ISBN. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `createByIsbn`.",
+                "description": "Imports by ISBN, saving the canonical Book and durable creation fact in the same database transaction; downstream projections converge asynchronously. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `createByIsbn`.",
                 "body": {
                   "mode": "raw",
                   "raw": "\"string\"",
@@ -1226,7 +1226,7 @@
                     "{{id}}"
                   ]
                 },
-                "description": "Updates the data of an existing book. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `update`.",
+                "description": "Updates canonical Book metadata with optimistic concurrency control. Changed state is propagated through the transactional outbox; consumers update asynchronously. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `update`.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"title\": \"string\",\n  \"description\": \"string\",\n  \"releaseYear\": 0,\n  \"coverUrl\": \"string\",\n  \"author\": \"string\",\n  \"isbn\": \"{{isbn}}\",\n  \"pageCount\": 0,\n  \"publisher\": \"string\",\n  \"genres\": [\n    \"string\"\n  ]\n}",
@@ -1263,7 +1263,7 @@
                     "{{id}}"
                   ]
                 },
-                "description": "Removes a book from the catalog. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `delete`."
+                "description": "Soft-deletes the Book while preserving referenced reading history, and persists an ordered deletion tombstone for downstream projections. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `delete`."
               },
               "response": []
             },
@@ -1321,7 +1321,7 @@
                     "cover"
                   ]
                 },
-                "description": "Uploads a cover image for the specified book. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `uploadCover`.",
+                "description": "Stores a cover image, updates the Book cover URL, and atomically enqueues the metadata change in the Catalog database. File storage is external to the database transaction. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `uploadCover`.",
                 "body": {
                   "mode": "formdata",
                   "formdata": [

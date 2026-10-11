@@ -44,7 +44,7 @@ public class BookController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create new book", description = "Creates a new book in the catalog. Requires ADMIN role.")
+    @Operation(summary = "Create new book", description = "Persists a canonical Book and its durable change notification atomically. Other services update their local projections asynchronously. Requires ADMIN role.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Book created successfully"),
@@ -60,7 +60,7 @@ public class BookController {
 
     @PostMapping("/isbn")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create book by ISBN", description = "Creates a new book in the catalog by fetching details from an external API using the provided ISBN. Requires ADMIN role.")
+    @Operation(summary = "Create book by ISBN", description = "Imports by ISBN, saving the canonical Book and durable creation fact in the same database transaction; downstream projections converge asynchronously. Requires ADMIN role.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Book created successfully"),
@@ -78,7 +78,7 @@ public class BookController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Delete book", description = "Removes a book from the catalog. Requires ADMIN role.")
+    @Operation(summary = "Delete book", description = "Soft-deletes the Book while preserving referenced reading history, and persists an ordered deletion tombstone for downstream projections. Requires ADMIN role.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Book deleted successfully"),
@@ -126,10 +126,11 @@ public class BookController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Update book", description = "Updates the data of an existing book. Requires ADMIN role.")
+    @Operation(summary = "Update book", description = "Updates canonical Book metadata with optimistic concurrency control. Changed state is propagated through the transactional outbox; consumers update asynchronously. Requires ADMIN role.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Book updated successfully"),
+            @ApiResponse(responseCode = "409", description = "Optimistic locking conflict; reload the current book before retrying", content = @Content),
             @ApiResponse(responseCode = "400", description = "Invalid data", content = @Content),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
             @ApiResponse(responseCode = "403", description = "Forbidden - Admin permission required", content = @Content),
@@ -159,7 +160,7 @@ public class BookController {
 
     @PostMapping(value = "/{id}/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Upload book cover", description = "Uploads a cover image for the specified book. Requires ADMIN role.")
+    @Operation(summary = "Upload book cover", description = "Stores a cover image, updates the Book cover URL, and atomically enqueues the metadata change in the Catalog database. File storage is external to the database transaction. Requires ADMIN role.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Cover uploaded successfully"),
