@@ -18,6 +18,7 @@ public class CreateBookSnapshotUseCase {
         var bookSnapshot = bookSnapshotRepository.findById(command.bookId())
                 .orElseGet(() -> new BookSnapshot(command.bookId()));
 
+        bookSnapshot.setActive(true);
         bookSnapshotRepository.save(bookSnapshot);
     }
 }
