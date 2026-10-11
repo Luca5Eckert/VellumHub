@@ -25,12 +25,12 @@ public class BookProgressRepositoryAdapter implements BookProgressRepository {
 
     @Override
     public BookProgress save(BookProgress bookProgress) {
-        return bookProgressRepositoryJpa.save(bookProgress);
+        return bookProgressRepositoryJpa.saveAndFlush(bookProgress);
     }
 
 
     @Override
-    public Optional<BookProgress> findById(Long bookProgressId) {
+    public Optional<BookProgress> findById(UUID bookProgressId) {
         return bookProgressRepositoryJpa.findById(bookProgressId);
     }
 
@@ -55,3 +55,4 @@ public class BookProgressRepositoryAdapter implements BookProgressRepository {
         return bookProgressRepositoryJpa.existsByUserIdAndBookIdAndIsActiveTrue(userId, bookId);
     }
 }
+

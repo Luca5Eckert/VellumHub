@@ -3,6 +3,7 @@ package com.vellumhub.engagement_service.share.kafka;
 import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
 import com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent;
+import com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,7 +29,7 @@ import static org.awaitility.Awaitility.await;
 @Testcontainers
 @DirtiesContext
 @EmbeddedKafka(partitions = 1, bootstrapServersProperty = "spring.kafka.bootstrap-servers",
-        topics = {KafkaTopics.CREATED_READING_PROGRESS, KafkaTopics.UPDATED_READING_PROGRESS})
+        topics = {KafkaTopics.CREATED_READING_PROGRESS, KafkaTopics.UPDATED_READING_PROGRESS, KafkaTopics.READING_PROGRESS})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = {
         "spring.jpa.hibernate.ddl-auto=validate", "spring.flyway.enabled=true",
         "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect",
@@ -59,6 +60,36 @@ class ReadingProgressKafkaFlowIntegrationTest {
 
     @Autowired KafkaTemplate<String, Object> kafka;
     @Autowired JdbcTemplate jdbc;
+
+
+    @Test
+    void orderedReadingProgressConsumesOncePerRevision() throws Exception {
+        UUID book = UUID.randomUUID();
+        UUID user = UUID.randomUUID();
+        UUID progress = UUID.randomUUID();
+        jdbc.update("INSERT INTO book_snapshot(book_id) VALUES (?)", book);
+        var created = new ReadingProgressChangedEvent(
+                UUID.randomUUID(), Instant.now(), progress, user, book,
+                "READING", 0, 10, 0L, ReadingProgressChangedEvent.Kind.CREATED);
+        var updated = new ReadingProgressChangedEvent(
+                UUID.randomUUID(), Instant.now(), progress, user, book,
+                "READING", 10, 20, 1L, ReadingProgressChangedEvent.Kind.UPDATED);
+        kafka.send(KafkaTopics.READING_PROGRESS, progress.toString(), created).get(10, TimeUnit.SECONDS);
+        kafka.send(KafkaTopics.READING_PROGRESS, progress.toString(), updated).get(10, TimeUnit.SECONDS);
+        kafka.send(KafkaTopics.READING_PROGRESS, progress.toString(), updated).get(10, TimeUnit.SECONDS);
+
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            assertThat(jdbc.queryForObject(
+                    "SELECT count(*) FROM reading_session_entries WHERE reading_session_id=?",
+                    Integer.class,progress)).isEqualTo(2);
+            assertThat(jdbc.queryForObject(
+                    "SELECT last_revision FROM reading_progress_offsets WHERE aggregate_id=?",
+                    Long.class,progress)).isEqualTo(1L);
+            assertThat(jdbc.queryForObject(
+                    "SELECT count(*) FROM reading_session_entries WHERE event_id=?",
+                    Integer.class,updated.eventId())).isEqualTo(1);
+        });
+    }
 
     @Test
     void preservesCatalogOccurrenceAndAcceptsLegacyMessages() throws Exception {

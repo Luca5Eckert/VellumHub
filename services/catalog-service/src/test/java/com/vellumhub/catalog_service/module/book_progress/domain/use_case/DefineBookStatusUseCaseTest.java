@@ -4,7 +4,7 @@ import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundEx
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
-import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingProgressChange;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
@@ -60,7 +60,7 @@ class DefineBookStatusUseCaseTest {
             when(bookProgressRepository.existsByUserIdAndBookIdAndIsActive(userId, bookId))
                     .thenReturn(false);
 
-            CreateBookProgressEvent event = useCase.execute(command);
+            ReadingProgressChange event = useCase.execute(command);
             assertThat(event.eventId()).isNotNull();
             assertThat(event.occurredAt()).isNotNull();
 
@@ -114,11 +114,11 @@ class DefineBookStatusUseCaseTest {
             when(bookProgressRepository.existsByUserIdAndBookIdAndIsActive(userId, bookId))
                     .thenReturn(false);
 
-            CreateBookProgressEvent event = useCase.execute(command);
+            ReadingProgressChange event = useCase.execute(command);
             assertThat(event.eventId()).isNotNull();
             assertThat(event.occurredAt()).isNotNull();
 
-            assertThat(event.initPage()).isEqualTo(42);
+            assertThat(event.newPage()).isEqualTo(42);
         }
 
         @Test
@@ -131,12 +131,12 @@ class DefineBookStatusUseCaseTest {
                     .thenReturn(false);
             when(book.getPageCount()).thenReturn(300);
 
-            CreateBookProgressEvent event = useCase.execute(command);
+            ReadingProgressChange event = useCase.execute(command);
             assertThat(event.eventId()).isNotNull();
             assertThat(event.occurredAt()).isNotNull();
 
             assertThat(event.progress()).isEqualTo(ReadingStatus.COMPLETED.name());
-            assertThat(event.initPage()).isEqualTo(300);
+            assertThat(event.newPage()).isEqualTo(300);
         }
 
         @Test
@@ -150,3 +150,4 @@ class DefineBookStatusUseCaseTest {
         }
     }
 }
+

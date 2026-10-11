@@ -15,9 +15,11 @@ public final class KafkaTopics {
     public static final String CREATED_READING_PROGRESS = "created-reading-progress";
     public static final String UPDATED_READING_PROGRESS = "updated-reading-progress";
 
+    public static final String READING_PROGRESS = "reading-progress-events";
     public static final String DLT_PATTERN = ".*-dlt";
     public static final String DLT_SUFFIX = "-dlt";
 
     private KafkaTopics() {
     }
 }
+

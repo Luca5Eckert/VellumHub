@@ -18,3 +18,4 @@ public record UpdateBookProgressEvent(
         this(null, null, bookProgressId, userId, bookId, progress, oldPage, newPage);
     }
 }
+

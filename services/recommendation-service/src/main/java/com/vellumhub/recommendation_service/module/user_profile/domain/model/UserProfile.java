@@ -28,6 +28,12 @@ public class UserProfile {
     @Id
     private UUID userId;
 
+    // Protect incremental profile updates even when two different books for the same user
+    // are processed concurrently on different Kafka partitions.
+    @jakarta.persistence.Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     @Column(columnDefinition = "vector(384)")
     @JdbcTypeCode(SqlTypes.VECTOR)
     private float[] profileVector = new float[384];
@@ -57,6 +63,7 @@ public class UserProfile {
         Arrays.fill(vector, 0.5f);
         return new UserProfile(
                 userId,
+                null,
                 vector,
                 new HashSet<>(),
                 0.0,
@@ -122,3 +129,4 @@ public class UserProfile {
         }
     }
 }
+

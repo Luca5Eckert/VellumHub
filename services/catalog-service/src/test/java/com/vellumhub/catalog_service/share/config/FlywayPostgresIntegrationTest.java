@@ -50,8 +50,62 @@ class FlywayPostgresIntegrationTest {
         assertThat(indexExists(jdbcTemplate, "idx_book_progress_user_id")).isTrue();
     }
 
+
     @Test
     @Order(2)
+    void optimisticLockRejectsStaleReadingProgress(
+            @Autowired JdbcTemplate jdbcTemplate,
+            @Autowired jakarta.persistence.EntityManagerFactory factory) {
+        java.util.UUID bookId = java.util.UUID.randomUUID();
+        java.util.UUID userId = java.util.UUID.randomUUID();
+        jdbcTemplate.update("""
+            INSERT INTO books(id,title,release_year,author,isbn,page_count,publisher,version,created_at)
+            VALUES(?,?,?,?,?,?,?,0,now())
+            """, bookId,"Optimistic Reading",2026,"Test Author","test-isbn",300,"Test Publisher");
+
+        var setup = factory.createEntityManager();
+        java.util.UUID progressId;
+        try {
+            setup.getTransaction().begin();
+            var book = setup.find(com.vellumhub.catalog_service.module.book.domain.model.Book.class,bookId);
+            var progress = com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress.create(
+                    userId,book,0,
+                    com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus.READING,
+                    null,null);
+            setup.persist(progress);
+            setup.getTransaction().commit();
+            progressId=progress.getId();
+        } finally { setup.close(); }
+
+        var first = factory.createEntityManager();
+        var stale = factory.createEntityManager();
+        try {
+            first.getTransaction().begin();
+            stale.getTransaction().begin();
+            var firstProgress = first.find(
+                    com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress.class,progressId);
+            var staleProgress = stale.find(
+                    com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress.class,progressId);
+            firstProgress.update(
+                    com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus.READING,10);
+            first.getTransaction().commit();
+            staleProgress.update(
+                    com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus.READING,20);
+            assertThatThrownBy(() -> stale.getTransaction().commit())
+                    .isInstanceOfAny(jakarta.persistence.OptimisticLockException.class,
+                                     jakarta.persistence.RollbackException.class);
+            assertThat(jdbcTemplate.queryForObject(
+                    "SELECT current_page FROM book_progress WHERE id=?",Integer.class,progressId))
+                    .isEqualTo(10);
+        } finally {
+            if (first.getTransaction().isActive()) first.getTransaction().rollback();
+            if (stale.getTransaction().isActive()) stale.getTransaction().rollback();
+            first.close(); stale.close();
+        }
+    }
+
+    @Test
+    @Order(3)
     void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(@Autowired JdbcTemplate jdbcTemplate) {
         jdbcTemplate.execute("alter table books drop column title");
 
