@@ -14,7 +14,11 @@ public class DeleteBookSnapshotUseCase {
     }
 
     public void execute(DeleteBookSnapshotCommand command) {
-        bookSnapshotRepository.deleteByBookId(command.bookId());
+        // Legacy delete topics must also preserve identities referenced by historical facts.
+        bookSnapshotRepository.findById(command.bookId()).ifPresent(snapshot -> {
+            snapshot.setActive(false);
+            bookSnapshotRepository.save(snapshot);
+        });
     }
 
 }
