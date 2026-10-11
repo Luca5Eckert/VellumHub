@@ -13,7 +13,7 @@ public interface BookProgressRepository {
 
     BookProgress save(BookProgress bookProgress);
 
-    Optional<BookProgress> findById(Long bookProgressId);
+    Optional<BookProgress> findById(UUID bookProgressId);
 
     boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
 
@@ -23,3 +23,4 @@ public interface BookProgressRepository {
 
     boolean existsByUserIdAndBookIdAndIsActive(UUID userId, UUID bookId);
 }
+

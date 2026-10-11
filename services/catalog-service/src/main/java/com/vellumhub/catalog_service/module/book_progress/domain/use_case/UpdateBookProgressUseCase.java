@@ -36,19 +36,21 @@ public class UpdateBookProgressUseCase {
 
           bookProgress.update(bookProgress.getReadingStatus(), command.currentPage());
 
-          bookProgressRepository.save(bookProgress);
+          BookProgress persisted = bookProgressRepository.save(bookProgress);
           metrics.recordBusinessCounter(VellumHubMetrics.READING_PROGRESS_UPDATED, "reading_progress_update", "success");
 
           return new UpdateBookProgressEvent(
                 UUID.randomUUID(),
                 Instant.now().truncatedTo(ChronoUnit.MICROS),
-                  bookProgress.getId(),
+                  persisted.getId(),
                   command.userId(),
                   command.bookId(),
                   bookProgress.getReadingStatus().name(),
                   currentPage,
-                  bookProgress.getCurrentPage()
+                  persisted.getCurrentPage(),
+                  persisted.getVersion() == null ? 1L : persisted.getVersion()
           );
      }
 
 }
+

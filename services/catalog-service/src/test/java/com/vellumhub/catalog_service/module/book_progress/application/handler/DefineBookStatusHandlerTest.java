@@ -4,7 +4,10 @@ import com.vellumhub.catalog_service.module.book_progress.application.dto.BookSt
 import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
 import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
-import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressEventProducer;
+import com.vellumhub.catalog_service.module.book_progress.application.event.ReadingProgressEventFactory;
+import com.vellumhub.catalog_service.module.outbox.application.port.OutboxWriter;
+import com.vellumhub.catalog_service.module.outbox.application.model.OutboxMessage;
+import java.time.Instant;
 import com.vellumhub.catalog_service.module.book_progress.domain.use_case.DefineBookStatusUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -34,7 +37,10 @@ class DefineBookStatusHandlerTest {
     private DefineBookStatusUseCase defineBookStatusUseCase;
 
     @Mock
-    private BookProgressEventProducer<String, CreateBookProgressEvent> bookProgressEventProducer;
+    private OutboxWriter outboxWriter;
+
+    @org.mockito.Spy
+    private ReadingProgressEventFactory eventFactory = new ReadingProgressEventFactory();
 
     @InjectMocks
     private DefineBookStatusHandler handler;
@@ -57,7 +63,7 @@ class DefineBookStatusHandlerTest {
         void shouldBuildCommandFromRequestAndDelegateToUseCase() {
             OffsetDateTime startedAt = OffsetDateTime.now();
             BookStatusRequest request = new BookStatusRequest(ReadingStatus.READING, 10, startedAt, null);
-            CreateBookProgressEvent event = new CreateBookProgressEvent(bookProgressId, userId, bookId, "READING", 10);
+            CreateBookProgressEvent event = new CreateBookProgressEvent(UUID.randomUUID(), Instant.now(), bookProgressId, userId, bookId, "READING", 10);
 
             when(defineBookStatusUseCase.execute(any())).thenReturn(event);
 
@@ -78,13 +84,17 @@ class DefineBookStatusHandlerTest {
         @Test
         void shouldPublishEventWithUserIdAsKeyToConfiguredTopic() {
             BookStatusRequest request = new BookStatusRequest(ReadingStatus.READING, 0, null, null);
-            CreateBookProgressEvent event = new CreateBookProgressEvent(bookProgressId, userId, bookId, "READING", 0);
+            CreateBookProgressEvent event = new CreateBookProgressEvent(UUID.randomUUID(), Instant.now(), bookProgressId, userId, bookId, "READING", 0);
 
             when(defineBookStatusUseCase.execute(any())).thenReturn(event);
 
             handler.handle(request, userId, bookId);
 
-            verify(bookProgressEventProducer).send("created-reading-progress", userId.toString(), event);
+            ArgumentCaptor<OutboxMessage> messages = ArgumentCaptor.forClass(OutboxMessage.class);
+            verify(outboxWriter).append(messages.capture());
+            assertThat(messages.getValue().topic()).isEqualTo("reading-progress-events");
+            assertThat(messages.getValue().messageKey()).isEqualTo(bookProgressId.toString());
+            assertThat(messages.getValue().revision()).isZero();
         }
 
         @Test
@@ -97,7 +107,7 @@ class DefineBookStatusHandlerTest {
                     .isInstanceOf(RuntimeException.class)
                     .hasMessage("use case failure");
 
-            verifyNoInteractions(bookProgressEventProducer);
+            verifyNoInteractions(outboxWriter);
         }
 
         @Test
@@ -109,7 +119,8 @@ class DefineBookStatusHandlerTest {
             assertThatThrownBy(() -> handler.handle(request, userId, bookId))
                     .isInstanceOf(RuntimeException.class);
 
-            verify(bookProgressEventProducer, never()).send(any(), any(), any());
+            verify(outboxWriter, never()).append(any());
         }
     }
 }
+

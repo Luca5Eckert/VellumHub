@@ -1,20 +1,19 @@
 package com.vellumhub.kafka.contracts.readingprogress;
-
 import java.time.Instant;
 import java.util.UUID;
 
-/** Catalog occurrence metadata is nullable only for legacy messages. */
+/** Compatibility DTO; revision is populated for new Catalog writes. */
 public record UpdateBookProgressEvent(
-        UUID eventId,
-        Instant occurredAt,
-        UUID bookProgressId,
-        UUID userId,
-        UUID bookId,
-        String progress,
-        int oldPage, int newPage
+  UUID eventId, Instant occurredAt, UUID bookProgressId, UUID userId, UUID bookId,
+  String progress, int oldPage, int newPage, long revision
 ) {
-    /** Source compatibility for legacy callers; never invent occurrence metadata. */
-    public UpdateBookProgressEvent(UUID bookProgressId, UUID userId, UUID bookId, String progress, int oldPage, int newPage) {
-        this(null, null, bookProgressId, userId, bookId, progress, oldPage, newPage);
-    }
+  public UpdateBookProgressEvent(UUID eventId, Instant occurredAt, UUID bookProgressId, UUID userId,
+                                 UUID bookId, String progress, int oldPage, int newPage) {
+    this(eventId, occurredAt, bookProgressId, userId, bookId, progress, oldPage, newPage, -1L);
+  }
+  public UpdateBookProgressEvent(UUID bookProgressId, UUID userId, UUID bookId, String progress,
+                                 int oldPage, int newPage) {
+    this(null, null, bookProgressId, userId, bookId, progress, oldPage, newPage, -1L);
+  }
 }
+

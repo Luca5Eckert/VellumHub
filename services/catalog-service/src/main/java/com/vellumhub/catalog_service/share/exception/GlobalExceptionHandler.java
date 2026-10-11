@@ -28,6 +28,18 @@ import java.util.Objects;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponseError> handleConcurrentProgressUpdate(
+            org.springframework.orm.ObjectOptimisticLockingFailureException conflict,
+            HttpServletRequest request) {
+        HttpStatus status = HttpStatus.CONFLICT;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value()).error("Concurrent Update")
+                .message("Reading progress was modified concurrently; reload and retry")
+                .details(List.of("Optimistic version mismatch"))
+                .path(request.getRequestURI()).timestamp(Instant.now()).build());
+    }
+
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
@@ -267,3 +279,4 @@ public class GlobalExceptionHandler {
                 .build());
     }
 }
+
