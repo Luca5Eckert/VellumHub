@@ -19,7 +19,9 @@ public class UpdateBookProgressHandler {
     @Transactional
     public void handle(int currentPage, UUID bookId, UUID userId) {
         var event = useCase.execute(new UpdateBookProgressCommand(userId, bookId, currentPage));
-        outbox.append(OutboxMessage.readingProgress(events.updated(event)));
+        if (event != null) {
+            outbox.append(OutboxMessage.readingProgress(events.updated(event)));
+        }
     }
 }
 
