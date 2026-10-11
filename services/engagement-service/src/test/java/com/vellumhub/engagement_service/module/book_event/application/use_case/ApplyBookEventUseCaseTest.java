@@ -52,8 +52,12 @@ class ApplyBookEventUseCaseTest {
     @Test void deletionRemovesProjectionWithoutDeletingCatalogRow() {
         UUID id=UUID.randomUUID();
         when(checkpoint.lockAndRead(id)).thenReturn(1L);
+        var saved=new BookSnapshot(id);
+        when(snapshots.findById(id)).thenReturn(Optional.of(saved));
         process.execute(event(id,2,BookChangedEvent.Kind.DELETED));
-        verify(snapshots).deleteByBookId(id);
+        assertThat(saved.isActive()).isFalse();
+        verify(snapshots).save(saved);
+        verify(snapshots,never()).deleteByBookId(id);
         verify(checkpoint).applied(id,1,2);
     }
 }
