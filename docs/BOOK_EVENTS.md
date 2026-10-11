@@ -29,7 +29,7 @@ Participating paths: create, import ISBN, approve request, update attributes, up
 
 ## Consumer projections
 
-- Engagement: maintains only Book identity in BookSnapshot. UPDATE advances checkpoint without materializing unnecessary attributes.
+- Engagement: maintains only Book identity in BookSnapshot. DELETE marks BookSnapshot inactive instead of deleting a row referenced by ratings, reactions or reading sessions. UPDATE advances checkpoint without materializing unnecessary attributes.
 - Recommendation: updates metadata and vector BookFeature. It skips inference when semantic fields have not changed, but recomputes when the embedding is missing.
 - Both: `book_event_offsets` row lock and effect share one transaction, ignoring duplicates and rejecting gaps.
 - On poison messages the dedicated Kafka container retries without skipping to later revisions. This protects order but can halt a partition indefinitely.
