@@ -75,10 +75,8 @@ class CreateBookHandlerTest {
             );
 
             var fantasyGenre = mock(Genre.class);
-            given(fantasyGenre.getName()).willReturn("Fantasy");
 
             var adventureGenre = mock(Genre.class);
-            given(adventureGenre.getName()).willReturn("Adventure");
 
             given(bookRepository.existByTitleAndAuthorAndIsbn("The Hobbit", "J.R.R. Tolkien", "123456789"))
                     .willReturn(false);
