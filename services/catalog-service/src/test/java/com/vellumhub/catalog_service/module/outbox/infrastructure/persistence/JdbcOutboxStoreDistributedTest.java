@@ -1,6 +1,5 @@
 package com.vellumhub.catalog_service.module.outbox.infrastructure.persistence;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.vellumhub.catalog_service.module.outbox.application.model.OutboxMessage;
 import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent;
@@ -34,7 +33,7 @@ class JdbcOutboxStoreDistributedTest {
         Flyway.configure().dataSource(dataSource).locations("classpath:db/migration").load().migrate();
         jdbc = new JdbcTemplate(dataSource);
         store = new JdbcOutboxStore(jdbc);
-        writer = new JdbcOutboxWriter(jdbc,JsonMapper.builder().findAndAddModules().build());
+        writer = new JdbcOutboxWriter(jdbc);
     }
     private OutboxMessage event(UUID aggregate, long revision) {
         var e = new ReadingProgressChangedEvent(UUID.randomUUID(),Instant.now(),aggregate,
