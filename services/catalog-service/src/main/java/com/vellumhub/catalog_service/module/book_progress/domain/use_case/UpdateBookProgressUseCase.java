@@ -34,6 +34,10 @@ public class UpdateBookProgressUseCase {
                throw new BookIsNotBeingReadException();
           }
 
+          // No state transition means no revision increment and no duplicate integration fact.
+          if (currentPage == command.currentPage()) {
+               return null;
+          }
           bookProgress.update(bookProgress.getReadingStatus(), command.currentPage());
 
           BookProgress persisted = bookProgressRepository.save(bookProgress);
