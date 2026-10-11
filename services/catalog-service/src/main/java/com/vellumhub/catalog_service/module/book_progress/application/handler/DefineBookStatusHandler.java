@@ -21,7 +21,8 @@ public class DefineBookStatusHandler {
     public void handle(BookStatusRequest request, UUID userId, UUID bookId) {
         var event = useCase.execute(new DefineBookStatusCommand(
                 userId, bookId, request.status(), request.currentPage(), request.startedAt(), request.endAt()));
-        outbox.append(OutboxMessage.readingProgress(events.created(event)));
+        outbox.append(OutboxMessage.readingProgress(events.map(event)));
     }
 }
+
 

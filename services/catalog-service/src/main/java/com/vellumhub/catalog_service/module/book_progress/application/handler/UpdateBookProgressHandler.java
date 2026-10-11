@@ -20,8 +20,9 @@ public class UpdateBookProgressHandler {
     public void handle(int currentPage, UUID bookId, UUID userId) {
         var event = useCase.execute(new UpdateBookProgressCommand(userId, bookId, currentPage));
         if (event != null) {
-            outbox.append(OutboxMessage.readingProgress(events.updated(event)));
+            outbox.append(OutboxMessage.readingProgress(events.map(event)));
         }
     }
 }
+
 

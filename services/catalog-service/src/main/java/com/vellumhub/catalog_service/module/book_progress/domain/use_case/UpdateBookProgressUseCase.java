@@ -7,7 +7,7 @@ import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingSt
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
-import com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingProgressChange;
 import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -24,7 +24,7 @@ public class UpdateBookProgressUseCase {
           this.metrics = metrics;
      }
 
-     public UpdateBookProgressEvent execute(UpdateBookProgressCommand command){
+     public ReadingProgressChange execute(UpdateBookProgressCommand command){
           BookProgress bookProgress = bookProgressRepository.findByUserIdAndBookId(command.userId(), command.bookId())
                   .orElseThrow(BookProgressNotFoundException::new);
 
@@ -43,7 +43,7 @@ public class UpdateBookProgressUseCase {
           BookProgress persisted = bookProgressRepository.save(bookProgress);
           metrics.recordBusinessCounter(VellumHubMetrics.READING_PROGRESS_UPDATED, "reading_progress_update", "success");
 
-          return new UpdateBookProgressEvent(
+          return new ReadingProgressChange(
                 UUID.randomUUID(),
                 Instant.now().truncatedTo(ChronoUnit.MICROS),
                   persisted.getId(),
@@ -52,9 +52,11 @@ public class UpdateBookProgressUseCase {
                   bookProgress.getReadingStatus().name(),
                   currentPage,
                   persisted.getCurrentPage(),
-                  persisted.getVersion() == null ? 1L : persisted.getVersion()
+                  persisted.getVersion() == null ? 1L : persisted.getVersion(),
+                  ReadingProgressChange.Kind.UPDATED
           );
      }
 
 }
+
 

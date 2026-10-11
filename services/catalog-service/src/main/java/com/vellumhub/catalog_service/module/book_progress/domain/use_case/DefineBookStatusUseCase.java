@@ -9,7 +9,7 @@ import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookP
 import com.vellumhub.catalog_service.module.book_progress.domain.model.BookProgress;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
 import com.vellumhub.catalog_service.module.book_progress.domain.port.BookProgressRepository;
-import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingProgressChange;
 import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -29,7 +29,7 @@ public class DefineBookStatusUseCase {
         this.bookRepository = bookRepository;
     }
 
-    public CreateBookProgressEvent execute(DefineBookStatusCommand command) {
+    public ReadingProgressChange execute(DefineBookStatusCommand command) {
         Book book = bookRepository.findById(command.bookId())
                 .orElseThrow(() -> new BookNotFoundException(
                         "Book with id " + command.bookId() + " not found"
@@ -52,15 +52,17 @@ public class DefineBookStatusUseCase {
 
         bookProgressRepository.save(bookProgress);
 
-        return new CreateBookProgressEvent(
+        return new ReadingProgressChange(
                 UUID.randomUUID(),
                 Instant.now().truncatedTo(ChronoUnit.MICROS),
                 bookProgress.getId(),
                 command.userId(),
                 command.bookId(),
                 bookProgress.getReadingStatus().name(),
-                bookProgress.getCurrentPage()
+                0, bookProgress.getCurrentPage(),
+                0L, ReadingProgressChange.Kind.CREATED
         );
     }
 
 }
+

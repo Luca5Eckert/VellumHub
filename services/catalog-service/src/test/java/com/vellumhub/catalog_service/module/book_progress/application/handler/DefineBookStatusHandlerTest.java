@@ -2,7 +2,7 @@ package com.vellumhub.catalog_service.module.book_progress.application.handler;
 
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookStatusRequest;
 import com.vellumhub.catalog_service.module.book_progress.domain.command.DefineBookStatusCommand;
-import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingProgressChange;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
 import com.vellumhub.catalog_service.module.book_progress.application.event.ReadingProgressEventFactory;
 import com.vellumhub.catalog_service.module.outbox.application.port.OutboxWriter;
@@ -63,7 +63,7 @@ class DefineBookStatusHandlerTest {
         void shouldBuildCommandFromRequestAndDelegateToUseCase() {
             OffsetDateTime startedAt = OffsetDateTime.now();
             BookStatusRequest request = new BookStatusRequest(ReadingStatus.READING, 10, startedAt, null);
-            CreateBookProgressEvent event = new CreateBookProgressEvent(UUID.randomUUID(), Instant.now(), bookProgressId, userId, bookId, "READING", 10);
+            ReadingProgressChange event = new ReadingProgressChange(UUID.randomUUID(), Instant.now(), bookProgressId, userId, bookId, "READING", 0, 10, 0L, ReadingProgressChange.Kind.CREATED);
 
             when(defineBookStatusUseCase.execute(any())).thenReturn(event);
 
@@ -84,7 +84,7 @@ class DefineBookStatusHandlerTest {
         @Test
         void shouldPublishEventWithUserIdAsKeyToConfiguredTopic() {
             BookStatusRequest request = new BookStatusRequest(ReadingStatus.READING, 0, null, null);
-            CreateBookProgressEvent event = new CreateBookProgressEvent(UUID.randomUUID(), Instant.now(), bookProgressId, userId, bookId, "READING", 0);
+            ReadingProgressChange event = new ReadingProgressChange(UUID.randomUUID(), Instant.now(), bookProgressId, userId, bookId, "READING", 0, 0, 0L, ReadingProgressChange.Kind.CREATED);
 
             when(defineBookStatusUseCase.execute(any())).thenReturn(event);
 
@@ -123,4 +123,5 @@ class DefineBookStatusHandlerTest {
         }
     }
 }
+
 

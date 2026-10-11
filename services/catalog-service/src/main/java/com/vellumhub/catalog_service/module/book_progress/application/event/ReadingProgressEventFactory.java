@@ -1,21 +1,18 @@
 package com.vellumhub.catalog_service.module.book_progress.application.event;
-import com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent;
-import com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent;
+
+import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingProgressChange;
 import com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent;
 import org.springframework.stereotype.Component;
+
+/** This is the only translation boundary from the Catalog use-case result to Kafka. */
 @Component
 public class ReadingProgressEventFactory {
-    public ReadingProgressChangedEvent created(CreateBookProgressEvent source) {
+    public ReadingProgressChangedEvent map(ReadingProgressChange change) {
         return new ReadingProgressChangedEvent(
-                source.eventId(), source.occurredAt(), source.bookProgressId(), source.userId(),
-                source.bookId(), source.progress(), 0, source.initPage(), 0L,
-                ReadingProgressChangedEvent.Kind.CREATED);
-    }
-    public ReadingProgressChangedEvent updated(UpdateBookProgressEvent source) {
-        return new ReadingProgressChangedEvent(
-                source.eventId(), source.occurredAt(), source.bookProgressId(), source.userId(),
-                source.bookId(), source.progress(), source.oldPage(), source.newPage(), source.revision(),
-                ReadingProgressChangedEvent.Kind.UPDATED);
+            change.eventId(), change.occurredAt(), change.bookProgressId(),
+            change.userId(), change.bookId(), change.progress(), change.oldPage(),
+            change.newPage(), change.revision(),
+            ReadingProgressChangedEvent.Kind.valueOf(change.kind().name()));
     }
 }
 
