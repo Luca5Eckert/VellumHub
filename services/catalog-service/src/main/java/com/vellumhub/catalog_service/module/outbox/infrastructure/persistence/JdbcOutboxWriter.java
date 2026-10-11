@@ -1,6 +1,6 @@
 package com.vellumhub.catalog_service.module.outbox.infrastructure.persistence;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.vellumhub.catalog_service.module.outbox.application.model.OutboxMessage;
 import com.vellumhub.catalog_service.module.outbox.application.port.OutboxWriter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -8,9 +8,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class JdbcOutboxWriter implements OutboxWriter {
     private final JdbcTemplate jdbc;
-    private final ObjectMapper mapper;
-    public JdbcOutboxWriter(JdbcTemplate jdbc, ObjectMapper mapper) {
-        this.jdbc = jdbc; this.mapper = mapper;
+    private final JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
+    public JdbcOutboxWriter(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
     }
     @Override public void append(OutboxMessage message) {
         final String json;
