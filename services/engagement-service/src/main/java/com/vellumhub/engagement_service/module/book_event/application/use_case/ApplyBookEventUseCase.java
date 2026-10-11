@@ -31,10 +31,16 @@ public class ApplyBookEventUseCase {
                 throw new IllegalStateException("Initial book event must be CREATED: "+event.bookId());
         }
         if (event.kind()==BookChangedEvent.Kind.DELETED) {
-            snapshots.deleteByBookId(event.bookId());
+            // Tombstone means inactive in this read model; the identity is referenced by history.
+            snapshots.findById(event.bookId()).ifPresent(snapshot -> {
+                snapshot.setActive(false);
+                snapshots.save(snapshot);
+            });
         } else {
-            snapshots.save(snapshots.findById(event.bookId())
-                    .orElseGet(()->new BookSnapshot(event.bookId())));
+            BookSnapshot snapshot = snapshots.findById(event.bookId())
+                    .orElseGet(()->new BookSnapshot(event.bookId()));
+            snapshot.setActive(true);
+            snapshots.save(snapshot);
         }
         checkpoint.applied(event.bookId(),previous,event.revision());
     }
