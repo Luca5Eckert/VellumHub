@@ -56,10 +56,8 @@ class ApproveBookRequestUseCaseTest {
         void shouldApproveBookRequestSuccessfully() {
             long requestId = 1L;
             Genre fantasyGenre = mock(Genre.class);
-            given(fantasyGenre.getName()).willReturn("Fantasy");
 
             Genre adventureGenre = mock(Genre.class);
-            given(adventureGenre.getName()).willReturn("Adventure");
 
             Set<Genre> genres = Set.of(fantasyGenre, adventureGenre);
 
