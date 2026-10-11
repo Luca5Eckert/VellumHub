@@ -1,79 +1,47 @@
 package com.vellumhub.catalog_service.module.book.domain.handler;
 
 import com.vellumhub.catalog_service.module.book.application.handler.DeleteBookHandler;
-import com.vellumhub.kafka.contracts.book.DeleteBookEvent;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotExistException;
+import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
+import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
-import com.vellumhub.catalog_service.module.book.domain.port.BookEventProducer;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DeleteBookHandlerTest {
+    @Mock BookRepository repository;
+    @Mock BookChangeWriter changes;
+    @Mock VellumHubMetrics metrics;
+    @InjectMocks DeleteBookHandler handler;
 
-    @Mock
-    private BookRepository bookRepository;
-
-    @Mock
-    private BookEventProducer<String, DeleteBookEvent> bookEventProducer;
-
-    @Mock
-    private VellumHubMetrics vellumHubMetrics;
-
-    @InjectMocks
-    private DeleteBookHandler deleteMediaHandler;
-
-    @Test
-    @DisplayName("Should delete book and send event when book exists")
-    void shouldDeleteMediaAndSendEvent_WhenMediaExists() {
-        // Arrange
-        UUID bookId = UUID.randomUUID();
-        when(bookRepository.existsById(bookId)).thenReturn(true);
-
-        // Act
-        deleteMediaHandler.execute(bookId);
-
-        // Assert
-        verify(bookRepository, times(1)).existsById(bookId);
-        verify(bookRepository, times(1)).deleteById(bookId);
-
-        ArgumentCaptor<DeleteBookEvent> eventCaptor = ArgumentCaptor.forClass(DeleteBookEvent.class);
-        verify(bookEventProducer, times(1)).send(
-                eq("deleted-book"),
-                eq(bookId.toString()),
-                eventCaptor.capture()
-        );
-
-        DeleteBookEvent capturedEvent = eventCaptor.getValue();
-        assertEquals(bookId, capturedEvent.bookId());
+    @Test void softDeletePreservesRowAndEmitsTombstone() {
+        UUID id=UUID.randomUUID();
+        Book book=Book.builder().id(id).title("Dune").build();
+        when(repository.findById(id)).thenReturn(Optional.of(book));
+        handler.execute(id);
+        assertThat(book.getDeletedAt()).isNotNull();
+        verify(repository).save(book);
+        verify(repository,never()).deleteById(any());
+        verify(changes).record(book,BookChangeKind.DELETED);
     }
 
-    @Test
-    @DisplayName("Should throw BookNotExistException when book does not exist")
-    void shouldThrowException_WhenMediaDoesNotExist() {
-        // Arrange
-        UUID bookId = UUID.randomUUID();
-        when(bookRepository.existsById(bookId)).thenReturn(false);
-
-        // Act & Assert
-        BookNotExistException exception = assertThrows(BookNotExistException.class, () ->
-                deleteMediaHandler.execute(bookId)
-        );
-
-        assertTrue(exception.getMessage().contains(bookId.toString()));
-        verify(bookRepository, times(1)).existsById(bookId);
-        verify(bookRepository, never()).deleteById(any());
-        verifyNoInteractions(bookEventProducer);
+    @Test void missingBookDoesNotEmit() {
+        UUID id=UUID.randomUUID();
+        when(repository.findById(id)).thenReturn(Optional.empty());
+        assertThatThrownBy(()->handler.execute(id)).isInstanceOf(BookNotExistException.class);
+        verifyNoInteractions(changes);
+        verify(repository,never()).save(any());
     }
 }
+
