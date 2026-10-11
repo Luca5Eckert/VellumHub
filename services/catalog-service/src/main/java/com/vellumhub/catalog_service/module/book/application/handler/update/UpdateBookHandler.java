@@ -98,14 +98,18 @@ public class UpdateBookHandler {
 
 
     private void verifyIfBookAlreadyExists(Book book, UpdateBookRequest request) {
-        boolean titleChanged = request.title() != null && !request.title().equals(book.getTitle());
-        boolean isbnChanged = request.isbn() != null && !request.isbn().equals(book.getIsbn());
+        boolean titleChanged = request.title() != null && !request.title().isBlank()
+                && !request.title().equals(book.getTitle());
+        boolean authorChanged = request.author() != null && !request.author().isBlank()
+                && !request.author().equals(book.getAuthor());
+        boolean isbnChanged = request.isbn() != null && !request.isbn().isBlank()
+                && !request.isbn().equals(book.getIsbn());
 
-        if (!titleChanged && !isbnChanged) return;
+        if (!titleChanged && !authorChanged && !isbnChanged) return;
 
-        String effectiveTitle = request.title() != null ? request.title() : book.getTitle();
-        String effectiveAuthor = request.author() != null ? request.author() : book.getAuthor();
-        String effectiveIsbn = request.isbn() != null ? request.isbn() : book.getIsbn();
+        String effectiveTitle = titleChanged ? request.title() : book.getTitle();
+        String effectiveAuthor = authorChanged ? request.author() : book.getAuthor();
+        String effectiveIsbn = isbnChanged ? request.isbn() : book.getIsbn();
         if (bookRepository.existByTitleAndAuthorAndIsbn(effectiveTitle, effectiveAuthor, effectiveIsbn)) {
             throw new InvalidBookException("Book with the same title, author and ISBN already exists.");
         }
