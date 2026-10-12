@@ -50,7 +50,7 @@ jobs:
           tags: |
             type=raw,value=${{ github.sha }}
             type=raw,value=main
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
