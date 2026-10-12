@@ -1,5 +1,7 @@
 -- The Outbox is local to Engagement and intentionally independent of the Catalog Outbox.
 -- IDs of Rating and Reaction are BIGINT; their stable textual IDs are used in the envelope.
+-- Fail fast on historic duplicate ratings; reconcile before cutover if this constraint fails.
+CREATE UNIQUE INDEX uq_engagement_rating_user_book ON rating(user_id,book_id);
 ALTER TABLE rating ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE reactions ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
 
@@ -60,3 +62,4 @@ FROM snapshot;
 
 -- Reject concurrent duplicate ratings: reconcile legacy duplicates before migration.
 CREATE UNIQUE INDEX uq_rating_user_book ON rating(user_id,book_id);
+
