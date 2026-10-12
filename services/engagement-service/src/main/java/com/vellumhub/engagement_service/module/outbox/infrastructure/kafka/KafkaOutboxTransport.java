@@ -8,6 +8,8 @@ import com.vellumhub.kafka.contracts.engagement.RatingCreatedEvent;
 import com.vellumhub.kafka.contracts.engagement.RatingUpdatedEvent;
 import com.vellumhub.kafka.contracts.engagement.RatingDeletedEvent;
 import com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent;
+import com.vellumhub.kafka.contracts.engagement.RatingBaselineEvent;
+import com.vellumhub.kafka.contracts.engagement.ReactionBaselineEvent;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
@@ -21,7 +23,9 @@ public class KafkaOutboxTransport {
         "RatingCreatedEvent",RatingCreatedEvent.class,
         "RatingUpdatedEvent",RatingUpdatedEvent.class,
         "RatingDeletedEvent",RatingDeletedEvent.class,
-        "ReactionChangedEvent",ReactionChangedEvent.class);
+        "ReactionChangedEvent",ReactionChangedEvent.class,
+        "RatingBaselineEvent",RatingBaselineEvent.class,
+        "ReactionBaselineEvent",ReactionBaselineEvent.class);
     private final KafkaTemplate<String,Object> kafka;
     private final JsonMapper mapper=JsonMapper.builder().findAndAddModules().build();
     public KafkaOutboxTransport(KafkaTemplate<String,Object> kafka) {this.kafka=kafka;}
@@ -29,7 +33,7 @@ public class KafkaOutboxTransport {
     public CompletableFuture<SendResult<String,Object>> send(OutboxRecord record) {
         Class<?> type=TYPES.get(record.eventType());
         if(type==null) throw new IllegalArgumentException("Unregistered event type="+record.eventType());
-        String requiredTopic=type==ReactionChangedEvent.class ?
+        String requiredTopic=(type==ReactionChangedEvent.class || type==ReactionBaselineEvent.class) ?
                 KafkaTopics.ENGAGEMENT_REACTIONS : KafkaTopics.ENGAGEMENT_RATINGS;
         if(!requiredTopic.equals(record.topic()))
             throw new IllegalArgumentException("Event/topic mismatch eventId="+record.eventId());
@@ -39,4 +43,5 @@ public class KafkaOutboxTransport {
         }
     }
 }
+
 

@@ -41,6 +41,12 @@ public class EngagementEventProcessor {
         } else if(fact instanceof RatingDeletedEvent e) {
             id=e.eventId();aggregateType="RATING";aggregateId=e.ratingId().toString();
             revision=e.revision();topic=KafkaTopics.ENGAGEMENT_RATINGS;
+        } else if(fact instanceof RatingBaselineEvent e) {
+            id=e.eventId();aggregateType="RATING";aggregateId=e.ratingId().toString();
+            revision=e.revision();topic=KafkaTopics.ENGAGEMENT_RATINGS;
+        } else if(fact instanceof ReactionBaselineEvent e) {
+            id=e.eventId();aggregateType="REACTION";aggregateId=e.reactionId().toString();
+            revision=e.revision();topic=KafkaTopics.ENGAGEMENT_REACTIONS;
         } else if(fact instanceof ReactionChangedEvent e) {
             id=e.eventId();aggregateType="REACTION";aggregateId=e.reactionId().toString();
             if(e.revision()==null) throw new IllegalArgumentException("Reaction revision required");
@@ -56,7 +62,13 @@ public class EngagementEventProcessor {
             WHERE aggregate_type=? AND aggregate_id=? FOR UPDATE
             """,Long.class,aggregateType,aggregateId);
         if(revision<=last) return;
-        // The initial revision can be >0 for aggregates created before the cutover.
+        // Existing aggregates begin with a baseline at their persisted revision.
+        // New aggregates must begin with a creation fact at revision zero.
+        boolean baseline=fact instanceof RatingBaselineEvent || fact instanceof ReactionBaselineEvent;
+        boolean creation=fact instanceof RatingCreatedEvent
+                || (fact instanceof ReactionChangedEvent change && change.oldTypeReaction()==null);
+        if(last==-1 && !baseline && (revision!=0 || !creation))
+            throw new IllegalStateException("Missing engagement cutover baseline: "+aggregateId);
         if(last>=0 && revision!=last+1)
             throw new IllegalStateException("Missing engagement revision aggregate="+aggregateId+
                     " expected="+(last+1)+" received="+revision);
@@ -85,4 +97,5 @@ public class EngagementEventProcessor {
         if(changed!=1) throw new IllegalStateException("Stale engagement checkpoint "+aggregateId);
     }
 }
+
 

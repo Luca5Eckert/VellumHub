@@ -30,3 +30,30 @@ CREATE INDEX idx_engagement_outbox_leased ON outbox_events(lease_until)
 CREATE INDEX idx_engagement_outbox_sequence ON outbox_events(aggregate_type,aggregate_id,aggregate_version)
   WHERE status <> 'PUBLISHED';
 
+
+-- Apply in a writer-frozen cutover, after draining legacy topics. Existing interactions
+-- already contributed to UserProfile; these baselines MUST NOT produce new adjustments.
+WITH snapshot AS (
+  SELECT gen_random_uuid() event_id, now() captured_at, id, user_id, book_id, version
+  FROM rating
+)
+INSERT INTO outbox_events(event_id,aggregate_type,aggregate_id,aggregate_version,
+  event_type,topic,message_key,payload)
+SELECT event_id,'RATING',id::text,version,'RatingBaselineEvent',
+       'engagement.ratings.v1',user_id::text,
+       jsonb_build_object('eventId',event_id,'occurredAt',captured_at,
+           'ratingId',id,'userId',user_id,'bookId',book_id,'revision',version)
+FROM snapshot;
+
+WITH snapshot AS (
+  SELECT gen_random_uuid() event_id, now() captured_at, id,user_id,book_snapshot_id book_id,version
+  FROM reactions
+)
+INSERT INTO outbox_events(event_id,aggregate_type,aggregate_id,aggregate_version,
+  event_type,topic,message_key,payload)
+SELECT event_id,'REACTION',id::text,version,'ReactionBaselineEvent',
+       'engagement.reactions.v1',user_id::text,
+       jsonb_build_object('eventId',event_id,'occurredAt',captured_at,
+           'reactionId',id,'userId',user_id,'bookId',book_id,'revision',version)
+FROM snapshot;
+
