@@ -81,10 +81,10 @@ class UpdateRatingHandlerTest {
         UpdateRatingRequest request = new UpdateRatingRequest(4, "Good");
         UUID userId = UUID.randomUUID();
 
-        when(updateRatingUseCase.execute(any(UpdateRatingCommand.class)))
+        when(updateRatingUseCase.execute(any(UpdateRatingCommand.class), any(UUID.class)))
                 .thenThrow(new RuntimeException("Rating not found"));
 
-        assertThatThrownBy(() -> updateRatingHandler.handle(ratingId, request))
+        assertThatThrownBy(() -> updateRatingHandler.handle(ratingId, request, UUID.randomUUID()))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Rating not found");
 
