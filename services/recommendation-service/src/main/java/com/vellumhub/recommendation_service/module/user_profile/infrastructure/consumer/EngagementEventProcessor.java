@@ -82,8 +82,11 @@ public class EngagementEventProcessor {
             rating.executeStrict(new UpdateUserProfileWithRatingCommand(
                     e.userId(),e.bookId(),0,e.stars(),true));
         } else if(fact instanceof RatingUpdatedEvent e) {
-            rating.executeStrict(new UpdateUserProfileWithRatingCommand(
-                    e.userId(),e.bookId(),e.oldStars(),e.newStars(),false));
+            // Review-only updates are business facts but have no recommendation-weight delta.
+            if(e.oldStars()!=e.newStars()) {
+                rating.executeStrict(new UpdateUserProfileWithRatingCommand(
+                        e.userId(),e.bookId(),e.oldStars(),e.newStars(),false));
+            }
         } else if(fact instanceof RatingDeletedEvent e) {
             deletion.execute(e.userId(),e.bookId(),e.oldStars());
         } else if(fact instanceof ReactionChangedEvent e) {
