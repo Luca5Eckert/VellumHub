@@ -60,6 +60,4 @@ SELECT event_id,'REACTION',id::text,version,'ReactionBaselineEvent',
 FROM snapshot;
 
 
--- Reject concurrent duplicate ratings: reconcile legacy duplicates before migration.
-CREATE UNIQUE INDEX uq_rating_user_book ON rating(user_id,book_id);
 
