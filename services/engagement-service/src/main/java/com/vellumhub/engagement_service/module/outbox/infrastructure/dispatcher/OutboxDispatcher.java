@@ -40,10 +40,15 @@ public class OutboxDispatcher {
                 transport.send(event).whenComplete((ack,error)-> {
                     if(error!=null) retry(event,error);
                     else try {
-                        store.published(event.eventId(),event.claimToken());
-                        published.increment();
-                        log.debug("operation=outbox_published eventId={} aggregateType={} topic={} attempt={}",
-                                event.eventId(),event.aggregateType(),event.topic(),event.attempts());
+                        if (store.published(event.eventId(),event.claimToken())) {
+                            published.increment();
+                            log.debug("operation=outbox_published eventId={} aggregateType={} topic={} attempt={}",
+                                    event.eventId(),event.aggregateType(),event.topic(),event.attempts());
+                        } else {
+                            // Another dispatcher reclaimed the expired lease; do not claim success.
+                            log.warn("operation=outbox_stale_ack eventId={} claimToken={} topic={}",
+                                    event.eventId(),event.claimToken(),event.topic());
+                        }
                     }catch(Exception exception) {
                         log.error("operation=outbox_ack_persist_failed eventId={} topic={}",
                                 event.eventId(),event.topic(),exception);
