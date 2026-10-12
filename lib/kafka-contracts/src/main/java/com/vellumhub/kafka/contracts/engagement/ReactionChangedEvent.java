@@ -37,6 +37,14 @@ public record ReactionChangedEvent(
         );
     }
 
+    /** Eight-argument legacy canonical record constructor without revision. */
+    public ReactionChangedEvent(UUID eventId, Instant occurredAt, Long reactionId,
+            UUID userId, UUID bookId, String oldTypeReaction, String newTypeReaction,
+            String typeReaction) {
+        this(eventId, occurredAt, reactionId, userId, bookId, oldTypeReaction,
+                newTypeReaction, typeReaction, null);
+    }
+
     /**
      * Backward-compatible constructor for the legacy payload shape.
      *
