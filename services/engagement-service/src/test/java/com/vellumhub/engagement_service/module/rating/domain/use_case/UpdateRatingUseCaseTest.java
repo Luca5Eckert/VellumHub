@@ -107,7 +107,7 @@ class UpdateRatingUseCaseTest {
     }
 
     private void mockPersistence(Rating rating) {
-        when(ratingRepository.findById(rating.getId())).thenReturn(Optional.of(rating));
+        when(ratingRepository.findByIdForUpdate(rating.getId())).thenReturn(Optional.of(rating));
         when(ratingRepository.save(any(Rating.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
