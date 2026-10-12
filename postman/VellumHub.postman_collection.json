@@ -1876,7 +1876,7 @@
                     "rating"
                   ]
                 },
-                "description": "Creates a new rating for a book (0-5 stars with optional text review)\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `create_1`.",
+                "description": "Records a rating (0-5 stars) in Engagement and durably enqueues RatingCreatedEvent in the same transaction. Recommendation converges asynchronously.\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `create_1`.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"stars\": 0,\n  \"review\": \"string\"\n}",
@@ -2026,7 +2026,7 @@
                     "{{ratingId}}"
                   ]
                 },
-                "description": "Updates an existing book rating (0-5 stars with optional text review)\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `update_1`.",
+                "description": "Updates the authenticated user's rating and atomically records RatingUpdatedEvent when state changes. Recommendation converges asynchronously.\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `update_1`.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"stars\": 0,\n  \"review\": \"string\"\n}",
@@ -2063,7 +2063,7 @@
                     "{{ratingId}}"
                   ]
                 },
-                "description": "Deletes an existing book rating\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `delete`."
+                "description": "Deletes the authenticated user's rating and durably records RatingDeletedEvent with the previous score. Recommendation converges asynchronously.\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `delete`."
               },
               "response": []
             },
@@ -2193,7 +2193,7 @@
                     "reactions"
                   ]
                 },
-                "description": "Creates a new reaction between the authenticated user and a book.\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `create`.",
+                "description": "Creates an authenticated user's reaction and durably records the transition in the Engagement outbox. Recommendation converges asynchronously.\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `create`.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"typeReaction\": \"VERY_POSITIVE\"\n}",
@@ -2263,7 +2263,7 @@
                     "{{id}}"
                   ]
                 },
-                "description": "Updates an existing reaction for the authenticated user.\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `update`.",
+                "description": "Updates the authenticated user's reaction and records ReactionChangedEvent only when its type changes. Recommendation converges asynchronously.\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `update`.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"typeReaction\": \"VERY_POSITIVE\"\n}",

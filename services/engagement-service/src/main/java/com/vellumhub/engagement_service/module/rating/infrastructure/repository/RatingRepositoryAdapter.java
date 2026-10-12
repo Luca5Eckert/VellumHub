@@ -25,7 +25,7 @@ public class RatingRepositoryAdapter implements RatingRepository {
 
     @Override
     public Rating save(Rating rating) {
-        return ratingRepositoryJpa.save(rating);
+        return ratingRepositoryJpa.saveAndFlush(rating);
     }
 
     @Override
@@ -49,6 +49,11 @@ public class RatingRepositoryAdapter implements RatingRepository {
     }
 
     @Override
+    public Optional<Rating> findByIdForUpdate(long id) {
+        return ratingRepositoryJpa.findByIdForUpdate(id);
+    }
+
+    @Override
     public boolean existsbyId(Long ratingId) {
         return ratingRepositoryJpa.existsById(ratingId);
     }
@@ -67,3 +72,4 @@ public class RatingRepositoryAdapter implements RatingRepository {
 
 
 }
+

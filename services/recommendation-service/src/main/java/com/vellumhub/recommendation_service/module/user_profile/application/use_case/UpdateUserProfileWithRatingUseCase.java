@@ -25,6 +25,14 @@ public class UpdateUserProfileWithRatingUseCase {
         this.ratingBookInteraction = ratingBookInteraction;
     }
 
+
+    /** Strict variant for durable Engagement events: missing dependencies MUST retry. */
+    public void executeStrict(UpdateUserProfileWithRatingCommand command) {
+        if(bookFeatureRepository.findById(command.bookId()).isEmpty())
+            throw new IllegalStateException("Book features unavailable for rating bookId="+command.bookId());
+        execute(command);
+    }
+
     public void execute(UpdateUserProfileWithRatingCommand command) {
         BookFeature book = bookFeatureRepository.findById(command.bookId())
                 .orElse(null);
@@ -53,3 +61,4 @@ public class UpdateUserProfileWithRatingUseCase {
 
 
 }
+

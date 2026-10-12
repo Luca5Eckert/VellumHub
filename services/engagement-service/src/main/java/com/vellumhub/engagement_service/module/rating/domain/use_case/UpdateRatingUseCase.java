@@ -8,6 +8,8 @@ import com.vellumhub.engagement_service.module.rating.domain.port.RatingReposito
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
+import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class UpdateRatingUseCase {
@@ -18,12 +20,22 @@ public class UpdateRatingUseCase {
         this.ratingRepository = ratingRepository;
     }
 
-    public RatingUpdateResult execute(UpdateRatingCommand command) {
-        Rating rating = ratingRepository.findById(command.ratingId())
+    @Transactional
+    public RatingUpdateResult execute(UpdateRatingCommand command, UUID authenticatedUserId) {
+        Rating rating = ratingRepository.findByIdForUpdate(command.ratingId())
                 .orElseThrow(() -> new RatingDomainException("Rating not found"));
+
+        if(!Objects.equals(rating.getUserId(),authenticatedUserId)) {
+            throw new RatingDomainException("User not authorized to update this rating");
+        }
 
         int oldStars = rating.getStars();
         String oldReview = rating.getReview();
+
+        boolean starsChanged=command.stars()!=null && command.stars()!=oldStars;
+        boolean reviewChanged=command.review()!=null && !Objects.equals(oldReview,command.review());
+        if(!starsChanged && !reviewChanged)
+            return new RatingUpdateResult(rating,oldStars,false);
 
         rating.update(
                 command.stars(),
@@ -31,9 +43,9 @@ public class UpdateRatingUseCase {
         );
 
         Rating savedRating = ratingRepository.save(rating);
-        boolean reviewChanged = !Objects.equals(oldReview, savedRating.getReview());
 
         return new RatingUpdateResult(savedRating, oldStars, reviewChanged);
     }
 
 }
+

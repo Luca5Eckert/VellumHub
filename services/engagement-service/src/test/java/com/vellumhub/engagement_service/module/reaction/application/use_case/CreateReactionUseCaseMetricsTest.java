@@ -5,7 +5,7 @@ import com.vellumhub.engagement_service.module.book_snapshot.domain.port.BookSna
 import com.vellumhub.engagement_service.module.reaction.application.command.CreateReactionCommand;
 import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
 import com.vellumhub.engagement_service.module.reaction.domain.model.TypeReaction;
-import com.vellumhub.engagement_service.module.reaction.domain.port.EventProducer;
+import com.vellumhub.engagement_service.module.reaction.application.event.ReactionEventRecorder;
 import com.vellumhub.engagement_service.module.reaction.domain.port.ReactionRepository;
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent;
@@ -37,7 +37,7 @@ class CreateReactionUseCaseMetricsTest {
     private BookSnapshotRepository bookSnapshotRepository;
 
     @Mock
-    private EventProducer<String, ReactionChangedEvent> eventProducer;
+    private ReactionEventRecorder recorder;
 
     private CreateReactionUseCase useCase;
     private SimpleMeterRegistry meterRegistry;
@@ -48,7 +48,7 @@ class CreateReactionUseCaseMetricsTest {
         useCase = new CreateReactionUseCase(
                 reactionRepository,
                 bookSnapshotRepository,
-                eventProducer,
+                recorder,
                 new VellumHubMetrics(meterRegistry)
         );
     }
@@ -69,26 +69,18 @@ class CreateReactionUseCaseMetricsTest {
         Reaction savedReaction = useCase.execute(command);
 
         var reactionCaptor = ArgumentCaptor.forClass(Reaction.class);
-        var eventCaptor = ArgumentCaptor.forClass(ReactionChangedEvent.class);
+
         verify(reactionRepository).save(reactionCaptor.capture());
-        verify(eventProducer).send(eq("user-reaction-changed"), eq(userId.toString()), eventCaptor.capture());
+        verify(recorder).changed(reactionCaptor.getValue(),null);
 
         Reaction persisted = reactionCaptor.getValue();
-        ReactionChangedEvent event = eventCaptor.getValue();
+
 
         assertThat(savedReaction).isSameAs(persisted);
         assertThat(persisted.getTypeReaction()).isEqualTo(TypeReaction.POSITIVE);
         assertThat(persisted.getCreatedAt()).isNotNull();
         assertThat(persisted.getUpdatedAt()).isEqualTo(persisted.getCreatedAt());
 
-        assertThat(event.eventId()).isNotNull();
-        assertThat(event.occurredAt()).isEqualTo(persisted.getCreatedAt());
-        assertThat(event.reactionId()).isEqualTo(42L);
-        assertThat(event.userId()).isEqualTo(userId);
-        assertThat(event.bookId()).isEqualTo(bookId);
-        assertThat(event.oldTypeReaction()).isNull();
-        assertThat(event.newTypeReaction()).isEqualTo(TypeReaction.POSITIVE.name());
-        assertThat(event.resultingTypeReaction()).isEqualTo(TypeReaction.POSITIVE.name());
         assertThat(reactionsChangedCount("reaction_creation")).isEqualTo(1.0);
     }
 
@@ -100,3 +92,4 @@ class CreateReactionUseCaseMetricsTest {
                 .count();
     }
 }
+

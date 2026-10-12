@@ -23,6 +23,10 @@ public class Rating {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    @Column(name="version", nullable=false)
+    private long version;
+
     @Column(nullable = false)
     private UUID userId;
 
@@ -64,3 +68,4 @@ public class Rating {
     }
 
 }
+

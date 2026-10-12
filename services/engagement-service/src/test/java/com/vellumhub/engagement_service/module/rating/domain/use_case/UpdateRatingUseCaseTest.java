@@ -37,7 +37,7 @@ class UpdateRatingUseCaseTest {
         UpdateRatingCommand command = new UpdateRatingCommand(ratingId, 5, "Great");
         mockPersistence(existingRating);
 
-        RatingUpdateResult result = updateRatingUseCase.execute(command);
+        RatingUpdateResult result = updateRatingUseCase.execute(command, existingRating.getUserId());
 
         assertThat(result.oldStars()).isEqualTo(4);
         assertThat(result.rating().getStars()).isEqualTo(5);
@@ -53,7 +53,7 @@ class UpdateRatingUseCaseTest {
         UpdateRatingCommand command = new UpdateRatingCommand(ratingId, 4, "Much better now");
         mockPersistence(existingRating);
 
-        RatingUpdateResult result = updateRatingUseCase.execute(command);
+        RatingUpdateResult result = updateRatingUseCase.execute(command, existingRating.getUserId());
 
         assertThat(result.oldStars()).isEqualTo(2);
         assertThat(result.rating().getStars()).isEqualTo(4);
@@ -68,7 +68,7 @@ class UpdateRatingUseCaseTest {
         UpdateRatingCommand command = new UpdateRatingCommand(ratingId, null, "Very good");
         mockPersistence(existingRating);
 
-        RatingUpdateResult result = updateRatingUseCase.execute(command);
+        RatingUpdateResult result = updateRatingUseCase.execute(command, existingRating.getUserId());
 
         assertThat(result.oldStars()).isEqualTo(4);
         assertThat(result.rating().getStars()).isEqualTo(4);
@@ -84,7 +84,7 @@ class UpdateRatingUseCaseTest {
         UpdateRatingCommand command = new UpdateRatingCommand(ratingId, 4, "Average");
         mockPersistence(existingRating);
 
-        RatingUpdateResult result = updateRatingUseCase.execute(command);
+        RatingUpdateResult result = updateRatingUseCase.execute(command, existingRating.getUserId());
 
         assertThat(result.oldStars()).isEqualTo(3);
         assertThat(result.rating().getStars()).isEqualTo(4);
@@ -97,9 +97,9 @@ class UpdateRatingUseCaseTest {
         long ratingId = 99L;
         UpdateRatingCommand command = new UpdateRatingCommand(ratingId, 4, "Good");
 
-        when(ratingRepository.findById(ratingId)).thenReturn(Optional.empty());
+        when(ratingRepository.findByIdForUpdate(ratingId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> updateRatingUseCase.execute(command))
+        assertThatThrownBy(() -> updateRatingUseCase.execute(command, UUID.randomUUID()))
                 .isInstanceOf(RatingDomainException.class)
                 .hasMessageContaining("Rating not found");
 
@@ -107,7 +107,7 @@ class UpdateRatingUseCaseTest {
     }
 
     private void mockPersistence(Rating rating) {
-        when(ratingRepository.findById(rating.getId())).thenReturn(Optional.of(rating));
+        when(ratingRepository.findByIdForUpdate(rating.getId())).thenReturn(Optional.of(rating));
         when(ratingRepository.save(any(Rating.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
@@ -121,3 +121,4 @@ class UpdateRatingUseCaseTest {
                 .build();
     }
 }
+

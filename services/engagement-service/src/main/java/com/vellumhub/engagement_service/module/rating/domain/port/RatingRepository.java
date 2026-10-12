@@ -16,6 +16,8 @@ public interface RatingRepository {
     boolean existsByUserIdAndBookId(UUID uuid, UUID uuid1);
 
     Optional<Rating> findById(long id);
+    /** Serializes concurrent mutations on one rating within its transaction. */
+    Optional<Rating> findByIdForUpdate(long id);
 
     boolean existsbyId(Long ratingId);
 
@@ -23,3 +25,4 @@ public interface RatingRepository {
 
     Page<Rating> findAllByBookId(UUID bookId, int page, int size);
 }
+

@@ -6,7 +6,7 @@ import com.vellumhub.engagement_service.module.rating.application.mapper.RatingM
 import com.vellumhub.engagement_service.module.rating.domain.command.UpdateRatingCommand;
 import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
 import com.vellumhub.engagement_service.module.rating.domain.model.RatingUpdateResult;
-import com.vellumhub.engagement_service.module.rating.domain.producer.UpdatedRatingEventProducer;
+import com.vellumhub.engagement_service.module.rating.application.event.RatingEventRecorder;
 import com.vellumhub.engagement_service.module.rating.domain.use_case.UpdateRatingUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ class UpdateRatingHandlerTest {
     private RatingMapper mapper;
 
     @Mock
-    private UpdatedRatingEventProducer updatedRatingEventProducer;
+    private RatingEventRecorder recorder;
 
     @InjectMocks
     private UpdateRatingHandler updateRatingHandler;
@@ -63,14 +63,14 @@ class UpdateRatingHandlerTest {
                 updatedRating.getTimestamp()
         );
 
-        when(updateRatingUseCase.execute(any(UpdateRatingCommand.class))).thenReturn(updateResult);
+        when(updateRatingUseCase.execute(any(UpdateRatingCommand.class), any(UUID.class))).thenReturn(updateResult);
         when(mapper.toGetResponse(updatedRating)).thenReturn(expectedResponse);
 
-        RatingGetResponse result = updateRatingHandler.handle(ratingId, request);
+        RatingGetResponse result = updateRatingHandler.handle(ratingId, request, userId);
 
         assertThat(result).isEqualTo(expectedResponse);
-        verify(updateRatingUseCase).execute(any(UpdateRatingCommand.class));
-        verify(updatedRatingEventProducer).produce(updateResult);
+        verify(updateRatingUseCase).execute(any(UpdateRatingCommand.class), any(UUID.class));
+        verify(recorder).updated(updateResult);
         verify(mapper).toGetResponse(updatedRating);
     }
 
@@ -79,14 +79,16 @@ class UpdateRatingHandlerTest {
     void shouldNotPublishWhenUseCaseFails() {
         long ratingId = 99L;
         UpdateRatingRequest request = new UpdateRatingRequest(4, "Good");
+        UUID userId = UUID.randomUUID();
 
-        when(updateRatingUseCase.execute(any(UpdateRatingCommand.class)))
+        when(updateRatingUseCase.execute(any(UpdateRatingCommand.class), any(UUID.class)))
                 .thenThrow(new RuntimeException("Rating not found"));
 
-        assertThatThrownBy(() -> updateRatingHandler.handle(ratingId, request))
+        assertThatThrownBy(() -> updateRatingHandler.handle(ratingId, request, UUID.randomUUID()))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Rating not found");
 
-        verifyNoInteractions(updatedRatingEventProducer, mapper);
+        verifyNoInteractions(recorder, mapper);
     }
 }
+

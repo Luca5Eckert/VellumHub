@@ -9,6 +9,10 @@ public final class KafkaTopics {
     /** Ordered, full-snapshot Book lifecycle stream (v2). */
     public static final String BOOK_EVENTS = "book-events";
 
+    /** Bounded-context streams contain immutable facts, not commands. */
+    public static final String ENGAGEMENT_RATINGS = "engagement.ratings.v1";
+    public static final String ENGAGEMENT_REACTIONS = "engagement.reactions.v1";
+
     public static final String CREATED_RATING = "created-rating";
     public static final String UPDATED_RATING = "updated-rating";
     public static final String USER_REACTION_CHANGED = "user-reaction-changed";
@@ -25,5 +29,6 @@ public final class KafkaTopics {
     private KafkaTopics() {
     }
 }
+
 
 
