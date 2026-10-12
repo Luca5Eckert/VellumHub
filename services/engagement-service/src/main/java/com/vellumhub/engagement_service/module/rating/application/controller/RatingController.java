@@ -128,7 +128,7 @@ public class RatingController {
     ) {
         var userId = authenticationService.getAuthenticatedUserId();
 
-        var response = updateRatingHandler.handle(ratingId, request);
+        var response = updateRatingHandler.handle(ratingId, request, userId);
 
         return ResponseEntity.ok(response);
     }

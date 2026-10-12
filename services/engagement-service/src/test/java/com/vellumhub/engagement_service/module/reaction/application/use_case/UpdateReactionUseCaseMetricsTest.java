@@ -4,7 +4,7 @@ import com.vellumhub.engagement_service.module.book_snapshot.domain.model.BookSn
 import com.vellumhub.engagement_service.module.reaction.application.command.UpdateReactionCommand;
 import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
 import com.vellumhub.engagement_service.module.reaction.domain.model.TypeReaction;
-import com.vellumhub.engagement_service.module.reaction.domain.port.EventProducer;
+import com.vellumhub.engagement_service.module.reaction.application.event.ReactionEventRecorder;
 import com.vellumhub.engagement_service.module.reaction.domain.port.ReactionRepository;
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent;
@@ -34,7 +34,7 @@ class UpdateReactionUseCaseMetricsTest {
     private ReactionRepository reactionRepository;
 
     @Mock
-    private EventProducer<String, ReactionChangedEvent> eventProducer;
+    private ReactionEventRecorder recorder;
 
     private UpdateReactionUseCase useCase;
     private SimpleMeterRegistry meterRegistry;
@@ -44,7 +44,7 @@ class UpdateReactionUseCaseMetricsTest {
         meterRegistry = new SimpleMeterRegistry();
         useCase = new UpdateReactionUseCase(
                 reactionRepository,
-                eventProducer,
+                recorder,
                 new VellumHubMetrics(meterRegistry)
         );
     }
@@ -62,11 +62,8 @@ class UpdateReactionUseCaseMetricsTest {
 
         var result = useCase.execute(new UpdateReactionCommand(userId, reactionId, TypeReaction.VERY_POSITIVE));
 
-        var eventCaptor = ArgumentCaptor.forClass(ReactionChangedEvent.class);
         verify(reactionRepository).save(reaction);
-        verify(eventProducer).send(eq("user-reaction-changed"), eq(userId.toString()), eventCaptor.capture());
-
-        ReactionChangedEvent event = eventCaptor.getValue();
+        verify(recorder).changed(reaction,TypeReaction.POSITIVE);
 
         assertThat(result.oldTypeReaction()).isEqualTo(TypeReaction.POSITIVE);
         assertThat(result.reaction()).isSameAs(reaction);
@@ -74,36 +71,22 @@ class UpdateReactionUseCaseMetricsTest {
         assertThat(reaction.getCreatedAt()).isEqualTo(createdAt);
         assertThat(reaction.getUpdatedAt()).isAfter(createdAt);
 
-        assertThat(event.eventId()).isNotNull();
-        assertThat(event.occurredAt()).isEqualTo(reaction.getUpdatedAt());
-        assertThat(event.reactionId()).isEqualTo(reactionId);
-        assertThat(event.userId()).isEqualTo(userId);
-        assertThat(event.bookId()).isEqualTo(bookId);
-        assertThat(event.oldTypeReaction()).isEqualTo(TypeReaction.POSITIVE.name());
-        assertThat(event.newTypeReaction()).isEqualTo(TypeReaction.VERY_POSITIVE.name());
-        assertThat(event.resultingTypeReaction()).isEqualTo(TypeReaction.VERY_POSITIVE.name());
         assertThat(reactionsChangedCount("reaction_update")).isEqualTo(1.0);
     }
 
     @Test
     @DisplayName("Should preserve an explicit same-value reaction transition")
-    void shouldPublishUnchangedReactionTransition() {
+    void shouldNotPublishUnchangedReactionTransition() {
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
         long reactionId = 43L;
         Instant createdAt = Instant.parse("2026-09-19T12:00:00Z");
         var reaction = reaction(reactionId, userId, bookId, TypeReaction.POSITIVE, createdAt);
         when(reactionRepository.findByIdForUpdate(reactionId)).thenReturn(Optional.of(reaction));
-        when(reactionRepository.save(any(Reaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
         useCase.execute(new UpdateReactionCommand(userId, reactionId, TypeReaction.POSITIVE));
-
-        var eventCaptor = ArgumentCaptor.forClass(ReactionChangedEvent.class);
-        verify(eventProducer).send(eq("user-reaction-changed"), eq(userId.toString()), eventCaptor.capture());
-
-        ReactionChangedEvent event = eventCaptor.getValue();
-        assertThat(event.oldTypeReaction()).isEqualTo(TypeReaction.POSITIVE.name());
-        assertThat(event.newTypeReaction()).isEqualTo(TypeReaction.POSITIVE.name());
+        org.mockito.Mockito.verifyNoInteractions(recorder);
+        org.mockito.Mockito.verify(reactionRepository, org.mockito.Mockito.never())
+                .save(org.mockito.ArgumentMatchers.any());
     }
 
     private Reaction reaction(
@@ -131,3 +114,4 @@ class UpdateReactionUseCaseMetricsTest {
                 .count();
     }
 }
+

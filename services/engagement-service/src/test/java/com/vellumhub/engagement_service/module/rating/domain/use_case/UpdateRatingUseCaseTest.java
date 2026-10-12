@@ -37,7 +37,7 @@ class UpdateRatingUseCaseTest {
         UpdateRatingCommand command = new UpdateRatingCommand(ratingId, 5, "Great");
         mockPersistence(existingRating);
 
-        RatingUpdateResult result = updateRatingUseCase.execute(command);
+        RatingUpdateResult result = updateRatingUseCase.execute(command, existingRating.getUserId());
 
         assertThat(result.oldStars()).isEqualTo(4);
         assertThat(result.rating().getStars()).isEqualTo(5);
@@ -97,7 +97,7 @@ class UpdateRatingUseCaseTest {
         long ratingId = 99L;
         UpdateRatingCommand command = new UpdateRatingCommand(ratingId, 4, "Good");
 
-        when(ratingRepository.findById(ratingId)).thenReturn(Optional.empty());
+        when(ratingRepository.findByIdForUpdate(ratingId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> updateRatingUseCase.execute(command))
                 .isInstanceOf(RatingDomainException.class)
@@ -121,3 +121,4 @@ class UpdateRatingUseCaseTest {
                 .build();
     }
 }
+

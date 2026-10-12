@@ -11,7 +11,8 @@ public record ReactionChangedEvent(
         UUID bookId,
         String oldTypeReaction,
         String newTypeReaction,
-        String typeReaction
+        String typeReaction,
+        Long revision
 ) {
 
     public ReactionChangedEvent(
@@ -31,8 +32,16 @@ public record ReactionChangedEvent(
                 bookId,
                 oldTypeReaction,
                 newTypeReaction,
-                newTypeReaction
+                newTypeReaction,
+                null
         );
+    }
+
+    /** Original seven-argument lifecycle constructor, for old consumers/tests. */
+    public ReactionChangedEvent(UUID eventId, Instant occurredAt, Long reactionId,
+            UUID userId, UUID bookId, String oldTypeReaction, String newTypeReaction) {
+        this(eventId, occurredAt, reactionId, userId, bookId,
+                oldTypeReaction, newTypeReaction, newTypeReaction, null);
     }
 
     /**
@@ -51,7 +60,8 @@ public record ReactionChangedEvent(
                 bookId,
                 null,
                 typeReaction,
-                typeReaction
+                typeReaction,
+                null
         );
     }
 
@@ -62,3 +72,4 @@ public record ReactionChangedEvent(
         return newTypeReaction != null ? newTypeReaction : typeReaction;
     }
 }
+

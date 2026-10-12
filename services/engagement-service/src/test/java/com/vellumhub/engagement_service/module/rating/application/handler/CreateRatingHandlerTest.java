@@ -3,7 +3,7 @@ package com.vellumhub.engagement_service.module.rating.application.handler;
 import com.vellumhub.engagement_service.module.rating.application.dto.CreateRatingRequest;
 import com.vellumhub.engagement_service.module.rating.domain.command.CreateRatingCommand;
 import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
-import com.vellumhub.engagement_service.module.rating.domain.producer.CreatedRatingEventProducer;
+import com.vellumhub.engagement_service.module.rating.application.event.RatingEventRecorder;
 import com.vellumhub.engagement_service.module.rating.domain.use_case.CreateRatingUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ class CreateRatingHandlerTest {
     private CreateRatingUseCase createRatingUseCase;
 
     @Mock
-    private CreatedRatingEventProducer createdRatingEventProducer;
+    private RatingEventRecorder recorder;
 
     @InjectMocks
     private CreateRatingHandler createRatingHandler;
@@ -46,7 +46,7 @@ class CreateRatingHandlerTest {
 
         // Assert
         verify(createRatingUseCase, times(1)).execute(any(CreateRatingCommand.class));
-        verify(createdRatingEventProducer, times(1)).produce(mockRating);
+        verify(recorder, times(1)).created(mockRating);
     }
 
     @Test
@@ -65,7 +65,7 @@ class CreateRatingHandlerTest {
             createRatingHandler.handle(request, userId);
         });
 
-        verifyNoInteractions(createdRatingEventProducer);
+        verifyNoInteractions(recorder);
     }
 
 }

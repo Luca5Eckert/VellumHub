@@ -1,7 +1,7 @@
 package com.vellumhub.engagement_service.module.rating.application.handler;
 
 import com.vellumhub.engagement_service.module.rating.application.dto.CreateRatingRequest;
-import com.vellumhub.engagement_service.module.rating.domain.producer.CreatedRatingEventProducer;
+import com.vellumhub.engagement_service.module.rating.application.event.RatingEventRecorder;
 import com.vellumhub.engagement_service.module.rating.domain.command.CreateRatingCommand;
 import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
 import com.vellumhub.engagement_service.module.rating.domain.use_case.CreateRatingUseCase;
@@ -14,11 +14,11 @@ import java.util.UUID;
 public class CreateRatingHandler {
 
     private final CreateRatingUseCase createRatingUseCase;
-    private final CreatedRatingEventProducer createdRatingEventProducer;
+    private final RatingEventRecorder recorder;
 
-    public CreateRatingHandler(CreateRatingUseCase createRatingUseCase, CreatedRatingEventProducer createdRatingEventProducer) {
+    public CreateRatingHandler(CreateRatingUseCase createRatingUseCase, RatingEventRecorder recorder) {
         this.createRatingUseCase = createRatingUseCase;
-        this.createdRatingEventProducer = createdRatingEventProducer;
+        this.recorder = recorder;
     }
 
     @Transactional
@@ -33,7 +33,8 @@ public class CreateRatingHandler {
         Rating rating = createRatingUseCase.execute(command);
 
 
-        createdRatingEventProducer.produce(rating);
+        recorder.created(rating);
     }
 
 }
+

@@ -37,6 +37,13 @@ public class RatingBookInteraction {
      * @param isNewRating indicates whether this is a new rating or an update to an existing rating
      * @return the weight adjustment to be applied to the user's profile, which is the difference between the new rating's weight and the old rating's weight
      */
+
+    /** The inverse contribution of a deleted rating (not an artificial zero-star rating). */
+    public ProfileAdjustment toDeletionAdjustment(BookFeature feature,int oldStars) {
+        return ProfileAdjustment.of(feature.getBookId(),
+                -RatingCategory.fromStars(oldStars).getWeight(),feature.getEmbedding());
+    }
+
     private int getWeightAdjustment(int newStars, int oldStars, boolean isNewRating) {
         int newWeight = RatingCategory.fromStars(newStars).getWeight();
         int oldWeight = isNewRating ? 0 : RatingCategory.fromStars(oldStars).getWeight();
@@ -50,3 +57,4 @@ public class RatingBookInteraction {
     }
 
 }
+

@@ -19,7 +19,7 @@ public class SpringReactionRepository implements ReactionRepository {
 
     @Override
     public Reaction save(Reaction reaction) {
-        return jpaReactionRepository.save(reaction);
+        return jpaReactionRepository.saveAndFlush(reaction);
     }
 
     @Override
@@ -37,3 +37,4 @@ public class SpringReactionRepository implements ReactionRepository {
         return jpaReactionRepository.findAllByUserId(userId);
     }
 }
+

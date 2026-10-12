@@ -4,7 +4,7 @@ import com.vellumhub.engagement_service.module.book_snapshot.domain.model.BookSn
 import com.vellumhub.engagement_service.module.book_snapshot.domain.port.BookSnapshotRepository;
 import com.vellumhub.engagement_service.module.reaction.application.command.CreateReactionCommand;
 import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
-import com.vellumhub.engagement_service.module.reaction.domain.port.EventProducer;
+import com.vellumhub.engagement_service.module.reaction.application.event.ReactionEventRecorder;
 import com.vellumhub.engagement_service.module.reaction.domain.port.ReactionRepository;
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.kafka.contracts.KafkaTopics;
@@ -20,18 +20,18 @@ public class CreateReactionUseCase {
 
     private final ReactionRepository reactionRepository;
     private final BookSnapshotRepository bookSnapshotRepository;
-    private final EventProducer<String, ReactionChangedEvent> eventProducer;
+    private final ReactionEventRecorder recorder;
     private final VellumHubMetrics metrics;
 
     public CreateReactionUseCase(
             ReactionRepository reactionRepository,
             BookSnapshotRepository bookSnapshotRepository,
-            EventProducer<String, ReactionChangedEvent> eventProducer,
+            ReactionEventRecorder recorder,
             VellumHubMetrics metrics
     ) {
         this.reactionRepository = reactionRepository;
         this.bookSnapshotRepository = bookSnapshotRepository;
-        this.eventProducer = eventProducer;
+        this.recorder = recorder;
         this.metrics = metrics;
     }
 
@@ -50,19 +50,10 @@ public class CreateReactionUseCase {
 
         Reaction savedReaction = reactionRepository.save(reaction);
 
-        var event = new ReactionChangedEvent(
-                UUID.randomUUID(),
-                savedReaction.getCreatedAt(),
-                savedReaction.getId(),
-                savedReaction.getUserId(),
-                savedReaction.getBookSnapshot().getBookId(),
-                null,
-                savedReaction.getTypeReaction().name()
-        );
-
-        eventProducer.send(KafkaTopics.USER_REACTION_CHANGED, event.userId().toString(), event);
+        recorder.changed(savedReaction, null);
         metrics.recordBusinessCounter(VellumHubMetrics.REACTIONS_CHANGED, "reaction_creation", "success");
 
         return savedReaction;
     }
 }
+
