@@ -1,6 +1,6 @@
 # VellumHub
 
-> An event-driven social reading platform connecting catalog discovery, collaborative book lists, reading progress, engagement, and personalized recommendations across five independently deployable services.
+> A social reading and recommendation platform used to explore when independent services, asynchronous state, and stronger delivery guarantees justify their operational cost.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%2F%204.0.x-green)](https://spring.io/projects/spring-boot)
@@ -12,7 +12,9 @@
 
 VellumHub covers the complete reading journey: users create an account, choose literary preferences, discover or request books, organize shared lists, track reading progress, rate and react to titles, and receive recommendations that learn from those interactions.
 
-The platform is also a production-oriented backend engineering reference built around one central rule: **data stays on the inside; events collaborate on the outside**. Each service protects its current state and invariants in its own database, then publishes immutable facts so other services can build the local state they need. PostgreSQL with pgvector therefore serves recommendations without synchronous fan-out to the source domains.
+The central engineering problem is **serving recommendations without depending on the availability of three other services for every read**. Synchronous fan-out would avoid duplicated state, but inherit upstream latency and failures. VellumHub instead uses Kafka-carried domain facts and service-owned PostgreSQL read models, accepting bounded eventual consistency for autonomous recommendation serving.
+
+**Engineering evidence:** Controlled distributed runs measured sub-0.8 s p95 interaction-to-visible ranking and 60/60 successful reads while User, Catalog, and Engagement were unavailable. Recent hardening introduced ordered transactional Outbox streams, revision checkpoints, and idempotent projection effects ([Catalog progress #295](https://github.com/Luca5Eckert/VellumHub/pull/295), [Catalog books #296](https://github.com/Luca5Eckert/VellumHub/pull/296), [Engagement #297](https://github.com/Luca5Eckert/VellumHub/pull/297)). These PRs were merged in October 2026; **merge and CI do not establish a production cutover**.
 
 **Explore:** [Measured behavior](#measured-recommendation-behavior) · [Architecture](#architecture) · [API documentation](#explore-the-api) · [Run locally](#run-locally) · [Quality](#verification-strategy) · [Roadmap](#current-status-and-roadmap)
 
@@ -50,14 +52,14 @@ VellumHub applies [Data on the Outside versus Data on the Inside](https://queue.
 | Architectural concern | VellumHub's approach |
 |---|---|
 | Data on the inside | Each domain owns a private PostgreSQL database, its mutable current state, business invariants, and local transaction boundary. |
-| Events on the outside | Services publish immutable integration facts through Kafka using eight versioned payload types from `lib/kafka-contracts`. |
+| Events on the outside | Services publish versioned integration facts through Kafka; producers announce committed changes rather than issuing commands to consumers. |
 | Event collaboration | User, Catalog, and Engagement publish what happened; Engagement and Recommendation decide independently how those facts affect their own models. |
 | Local projections | Book snapshots, reading history, book features, user vectors, and recommendation response data are materialized where they are consumed. |
 | Query autonomy | Recommendation and replicated engagement flows read local tables instead of synchronously joining or calling the source services. |
 | Consistency model | A service is transactionally consistent inside its boundary; projections across boundaries converge asynchronously. |
-| Failure model | Consumers retry, route exhausted records to dead-letter topics, and expose Kafka/retry/DLT metrics. Atomic state-and-event publication remains planned through transactional outbox. |
+| Failure model | Selected Catalog and Engagement mutations now use transactional Outbox, per-aggregate ordering and durable consumer checkpoints; full DLT replay and rollout verification remain open. |
 
-The implementation spans **5 application services**, **14 functional modules**, **50 HTTP operations**, **8 shared integration-event payloads**, and **4 service-owned databases**. The numbers provide context; the important property is that each boundary can evolve and serve its queries without sharing tables or requiring a synchronous distributed transaction.
+The implementation spans **five application services** with service-owned persistence. The durable architectural property matters more than a potentially stale endpoint count: domains do not share business tables or require a synchronous distributed transaction to serve recommendations.
 
 ## Measured Recommendation Behavior
 
@@ -115,7 +117,7 @@ Current reading progress remains canonical in Catalog. Engagement receives the s
 
 ### Durability according to consequence
 
-The project does not claim exactly-once behavior. Outbox/inbox-style guarantees add writes, storage growth, indexing, cleanup, and I/O. For Recommendation, where many small interaction signals continuously update a profile, losing an isolated signal has a different consequence from losing user-visible reading history or an invariant-bearing event. Stronger guarantees are therefore prioritized where the domain consequence justifies their cost.
+Delivery remains at-least-once, not exactly-once transport. Transactional Outbox and downstream checkpoints add writes, storage, indexes and contention; those costs were accepted for state transitions whose loss or duplicate application would be consequential. Other future event types may require different guarantees.
 
 ### Exploration versus relevance in the 70/30 ranker
 
@@ -253,7 +255,9 @@ VellumHub makes its current guarantees and remaining boundaries explicit:
 
 The distributed benchmark extends the earlier `created-book` pilot by measuring both projection convergence and the user-visible recommendation effect. It uses real Kafka, real PostgreSQL/pgvector, real Flyway migrations, the production rating consumer/profile update path, production ranking SQL, and the authenticated `/recommendations` endpoint. Deterministic fixture embeddings keep model inference outside the architectural freshness boundary.
 
-Consumer idempotency and transactional outbox publication remain selective hardening work. They are not claimed as implemented until production mechanisms and failure-sensitive tests exist, and their priority depends on the consequence of event loss in each domain rather than treating every signal as equally critical. See [Distributed Integration Testing](docs/DISTRIBUTED_TESTING.md) for the precise boundary and extension rules.
+**Implemented, with operational limits:** Catalog persists Book and Reading Progress state with Outbox records in the same PostgreSQL transaction; downstream projections check aggregate revision and deduplicate applied effects. Engagement now persists Rating/Reaction facts to its Outbox and Recommendation records event IDs/revisions for those signals. See [Book facts](docs/BOOK_EVENTS.md) and [Engagement facts](docs/ENGAGEMENT_EVENTS.md) for contracts and rollout sequence.
+
+**Not yet established:** full production cutover, safe DLT replay for every stream, globally exactly-once behavior or a production SLA. Strict retry can block a partition on a poison event. The [distributed testing guide](docs/DISTRIBUTED_TESTING.md) explains tested boundaries.
 
 This is not Event Sourcing: PostgreSQL tables remain the systems of record and Kafka carries integration events between services. Nor is every event full-state replication—the payload is shaped around what downstream collaborators need.
 
@@ -406,9 +410,9 @@ Detailed guides:
 | Contract-derived Postman collection and workflows | Implemented | [Postman](postman/README.md) |
 | Real Kafka + PostgreSQL/pgvector distributed testing | Recommendation pilot implemented | [#207](https://github.com/Luca5Eckert/VellumHub/issues/207) |
 | Recommendation convergence, read-autonomy, and freshness benchmark | Implemented in PR #286 | [#283](https://github.com/Luca5Eckert/VellumHub/issues/283) |
-| Consumer idempotency | Planned | [#200](https://github.com/Luca5Eckert/VellumHub/issues/200) |
-| Transactional outbox | Planned | [#201](https://github.com/Luca5Eckert/VellumHub/issues/201), [#202](https://github.com/Luca5Eckert/VellumHub/issues/202) |
-| Broader cross-service E2E coverage | Planned | [Distributed testing](docs/DISTRIBUTED_TESTING.md) |
+| Consumer idempotency | Implemented for selected ordered projections; further hardening in progress | [#200](https://github.com/Luca5Eckert/VellumHub/issues/200), [#297](https://github.com/Luca5Eckert/VellumHub/pull/297) |
+| Transactional outbox | Merged for Catalog progress/Book and Engagement rating/reaction; not production-validated | [#295](https://github.com/Luca5Eckert/VellumHub/pull/295), [#296](https://github.com/Luca5Eckert/VellumHub/pull/296), [#297](https://github.com/Luca5Eckert/VellumHub/pull/297) |
+| Broader cross-service E2E coverage | Selected real-boundary flows covered; failure/recovery coverage continues | [Distributed testing](docs/DISTRIBUTED_TESTING.md) |
 
 ## Design Principles
 
