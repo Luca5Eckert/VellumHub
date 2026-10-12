@@ -37,13 +37,6 @@ public record ReactionChangedEvent(
         );
     }
 
-    /** Original seven-argument lifecycle constructor, for old consumers/tests. */
-    public ReactionChangedEvent(UUID eventId, Instant occurredAt, Long reactionId,
-            UUID userId, UUID bookId, String oldTypeReaction, String newTypeReaction) {
-        this(eventId, occurredAt, reactionId, userId, bookId,
-                oldTypeReaction, newTypeReaction, newTypeReaction, null);
-    }
-
     /**
      * Backward-compatible constructor for the legacy payload shape.
      *
