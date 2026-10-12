@@ -121,6 +121,7 @@ class UserReactionConsumerEventTest {
                 UUID.randomUUID(),
                 "POSITIVE",
                 null,
+                null,
                 null
         );
 
