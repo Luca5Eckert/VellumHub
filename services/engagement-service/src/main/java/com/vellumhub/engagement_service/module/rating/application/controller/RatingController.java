@@ -49,7 +49,7 @@ public class RatingController {
     }
 
     @PostMapping
-    @Operation(summary = "Submit book rating", description = "Creates a new rating for a book (0-5 stars with optional text review)")
+    @Operation(summary = "Submit book rating", description = "Records a rating (0-5 stars) in Engagement and durably enqueues RatingCreatedEvent in the same transaction. Recommendation converges asynchronously.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Rating registered successfully",
@@ -114,7 +114,7 @@ public class RatingController {
     }
 
     @PutMapping("/{ratingId}")
-    @Operation(summary = "Update rating", description = "Updates an existing book rating (0-5 stars with optional text review)")
+    @Operation(summary = "Update rating", description = "Updates the authenticated user's rating and atomically records RatingUpdatedEvent when state changes. Recommendation converges asynchronously.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(
@@ -134,7 +134,7 @@ public class RatingController {
     }
 
     @DeleteMapping("/{ratingId}")
-    @Operation(summary = "Delete rating", description = "Deletes an existing book rating")
+    @Operation(summary = "Delete rating", description = "Deletes the authenticated user's rating and durably records RatingDeletedEvent with the previous score. Recommendation converges asynchronously.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Rating deleted successfully"),

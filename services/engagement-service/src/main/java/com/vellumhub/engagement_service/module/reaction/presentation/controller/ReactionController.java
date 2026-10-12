@@ -48,7 +48,7 @@ public class ReactionController {
 
     @Operation(
             summary = "Create Reaction",
-            description = "Creates a new reaction between the authenticated user and a book."
+            description = "Creates an authenticated user's reaction and durably records the transition in the Engagement outbox. Recommendation converges asynchronously."
     )
     @PostMapping
     public ResponseEntity<Void> create(
@@ -64,7 +64,7 @@ public class ReactionController {
 
     @Operation(
             summary = "Update Reaction",
-            description = "Updates an existing reaction for the authenticated user."
+            description = "Updates the authenticated user's reaction and records ReactionChangedEvent only when its type changes. Recommendation converges asynchronously."
     )
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(
