@@ -14,7 +14,7 @@ VellumHub covers the complete reading journey: users create an account, choose l
 
 The central engineering problem is **serving recommendations without depending on the availability of three other services for every read**. Synchronous fan-out would avoid duplicated state, but inherit upstream latency and failures. VellumHub instead uses Kafka-carried domain facts and service-owned PostgreSQL read models, accepting bounded eventual consistency for autonomous recommendation serving.
 
-**Engineering evidence:** Controlled distributed runs measured sub-0.8 s p95 interaction-to-visible ranking and 60/60 successful reads while User, Catalog, and Engagement were unavailable. Recent hardening introduced ordered transactional Outbox streams, revision checkpoints, and idempotent projection effects ([Catalog progress #295](https://github.com/Luca5Eckert/VellumHub/pull/295), [Catalog books #296](https://github.com/Luca5Eckert/VellumHub/pull/296), [Engagement #297](https://github.com/Luca5Eckert/VellumHub/pull/297)). These PRs were merged in October 2026; **merge and CI do not establish a production cutover**.
+**Engineering evidence:** Controlled distributed runs measured sub-0.8 s p95 interaction-to-visible ranking and 60/60 successful reads while User, Catalog, and Engagement were unavailable. Recent hardening introduced ordered Transactional Outbox streams ([Catalog progress #295](https://github.com/Luca5Eckert/VellumHub/pull/295), [Catalog books #296](https://github.com/Luca5Eckert/VellumHub/pull/296), [Engagement #297](https://github.com/Luca5Eckert/VellumHub/pull/297)) and transactional consumer idempotency for canonical streams ([#299](https://github.com/Luca5Eckert/VellumHub/pull/299)). **Merged code does not establish a coordinated production cutover, global exactly-once guarantees or DLT replay readiness**.
 
 **Explore:** [Measured behavior](#measured-recommendation-behavior) · [Architecture](#architecture) · [API documentation](#explore-the-api) · [Run locally](#run-locally) · [Quality](#verification-strategy) · [Roadmap](#current-status-and-roadmap)
 
@@ -410,7 +410,7 @@ Detailed guides:
 | Contract-derived Postman collection and workflows | Implemented | [Postman](postman/README.md) |
 | Real Kafka + PostgreSQL/pgvector distributed testing | Recommendation pilot implemented | [#207](https://github.com/Luca5Eckert/VellumHub/issues/207) |
 | Recommendation convergence, read-autonomy, and freshness benchmark | Implemented in PR #286 | [#283](https://github.com/Luca5Eckert/VellumHub/issues/283) |
-| Consumer idempotency | Implemented for selected ordered projections; further hardening in progress | [#200](https://github.com/Luca5Eckert/VellumHub/issues/200), [#297](https://github.com/Luca5Eckert/VellumHub/pull/297) |
+| Consumer idempotency | #200 implementation merged via #299 for canonical Book/Reading Progress/Rating/Reaction; operational cutover unverified | [#200](https://github.com/Luca5Eckert/VellumHub/issues/200), [#299](https://github.com/Luca5Eckert/VellumHub/pull/299) |
 | Transactional outbox | Merged for Catalog progress/Book and Engagement rating/reaction; not production-validated | [#295](https://github.com/Luca5Eckert/VellumHub/pull/295), [#296](https://github.com/Luca5Eckert/VellumHub/pull/296), [#297](https://github.com/Luca5Eckert/VellumHub/pull/297) |
 | Broader cross-service E2E coverage | Selected real-boundary flows covered; failure/recovery coverage continues | [Distributed testing](docs/DISTRIBUTED_TESTING.md) |
 
