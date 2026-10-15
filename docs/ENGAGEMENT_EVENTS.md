@@ -15,7 +15,7 @@ Every live fact contains immutable eventId, occurredAt, the persisted aggregate 
 
 - Business state and an Outbox JSONB row commit in the same PostgreSQL transaction. The asynchronous publisher may resend a fact if an ACK was received but the status update was interrupted.
 - Claim rows with `SKIP LOCKED`, short leases, token fencing and predecessor revision checks. Mark PUBLISHED **only** after a broker ACK. Broker outages keep events durable, with retry and lastError.
-- Recommendation persists processed_engagement_events and per-aggregate engagement_event_offsets within the UserProfile transaction. Missing BookFeature is a retryable error, not a successful skip.
+- Recommendation persists `processed_engagement_events` and per-aggregate `engagement_event_offsets` within the UserProfile transaction. Already-applied revisions are no-ops; reusing an event ID on an unapplied revision fails the transaction instead of silently acknowledging it. Missing BookFeature is a retryable error, not a successful skip. See [Consumer Idempotency](CONSUMER_IDEMPOTENCY.md).
 - New aggregates start at revision 0; preexisting aggregates receive migration-only RatingBaselineEvent/ReactionBaselineEvent at their persisted revision. Baselines only set checkpoints and **do not** reapply historic weights.
 - Kafka key userId preserves order *within each topic*, not a global order across rating and reaction topics. `UserProfile.@Version` guards concurrent updates across partitions.
 - Strict retry favors ordering over liveness; poison messages can block a partition. Coordinate DLT/replay design with #272.
@@ -27,11 +27,13 @@ Every live fact contains immutable eventId, occurredAt, the persisted aggregate 
 3. Provision engagement.ratings.v1 and engagement.reactions.v1; keep partition count stable during cutover.
 4. Check pre-existing duplicate (userId,bookId) ratings; resolve before applying the unique index in Engagement V8.
 5. Apply Engagement V8, recording baselines of preexisting Rating and Reaction. Enable the relay after consumers are ready. Reopen writers.
-6. Confirm baselines, live CREATE/UPDATE/DELETE, idempotent redelivery, outbox backlog and consumer lag. Retire old listeners only after the drain is verified.
+6. Disable Recommendation legacy rating/reaction listeners via `KAFKA_LEGACY_CONSUMERS_ENABLED=false` after the drain; verify baselines, live CREATE/UPDATE/DELETE, duplicate redelivery, outbox backlog and consumer lag. Retire legacy code only after checking convergence.
 
 **ReadingSessionEntry** is a read projection of a Catalog-owned Reading Progress event already protected by the Catalog Outbox. It must not be republished as a redundant Engagement event absent a distinct downstream use case.
 
 HTTP Swagger/OpenAPI endpoints report *local* database success and eventual downstream convergence. Log eventId, aggregate type/revision/topic/attempt, but not full payloads. Metrics `vellumhub.outbox.pending/published/failed` must avoid IDs as high-cardinality tags.
+
+Canonical consumers expose `vellumhub.kafka.events.duplicate`, retaining event IDs in logs but never in metric labels. The legacy listeners remain enabled by default for pre-cutover deployments and do not share the new identity checkpoint; do not process the same logical mutation from both versions.
 
 Physical delivery remains at-least-once; even a compensated RatingDeleted effect cannot perfectly invert a normalized historical embedding vector. Production guarantees require monitored rollout and failure/recovery testing.
 

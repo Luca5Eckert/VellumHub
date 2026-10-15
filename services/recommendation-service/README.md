@@ -70,25 +70,23 @@ Through the gateway, recommendation routes are exposed under:
 
 ## Event Contract
 
-Consumed topics:
+Canonical versioned topics:
 
-| Topic | Producer | Local effect |
+| Topic | Producer | Local effect / checkpoint |
 |---|---|---|
-| `created-book` | Catalog | Create book feature and recommendation metadata |
-| `updated-book` | Catalog | Refresh book feature and recommendation metadata |
-| `deleted-book` | Catalog | Remove local recommendation state for the book |
-| `created-rating` | Engagement | Apply the full category weight for a first rating |
-| `updated-rating` | Engagement | Apply the delta between previous and new rating categories |
-| `user-reaction-changed` | Engagement | Apply the delta between previous and new reaction weights |
-| `created-user-preference` | User | Seed or update cold-start profile vector |
-| `created-reading-progress` | Catalog | Adjust user profile from new progress event |
-| `updated-reading-progress` | Catalog | Adjust user profile from progress update |
+| `book-events` | Catalog | Book metadata/features via `book_event_offsets` and `processed_events` |
+| `reading-progress-events` | Catalog | User progress delta via `reading_progress_offsets` and `processed_events` |
+| `engagement.ratings.v1` | Engagement | Rating lifecycle via `engagement_event_offsets` / `processed_engagement_events` |
+| `engagement.reactions.v1` | Engagement | Reaction transitions via the same Engagement checkpoints |
+| `created-user-preference` | User | Cold-start user preference updates (outside #200's canonical versioned streams) |
+
+Older topics (`created/updated/deleted-book`, `created/updated-reading-progress`, `created/updated-rating` and `user-reaction-changed`) have compatibility listeners. They do not share the canonical checkpoint guarantees; keep them only during a coordinated migration and disable them with `KAFKA_LEGACY_CONSUMERS_ENABLED=false` after draining. The current default is `true` to preserve pre-cutover behavior. See [Consumer Idempotency](../../docs/CONSUMER_IDEMPOTENCY.md) before enabling the canonical writers.
 
 Rating updates within the same rating category produce a zero adjustment and leave the profile vector unchanged. Reaction updates follow the same transition rule: Recommendation applies `weight(new) - weight(old)`, while reaction creation applies the full resulting weight. Same-value reaction updates therefore produce zero profile drift.
 
 See [Reaction Lifecycle Kafka Contracts](../../docs/REACTION_EVENT_CONTRACTS.md) for the enriched reaction payload, legacy compatibility, and delivery-guarantee boundary.
 
-Retry and Dead Letter Topic handling are centralized in `share/kafka/config/KafkaRetryConfig`.
+Legacy retry/DLT handling is configured in `share/kafka/config/KafkaRetryConfig`. Canonical ordered consumers use blocking retries until the operational retry/DLT/replay policy is implemented in #272.
 
 ## Vector Pipeline and Ranking
 
@@ -110,11 +108,13 @@ The pgvector extension and HNSW indexes are managed through Flyway migrations.
 
 Primary database: `recommendation_db` (PostgreSQL + pgvector).
 
-Core tables:
+Core read models:
 
 - `book_features`;
 - `user_profiles`;
 - `recommendations`.
+
+Canonical ingestion state: `processed_events`, `book_event_offsets`, `reading_progress_offsets`, `processed_engagement_events` and `engagement_event_offsets`. Event identity and checkpoint updates commit with their local effects.
 
 These are derived read models. Upstream services remain the source of truth for books, users, ratings, reactions, and current reading progress.
 
@@ -170,7 +170,7 @@ docker info
 mvn -pl services/recommendation-service -am -Dgroups=distributed test
 ```
 
-The distributed suite covers the `created-book` retry/DLT boundary, the rating lifecycle path, and reaction lifecycle transitions into the persisted user profile.
+The distributed suite covers the legacy `created-book` retry/DLT boundary, rating and reaction lifecycle tests, and the canonical #200 idempotency scenarios (replay, concurrency, rollback and real Kafka redelivery).
 
 See [Distributed Integration Testing](../../docs/DISTRIBUTED_TESTING.md) for infrastructure boundaries, CI budget, extension rules, and the planned E2E boundary.
 
@@ -180,7 +180,7 @@ For platform topology and broader hardening work, see the [root README](../../RE
 
 Online profiles consume Catalog's reading-progress events directly; Engagement is not an
 intermediate publisher or synchronous dependency. `eventId`/`occurredAt` enrich provenance
-without changing profile weights. Missing book features still produce a warning and skip.
+without changing profile weights. Canonical consumers fail and retry when required BookFeature data is missing; legacy consumers may still warn and skip during migration.
 
 The separate [offline exporter](../../training/README.md) reads canonical Catalog state and
 Engagement feedback/history into versioned facts for #193. Replicated history never substitutes
