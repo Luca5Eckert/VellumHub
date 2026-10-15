@@ -11,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+@ConditionalOnProperty(name = "app.kafka.legacy-consumers.enabled", havingValue = "true", matchIfMissing = true)
 @Component
 @Slf4j
 public class UpdatedRatingConsumerEvent {
