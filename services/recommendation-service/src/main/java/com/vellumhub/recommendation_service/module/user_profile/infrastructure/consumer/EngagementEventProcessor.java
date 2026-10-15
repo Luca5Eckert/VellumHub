@@ -7,6 +7,7 @@ import com.vellumhub.recommendation_service.module.user_profile.application.comm
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.ReactionChangedUseCase;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateUserProfileWithRatingUseCase;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.RemoveRatingFromProfileUseCase;
+import com.vellumhub.recommendation_service.share.application.EventProcessingOutcome;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +29,7 @@ public class EngagementEventProcessor {
     }
 
     @Transactional
-    public void apply(Object fact) {
+    public EventProcessingOutcome apply(Object fact) {
         final UUID id;
         final String aggregateType,aggregateId,topic;
         final long revision;
@@ -61,7 +62,7 @@ public class EngagementEventProcessor {
             SELECT last_revision FROM engagement_event_offsets
             WHERE aggregate_type=? AND aggregate_id=? FOR UPDATE
             """,Long.class,aggregateType,aggregateId);
-        if(revision<=last) return;
+        if(revision<=last) return EventProcessingOutcome.DUPLICATE;
         // Existing aggregates begin with a baseline at their persisted revision.
         // New aggregates must begin with a creation fact at revision zero.
         boolean baseline=fact instanceof RatingBaselineEvent || fact instanceof ReactionBaselineEvent;
@@ -77,7 +78,7 @@ public class EngagementEventProcessor {
             INSERT INTO processed_engagement_events(event_id,topic,aggregate_type,aggregate_id)
             VALUES(?,?,?,?) ON CONFLICT DO NOTHING
             """,id,topic,aggregateType,aggregateId);
-        if(accepted==0) return;
+        if(accepted==0) throw new IllegalStateException("Event ID collision: " + id);
         if(fact instanceof RatingCreatedEvent e) {
             rating.executeStrict(new UpdateUserProfileWithRatingCommand(
                     e.userId(),e.bookId(),0,e.stars(),true));
@@ -98,6 +99,7 @@ public class EngagementEventProcessor {
             WHERE aggregate_type=? AND aggregate_id=? AND last_revision=?
             """,revision,aggregateType,aggregateId,last);
         if(changed!=1) throw new IllegalStateException("Stale engagement checkpoint "+aggregateId);
+        return EventProcessingOutcome.APPLIED;
     }
 }
 

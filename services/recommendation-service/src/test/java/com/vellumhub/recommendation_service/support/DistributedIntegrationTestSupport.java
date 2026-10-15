@@ -18,7 +18,10 @@ public abstract class DistributedIntegrationTestSupport extends KafkaPgvectorInt
             "create_rating_event:com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent",
             "create_book_progress_event:com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent",
             "update_book_progress_event:com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent",
-            "update_rating_event:com.vellumhub.kafka.contracts.engagement.UpdatedRatingEvent"
+            "update_rating_event:com.vellumhub.kafka.contracts.engagement.UpdatedRatingEvent",
+            "book_changed_event:com.vellumhub.kafka.contracts.book.BookChangedEvent",
+            "reading_progress_changed_event:com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent",
+            "rating_created_event:com.vellumhub.kafka.contracts.engagement.RatingCreatedEvent"
     );
 
     @DynamicPropertySource

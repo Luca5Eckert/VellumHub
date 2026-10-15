@@ -7,6 +7,7 @@ import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.book.BookChangedEvent;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
+import com.vellumhub.recommendation_service.share.application.EventProcessingOutcome;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -24,11 +25,18 @@ public class OrderedBookEventConsumer {
     public void consume(BookChangedEvent event) {
         Timer.Sample sample=metrics.startKafkaProcessing();
         try {
-            projection.execute(event);
+            EventProcessingOutcome outcome = projection.execute(event);
+            if (outcome == EventProcessingOutcome.DUPLICATE) {
+                metrics.recordKafkaDuplicate(KafkaTopics.BOOK_EVENTS,"BookChangedEvent",KafkaConsumerGroups.RECOMMENDATION_SERVICE);
+                log.debug("operation=book_event_duplicate, bookId={}, eventId={}, revision={}",
+                        event.bookId(),event.eventId(),event.revision());
+            }
             metrics.recordKafkaConsumed(KafkaTopics.BOOK_EVENTS,"BookChangedEvent",KafkaConsumerGroups.RECOMMENDATION_SERVICE);
             metrics.recordKafkaProcessingDuration(sample,KafkaTopics.BOOK_EVENTS,"BookChangedEvent",
-                    KafkaConsumerGroups.RECOMMENDATION_SERVICE,"success");
-            log.debug("operation=book_projection_applied, bookId={}, eventId={}, kind={}, revision={}",
+                    KafkaConsumerGroups.RECOMMENDATION_SERVICE,
+                    outcome == EventProcessingOutcome.DUPLICATE ? "duplicate" : "success");
+            if (outcome == EventProcessingOutcome.APPLIED)
+                log.debug("operation=book_projection_applied, bookId={}, eventId={}, kind={}, revision={}",
                     event.bookId(),event.eventId(),event.kind(),event.revision());
         } catch(RuntimeException ex) {
             metrics.recordKafkaConsumeFailed(KafkaTopics.BOOK_EVENTS,"BookChangedEvent",

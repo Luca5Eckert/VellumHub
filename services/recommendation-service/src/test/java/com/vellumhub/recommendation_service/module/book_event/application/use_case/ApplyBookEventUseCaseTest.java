@@ -3,6 +3,7 @@ package com.vellumhub.recommendation_service.module.book_event.application.use_c
 import com.vellumhub.recommendation_service.module.book_event.application.port.BookEventCheckpoint;
 import com.vellumhub.kafka.contracts.book.BookChangedEvent;
 import org.junit.jupiter.api.Test;
+import com.vellumhub.recommendation_service.share.application.EventProcessingOutcome;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -34,16 +35,18 @@ class ApplyBookEventUseCaseTest {
         UUID id=UUID.randomUUID();
         when(checkpoint.lockAndRead(id)).thenReturn(-1L);
         when(embeddings.of(any(),any(),any(),any())).thenReturn(new float[384]);
-        process.execute(event(id,6,BookChangedEvent.Kind.BASELINE,null));
+        assertThat(process.execute(event(id,6,BookChangedEvent.Kind.BASELINE,null)))
+                .isEqualTo(EventProcessingOutcome.APPLIED);
         verify(features).save(any(BookFeature.class));
         verify(recommendations).save(any(Recommendation.class));
-        verify(checkpoint).applied(id,-1,6);
+        verify(checkpoint).applied(eq(id),eq(-1L),eq(6L),any(UUID.class));
     }
 
     @Test void duplicateCannotRedoEmbedding() {
         UUID id=UUID.randomUUID();
         when(checkpoint.lockAndRead(id)).thenReturn(2L);
-        process.execute(event(id,2,BookChangedEvent.Kind.UPDATED,"/cover.png"));
+        assertThat(process.execute(event(id,2,BookChangedEvent.Kind.UPDATED,"/cover.png")))
+                .isEqualTo(EventProcessingOutcome.DUPLICATE);
         verifyNoInteractions(embeddings,features,recommendations);
     }
 
@@ -53,7 +56,7 @@ class ApplyBookEventUseCaseTest {
         assertThatThrownBy(()->process.execute(event(id,3,BookChangedEvent.Kind.UPDATED,null)))
             .isInstanceOf(IllegalStateException.class);
         verifyNoInteractions(embeddings,features,recommendations);
-        verify(checkpoint,never()).applied(any(),anyLong(),anyLong());
+        verify(checkpoint,never()).applied(any(),anyLong(),anyLong(),any());
     }
 
     @Test void coverOnlyChangeDoesNotRecomputeVector() {
@@ -67,7 +70,7 @@ class ApplyBookEventUseCaseTest {
         process.execute(event(id,1,BookChangedEvent.Kind.UPDATED,"/new.png"));
         verifyNoInteractions(embeddings);
         assertThat(old.getCoverUrl()).isEqualTo("/new.png");
-        verify(checkpoint).applied(id,0,1);
+        verify(checkpoint).applied(eq(id),eq(0L),eq(1L),any(UUID.class));
     }
 
     @Test void deletionClearsReadModelsOnce() {
@@ -76,7 +79,7 @@ class ApplyBookEventUseCaseTest {
         process.execute(event(id,2,BookChangedEvent.Kind.DELETED,null));
         verify(features).deleteById(id);
         verify(recommendations).deleteById(id);
-        verify(checkpoint).applied(id,1,2);
+        verify(checkpoint).applied(eq(id),eq(1L),eq(2L),any(UUID.class));
     }
 }
 

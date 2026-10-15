@@ -7,6 +7,7 @@ import com.vellumhub.recommendation_service.module.book_feature.domain.port.Embe
 import com.vellumhub.recommendation_service.module.recommendation.domain.model.Recommendation;
 import com.vellumhub.recommendation_service.module.recommendation.domain.port.RecommendationRepository;
 import lombok.extern.slf4j.Slf4j;
+import com.vellumhub.recommendation_service.share.application.EventProcessingOutcome;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
@@ -25,11 +26,11 @@ public class ApplyBookEventUseCase {
         this.recommendations=recommendations;
     }
     @Transactional
-    public void execute(BookChangedEvent event) {
+    public EventProcessingOutcome execute(BookChangedEvent event) {
         long previous=checkpoint.lockAndRead(event.bookId());
         if (event.revision()<=previous) {
             log.debug("operation=book_event_duplicate, bookId={}, revision={}",event.bookId(),event.revision());
-            return;
+            return EventProcessingOutcome.DUPLICATE;
         }
         if (event.kind()!=BookChangedEvent.Kind.BASELINE || previous!=-1) {
             if (event.revision()!=previous+1 || event.kind()==BookChangedEvent.Kind.BASELINE)
@@ -44,7 +45,8 @@ public class ApplyBookEventUseCase {
         } else {
             applySnapshot(event);
         }
-        checkpoint.applied(event.bookId(),previous,event.revision());
+        checkpoint.applied(event.bookId(),previous,event.revision(),event.eventId());
+        return EventProcessingOutcome.APPLIED;
     }
     private void applySnapshot(BookChangedEvent event) {
         BookChangedEvent.State state=event.state();

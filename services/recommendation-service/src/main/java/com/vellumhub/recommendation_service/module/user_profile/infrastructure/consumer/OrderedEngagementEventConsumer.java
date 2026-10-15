@@ -1,5 +1,6 @@
 package com.vellumhub.recommendation_service.module.user_profile.infrastructure.consumer;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.engagement.*;
@@ -7,6 +8,7 @@ import java.util.UUID;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
+import com.vellumhub.recommendation_service.share.application.EventProcessingOutcome;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -22,21 +24,31 @@ public class OrderedEngagementEventConsumer {
     @KafkaListener(topics={KafkaTopics.ENGAGEMENT_RATINGS,KafkaTopics.ENGAGEMENT_REACTIONS},
             groupId=KafkaConsumerGroups.RECOMMENDATION_SERVICE,
             containerFactory="orderedEngagementContainerFactory")
-    public void consume(Object fact) {
+    public void consume(ConsumerRecord<String, Object> record) {
+        // Spring Kafka 4 supplies ConsumerRecord for an untyped multi-contract listener.
+        // Explicitly unwrap the deserialized payload instead of treating the record as a fact.
+        Object fact = record.value();
         String name=fact.getClass().getSimpleName();
-        UUID id=eventId(fact);
         Timer.Sample sample=metrics.startKafkaProcessing();
         try {
-            processor.apply(fact);
+            UUID id=eventId(fact);
+            EventProcessingOutcome outcome = processor.apply(fact);
+            if (outcome == EventProcessingOutcome.DUPLICATE) {
+                metrics.recordKafkaDuplicate("engagement-events",name,KafkaConsumerGroups.RECOMMENDATION_SERVICE);
+                log.debug("operation=engagement_event_duplicate eventId={} type={}",id,name);
+            }
             metrics.recordKafkaConsumed("engagement-events",name,KafkaConsumerGroups.RECOMMENDATION_SERVICE);
             metrics.recordKafkaProcessingDuration(sample,"engagement-events",name,
-                    KafkaConsumerGroups.RECOMMENDATION_SERVICE,"success");
-            log.debug("operation=engagement_fact_processed eventId={} type={}",id,name);
+                    KafkaConsumerGroups.RECOMMENDATION_SERVICE,
+                    outcome == EventProcessingOutcome.DUPLICATE ? "duplicate" : "success");
+            if (outcome == EventProcessingOutcome.APPLIED)
+                log.debug("operation=engagement_fact_processed eventId={} type={}",id,name);
         } catch(RuntimeException error) {
             metrics.recordKafkaConsumeFailed("engagement-events",name,KafkaConsumerGroups.RECOMMENDATION_SERVICE);
             metrics.recordKafkaProcessingDuration(sample,"engagement-events",name,
                     KafkaConsumerGroups.RECOMMENDATION_SERVICE,"failure");
-            log.error("operation=engagement_fact_failed eventId={} type={}",id,name,error);
+            log.error("operation=engagement_fact_failed type={} exception={}",name,
+                    error.getClass().getSimpleName(),error);
             throw error;
         }
     }
