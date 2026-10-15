@@ -177,15 +177,21 @@ Service Dockerfiles intentionally exclude test-scope dependencies during `depend
 
 ## Idempotency and transactional outbox
 
-Consumer idempotency and transactional outbox publication are still planned production guarantees, not implemented guarantees. Therefore issue #278 does not invent them merely to add tests.
+Canonical consumer idempotency is implemented through PostgreSQL checkpoints and processed-event identities in Recommendation (#200). Catalog and Engagement transactional outboxes are implemented in code (#201/#202). Production deployment and convergence require a separate verified cutover.
 
-When their production mechanisms exist, extend this suite to prove:
+`ConsumerIdempotencyDistributedTest` extends the existing Kafka + pgvector harness without introducing a new framework. It checks:
 
-- duplicate delivery applies a durable effect once;
-- retry/reprocessing preserves that guarantee;
-- domain state and outbox records commit atomically;
-- committed outbox events survive publisher failure and are republished;
-- a successful domain commit does not lose its corresponding event.
+- applying the same Book event twice does not regenerate an embedding and records its ID once;
+- concurrent Book processing serializes on a database checkpoint;
+- a failed projection rolls back the checkpoint and identity row so a later retry can apply;
+- repeated Reading Progress does not modify a user score a second time;
+- absent BookFeature cannot cause a successful checkpoint;
+- Engagement event-ID collision cannot acknowledge an unrelated aggregate revision;
+- an actual Kafka redelivery of Rating increments the duplicate counter while retaining one durable profile delta.
+
+These scenarios run with a deterministic embedding double, real Kafka, real PostgreSQL/pgvector and the production Spring consumer implementation. Their presence in source is not evidence of a passing CI run. See [Consumer Idempotency](CONSUMER_IDEMPOTENCY.md) for rollout rules, invariants and operational limits.
+
+Publisher outbox failure/recovery is exercised by the Catalog and Engagement Outbox distributed suites; it should not be duplicated in this consumer-specific issue.
 
 ## Explicit limits
 

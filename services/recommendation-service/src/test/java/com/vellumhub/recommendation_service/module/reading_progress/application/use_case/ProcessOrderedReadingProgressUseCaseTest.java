@@ -5,9 +5,11 @@ import com.vellumhub.recommendation_service.module.book_feature.domain.port.Book
 import com.vellumhub.recommendation_service.module.book_feature.domain.model.BookFeature;
 import com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent;
 import org.junit.jupiter.api.Test;
+import com.vellumhub.recommendation_service.share.application.EventProcessingOutcome;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
@@ -24,7 +26,7 @@ class ProcessOrderedReadingProgressUseCaseTest {
     @Test void duplicateDoesNotRepeatEffect() {
         var e=event(1,ReadingProgressChangedEvent.Kind.UPDATED);
         when(checkpoint.lockAndRead(e.bookProgressId())).thenReturn(1L);
-        process.execute(e);
+        assertThat(process.execute(e)).isEqualTo(EventProcessingOutcome.DUPLICATE);
         verifyNoInteractions(effect);
         verify(checkpoint,never()).markApplied(any(),anyLong(),any());
     }
@@ -37,7 +39,7 @@ class ProcessOrderedReadingProgressUseCaseTest {
     @Test void baselineAdvancesOnlyCheckpoint() {
         var e=event(0,ReadingProgressChangedEvent.Kind.BASELINE);
         when(checkpoint.lockAndRead(e.bookProgressId())).thenReturn(-1L);
-        process.execute(e);
+        assertThat(process.execute(e)).isEqualTo(EventProcessingOutcome.APPLIED);
         verify(checkpoint).markApplied(e.bookProgressId(),0L,e.eventId());
         verifyNoInteractions(effect);
     }

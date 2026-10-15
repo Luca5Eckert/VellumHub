@@ -20,7 +20,10 @@ public class JdbcBookEventCheckpoint implements BookEventCheckpoint {
         return offset;
     }
 
-    @Override public void applied(UUID bookId, long before, long next) {
+    @Override public void applied(UUID bookId, long before, long next, UUID eventId) {
+        // A shared unique event identity prevents reuse across Book and Reading Progress.
+        // The insert and the per-aggregate revision fence belong to the caller's transaction.
+        jdbc.update("INSERT INTO processed_events(event_id) VALUES (?)", eventId);
         int changed = jdbc.update("""
                 UPDATE book_event_offsets SET last_revision=?
                 WHERE book_id=? AND last_revision=?

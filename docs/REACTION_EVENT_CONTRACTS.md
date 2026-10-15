@@ -1,6 +1,6 @@
 # Reaction Lifecycle Kafka Contract
 
-The Engagement Service publishes reaction lifecycle facts on the `user-reaction-changed` topic. Recommendation consumes those facts to update its local user profile without calling Engagement synchronously.
+The original reaction topic was `user-reaction-changed`. The canonical durable stream is now `engagement.reactions.v1` with `ReactionChangedEvent` / `ReactionBaselineEvent`, per-reaction revisions, transactional outbox and Recommendation checkpoints. `user-reaction-changed` is a legacy compatibility topic, not the canonical idempotent path.
 
 ## Payload
 
@@ -121,7 +121,7 @@ oldTypeReaction = null
 newTypeReaction = typeReaction
 ```
 
-Legacy events do not have `eventId`, `occurredAt`, or `reactionId`. Consumer idempotency for enriched events belongs to issue #200, which must define the final handling policy for those legacy messages.
+Legacy events do not have `eventId`, `occurredAt`, or `reactionId`. Canonical consumption under #200 uses `processed_engagement_events` and per-aggregate revisions. Old messages without stable identity/revision cannot be made replay-safe by fabricating an event ID; those listeners are gated by `KAFKA_LEGACY_CONSUMERS_ENABLED` and must be drained before disabling. See [Consumer Idempotency](CONSUMER_IDEMPOTENCY.md).
 
 A missing local book feature now fails consumption so the existing retry/DLT pipeline can retain the event. A successful acknowledgement must not discard a delta that later transitions depend on. Retry exhaustion still requires operational recovery; this change does not implement safe replay.
 
@@ -130,7 +130,7 @@ A missing local book feature now fails consumption so the existing retry/DLT pip
 This contract makes the event self-contained but does not provide atomic publication or idempotent consumption by itself.
 
 - transactional outbox for Engagement belongs to #202;
-- idempotent Recommendation consumers belong to #200;
+- idempotent canonical Recommendation consumers are implemented under #200 (production rollout must be verified);
 - retry, DLT, and safe replay belong to #272.
 
 This separation keeps lifecycle semantics independent from delivery mechanics.

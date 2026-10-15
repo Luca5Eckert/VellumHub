@@ -14,6 +14,7 @@ public class VellumHubMetrics {
     public static final String KAFKA_EVENTS_PUBLISH_FAILED = "vellumhub.kafka.events.publish.failed";
     public static final String KAFKA_EVENTS_CONSUMED = "vellumhub.kafka.events.consumed";
     public static final String KAFKA_EVENTS_CONSUME_FAILED = "vellumhub.kafka.events.consume.failed";
+    public static final String KAFKA_EVENTS_DUPLICATE = "vellumhub.kafka.events.duplicate";
     public static final String KAFKA_EVENT_PROCESSING_DURATION = "vellumhub.kafka.event.processing.duration";
     public static final String KAFKA_DLT_EVENTS = "vellumhub.kafka.dlt.events";
 
@@ -49,6 +50,11 @@ public class VellumHubMetrics {
 
     public void recordKafkaConsumed(String topic, String eventType, String consumerGroup) {
         counter(KAFKA_EVENTS_CONSUMED, "topic", topic, "event_type", eventType, "consumer_group", consumerGroup, "result", "success").increment();
+    }
+
+    public void recordKafkaDuplicate(String topic, String eventType, String consumerGroup) {
+        counter(KAFKA_EVENTS_DUPLICATE, "topic", topic, "event_type", eventType,
+                "consumer_group", consumerGroup).increment();
     }
 
     public void recordKafkaConsumeFailed(String topic, String eventType, String consumerGroup) {

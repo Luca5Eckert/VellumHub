@@ -4,6 +4,7 @@ import com.vellumhub.recommendation_service.module.book_feature.domain.port.Book
 import com.vellumhub.recommendation_service.module.user_profile.application.command.UpdateBookProgressCommand;
 import com.vellumhub.recommendation_service.module.user_profile.application.use_case.UpdateBookProgressUseCase;
 import com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent;
+import com.vellumhub.recommendation_service.share.application.EventProcessingOutcome;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,15 +19,15 @@ public class ProcessOrderedReadingProgressUseCase {
         this.checkpoint=checkpoint; this.features=features; this.profile=profile;
     }
     @Transactional
-    public void execute(ReadingProgressChangedEvent event) {
+    public EventProcessingOutcome execute(ReadingProgressChangedEvent event) {
         long last=checkpoint.lockAndRead(event.bookProgressId());
-        if (event.revision() <= last) return;
+        if (event.revision() <= last) return EventProcessingOutcome.DUPLICATE;
         if (event.revision() != last+1) throw new IllegalStateException(
                 "Reading progress gap: " + event.bookProgressId() +
                 " expected=" + (last+1) + " received=" + event.revision());
         if (event.revision()==0 && event.kind()==ReadingProgressChangedEvent.Kind.BASELINE) {
             checkpoint.markApplied(event.bookProgressId(), 0, event.eventId());
-            return;
+            return EventProcessingOutcome.APPLIED;
         }
         if (event.revision()==0 && event.kind()!=ReadingProgressChangedEvent.Kind.CREATED)
             throw new IllegalArgumentException("First revision must be CREATED");
@@ -39,6 +40,7 @@ public class ProcessOrderedReadingProgressUseCase {
         profile.execute(UpdateBookProgressCommand.of(
                 event.userId(), event.bookId(), event.progress(), event.oldPage(), event.newPage()));
         checkpoint.markApplied(event.bookProgressId(), event.revision(), event.eventId());
+        return EventProcessingOutcome.APPLIED;
     }
 }
 

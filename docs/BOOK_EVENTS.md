@@ -1,6 +1,6 @@
 # Catalog Book Events — ECST and Transactional Outbox
 
-Status: proposed in [PR #296](https://github.com/Luca5Eckert/VellumHub/pull/296). This is not evidence of a production rollout.
+Status: implementation merged in [PR #296](https://github.com/Luca5Eckert/VellumHub/pull/296); consumer identity hardening tracked by [#200](https://github.com/Luca5Eckert/VellumHub/issues/200). Neither merge proves production rollout.
 
 ## Overview
 
@@ -31,7 +31,7 @@ Participating paths: create, import ISBN, approve request, update attributes, up
 
 - Engagement: maintains only Book identity in BookSnapshot. DELETE marks BookSnapshot inactive instead of deleting a row referenced by ratings, reactions or reading sessions. UPDATE advances checkpoint without materializing unnecessary attributes.
 - Recommendation: updates metadata and vector BookFeature. It skips inference when semantic fields have not changed, but recomputes when the embedding is missing.
-- Both: `book_event_offsets` row lock and effect share one transaction, ignoring duplicates and rejecting gaps.
+- Both: `book_event_offsets` row lock and effect share one transaction, ignoring duplicates and rejecting gaps. Recommendation also writes the immutable `eventId` into the existing `processed_events` registry in that transaction; an ID reused for an unapplied aggregate revision is rejected. See [Consumer Idempotency](CONSUMER_IDEMPOTENCY.md).
 - On poison messages the dedicated Kafka container retries without skipping to later revisions. This protects order but can halt a partition indefinitely.
 
 ## Rollout
@@ -41,7 +41,7 @@ Participating paths: create, import ISBN, approve request, update attributes, up
 3. Migrate Engagement V7 and Recommendation V3. Deploy new consumers before Catalog producers.
 4. Apply Catalog Flyway V3 baseline: snapshots of active books in the existing Outbox.
 5. Start writers and monitor backlog/lag/checkpoint convergence.
-6. Retire legacy listeners only after successful cutover.
+6. Disable Recommendation's legacy Book listeners with `KAFKA_LEGACY_CONSUMERS_ENABLED=false` only after draining their topics and completing cutover; retire the legacy code after verification. Other legacy flows must be coordinated separately.
 
 Do not rely on cross-topic ordering or modify topic partition count without planning migration.
 
@@ -62,6 +62,6 @@ HTTP 201, 200 or 204 reflect the local Catalog transaction only. They do not imp
 - Cover upload files are outside the PostgreSQL transaction: orphan cleanup is an outstanding operational concern.
 - Heavy embedding computation under a consumer transaction can hold its per-book lock; profile and measure before optimizing.
 - Purging PUBLISHED rows requires a documented retention policy.
-- Consumers of other interaction topics still need their own durability/idempotency work (#200, #202, #272).
+- Rating and Reaction canonical consumers have identity checkpoints under #200/#202. Legacy topic handlers remain excluded from those guarantees until coordinated cutover; retry/DLT and operational replay remain in #272.
 
 See `docs/DISTRIBUTED_TESTING.md` for distributed test infrastructure.
