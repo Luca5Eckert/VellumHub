@@ -198,3 +198,8 @@ Publisher outbox failure/recovery is exercised by the Catalog and Engagement Out
 The shared harness is not a general testing framework and does not replace unit, slice, repository, migration, or REST contract tests. It is reserved for behavior that depends on a real distributed boundary.
 
 Toxiproxy, network latency/fault injection, metrics-level retry assertions, and broader parallel execution remain conditional improvements. Add them only when a concrete production failure mode or guarantee makes the extra infrastructure worthwhile.
+
+
+## Ordered Kafka recovery (#272)
+
+`OrderedKafkaRecoveryTest` verifies bounded policy construction and the installed record/rebalance callbacks. The extended Recommendation distributed idempotency test sends an intentionally failing canonical Book event to actual Kafka and verifies the DLT provenance headers, durable quarantine and absence of committed projection checkpoints. The recovery CLI additionally defaults to dry run. See [Kafka Recovery Runbook](KAFKA_RECOVERY_RUNBOOK.md) for crash-window and reprocessing limitations.

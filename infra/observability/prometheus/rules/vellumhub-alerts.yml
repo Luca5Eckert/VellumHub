@@ -122,3 +122,13 @@ groups:
           summary: "Recommendation empty-result ratio is high."
           description: "More than 30% of recommendation requests returned empty results."
           runbook: "docs/OBSERVABILITY_RUNBOOKS.md#recommendation-slow-or-empty"
+
+      - alert: KafkaOrderedRecordQuarantined
+        expr: increase(vellumhub_kafka_recovery_quarantined_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: P1
+        annotations:
+          summary: "An ordered Kafka partition has been quarantined."
+          description: "An unapplied event exhausted bounded retries. The source offset must not advance."
+          runbook: "docs/KAFKA_RECOVERY_RUNBOOK.md"

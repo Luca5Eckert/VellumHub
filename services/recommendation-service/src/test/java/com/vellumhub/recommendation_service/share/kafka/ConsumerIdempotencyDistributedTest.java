@@ -1,6 +1,7 @@
 package com.vellumhub.recommendation_service.share.kafka;
 
 import com.vellumhub.testing.distributed.kafka.KafkaProbe;
+import com.vellumhub.testing.distributed.kafka.KafkaProbe;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.recommendation_service.share.application.EventProcessingOutcome;
 import com.vellumhub.kafka.contracts.KafkaTopics;
@@ -61,6 +62,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
 
     @BeforeEach
     void resetDatabase() {
+        jdbc.update("DELETE FROM kafka_consumer_quarantine");
         jdbc.update("DELETE FROM processed_engagement_events");
         jdbc.update("DELETE FROM engagement_event_offsets");
         jdbc.update("DELETE FROM processed_events");
@@ -72,6 +74,36 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
         jdbc.update("DELETE FROM book_features");
         reset(embeddings);
         when(embeddings.of(any(),any(),any(),any())).thenReturn(vector());
+    }
+
+    @Test
+    void exhaustedOrderedBookFailureGoesToDltButNeverAcknowledgesRevision() throws Exception {
+        UUID book=UUID.randomUUID();
+        var event=bookEvent(book);
+        doThrow(new IllegalStateException("forced recovery scenario"))
+                .when(embeddings).of(any(),any(),any(),any());
+
+        String dltTopic=KafkaTopics.BOOK_EVENTS+".recommendation-service-dlt";
+        try (var dlt=KafkaProbe.subscribe(KAFKA.getBootstrapServers(),dltTopic,
+                "ordered-book-recovery")) {
+            // Separate group: observing DLT does not affect the canonical consumer.
+            kafka.send(KafkaTopics.BOOK_EVENTS,book.toString(),event).get(5,TimeUnit.SECONDS);
+            var dead=dlt.awaitRecord(dltTopic,book.toString(),
+                    Duration.ofSeconds(20), Duration.ofMillis(100));
+            assertThat(KafkaProbe.utf8HeaderValues(dead,"x-vellum-source-topic"))
+                    .containsExactly(KafkaTopics.BOOK_EVENTS);
+            assertThat(KafkaProbe.utf8HeaderValues(dead,"x-vellum-consumer-group"))
+                    .containsExactly(KafkaConsumerGroups.RECOMMENDATION_SERVICE);
+        }
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            assertThat(jdbc.queryForObject("""
+                    SELECT COUNT(*) FROM kafka_consumer_quarantine
+                    WHERE consumer_group=? AND source_topic=? AND status='BLOCKED'
+                    """, Integer.class,KafkaConsumerGroups.RECOMMENDATION_SERVICE,
+                    KafkaTopics.BOOK_EVENTS)).isEqualTo(1);
+        });
+        assertThat(count("processed_events","event_id",event.eventId())).isZero();
+        assertThat(count("book_event_offsets","book_id",book)).isZero();
     }
 
     @Test
