@@ -95,3 +95,8 @@ Do not describe these scenarios as passing until CI or local execution confirms 
 - End-to-end observability evidence belongs to [#214](https://github.com/Luca5Eckert/VellumHub/issues/214).
 - The current implementation does not use Redis as an idempotency store, Kafka transactions, Debezium, or a generic cross-service deduplication framework. PostgreSQL is sufficient because projection writes and checkpoints must commit atomically.
 - The score/vector compensation for a deleted historical rating does not perfectly reconstruct all prior normalization steps. Idempotency prevents a delta from applying twice, but does not make the ranking algorithm mathematically invertible.
+
+
+## Recovery of blocked ordered partitions (#272)
+
+Bounded retry, sanitized DLT copies, PostgreSQL quarantine markers and original-offset replay are documented in [Kafka Recovery Runbook](KAFKA_RECOVERY_RUNBOOK.md). A DLT record does not authorize advancing over a missing revision. The operational CLI requires an audited resume and consumer restart; processed-event checkpoints remain the source of correctness.

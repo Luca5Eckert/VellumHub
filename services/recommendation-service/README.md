@@ -185,3 +185,8 @@ without changing profile weights. Canonical consumers fail and retry when requir
 The separate [offline exporter](../../training/README.md) reads canonical Catalog state and
 Engagement feedback/history into versioned facts for #193. Replicated history never substitutes
 for current Catalog state. This is distinct from the synthetic evaluation harness.
+
+
+## Ordered Kafka failure recovery (#272)
+
+Canonical Book/Reading Progress/Rating/Reaction consumers use bounded retries, service-scoped DLT copies and a persistent PostgreSQL quarantine. Source offsets stay uncommitted when a revision cannot be applied. On recovery, an operator requests original-offset replay and restarts the affected consumer service; the listener marks the quarantine resolved after the record succeeds. Consult [Kafka Recovery Runbook](../../docs/KAFKA_RECOVERY_RUNBOOK.md) for the CLI, audit trail, replay safety and deployment requirements. Legacy DLT replay remains restricted where a stable event identity is unavailable.

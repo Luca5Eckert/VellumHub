@@ -92,7 +92,7 @@ public class KafkaRetryConfig {
                 "Kafka DLT message quarantined. operation=kafka_dlt_quarantine, event_type=kafka_dlt, originalTopic={}, dltTopic={}, error={}, payloadBytes={}",
                 quarantinedTopic,
                 topic,
-                errorMessage,
+                errorMessage == null ? "unknown" : "redacted",
                 payloadByteLength(payload)
         );
 
@@ -101,6 +101,9 @@ public class KafkaRetryConfig {
     private String originalTopic(String dltTopic, String originalTopic) {
         if (originalTopic != null && !originalTopic.isBlank()) {
             return originalTopic;
+        }
+        if (dltTopic != null && dltTopic.endsWith("." + "recommendation-service" + KafkaTopics.DLT_SUFFIX)) {
+            return dltTopic.substring(0, dltTopic.length() - ("." + "recommendation-service" + KafkaTopics.DLT_SUFFIX).length());
         }
         if (dltTopic != null && dltTopic.endsWith(KafkaTopics.DLT_SUFFIX)) {
             return dltTopic.substring(0, dltTopic.length() - KafkaTopics.DLT_SUFFIX.length());

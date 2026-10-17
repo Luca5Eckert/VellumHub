@@ -175,3 +175,8 @@ must never substitute for occurrence time. Deploy migrations before the new appl
 The [offline exporter](../../training/README.md) labels these records `REPLICATED_HISTORY`
 and flags incomplete metadata. It reads current state only from Catalog. Duplicate handling
 remains #200; atomic commit/publication remains #201. Metadata alone provides neither guarantee.
+
+
+## Ordered Kafka failure recovery (#272)
+
+Canonical Book/Reading Progress consumers use bounded retries, service-scoped DLT copies and a persistent PostgreSQL quarantine. Source offsets stay uncommitted when a revision cannot be applied. On recovery, an operator requests original-offset replay and restarts the affected consumer service; the listener marks the quarantine resolved after the record succeeds. Consult [Kafka Recovery Runbook](../../docs/KAFKA_RECOVERY_RUNBOOK.md) for the CLI, audit trail, replay safety and deployment requirements. Legacy DLT replay remains restricted where a stable event identity is unavailable.
