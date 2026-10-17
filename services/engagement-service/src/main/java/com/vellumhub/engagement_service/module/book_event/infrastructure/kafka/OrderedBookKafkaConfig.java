@@ -1,26 +1,22 @@
 package com.vellumhub.engagement_service.module.book_event.infrastructure.kafka;
 
+import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
+import com.vellumhub.engagement_service.share.kafka.recovery.OrderedKafkaRecovery;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.listener.DefaultErrorHandler;
-import org.springframework.util.backoff.FixedBackOff;
 
-/**
- * Never skip a failed revision. Unbounded blocking retry protects order, but stalls a
- * partition on poison messages; operators must alert on lag and repair the dependency.
- */
+/** A failed ordered revision must never be skipped or acknowledged. */
 @Configuration
 public class OrderedBookKafkaConfig {
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, Object> orderedBookContainerFactory(
-            ConsumerFactory<String, Object> consumerFactory) {
+            ConsumerFactory<String, Object> consumerFactory,
+            OrderedKafkaRecovery recovery) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, Object>();
         factory.setConsumerFactory(consumerFactory);
-        factory.setCommonErrorHandler(
-                new DefaultErrorHandler(new FixedBackOff(3000L, FixedBackOff.UNLIMITED_ATTEMPTS)));
+        recovery.configure(factory, KafkaConsumerGroups.ENGAGEMENT_SERVICE);
         return factory;
     }
 }
-
