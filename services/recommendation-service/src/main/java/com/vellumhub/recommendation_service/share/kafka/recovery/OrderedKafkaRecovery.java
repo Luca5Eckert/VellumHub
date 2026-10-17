@@ -67,7 +67,7 @@ public class OrderedKafkaRecovery {
     public OrderedKafkaRecovery(JdbcTemplate jdbc,
             @Qualifier("orderedRecoveryDltKafkaTemplate") KafkaTemplate<String, byte[]> publisher,
             KafkaListenerEndpointRegistry registry, MeterRegistry metrics,
-            @Value("${spring.application.name}") String service,
+            @Value("${spring.application.name:recommendation-service}") String service,
             @Value("${app.kafka.recovery.backoff-ms:1000}") long retryBackoffMs,
             @Value("${app.kafka.recovery.max-retries:3}") long maxRetries) {
         if (retryBackoffMs < 1 || maxRetries < 0 || maxRetries > 20) {
@@ -178,7 +178,7 @@ public class OrderedKafkaRecovery {
             byte[] payload = record.value() instanceof byte[] bytes
                     ? bytes : mapper.writeValueAsBytes(record.value());
             publisher.send(new ProducerRecord<>(dltTopic, null,
-                    String.valueOf(record.key()), payload, headers)).get(10, TimeUnit.SECONDS);
+                    record.key() == null ? null : record.key().toString(), payload, headers)).get(10, TimeUnit.SECONDS);
             jdbc.update("""
                     INSERT INTO kafka_consumer_quarantine
                     (consumer_group,source_topic,source_partition,source_offset,
