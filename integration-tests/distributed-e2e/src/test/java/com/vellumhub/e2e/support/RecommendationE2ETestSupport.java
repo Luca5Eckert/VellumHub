@@ -8,8 +8,6 @@ import org.springframework.test.context.DynamicPropertySource;
 
 public abstract class RecommendationE2ETestSupport extends KafkaPgvectorIntegrationTestSupport {
 
-    private static final String JWT_SECRET =
-            "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=";
     private static final String PRODUCER_TYPE_MAPPINGS = String.join(",",
             "create_book_event:com.vellumhub.kafka.contracts.book.CreateBookEvent",
             "create_rating_event:com.vellumhub.kafka.contracts.engagement.CreatedRatingEvent"
@@ -36,7 +34,7 @@ public abstract class RecommendationE2ETestSupport extends KafkaPgvectorIntegrat
 
         registry.add("app.kafka.retry.backoff-ms", () -> "100");
         registry.add("management.health.kafka.enabled", () -> "false");
-        registry.add("jwt.secret", () -> JWT_SECRET);
+        registry.add("jwt.public-key-location", () -> "classpath:security/test-public.pem");
         registry.add("server.port", () -> "0");
 
         registry.add("catalog-service.ribbon.listOfServers", () -> "http://127.0.0.1:1");
