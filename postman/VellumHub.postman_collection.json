@@ -398,6 +398,90 @@
               "response": []
             },
             {
+              "name": "Link a verified Google identity to the current password account",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/auth/google/link",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "google",
+                    "link"
+                  ]
+                },
+                "description": "Link a verified Google identity to the current password account\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `linkGoogle`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"externalToken\": \"string\",\n  \"currentPassword\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Unlink Google from a local-password account",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/auth/google/link",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "google",
+                    "link"
+                  ]
+                },
+                "description": "Unlink Google from a local-password account\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `unlinkGoogle`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPassword\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
               "name": "Authenticate user",
               "request": {
                 "method": "POST",

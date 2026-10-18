@@ -442,3 +442,9 @@ replicated reading history come from Engagement, with explicit provenance. This 
 ## HTTP perimeter security (SEC-01 / #302)
 
 Gateway and downstream services retain independently validated HS256 bearer JWTs until the scheduled cryptographic migration. The Gateway now has an explicit POST-only public login/register/Google allowlist, strips untrusted identity headers, and ignores client-supplied X-Forwarded-For unless the immediate proxy is within `VELLUM_TRUSTED_PROXY_CIDRS`. Centralized API documentation is opt-in through `VELLUM_DOCS_ENABLED`, enabled in local Compose and disabled by default. Production Ingress must expose only API routes; internal health/Prometheus scrapes remain reachable through the service network. See [HTTP boundary runbook](docs/SECURITY_HTTP_BOUNDARY.md) for routing, CORS, tests, risks and rollback. This is not an OAuth2/OIDC migration.
+
+## Google identity linkage (SEC-02 / #303)
+
+Google login is resolved by verified `issuer + subject` rather than email. The User Service keeps the stable local UUID and does not automatically merge legacy accounts sharing an email claim. New Google-only accounts have no password and cannot authenticate with local password. Existing password accounts can explicitly associate or remove a verified Google identity after proving their current local password. The database holds unique binding constraints and an immutable audit log (hashed subject, never the provider ID token). Flyway V2 expands password nullability without auto-backfilling unknown external identities.
+
+See [Google identity linkage runbook](docs/SECURITY_GOOGLE_IDENTITY.md) for route contracts, recovery of legacy users, migration/rollback and tests. This is not an OAuth2 Authorization Server or frontend PKCE migration.

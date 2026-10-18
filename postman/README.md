@@ -156,3 +156,7 @@ remember to regenerate manually.
 
 Postman is an exploration and workflow tool here. It does not replace service tests,
 distributed integration tests, or the service-owned OpenAPI contracts.
+
+## Google linking requests (SEC-02)
+
+Authentication now includes `POST /auth/google/link` (Bearer token + current password + a fresh Google ID token) and `DELETE /auth/google/link` (Bearer token + current password). In both generated Postman requests replace `externalToken` and `currentPassword` placeholders locally before sending. Never save a real provider ID token, local password or bearer token into the committed collection. Unlinked legacy accounts are **not** recovered by matching email.
