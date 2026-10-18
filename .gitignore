@@ -17,3 +17,6 @@ __pycache__/
 .pytest_cache/
 /target/training-export/
 /training/.venv/
+
+# Local JWT signing material (never commit private keys)
+/.local/keys/
