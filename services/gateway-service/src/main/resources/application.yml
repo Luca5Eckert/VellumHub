@@ -112,11 +112,8 @@ spring:
               filters:
                 - StripPrefix=2
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          secret-key: ${JWT_KEY}
+jwt:
+  public-key-location: ${JWT_PUBLIC_KEY_LOCATION:}
 
   data:
     redis:
