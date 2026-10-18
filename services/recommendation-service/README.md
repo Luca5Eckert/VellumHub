@@ -190,3 +190,7 @@ for current Catalog state. This is distinct from the synthetic evaluation harnes
 ## Ordered Kafka failure recovery (#272)
 
 Canonical Book/Reading Progress/Rating/Reaction consumers use bounded retries, service-scoped DLT copies and a persistent PostgreSQL quarantine. Source offsets stay uncommitted when a revision cannot be applied. On recovery, an operator requests original-offset replay and restarts the affected consumer service; the listener marks the quarantine resolved after the record succeeds. Consult [Kafka Recovery Runbook](../../docs/KAFKA_RECOVERY_RUNBOOK.md) for the CLI, audit trail, replay safety and deployment requirements. Legacy DLT replay remains restricted where a stable event identity is unavailable.
+
+## SEC-01 HTTP security baseline
+
+The API remains JWT bearer-based (HS256 until issue #163). Service security continues to validate tokens independently of the Gateway. Swagger/OpenAPI is opt-in through `VELLUM_DOCS_ENABLED=true` in local Compose; default deployment configuration denies documentation. Health and Prometheus remain unauthenticated at the service HTTP layer for **internal** probe/scrape traffic, so network and Ingress must keep these ports private. CORS uses explicit `CORS_ALLOWED_ORIGINS` and does not enable cookie credentials. See [SEC-01 HTTP boundary contract](../../docs/SECURITY_HTTP_BOUNDARY.md) for policy matrix, tests and rollback.

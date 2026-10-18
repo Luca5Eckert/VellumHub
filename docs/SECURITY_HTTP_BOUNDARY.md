@@ -18,7 +18,7 @@ This document is the route and network contract for issue #302. OAuth2/OIDC, RS2
 | /actuator/health/** | GET | no HTTP token | internal probing; public ingress must not route |
 | /actuator/prometheus | GET | no HTTP token | internal scraping only; public ingress must not route |
 
-Every downstream service validates the existing HS256 access token. Role/ownership checks remain downstream. 401 indicates missing/invalid authentication; 403 indicates insufficient authorization when the principal has already authenticated.
+Every downstream service validates the existing HS256 access token. Role/ownership checks remain downstream. 401 indicates missing/invalid bearer authentication at the HTTP security chain; 403 indicates failed authorization where applicable. Existing User Service domain-level login failures return its legacy error contract (400 for invalid Google/provider credential). Changing that contract is not part of SEC-01.
 
 ## Configuration and deployment
 

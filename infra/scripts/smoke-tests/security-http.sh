@@ -22,7 +22,7 @@ check() {
 check "anonymous protected" 401 GET /api/v1/recommendations/recommendations
 check "non-public login method" 401 GET /api/v1/auth/login
 check "non-public auth wildcard" 401 GET /api/v1/auth/not-public
-check "invalid Google token" 401 POST /api/v1/auth/google '{"externalToken":"invalid-provider-id-token"}'
+check "invalid Google token" 400 POST /api/v1/auth/google '{"externalToken":"invalid-provider-id-token"}'
 if [[ -n "${SECURITY_TEST_EMAIL:-}" && -n "${SECURITY_TEST_PASSWORD:-}" ]]; then
   token=$(curl --fail --silent -X POST -H 'Content-Type: application/json' \
     --data "$(printf '{"email":"%s","password":"%s"}' "$SECURITY_TEST_EMAIL" "$SECURITY_TEST_PASSWORD")" \

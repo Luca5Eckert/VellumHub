@@ -438,3 +438,7 @@ Detailed guides:
 and a hashed manifest. Current reading state comes from Catalog; canonical feedback and
 replicated reading history come from Engagement, with explicit provenance. This prepares
 #193 without changing the direct Catalog → Recommendation event flow.
+
+## HTTP perimeter security (SEC-01 / #302)
+
+Gateway and downstream services retain independently validated HS256 bearer JWTs until the scheduled cryptographic migration. The Gateway now has an explicit POST-only public login/register/Google allowlist, strips untrusted identity headers, and ignores client-supplied X-Forwarded-For unless the immediate proxy is within `VELLUM_TRUSTED_PROXY_CIDRS`. Centralized API documentation is opt-in through `VELLUM_DOCS_ENABLED`, enabled in local Compose and disabled by default. Production Ingress must expose only API routes; internal health/Prometheus scrapes remain reachable through the service network. See [HTTP boundary runbook](docs/SECURITY_HTTP_BOUNDARY.md) for routing, CORS, tests, risks and rollback. This is not an OAuth2/OIDC migration.

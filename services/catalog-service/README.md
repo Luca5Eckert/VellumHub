@@ -177,3 +177,7 @@ cd catalog-service
 ```
 
 For full platform topology and event flow, see the [root README](../README.md).
+
+## SEC-01 HTTP security baseline
+
+The API remains JWT bearer-based (HS256 until issue #163). Service security continues to validate tokens independently of the Gateway. Swagger/OpenAPI is opt-in through `VELLUM_DOCS_ENABLED=true` in local Compose; default deployment configuration denies documentation. Health and Prometheus remain unauthenticated at the service HTTP layer for **internal** probe/scrape traffic, so network and Ingress must keep these ports private. CORS uses explicit `CORS_ALLOWED_ORIGINS` and does not enable cookie credentials. See [SEC-01 HTTP boundary contract](../../docs/SECURITY_HTTP_BOUNDARY.md) for policy matrix, tests and rollback.
