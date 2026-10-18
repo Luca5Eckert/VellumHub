@@ -54,7 +54,7 @@ public class ExternalIdentityBindingService {
         }
         // No identity proof exists for an older account, regardless of matching email.
         // The owner must sign in locally and explicitly link the Google subject.
-        if (users.existsByEmailIgnoreCase(email)) {
+        if (users.existsByEmailIncludingDeleted(email)) {
             throw new ExternalIdentityConflictException();
         }
         String name = verified.name() == null || verified.name().isBlank()

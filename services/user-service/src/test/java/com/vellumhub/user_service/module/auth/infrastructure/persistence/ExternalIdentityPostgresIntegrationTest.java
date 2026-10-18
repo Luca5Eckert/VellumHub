@@ -100,6 +100,17 @@ class ExternalIdentityPostgresIntegrationTest {
     }
 
     @Test
+    void softDeletedLocalAccountIsNotRecreatedFromMatchingProviderEmail() {
+        String email = "deleted-" + UUID.randomUUID() + "@example.com";
+        UserEntity owner = users.saveAndFlush(UserEntity.builder()
+                .name("Legacy deleted").email(email).password(encoder.encode("old-password"))
+                .role(RoleUser.USER).active(true).build());
+        jdbc.update("UPDATE tb_users SET deleted_at = CURRENT_TIMESTAMP, active = false WHERE id = ?", owner.getId());
+        assertThatThrownBy(() -> bindings.resolveForLogin(identity(UUID.randomUUID().toString(), email)))
+                .isInstanceOf(ExternalIdentityConflictException.class);
+    }
+
+    @Test
     void concurrentLoginForOneSubjectResolvesOneUserAndOneAuditEvent() throws Exception {
         String subject = UUID.randomUUID().toString();
         String email = "race-" + UUID.randomUUID() + "@example.com";

@@ -59,7 +59,7 @@ class ExternalIdentityBindingServiceTest {
 
     @Test
     void refusesImplicitLinkToLegacyEmail() {
-        when(users.existsByEmailIgnoreCase("owner@example.com")).thenReturn(true);
+        when(users.existsByEmailIncludingDeleted("owner@example.com")).thenReturn(true);
         assertThatThrownBy(() -> bindings.resolveForLogin(google("unlinked-subject", "Owner@Example.com")))
                 .isInstanceOf(ExternalIdentityConflictException.class);
         verify(users, never()).saveAndFlush(any());

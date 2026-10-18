@@ -144,7 +144,7 @@ public class GlobalExceptionHandler {
                 .status(status.value())
                 .error("Data Integrity Error")
                 .message("Database constraint violation")
-                .details(List.of(Objects.requireNonNull(ex.getMostSpecificCause().getMessage())))
+                .details(List.of("Database constraint violation"))
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
