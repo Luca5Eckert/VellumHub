@@ -84,7 +84,10 @@ jobs:
           mkdir -p .local/keys
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out .local/keys/private.pem
           openssl pkey -in .local/keys/private.pem -pubout -out .local/keys/public.pem
+          # Containers run as non-root UID 10001; grant only that UID read access.
+          sudo chown 10001:10001 .local/keys/private.pem
           chmod 600 .local/keys/private.pem
+          chmod 644 .local/keys/public.pem
           # .env.example resolves JWT_PUBLIC_KEY_PATH and JWT_PRIVATE_KEY_PATH to these mounts.
 
       - name: Start VellumHub

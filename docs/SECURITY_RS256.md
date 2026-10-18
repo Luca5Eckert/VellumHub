@@ -34,7 +34,7 @@ JWT_PRIVATE_KEY_PATH=./.local/keys/private.pem
 JWT_EXPIRATION_MS=3600000
 ```
 
-Compose mounts `JWT_PUBLIC_KEY_PATH` read-only at `/run/keys/public.pem` in **all five** containers, and `JWT_PRIVATE_KEY_PATH` read-only at `/run/keys/private.pem` in **User Service only**. The corresponding application properties are `jwt.public-key-location=file:/run/keys/public.pem` and (User Service only) `jwt.private-key-location=file:/run/keys/private.pem`. A missing/invalid key prevents secure startup; it must not fall back to HMAC or generate a fresh key automatically.
+Compose mounts `JWT_PUBLIC_KEY_PATH` read-only at `/run/keys/public.pem` in **all five** containers, and `JWT_PRIVATE_KEY_PATH` read-only at `/run/keys/private.pem` in **User Service only**. The images run as non-root UID **10001**, so the signing PEM must be readable by UID 10001 even when the host created it as another user. On Linux, use a narrowly scoped ACL (`setfacl -m u:10001:r .local/keys/private.pem`) or change only the private key's owner to UID 10001 (`sudo chown 10001:10001 .local/keys/private.pem; chmod 600 .local/keys/private.pem`). Never change the private file to world-readable as a workaround. The corresponding application properties are `jwt.public-key-location=file:/run/keys/public.pem` and (User Service only) `jwt.private-key-location=file:/run/keys/private.pem`. A missing/invalid key prevents secure startup; it must not fall back to HMAC or generate a fresh key automatically.
 
 Start with `docker compose up -d --build`. Mounts require readable host file permissions for the container runtime. Verify the User Service replicas use the same key pair; do not mount any private PEM into Gateway, Catalog, Engagement, or Recommendation.
 
