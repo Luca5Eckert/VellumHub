@@ -123,6 +123,9 @@ jobs:
           docker compose ps
           exit 1
 
+      - name: Verify real RS256 login and authorization across services
+        run: python3 infra/scripts/security/verify_rs256_compose.py
+
       - name: Regenerate collection
         run: |
           python postman/generate.py \

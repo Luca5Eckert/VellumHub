@@ -86,6 +86,9 @@ mvn -f services/catalog-service/pom.xml test
 mvn -f services/engagement-service/pom.xml test
 mvn -f services/recommendation-service/pom.xml test
 
+# With a running Compose stack, exercise real login and signed JWT verification:
+python3 infra/scripts/security/verify_rs256_compose.py
+
 # Compose config verifies mount resolution after setting .env:
 docker compose config --quiet
 ```
