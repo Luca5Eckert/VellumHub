@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(BookController.class)
 @Import(SecurityConfig.class)
 @TestPropertySource(properties = {
-        "jwt.secret=dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2Vz"
+        "jwt.public-key-location=classpath:security/test-public.pem"
 })
 @DisplayName("BookController WebMvcTest")
 class BookControllerTest {
