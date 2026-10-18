@@ -35,7 +35,8 @@ public class RateLimiterConfig {
                     String userId = jwtAuth.getToken().getClaimAsString("user_id");
                     return "user:" + Objects.requireNonNullElseGet(userId, jwtAuth::getName);
                 })
-                .switchIfEmpty(Mono.fromSupplier(() -> "ip:" + extractClientIp(exchange)));
+                .switchIfEmpty(Mono.fromSupplier(() -> "ip:" + extractClientIp(exchange)))
+                .onErrorResume(error -> Mono.fromSupplier(() -> "ip:" + extractClientIp(exchange)));
     }
 
     @Bean

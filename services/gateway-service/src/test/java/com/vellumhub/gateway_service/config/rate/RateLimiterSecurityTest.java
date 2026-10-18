@@ -46,6 +46,8 @@ class RateLimiterSecurityTest {
     void invalidTrustedProxyConfigurationFailsAtStartup() {
         assertThatThrownBy(() -> new RateLimiterConfig("not-a-cidr"))
                 .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new RateLimiterConfig("0.0.0.0/0"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

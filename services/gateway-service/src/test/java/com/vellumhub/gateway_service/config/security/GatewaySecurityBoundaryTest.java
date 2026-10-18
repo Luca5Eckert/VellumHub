@@ -40,6 +40,23 @@ class GatewaySecurityBoundaryTest {
     }
 
     @Test
+    void corsUsesOnlyExplicitOriginsAndPreservesExistingCredentialsMode() {
+        var config = new GatewaySecurityConfig(
+                "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMzItaXRz",
+                false, "https://frontend.example");
+        var request = org.springframework.mock.http.server.reactive.MockServerHttpRequest
+                .options("/api/v1/auth/login")
+                .header("Origin", "https://frontend.example")
+                .header("Access-Control-Request-Method", "POST").build();
+        var exchange = org.springframework.mock.web.server.MockServerWebExchange.from(request);
+        var cors = config.corsSource().getCorsConfiguration(exchange);
+        assertThat(cors).isNotNull();
+        assertThat(cors.getAllowedOrigins()).containsExactly("https://frontend.example");
+        assertThat(cors.getAllowCredentials()).isTrue();
+        assertThat(cors.getAllowedOrigins()).doesNotContain("*");
+    }
+
+    @Test
     void corsDoesNotGrantAuthenticationToAnOrigin() {
         client().get().uri("/api/v1/catalog/books")
                 .header(HttpHeaders.ORIGIN, "https://untrusted.example")

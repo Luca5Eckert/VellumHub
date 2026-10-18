@@ -29,7 +29,7 @@ Every downstream service validates the existing HS256 access token. Role/ownersh
 * Identity assertion headers such as X-User-Id, X-User-Roles and X-Authenticated-User are stripped by the Gateway before routing. Downstream identity comes from the validated JWT, not client headers.
 * HTTP routes and authorization work without OAuth2 Authorization Server; login and JWT remain legacy HS256 until their separate issues.
 
-Production Kustomize ingress exports only /api/v1 on the Gateway; internal services use ClusterIP. Existing NetworkPolicy still admits traffic within the VellumHub namespace, including operational scrapers. This is **network isolation**, not Actuator authentication. Do not expose service ports publicly or add wildcard ingress routes for /docs or /actuator. Confirm the CNI enforces NetworkPolicy and restrict namespace access.
+Kubernetes base ConfigMap explicitly sets VELLUM_DOCS_ENABLED=false and VELLUM_TRUSTED_PROXY_CIDRS="" (override the latter with actual ingress CIDRs for fair per-client quotas). Production Kustomize ingress exports only /api/v1 on the Gateway; internal services use ClusterIP. Existing NetworkPolicy still admits traffic within the VellumHub namespace, including operational scrapers. This is **network isolation**, not Actuator authentication. Do not expose service ports publicly or add wildcard ingress routes for /docs or /actuator. Confirm the CNI enforces NetworkPolicy and restrict namespace access.
 
 ## Tests and evidence
 
