@@ -166,3 +166,9 @@ cd services/gateway-service
 `OpenApiDocumentationConfigurationTest` guards the four Swagger UI entries and their matching gateway routes against accidental configuration drift.
 
 For platform topology and cross-service flows, see the [root README](../../README.md). For the complete API documentation flow, see [API Documentation](../../docs/api-documentation.md).
+
+## SEC-01 HTTP security baseline
+
+The API remains JWT bearer-based (HS256 until issue #163). Service security continues to validate tokens independently of the Gateway. Swagger/OpenAPI is opt-in through `VELLUM_DOCS_ENABLED=true` in local Compose; default deployment configuration denies documentation. Health and Prometheus remain unauthenticated at the service HTTP layer for **internal** probe/scrape traffic, so network and Ingress must keep these ports private. CORS uses explicit `CORS_ALLOWED_ORIGINS` and preserves credentialed browser requests for compatibility. JWT Bearer remains the authenticator; any future cookie-session authentication requires separate CSRF review. See [SEC-01 HTTP boundary contract](../../docs/SECURITY_HTTP_BOUNDARY.md) for policy matrix, tests and rollback.
+
+The Gateway permits only POST /api/v1/auth/login, /api/v1/auth/register and /api/v1/auth/google without a JWT. Client-supplied identity headers are removed before forwarding. `VELLUM_TRUSTED_PROXY_CIDRS` (comma-separated CIDRs; empty by default) must list only reverse proxies that append verified X-Forwarded-For hops. The Redis quota values are unchanged; the default without a trusted proxy uses the TCP peer address. The application logs Gateway at INFO rather than TRACE by default.
