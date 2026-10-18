@@ -71,8 +71,12 @@ class UserSecurityBoundaryTest {
     @Test
     void bindingEndpointsRequireJwtAndForwardItsSubjectUserId() throws Exception {
         UUID userId = UUID.randomUUID();
-        String linkPayload = "{\\"externalToken\\":\\"verified-id-token\\",\\"currentPassword\\":\\"password\\"}";
-        String unlinkPayload = "{\\"currentPassword\\":\\"password\\"}";
+        String linkPayload = """
+                {"externalToken":"verified-id-token","currentPassword":"password"}
+                """;
+        String unlinkPayload = """
+                {"currentPassword":"password"}
+                """;
         mockMvc.perform(post("/auth/google/link").contentType(MediaType.APPLICATION_JSON)
                 .content(linkPayload)).andExpect(status().isUnauthorized());
         mockMvc.perform(delete("/auth/google/link").contentType(MediaType.APPLICATION_JSON)
