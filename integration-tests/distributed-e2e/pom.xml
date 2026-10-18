@@ -54,6 +54,9 @@
     <build>
         <testResources>
             <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+            </testResource>
+            <testResource>
                 <directory>${project.basedir}/../../services/recommendation-service/src/main/resources</directory>
                 <includes>
                     <include>application.properties</include>
