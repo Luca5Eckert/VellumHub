@@ -2,6 +2,8 @@ package com.vellumhub.catalog_service.share.security;
 
 import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -49,6 +51,9 @@ public class SecurityConfig {
      * @return A cadeia de filtros configurada.
      * @throws Exception Caso ocorra erro na configuração.
      */
+    @Value("${VELLUM_DOCS_ENABLED:false}")
+    private boolean documentationEnabled;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -57,7 +62,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health/**", "/actuator/prometheus").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html")
+                        .access((authentication, context) -> new AuthorizationDecision(documentationEnabled))
                         .requestMatchers("/files/books/**").permitAll()
                         .anyRequest().authenticated()
                 )

@@ -13,7 +13,7 @@ logging:
       rename:
         logger_name: logger
   level:
-    org.springframework.cloud.gateway: TRACE
+    org.springframework.cloud.gateway: INFO
 
 spring:
   application:
@@ -125,7 +125,10 @@ spring:
       connect-timeout: 2s
 
 springdoc:
+  api-docs:
+    enabled: ${VELLUM_DOCS_ENABLED:false}
   swagger-ui:
+    enabled: ${VELLUM_DOCS_ENABLED:false}
     path: /docs
     disable-swagger-default-url: true
     urls:
