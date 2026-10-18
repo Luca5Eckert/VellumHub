@@ -90,10 +90,10 @@ Open `http://localhost:8080/docs` and choose the service from the Swagger UI sel
 
 JWT settings:
 
-- Algorithm: HMAC SHA-256.
-- Secret property: `spring.security.oauth2.resourceserver.jwt.secret-key`.
-- Environment variable: `JWT_KEY`.
-- The configured key must be Base64-compatible because the gateway decodes it before building the verifier.
+- Algorithm: RSASSA-PKCS1-v1_5 with SHA-256 (JWT `RS256`), explicitly allowlisted in Nimbus.
+- Spring Resource property: `jwt.public-key-location` (from `JWT_PUBLIC_KEY_LOCATION`).
+- Verification uses only a mounted X.509 PEM **public key**. No signing key, shared HMAC secret, JWKS URL, or synchronous issuer call is required.
+- HS256 tokens are rejected. See [RS256 operations](../../docs/SECURITY_RS256.md).
 
 The public documentation surface is intentionally limited to `/docs`, `/docs/**`, `/swagger-ui/**`, and the Swagger bootstrap endpoint `/v3/api-docs/swagger-config`. Business routes keep their existing authentication policy.
 
@@ -105,7 +105,7 @@ The public documentation surface is intentionally limited to `/docs`, `/docs/**`
 | `CATALOG_SERVICE_URL` | Catalog target, including OpenAPI proxy | `http://catalog-service:8080` |
 | `ENGAGEMENT_SERVICE_URL` | Engagement target, including OpenAPI proxy | `http://engagement-service:8080` |
 | `RECOMMENDATION_SERVICE_URL` | Recommendation target, including OpenAPI proxy | `http://recommendation-service:8080` |
-| `JWT_KEY` | Gateway JWT verification key | required for realistic local/prod runs |
+| `JWT_PUBLIC_KEY_LOCATION` | URI of the X.509 PEM verification key | required, fail closed |
 | `SPRING_DATA_REDIS_HOST` | Redis host | `localhost` |
 | `SPRING_DATA_REDIS_PORT` | Redis port | `6379` |
 
@@ -169,6 +169,6 @@ For platform topology and cross-service flows, see the [root README](../../READM
 
 ## SEC-01 HTTP security baseline
 
-The API remains JWT bearer-based (HS256 until issue #163). Service security continues to validate tokens independently of the Gateway. Swagger/OpenAPI is opt-in through `VELLUM_DOCS_ENABLED=true` in local Compose; default deployment configuration denies documentation. Health and Prometheus remain unauthenticated at the service HTTP layer for **internal** probe/scrape traffic, so network and Ingress must keep these ports private. CORS uses explicit `CORS_ALLOWED_ORIGINS` and preserves credentialed browser requests for compatibility. JWT Bearer remains the authenticator; any future cookie-session authentication requires separate CSRF review. See [SEC-01 HTTP boundary contract](../../docs/SECURITY_HTTP_BOUNDARY.md) for policy matrix, tests and rollback.
+The API remains JWT bearer-based; issue #163 migrates the signature to RS256 with independent public-key validation on this branch (coordinated cutover required). Service security continues to validate tokens independently of the Gateway. Swagger/OpenAPI is opt-in through `VELLUM_DOCS_ENABLED=true` in local Compose; default deployment configuration denies documentation. Health and Prometheus remain unauthenticated at the service HTTP layer for **internal** probe/scrape traffic, so network and Ingress must keep these ports private. CORS uses explicit `CORS_ALLOWED_ORIGINS` and preserves credentialed browser requests for compatibility. JWT Bearer remains the authenticator; any future cookie-session authentication requires separate CSRF review. See [SEC-01 HTTP boundary contract](../../docs/SECURITY_HTTP_BOUNDARY.md) for policy matrix, tests and rollback.
 
 The Gateway permits only POST /api/v1/auth/login, /api/v1/auth/register and /api/v1/auth/google without a JWT. Client-supplied identity headers are removed before forwarding. `VELLUM_TRUSTED_PROXY_CIDRS` (comma-separated CIDRs; empty by default) must list only reverse proxies that append verified X-Forwarded-For hops. The Redis quota values are unchanged; the default without a trusted proxy uses the TCP peer address. The application logs Gateway at INFO rather than TRACE by default.

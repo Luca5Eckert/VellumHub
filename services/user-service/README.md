@@ -85,23 +85,16 @@ Recommendation consumes this topic to create or adjust `user_profiles` for cold-
 
 ## Authentication Model
 
+The User Service is the **only JWT signer** in issue #163. It reads an RSA private key (unencrypted PKCS#8 PEM) and, as a resource server, reads the matching public key (X.509 PEM). The gateway and business services receive **only the public key**. All JWTs use RS256; HS256 JWTs are rejected after cutover.
+
 | Setting | Meaning |
 |---|---|
-| `JWT_KEY` | Base64-encoded signing/verification secret |
-| `JWT_EXPIRATION_MS` | Token expiration in milliseconds |
-| `GOOGLE_CLIENT_ID` | Google token audience/client id |
+| `JWT_PRIVATE_KEY_LOCATION` | Spring Resource URI of the private RSA signing key; User Service only |
+| `JWT_PUBLIC_KEY_LOCATION` | Spring Resource URI of the public RSA verification key; all five services |
+| `JWT_EXPIRATION_MS` | JWT lifetime in milliseconds (unchanged in #163) |
+| `GOOGLE_CLIENT_ID` | Google ID token audience/client ID (unchanged) |
 
-Generate a local Base64 key:
-
-```bash
-openssl rand -base64 32
-```
-
-Windows PowerShell:
-
-```powershell
-$bytes = New-Object byte[] 32; $rng = New-Object System.Security.Cryptography.RNGCryptoServiceProvider; $rng.GetBytes($bytes); [Convert]::ToBase64String($bytes); $rng.Dispose()
-```
+In Docker Compose, configure host paths `JWT_PRIVATE_KEY_PATH` and `JWT_PUBLIC_KEY_PATH` in `.env`; read-only mounts map them into the containers. Never commit the private key, place it in a ConfigMap, or provide it to other services. For key generation, Kubernetes provisioning, coordinated rollout, rollback, and troubleshooting, see [RS256 operations](../../docs/SECURITY_RS256.md).
 
 ## Data Ownership
 
@@ -159,7 +152,7 @@ For gateway routes and full system flow, see the [root README](../../README.md).
 
 ## SEC-01 HTTP security baseline
 
-The API remains JWT bearer-based (HS256 until issue #163). Service security continues to validate tokens independently of the Gateway. Swagger/OpenAPI is opt-in through `VELLUM_DOCS_ENABLED=true` in local Compose; default deployment configuration denies documentation. Health and Prometheus remain unauthenticated at the service HTTP layer for **internal** probe/scrape traffic, so network and Ingress must keep these ports private. CORS uses explicit `CORS_ALLOWED_ORIGINS` and preserves credentialed browser requests for compatibility. JWT Bearer remains the authenticator; any future cookie-session authentication requires separate CSRF review. See [SEC-01 HTTP boundary contract](../../docs/SECURITY_HTTP_BOUNDARY.md) for policy matrix, tests and rollback.
+The API remains JWT bearer-based; issue #163 migrates the signature to RS256 with independent public-key validation on this branch (coordinated cutover required). Service security continues to validate tokens independently of the Gateway. Swagger/OpenAPI is opt-in through `VELLUM_DOCS_ENABLED=true` in local Compose; default deployment configuration denies documentation. Health and Prometheus remain unauthenticated at the service HTTP layer for **internal** probe/scrape traffic, so network and Ingress must keep these ports private. CORS uses explicit `CORS_ALLOWED_ORIGINS` and preserves credentialed browser requests for compatibility. JWT Bearer remains the authenticator; any future cookie-session authentication requires separate CSRF review. See [SEC-01 HTTP boundary contract](../../docs/SECURITY_HTTP_BOUNDARY.md) for policy matrix, tests and rollback.
 
 POST /auth/google is intentionally public and continues to validate the Google ID token in the existing verification adapter. Account linking by issuer/subject is tracked separately as SEC-02 (#303); this issue does not claim to address takeover risk caused by email-based linkage.
 
