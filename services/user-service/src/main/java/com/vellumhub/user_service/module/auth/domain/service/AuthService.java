@@ -4,6 +4,8 @@ import com.vellumhub.user_service.module.auth.application.dto.LoginExternalReque
 import com.vellumhub.user_service.module.auth.application.dto.LoginUserRequest;
 import com.vellumhub.user_service.module.auth.application.dto.RegisterUserRequest;
 import com.vellumhub.user_service.module.auth.domain.handler.LoginExternalHandler;
+import com.vellumhub.user_service.module.auth.domain.handler.GoogleIdentityLinkHandler;
+import java.util.UUID;
 import com.vellumhub.user_service.module.auth.domain.handler.LoginUserHandler;
 import com.vellumhub.user_service.module.auth.domain.handler.RegisterUserHandler;
 import com.vellumhub.user_service.module.user.domain.RoleUser;
@@ -16,11 +18,14 @@ public class AuthService {
     private final LoginUserHandler loginUserHandler;
     private final LoginExternalHandler loginExternalHandler;
     private final RegisterUserHandler registerUserHandler;
+    private final GoogleIdentityLinkHandler googleIdentityLinkHandler;
 
-    public AuthService(LoginUserHandler loginUserHandler, LoginExternalHandler loginExternalHandler, RegisterUserHandler registerUserHandler) {
+    public AuthService(LoginUserHandler loginUserHandler, LoginExternalHandler loginExternalHandler,
+                       RegisterUserHandler registerUserHandler, GoogleIdentityLinkHandler googleIdentityLinkHandler) {
         this.loginUserHandler = loginUserHandler;
         this.loginExternalHandler = loginExternalHandler;
         this.registerUserHandler = registerUserHandler;
+        this.googleIdentityLinkHandler = googleIdentityLinkHandler;
     }
 
     public void register(RegisterUserRequest registerUserRequest) {
@@ -45,4 +50,12 @@ public class AuthService {
     public String login(LoginExternalRequest request) {
         return loginExternalHandler.handle(request.externalToken());
     }
+    public void linkGoogle(UUID userId, String token, String password) {
+        googleIdentityLinkHandler.link(userId, token, password);
+    }
+
+    public void unlinkGoogle(UUID userId, String password) {
+        googleIdentityLinkHandler.unlink(userId, password);
+    }
 }
+

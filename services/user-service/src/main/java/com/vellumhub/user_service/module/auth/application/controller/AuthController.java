@@ -1,6 +1,12 @@
 package com.vellumhub.user_service.module.auth.application.controller;
 
 import com.vellumhub.user_service.module.auth.application.dto.LoginExternalRequest;
+import com.vellumhub.user_service.module.auth.application.dto.LinkGoogleIdentityRequest;
+import com.vellumhub.user_service.module.auth.application.dto.UnlinkGoogleIdentityRequest;
+import java.util.UUID;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import com.vellumhub.user_service.module.auth.application.dto.LoginUserRequest;
 import com.vellumhub.user_service.module.auth.application.dto.RegisterUserRequest;
 import com.vellumhub.user_service.module.auth.domain.service.AuthService;
@@ -60,4 +66,32 @@ public class AuthController {
         return ResponseEntity.ok(token);
     }
 
+    @PostMapping("/google/link")
+    @Operation(summary = "Link a verified Google identity to the current password account")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Linked or already linked"),
+        @ApiResponse(responseCode = "401", description = "Missing/invalid local JWT"),
+        @ApiResponse(responseCode = "403", description = "Current password proof required"),
+        @ApiResponse(responseCode = "409", description = "External identity conflict")
+    })
+    public ResponseEntity<Void> linkGoogle(@AuthenticationPrincipal Jwt jwt,
+                                            @Valid @RequestBody LinkGoogleIdentityRequest request) {
+        authService.linkGoogle(UUID.fromString(jwt.getClaimAsString("user_id")),
+                request.externalToken(), request.currentPassword());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/google/link")
+    @Operation(summary = "Unlink Google from a local-password account")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Unlinked or no matching identity"),
+        @ApiResponse(responseCode = "403", description = "Current password proof required")
+    })
+    public ResponseEntity<Void> unlinkGoogle(@AuthenticationPrincipal Jwt jwt,
+                                              @Valid @RequestBody UnlinkGoogleIdentityRequest request) {
+        authService.unlinkGoogle(UUID.fromString(jwt.getClaimAsString("user_id")),
+                request.currentPassword());
+        return ResponseEntity.noContent().build();
+    }
 }
+
