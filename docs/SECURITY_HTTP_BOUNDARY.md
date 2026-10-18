@@ -52,3 +52,5 @@ Optional E2E credentials and a Google identity token can be supplied to the smok
 ## Rollback and residual risk
 
 Rollback is a deployment of the previous immutable image and matching configuration, not a security bypass toggle. Validate local/Google login, Redis quotas, documentation, CORS and Prometheus before promoting. HS256 shared-key exposure, lack of explicit JWT iss/aud and email-based Google linkage remain known risks for #163/#305/#303. Token revocation and OIDC scopes are not claimed here.
+
+SEC-02 adds two authenticated User Service routes behind the existing Gateway: POST /api/v1/auth/google/link and DELETE /api/v1/auth/google/link. Both require a valid existing bearer token and current local-password proof. POST /api/v1/auth/google remains the only publicly callable Google operation. Details: [SEC-02 runbook](SECURITY_GOOGLE_IDENTITY.md).
