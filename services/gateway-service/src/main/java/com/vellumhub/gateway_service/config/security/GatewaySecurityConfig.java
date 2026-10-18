@@ -81,11 +81,13 @@ public class GatewaySecurityConfig {
     }
 
     @Bean
-    public ReactiveJwtDecoder reactiveJwtDecoder() throws IOException {
+    public ReactiveJwtDecoder reactiveJwtDecoder() {
         RSAPublicKey publicKey;
         try (InputStream inputStream = publicKeyResource.getInputStream()) {
             publicKey = Objects.requireNonNull(RsaKeyConverters.x509().convert(inputStream),
                     "Invalid X.509 RSA public key");
+        } catch (IOException exception) {
+            throw new IllegalStateException("JWT public key cannot be read", exception);
         }
         if (publicKey.getModulus().bitLength() < 2048) {
             throw new IllegalArgumentException("JWT verification RSA key must have at least 2048 bits");
