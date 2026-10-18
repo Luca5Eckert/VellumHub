@@ -33,19 +33,19 @@ class JwtTokenProviderTest {
     @Test
     void issuesAnRs256JwtValidatedWithoutAccessToThePrivateKey() throws Exception {
         UUID userId = UUID.randomUUID();
-        String token = provider().createToken("user@test.com", userId, List.of("ROLE_USER", "ROLE_ADMIN"));
+        String token = provider().createToken("user@test.com", userId, List.of("USER", "ADMIN"));
         Jwt jwt = decoder().decode(token);
 
         assertThat(jwt.getHeaders()).containsEntry("alg", "RS256");
         assertThat(jwt.getSubject()).isEqualTo("user@test.com");
         assertThat(jwt.getClaimAsString("user_id")).isEqualTo(userId.toString());
-        assertThat(jwt.getClaimAsStringList("roles")).containsExactly("ROLE_USER", "ROLE_ADMIN");
+        assertThat(jwt.getClaimAsStringList("roles")).containsExactly("USER", "ADMIN");
         assertThat(jwt.getExpiresAt()).isAfter(jwt.getIssuedAt());
     }
 
     @Test
     void rejectsAlteredPayload() throws Exception {
-        String token = provider().createToken("user@test.com", UUID.randomUUID(), List.of("ROLE_USER"));
+        String token = provider().createToken("user@test.com", UUID.randomUUID(), List.of("USER"));
         String[] parts = token.split("\\.");
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
         String alteredPayload = payload.replace("user@test.com", "admin@test.com");
@@ -66,7 +66,7 @@ class JwtTokenProviderTest {
         var pem = "-----BEGIN PRIVATE KEY-----\n" + encoded + "\n-----END PRIVATE KEY-----\n";
         String forged = new JwtTokenProvider(
                 new ByteArrayResource(pem.getBytes(StandardCharsets.US_ASCII)), EXPIRATION_MS)
-                .createToken("user@test.com", UUID.randomUUID(), List.of("ROLE_USER"));
+                .createToken("user@test.com", UUID.randomUUID(), List.of("USER"));
 
         assertThatThrownBy(() -> decoder().decode(forged)).isInstanceOf(JwtException.class);
     }

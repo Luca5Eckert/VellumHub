@@ -74,7 +74,7 @@ def main():
         raise AssertionError("User Service did not emit RS256")
     if payload.get("sub") != email or not payload.get("user_id"):
         raise AssertionError("Login JWT lost its expected identity claims")
-    if "ROLE_USER" not in payload.get("roles", []):
+    if "USER" not in payload.get("roles", []):
         raise AssertionError("Login JWT lost its USER role")
     if payload.get("iat", 0) > time.time() or payload.get("exp", 0) <= time.time():
         raise AssertionError("Login JWT has invalid temporal claims")
