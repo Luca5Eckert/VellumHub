@@ -2,7 +2,6 @@ package com.vellumhub.user_service.share.security.config;
 
 import com.vellumhub.user_service.module.auth.infrastructure.security.user.UserDetailsServiceImpl;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
-import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authorization.AuthorizationDecision;
@@ -17,21 +16,26 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-import javax.crypto.spec.SecretKeySpec;
+import org.springframework.core.io.Resource;
+import org.springframework.security.converter.RsaKeyConverters;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Objects;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    @Value("${jwt.public-key-location}")
+    private Resource publicKeyResource;
 
     private final UserRepository userRepository;
 
@@ -76,12 +80,17 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtDecoder jwtDecoder() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
-
-        return NimbusJwtDecoder.withSecretKey(secretKey)
-                .macAlgorithm(MacAlgorithm.HS256)
+    public JwtDecoder jwtDecoder() throws IOException {
+        RSAPublicKey publicKey;
+        try (InputStream inputStream = publicKeyResource.getInputStream()) {
+            publicKey = Objects.requireNonNull(RsaKeyConverters.x509().convert(inputStream),
+                    "Invalid X.509 RSA public key");
+        }
+        if (publicKey.getModulus().bitLength() < 2048) {
+            throw new IllegalArgumentException("JWT verification RSA key must have at least 2048 bits");
+        }
+        return NimbusJwtDecoder.withPublicKey(publicKey)
+                .signatureAlgorithm(SignatureAlgorithm.RS256)
                 .build();
     }
 
