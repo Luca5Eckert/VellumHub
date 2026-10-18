@@ -18,7 +18,7 @@ CREATE TABLE external_identity_audit (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES tb_users(id) ON DELETE RESTRICT,
     issuer VARCHAR(255) NOT NULL,
-    subject_sha256 CHAR(64) NOT NULL,
+    subject_sha256 VARCHAR(64) NOT NULL,
     action VARCHAR(32) NOT NULL,
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_external_identity_audit_action CHECK (action IN ('CREATED', 'LINKED', 'UNLINKED'))
