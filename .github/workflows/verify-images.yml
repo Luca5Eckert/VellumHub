@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: |
           started_at=$(date +%s)
-          mvn -B -ntp -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -Dgroups=distributed test
+          mvn -B -ntp -T 2 -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -Dgroups=distributed test
           elapsed=$(( $(date +%s) - started_at ))
           echo "Distributed integration suite execution: ${elapsed}s"
           if (( elapsed > 150 )); then
