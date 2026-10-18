@@ -26,29 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(value = AuthController.class, properties = {
         "jwt.secret=dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMzItaXRz",
         "VELLUM_DOCS_ENABLED=false"
-    @Test
-    void bindingEndpointsRequireJwtAndForwardItsSubjectUserId() throws Exception {
-        UUID userId = UUID.randomUUID();
-        String linkPayload = "{\"externalToken\":\"verified-id-token\",\"currentPassword\":\"password\"}";
-        String unlinkPayload = "{\"currentPassword\":\"password\"}";
-        mockMvc.perform(post("/auth/google/link").contentType(MediaType.APPLICATION_JSON)
-                .content(linkPayload)).andExpect(status().isUnauthorized());
-        mockMvc.perform(delete("/auth/google/link").contentType(MediaType.APPLICATION_JSON)
-                .content(unlinkPayload)).andExpect(status().isUnauthorized());
-
-        mockMvc.perform(post("/auth/google/link").with(jwt().jwt(token ->
-                    token.claim("user_id", userId.toString())))
-                .contentType(MediaType.APPLICATION_JSON).content(linkPayload))
-                .andExpect(status().isNoContent());
-        verify(authService).linkGoogle(userId, "verified-id-token", "password");
-        mockMvc.perform(delete("/auth/google/link").with(jwt().jwt(token ->
-                    token.claim("user_id", userId.toString())))
-                .contentType(MediaType.APPLICATION_JSON).content(unlinkPayload))
-                .andExpect(status().isNoContent());
-        verify(authService).unlinkGoogle(userId, "password");
-    }
-}
-)
+})
 @Import(SecurityConfig.class)
 class UserSecurityBoundaryTest {
 
@@ -89,4 +67,27 @@ class UserSecurityBoundaryTest {
     void protectedUsersRequireAuthentication() throws Exception {
         mockMvc.perform(get("/users")).andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void bindingEndpointsRequireJwtAndForwardItsSubjectUserId() throws Exception {
+        UUID userId = UUID.randomUUID();
+        String linkPayload = "{\\"externalToken\\":\\"verified-id-token\\",\\"currentPassword\\":\\"password\\"}";
+        String unlinkPayload = "{\\"currentPassword\\":\\"password\\"}";
+        mockMvc.perform(post("/auth/google/link").contentType(MediaType.APPLICATION_JSON)
+                .content(linkPayload)).andExpect(status().isUnauthorized());
+        mockMvc.perform(delete("/auth/google/link").contentType(MediaType.APPLICATION_JSON)
+                .content(unlinkPayload)).andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/auth/google/link").with(jwt().jwt(token ->
+                    token.claim("user_id", userId.toString())))
+                .contentType(MediaType.APPLICATION_JSON).content(linkPayload))
+                .andExpect(status().isNoContent());
+        verify(authService).linkGoogle(userId, "verified-id-token", "password");
+        mockMvc.perform(delete("/auth/google/link").with(jwt().jwt(token ->
+                    token.claim("user_id", userId.toString())))
+                .contentType(MediaType.APPLICATION_JSON).content(unlinkPayload))
+                .andExpect(status().isNoContent());
+        verify(authService).unlinkGoogle(userId, "password");
+    }
+
 }
