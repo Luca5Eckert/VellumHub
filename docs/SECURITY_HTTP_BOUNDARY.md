@@ -23,7 +23,7 @@ Every downstream service validates the existing HS256 access token. Role/ownersh
 ## Configuration and deployment
 
 * `VELLUM_DOCS_ENABLED` defaults to `false` in all services. Compose explicitly enables local API documentation even though it runs the `prod` Spring profile. Do not enable on a public ingress.
-* `CORS_ALLOWED_ORIGINS` is a comma-separated list of exact browser origins. Bearer tokens are passed in the Authorization header; credentialed cookie CORS is intentionally disabled. CORS is not authorization and clients without browser enforcement still need tokens.
+* `CORS_ALLOWED_ORIGINS` is a comma-separated list of exact browser origins. Bearer tokens are passed in the Authorization header; allowCredentials remains enabled with exact allowed origins for compatibility with existing browser clients, but cookies are not accepted as authentication by the current API. Reassess CSRF before introducing cookie sessions. CORS is not authorization and clients without browser enforcement still need tokens.
 * `VELLUM_TRUSTED_PROXY_CIDRS` defaults to empty. In that mode, Gateway ignores X-Forwarded-For entirely and identifies a client by its TCP peer. Set explicit IP/CIDR ranges only for ingress proxies that append validated peer IPs. An incorrectly configured ingress may cause clients to share one rate-limit bucket.
 * Rate-limit settings remain: auth and users 5 replenish/10 burst by IP; catalog and engagement 30/60, recommendation 20/40 by authenticated user (fallback IP).
 * Identity assertion headers such as X-User-Id, X-User-Roles and X-Authenticated-User are stripped by the Gateway before routing. Downstream identity comes from the validated JWT, not client headers.

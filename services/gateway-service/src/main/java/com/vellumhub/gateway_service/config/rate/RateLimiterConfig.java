@@ -104,7 +104,7 @@ public class RateLimiterConfig {
             }
             try {
                 int prefix = Integer.parseInt(pieces[1]);
-                if (prefix < 0 || prefix > address.getAddress().length * 8) {
+                if (prefix == 0 || prefix > address.getAddress().length * 8) {
                     throw new IllegalArgumentException("Invalid trusted proxy CIDR prefix: " + value);
                 }
                 return new TrustedNetwork(address.getAddress(), prefix);
