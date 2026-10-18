@@ -1,9 +1,5 @@
 spring:
   security:
-    oauth2:
-      resourceserver:
-        jwt:
-          secret-key: ${JWT_KEY}
 
 management:
   endpoint:
