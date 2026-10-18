@@ -40,6 +40,27 @@ class GatewaySecurityBoundaryTest {
     }
 
     @Test
+    void authenticationFailuresDoNotExposeCanarySecretsInGatewayLogs() {
+        var logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory
+                .getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        var collector = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
+        collector.start();
+        logger.addAppender(collector);
+        try {
+            client().get().uri("/api/v1/users")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer sec01-access-canary-6a74")
+                    .header(HttpHeaders.COOKIE, "SESSION=sec01-cookie-canary-7b85")
+                    .exchange().expectStatus().isUnauthorized();
+        } finally {
+            logger.detachAppender(collector);
+            collector.stop();
+        }
+        assertThat(collector.list.stream().map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage).toList())
+                .noneMatch(message -> message.contains("sec01-access-canary-6a74")
+                        || message.contains("sec01-cookie-canary-7b85"));
+    }
+
+    @Test
     void corsUsesOnlyExplicitOriginsAndPreservesExistingCredentialsMode() {
         var config = new GatewaySecurityConfig(
                 "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMzItaXRz",

@@ -47,7 +47,7 @@ docker compose down
 kubectl kustomize deploy/kubernetes/overlays/prod
 ```
 
-Optional E2E credentials and a Google identity token can be supplied to the smoke script. A missing external Google fixture means the **positive Google login E2E is not yet proven**; an invalid-provider-token test alone does not meet that acceptance criterion. Compare the structured log output and exported trace attributes against canary secrets. Never print the secrets themselves into CI artifacts.
+Optional E2E credentials and a Google identity token can be supplied to the smoke script. A missing external Google fixture means the **positive Google login E2E is not yet proven**; an invalid-provider-token test alone does not meet that acceptance criterion. GatewaySecurityBoundaryTest asserts that negative-auth requests containing Authorization and Cookie canaries do not appear in captured Gateway application log messages. Independently compare structured production-like log output and **exported OpenTelemetry spans** against canary secrets, as the unit/integration test does not validate an actual OTEL collector/exporter. Never print the secrets themselves into CI artifacts.
 
 ## Rollback and residual risk
 
