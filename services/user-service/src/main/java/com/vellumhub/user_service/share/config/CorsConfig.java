@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * Configuração de CORS (Cross-Origin Resource Sharing) para o microserviço.
  * <p>
  * Esta classe permite que o frontend (Next.js ou outro) em uma origem diferente
- * faça requisições para este backend, incluindo requisições com credenciais.
+ * faça requisições para este backend, usando tokens Bearer, sem cookies autenticadores.
  * </p>
  * <p>
  * As origens permitidas são injetadas via variável de ambiente ou arquivo de propriedades,
@@ -26,8 +26,8 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(allowedOrigins)
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("Authorization", "Content-Type", "Accept")
-                .allowCredentials(true);
+                .allowCredentials(false);
     }
 }
