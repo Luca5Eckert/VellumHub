@@ -43,6 +43,31 @@ class JwtSignatureVerificationTest {
     }
 
     @Test
+    void rejectsExpiredRsaTokens() throws Exception {
+        KeyPair trusted = keyPair();
+        var token = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), new JWTClaimsSet.Builder()
+                .subject("user@example.com")
+                .issueTime(Date.from(Instant.now().minusSeconds(3600)))
+                .expirationTime(Date.from(Instant.now().minusSeconds(300)))
+                .build());
+        token.sign(new RSASSASigner((RSAPrivateKey) trusted.getPrivate()));
+
+        ReactiveJwtDecoder decoder = decoder(publicPem(trusted));
+        assertThatThrownBy(() -> decoder.decode(token.serialize()).block())
+                .isInstanceOf(JwtException.class);
+    }
+
+    @Test
+    void rejectsWeakRsaPublicKeys() throws Exception {
+        KeyPairGenerator weakGenerator = KeyPairGenerator.getInstance("RSA");
+        weakGenerator.initialize(1024);
+
+        assertThatThrownBy(() -> decoder(publicPem(weakGenerator.generateKeyPair())))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("2048");
+    }
+
+    @Test
     void rejectsMalformedPublicKeyAtStartup() {
         Resource invalid = new ByteArrayResource("not a public key".getBytes(StandardCharsets.US_ASCII));
         assertThatThrownBy(() -> decoder(invalid)).isInstanceOf(RuntimeException.class);

@@ -85,6 +85,21 @@ class JwtTokenProviderTest {
     }
 
     @Test
+    void rejectsWeakRsaPrivateKeys() throws Exception {
+        var generator = java.security.KeyPairGenerator.getInstance("RSA");
+        generator.initialize(1024);
+        var weak = generator.generateKeyPair();
+        String encoded = Base64.getMimeEncoder(64, new byte[]{'\n'})
+                .encodeToString(weak.getPrivate().getEncoded());
+        String pem = "-----BEGIN PRIVATE KEY-----\n" + encoded + "\n-----END PRIVATE KEY-----\n";
+
+        assertThatThrownBy(() -> new JwtTokenProvider(
+                new ByteArrayResource(pem.getBytes(StandardCharsets.US_ASCII)), EXPIRATION_MS))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("2048");
+    }
+
+    @Test
     void rejectsInvalidPrivateKeyMaterial() {
         assertThatThrownBy(() -> new JwtTokenProvider(
                 new ByteArrayResource("not a PKCS8 PEM".getBytes(StandardCharsets.US_ASCII)),
