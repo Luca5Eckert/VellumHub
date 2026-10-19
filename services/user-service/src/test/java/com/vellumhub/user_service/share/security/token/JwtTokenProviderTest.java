@@ -1,6 +1,7 @@
 package com.vellumhub.user_service.share.security.token;
 
 import com.vellumhub.user_service.module.auth.infrastructure.security.token.JwtTokenProvider;
+import com.vellumhub.security.jwt.JwtAccessToken;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
@@ -26,8 +27,10 @@ class JwtTokenProviderTest {
     }
 
     private NimbusJwtDecoder decoder() {
-        return NimbusJwtDecoder.withPublicKey(TestRsaKeyMaterial.publicKey())
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(TestRsaKeyMaterial.publicKey())
                 .signatureAlgorithm(SignatureAlgorithm.RS256).validateType(false).build();
+        decoder.setJwtValidator(JwtAccessToken.validator("https://auth.vellumhub.local", "api://vellumhub", 30));
+        return decoder;
     }
 
     @Test
