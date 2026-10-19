@@ -42,7 +42,7 @@ class JwtTokenProviderTest {
         assertThat(jwt.getHeaders()).containsEntry("alg", "RS256");
         assertThat(jwt.getSubject()).isEqualTo(userId.toString());
         assertThat(jwt.getHeaders()).containsEntry("typ", "at+jwt").containsEntry("kid", "local-test-key");
-        assertThat(jwt.getIssuer()).isEqualTo("https://auth.vellumhub.local");
+        assertThat(jwt.getIssuer()).isEqualTo(java.net.URI.create("https://auth.vellumhub.local"));
         assertThat(jwt.getAudience()).containsExactly("api://vellumhub");
         assertThat(jwt.getId()).isNotBlank();
         assertThat(jwt.getClaimAsString("client_id")).isEqualTo("vellumhub-web");
