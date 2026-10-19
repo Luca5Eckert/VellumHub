@@ -2,6 +2,7 @@ package com.vellumhub.engagement_service.share.security.context;
 
 import com.vellumhub.engagement_service.share.exception.UserNotAuthenticatedException;
 import com.vellumhub.engagement_service.share.port.RequestContext;
+import com.vellumhub.security.jwt.JwtAccessToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
@@ -18,8 +19,7 @@ public class JwtRequestContext implements RequestContext {
                 .getPrincipal();
 
         if (principal instanceof Jwt jwt) {
-            String userId = jwt.getClaimAsString("user_id");
-            return UUID.fromString(userId);
+            return JwtAccessToken.userId(jwt);
         }
 
         throw new UserNotAuthenticatedException("User not authenticated or invalid token");

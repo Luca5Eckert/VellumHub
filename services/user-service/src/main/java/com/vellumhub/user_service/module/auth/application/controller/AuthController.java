@@ -3,6 +3,7 @@ package com.vellumhub.user_service.module.auth.application.controller;
 import com.vellumhub.user_service.module.auth.application.dto.LoginExternalRequest;
 import com.vellumhub.user_service.module.auth.application.dto.LinkGoogleIdentityRequest;
 import com.vellumhub.user_service.module.auth.application.dto.UnlinkGoogleIdentityRequest;
+import com.vellumhub.security.jwt.JwtAccessToken;
 import java.util.UUID;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -76,7 +77,7 @@ public class AuthController {
     })
     public ResponseEntity<Void> linkGoogle(@AuthenticationPrincipal Jwt jwt,
                                             @Valid @RequestBody LinkGoogleIdentityRequest request) {
-        authService.linkGoogle(UUID.fromString(jwt.getClaimAsString("user_id")),
+        authService.linkGoogle(JwtAccessToken.userId(jwt),
                 request.externalToken(), request.currentPassword());
         return ResponseEntity.noContent().build();
     }
@@ -89,7 +90,7 @@ public class AuthController {
     })
     public ResponseEntity<Void> unlinkGoogle(@AuthenticationPrincipal Jwt jwt,
                                               @Valid @RequestBody UnlinkGoogleIdentityRequest request) {
-        authService.unlinkGoogle(UUID.fromString(jwt.getClaimAsString("user_id")),
+        authService.unlinkGoogle(JwtAccessToken.userId(jwt),
                 request.currentPassword());
         return ResponseEntity.noContent().build();
     }
