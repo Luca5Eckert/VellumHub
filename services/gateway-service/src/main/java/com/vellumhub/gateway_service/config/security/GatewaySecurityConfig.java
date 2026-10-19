@@ -1,6 +1,10 @@
 package com.vellumhub.gateway_service.config.security;
 
 import com.vellumhub.security.jwt.JwtAccessToken;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import java.nio.charset.StandardCharsets;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -69,6 +73,22 @@ public class GatewaySecurityConfig {
                                 Mono.just(new AuthorizationDecision(publicDocumentation)))
                         .anyExchange().authenticated()
                 )
+                .exceptionHandling(errors -> errors
+                        .authenticationEntryPoint((exchange, error) -> {
+                            var response = exchange.getResponse();
+                            response.setStatusCode(HttpStatus.UNAUTHORIZED);
+                            response.getHeaders().set(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
+                            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                            byte[] body = "{\"code\":\"UNAUTHORIZED\",\"message\":\"Missing or invalid access token\"}".getBytes(StandardCharsets.UTF_8);
+                            return response.writeWith(Mono.just(response.bufferFactory().wrap(body)));
+                        })
+                        .accessDeniedHandler((exchange, error) -> {
+                            var response = exchange.getResponse();
+                            response.setStatusCode(HttpStatus.FORBIDDEN);
+                            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                            byte[] body = "{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permission\"}".getBytes(StandardCharsets.UTF_8);
+                            return response.writeWith(Mono.just(response.bufferFactory().wrap(body)));
+                        }))
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtDecoder(reactiveJwtDecoder())))
                 .build();
