@@ -53,7 +53,9 @@ def b64url_decode(data):
 
 def main():
     email = f"rs256-smoke-{secrets.token_hex(12)}@example.test"
-    password = secrets.token_urlsafe(24)
+    # RegisterUserHandler uses Passay: 8-30 chars, upper, lower, digit, special.
+    # token_urlsafe(24) produces 32 characters and fails registration with 400.
+    password = "Zq8!" + secrets.token_hex(10)
     status, _ = http("POST", "/api/v1/auth/register", {
         "name": "RS256 CI Smoke", "email": email, "password": password,
     })
