@@ -74,7 +74,17 @@ def main():
     payload = json.loads(b64url_decode(parts[1]))
     if header.get("alg") != "RS256":
         raise AssertionError("User Service did not emit RS256")
-    if payload.get("sub") != email or not payload.get("user_id"):
+    if payload.get("sub") != payload.get("user_id") or not payload.get("sub"):
+        raise AssertionError("JWT subject and compatibility claim must identify the same UUID")
+    if not header.get("kid") or header.get("typ") != "at+jwt":
+        raise AssertionError("JWT lacks at+jwt type or stable kid")
+    if payload.get("iss") != os.environ.get("JWT_ISSUER", "https://auth.vellumhub.local"):
+        raise AssertionError("JWT issuer mismatch")
+    if "api://vellumhub" not in payload.get("aud", []):
+        raise AssertionError("JWT audience mismatch")
+    if not payload.get("jti") or not payload.get("client_id"):
+        raise AssertionError("JWT lacks required RFC 9068 claims")
+    if payload.get("sub") != payload.get("user_id"):
         raise AssertionError("Login JWT lost its expected identity claims")
     if "USER" not in payload.get("roles", []):
         raise AssertionError("Login JWT lost its USER role")
@@ -94,7 +104,7 @@ def main():
     expect_status(status, 401, "Missing bearer JWT")
 
     tampered = dict(payload)
-    tampered["sub"] = "tampered@example.test"
+    tampered["sub"] = "00000000-0000-0000-0000-000000000000"
     modified = parts[0] + "." + b64url_encode(
         json.dumps(tampered, separators=(",", ":")).encode("utf-8")
     ) + "." + parts[2]

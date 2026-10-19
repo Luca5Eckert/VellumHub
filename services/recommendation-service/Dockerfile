@@ -2,11 +2,15 @@ FROM maven:3.9.9-eclipse-temurin-21 AS build
 
 WORKDIR /workspace
 
+COPY lib/jwt-security/pom.xml lib/jwt-security/pom.xml
+COPY lib/jwt-security/src lib/jwt-security/src
+
 COPY lib/kafka-contracts/pom.xml lib/kafka-contracts/pom.xml
 COPY lib/kafka-contracts/src lib/kafka-contracts/src
 COPY services/recommendation-service/pom.xml services/recommendation-service/pom.xml
 
-RUN mvn -B -ntp -f lib/kafka-contracts/pom.xml install -Dmaven.test.skip=true
+RUN mvn -B -ntp -f lib/jwt-security/pom.xml install -Dmaven.test.skip=true \
+    && mvn -B -ntp -f lib/kafka-contracts/pom.xml install -Dmaven.test.skip=true
 
 COPY services/recommendation-service/src services/recommendation-service/src
 RUN mvn -B -ntp -f services/recommendation-service/pom.xml package -DproductionImageBuild=true -Dmaven.test.skip=true

@@ -83,12 +83,12 @@ class UserSecurityBoundaryTest {
                 .content(unlinkPayload)).andExpect(status().isUnauthorized());
 
         mockMvc.perform(post("/auth/google/link").with(jwt().jwt(token ->
-                    token.claim("user_id", userId.toString())))
+                    token.subject(userId.toString()).claim("user_id", userId.toString())))
                 .contentType(MediaType.APPLICATION_JSON).content(linkPayload))
                 .andExpect(status().isNoContent());
         verify(authService).linkGoogle(userId, "verified-id-token", "password");
         mockMvc.perform(delete("/auth/google/link").with(jwt().jwt(token ->
-                    token.claim("user_id", userId.toString())))
+                    token.subject(userId.toString()).claim("user_id", userId.toString())))
                 .contentType(MediaType.APPLICATION_JSON).content(unlinkPayload))
                 .andExpect(status().isNoContent());
         verify(authService).unlinkGoogle(userId, "password");

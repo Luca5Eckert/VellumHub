@@ -213,7 +213,7 @@ class RecommendationFreshnessBenchmarkIT extends DistributedIntegrationTestSuppo
                         .param("limit", Integer.toString(LIMIT))
                         .param("offset", "0")
                         .with(jwt().jwt(token -> token
-                                .subject("freshness@vellumhub.test")
+                                .subject(userId.toString())
                                 .claim("user_id", userId.toString())
                                 .claim("roles", List.of("USER")))))
                 .andReturn();

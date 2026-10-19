@@ -1,5 +1,6 @@
 package com.vellumhub.user_service.module.auth.infrastructure.security.token;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /** Public-only JWKS. Administrative key changes occur through deployment configuration, not HTTP. */
+@Hidden // Internal machine-readable trust endpoint; not part of the application resource API.
 @RestController
 public final class JwksController {
     private final JwtKeyRing keyRing;

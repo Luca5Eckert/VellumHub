@@ -362,7 +362,7 @@ class DistributedRecommendationBenchmarkIT extends DistributedIntegrationTestSup
                             .param("limit", "10")
                             .param("offset", "0")
                             .with(jwt().jwt(token -> token
-                                    .subject("benchmark@vellumhub.test")
+                                    .subject(userId.toString())
                                     .claim("user_id", userId.toString())
                                     .claim("roles", List.of("USER")))))
                     .andReturn();

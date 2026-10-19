@@ -28,6 +28,7 @@ class JwtRequestContextTest {
         UUID userId = UUID.randomUUID();
         Jwt jwt = Jwt.withTokenValue("token")
                 .header("alg", "none")
+                .subject(userId.toString())
                 .claim("user_id", userId.toString())
                 .build();
 

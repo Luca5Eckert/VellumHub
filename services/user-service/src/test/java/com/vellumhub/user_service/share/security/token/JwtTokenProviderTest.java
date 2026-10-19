@@ -27,7 +27,7 @@ class JwtTokenProviderTest {
 
     private NimbusJwtDecoder decoder() {
         return NimbusJwtDecoder.withPublicKey(TestRsaKeyMaterial.publicKey())
-                .signatureAlgorithm(SignatureAlgorithm.RS256).build();
+                .signatureAlgorithm(SignatureAlgorithm.RS256).validateType(false).build();
     }
 
     @Test
@@ -53,7 +53,7 @@ class JwtTokenProviderTest {
         String token = provider().createToken("user@test.com", UUID.randomUUID(), List.of("USER"));
         String[] parts = token.split("\\.");
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-        String alteredPayload = payload.replace("\"sub\":\"", "\"sub\":\"attacker-");
+        String alteredPayload = payload.replace("api://vellumhub", "api://forged");
         String alteredToken = parts[0] + "." + Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(alteredPayload.getBytes(StandardCharsets.UTF_8)) + "." + parts[2];
 

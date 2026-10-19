@@ -2,11 +2,15 @@ FROM maven:3.9.9-eclipse-temurin-21 AS build
 
 WORKDIR /workspace
 
+COPY lib/jwt-security/pom.xml lib/jwt-security/pom.xml
+COPY lib/jwt-security/src lib/jwt-security/src
+
 COPY lib/kafka-contracts/pom.xml lib/kafka-contracts/pom.xml
 COPY lib/kafka-contracts/src lib/kafka-contracts/src
 COPY services/user-service/pom.xml services/user-service/pom.xml
 
-RUN mvn -B -ntp -f lib/kafka-contracts/pom.xml install -DskipTests \
+RUN mvn -B -ntp -f lib/jwt-security/pom.xml install -Dmaven.test.skip=true \
+    && mvn -B -ntp -f lib/kafka-contracts/pom.xml install -DskipTests \
     && mvn -B -ntp -f services/user-service/pom.xml dependency:go-offline
 
 COPY services/user-service/src services/user-service/src
