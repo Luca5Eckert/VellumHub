@@ -52,6 +52,9 @@ public final class JwtKeyRing {
                 }
                 String kid = entry[0].trim();
                 validateKid(kid);
+                if (!entry[1].trim().startsWith("file:")) {
+                    throw new IllegalArgumentException("Additional public JWK sources must be local file resources");
+                }
                 if (keys.putIfAbsent(kid, readPublic(resources.getResource(entry[1].trim()))) != null) {
                     throw new IllegalArgumentException("Duplicate JWT kid: " + kid);
                 }

@@ -32,7 +32,7 @@ public final class JwtAccessToken {
                     || !"at+jwt".equals(jwt.getHeaders().get("typ"))) {
                 return invalid("Unexpected access-token algorithm or type");
             }
-            if (!jwt.getAudience().contains(audience)) {
+            if (jwt.getAudience() == null || !jwt.getAudience().contains(audience)) {
                 return invalid("Invalid access-token audience");
             }
             if (jwt.getSubject() == null || !isCanonicalUuid(jwt.getSubject())) {
@@ -67,6 +67,7 @@ public final class JwtAccessToken {
     }
 
     private static boolean isCanonicalUuid(String value) {
+        if (value == null) return false;
         try {
             return UUID.fromString(value).toString().equalsIgnoreCase(value);
         } catch (IllegalArgumentException exception) {
