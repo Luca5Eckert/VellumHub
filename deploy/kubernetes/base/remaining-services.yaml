@@ -22,14 +22,19 @@ spec:
             - {name: VELLUM_ENVIRONMENT, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_ENVIRONMENT}}}
             - {name: VELLUM_DOCS_ENABLED, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_DOCS_ENABLED}}}
             - {name: CORS_ALLOWED_ORIGINS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CORS_ALLOWED_ORIGINS}}}
-            - {name: JWT_KEY, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: JWT_KEY}}}
+            - {name: JWT_PUBLIC_KEY_LOCATION, value: "file:/etc/vellumhub/keys/public.pem"}
             - {name: SPRING_DATASOURCE_USERNAME, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_USER}}}
             - {name: SPRING_DATASOURCE_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_PASSWORD}}}
+          volumeMounts:
+            - {name: jwt-public-key, mountPath: /etc/vellumhub/keys, readOnly: true}
           resources: {requests: {cpu: 250m, memory: 640Mi}, limits: {cpu: "1", memory: 1Gi}}
           securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, runAsNonRoot: true, runAsUser: 10001, capabilities: {drop: [ALL]}}
           startupProbe: {httpGet: {path: /actuator/health/liveness, port: http}, periodSeconds: 5, failureThreshold: 30}
           livenessProbe: {httpGet: {path: /actuator/health/liveness, port: http}, periodSeconds: 15, failureThreshold: 3}
           readinessProbe: {httpGet: {path: /actuator/health/readiness, port: http}, periodSeconds: 10, failureThreshold: 3}
+      volumes:
+        - name: jwt-public-key
+          configMap: {name: vellumhub-jwt-public, items: [{key: public.pem, path: public.pem}]}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -56,11 +61,17 @@ spec:
             - {name: VELLUM_ENVIRONMENT, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_ENVIRONMENT}}}
             - {name: VELLUM_DOCS_ENABLED, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_DOCS_ENABLED}}}
             - {name: CORS_ALLOWED_ORIGINS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CORS_ALLOWED_ORIGINS}}}
-            - {name: JWT_KEY, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: JWT_KEY}}}
+            - {name: JWT_PUBLIC_KEY_LOCATION, value: "file:/etc/vellumhub/keys/public.pem"}
             - {name: SPRING_DATASOURCE_USERNAME, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_USER}}}
             - {name: SPRING_DATASOURCE_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_PASSWORD}}}
+          volumeMounts:
+            - {name: jwt-public-key, mountPath: /etc/vellumhub/keys, readOnly: true}
           resources: {requests: {cpu: 500m, memory: 1Gi}, limits: {cpu: "2", memory: 2Gi}}
           securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, runAsNonRoot: true, runAsUser: 10001, capabilities: {drop: [ALL]}}
           startupProbe: {httpGet: {path: /actuator/health/liveness, port: http}, periodSeconds: 10, failureThreshold: 60}
           livenessProbe: {httpGet: {path: /actuator/health/liveness, port: http}, periodSeconds: 20, failureThreshold: 3}
           readinessProbe: {httpGet: {path: /actuator/health/readiness, port: http}, periodSeconds: 15, failureThreshold: 3}
+
+      volumes:
+        - name: jwt-public-key
+          configMap: {name: vellumhub-jwt-public, items: [{key: public.pem, path: public.pem}]}

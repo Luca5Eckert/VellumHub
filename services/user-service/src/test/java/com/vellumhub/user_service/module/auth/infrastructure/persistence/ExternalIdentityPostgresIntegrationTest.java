@@ -1,6 +1,7 @@
 package com.vellumhub.user_service.module.auth.infrastructure.persistence;
 
 import com.vellumhub.user_service.UserServiceApplication;
+import com.vellumhub.user_service.share.security.token.TestRsaKeyMaterial;
 import com.vellumhub.user_service.module.auth.domain.exception.ExternalIdentityConflictException;
 import com.vellumhub.user_service.module.auth.domain.model.UserInfo;
 import com.vellumhub.user_service.module.auth.domain.service.ExternalIdentityBindingService;
@@ -45,7 +46,8 @@ class ExternalIdentityPostgresIntegrationTest {
         registry.add("spring.kafka.bootstrap-servers", () -> "localhost:65535");
         registry.add("spring.kafka.listener.auto-startup", () -> "false");
         registry.add("management.health.kafka.enabled", () -> "false");
-        registry.add("jwt.secret", () -> "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=");
+        registry.add("jwt.public-key-location", TestRsaKeyMaterial::publicLocation);
+        registry.add("jwt.private-key-location", TestRsaKeyMaterial::privateLocation);
         registry.add("jwt.expiration-ms", () -> "3600000");
         registry.add("google.client.id", () -> "test-client");
     }

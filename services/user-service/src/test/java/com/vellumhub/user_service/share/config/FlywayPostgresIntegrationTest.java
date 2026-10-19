@@ -1,6 +1,7 @@
 package com.vellumhub.user_service.share.config;
 
 import com.vellumhub.user_service.UserServiceApplication;
+import com.vellumhub.user_service.share.security.token.TestRsaKeyMaterial;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -73,7 +74,8 @@ class FlywayPostgresIntegrationTest {
                 "SPRING_DATASOURCE_USERNAME", POSTGRES.getUsername(),
                 "SPRING_DATASOURCE_PASSWORD", POSTGRES.getPassword(),
                 "KAFKA_BOOTSTRAP_SERVERS", "localhost:65535",
-                "JWT_KEY", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=",
+                "JWT_PUBLIC_KEY_LOCATION", TestRsaKeyMaterial.publicLocation(),
+                "JWT_PRIVATE_KEY_LOCATION", TestRsaKeyMaterial.privateLocation(),
                 "JWT_EXPIRATION_MS", "3600000",
                 "GOOGLE_CLIENT_ID", "test-client-id");
     }
@@ -86,7 +88,8 @@ class FlywayPostgresIntegrationTest {
                 Map.entry("spring.kafka.listener.auto-startup", "false"),
                 Map.entry("spring.kafka.admin.fail-fast", "false"),
                 Map.entry("management.health.kafka.enabled", "false"),
-                Map.entry("jwt.secret", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM="),
+                Map.entry("jwt.public-key-location", TestRsaKeyMaterial.publicLocation()),
+                Map.entry("jwt.private-key-location", TestRsaKeyMaterial.privateLocation()),
                 Map.entry("jwt.expiration-ms", "3600000"),
                 Map.entry("google.client.id", "test-client-id"),
                 Map.entry("server.port", "0"));

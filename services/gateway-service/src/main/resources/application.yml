@@ -112,17 +112,14 @@ spring:
               filters:
                 - StripPrefix=2
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          secret-key: ${JWT_KEY}
-
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
       connect-timeout: 2s
+
+jwt:
+  public-key-location: ${JWT_PUBLIC_KEY_LOCATION:}
 
 springdoc:
   api-docs:

@@ -1,6 +1,5 @@
 package com.vellumhub.gateway_service.config.security;
 
-import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,14 +7,19 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
-import javax.crypto.spec.SecretKeySpec;
+import org.springframework.core.io.Resource;
+import org.springframework.security.converter.RsaKeyConverters;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Objects;
 import java.util.Arrays;
 import java.util.List;
 import reactor.core.publisher.Mono;
@@ -24,21 +28,21 @@ import reactor.core.publisher.Mono;
 @EnableWebFluxSecurity
 public class GatewaySecurityConfig {
 
-    private final String jwtSecret;
+    private final Resource publicKeyResource;
     private final boolean publicDocumentation;
     private final String allowedOrigins;
 
     public GatewaySecurityConfig(
-            @Value("${spring.security.oauth2.resourceserver.jwt.secret-key}") String jwtSecret,
+            @Value("${jwt.public-key-location}") Resource publicKeyResource,
             @Value("${VELLUM_DOCS_ENABLED:false}") boolean publicDocumentation,
             @Value("${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}") String allowedOrigins) {
-        this.jwtSecret = jwtSecret;
+        this.publicKeyResource = publicKeyResource;
         this.publicDocumentation = publicDocumentation;
         this.allowedOrigins = allowedOrigins;
     }
 
     @Bean
-    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) throws IOException {
         return http
                 // Stateless bearer-token API. Revisit CSRF if browser cookies become authenticators.
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -78,10 +82,18 @@ public class GatewaySecurityConfig {
 
     @Bean
     public ReactiveJwtDecoder reactiveJwtDecoder() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
-        return NimbusReactiveJwtDecoder.withSecretKey(secretKey)
-                .macAlgorithm(MacAlgorithm.HS256)
+        RSAPublicKey publicKey;
+        try (InputStream inputStream = publicKeyResource.getInputStream()) {
+            publicKey = Objects.requireNonNull(RsaKeyConverters.x509().convert(inputStream),
+                    "Invalid X.509 RSA public key");
+        } catch (IOException exception) {
+            throw new IllegalStateException("JWT public key cannot be read", exception);
+        }
+        if (publicKey.getModulus().bitLength() < 2048) {
+            throw new IllegalArgumentException("JWT verification RSA key must have at least 2048 bits");
+        }
+        return NimbusReactiveJwtDecoder.withPublicKey(publicKey)
+                .signatureAlgorithm(SignatureAlgorithm.RS256)
                 .build();
     }
 }

@@ -43,7 +43,7 @@ import static org.awaitility.Awaitility.await;
         "spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer",
         "spring.kafka.producer.properties.spring.json.type.mapping=create_book_progress_event:com.vellumhub.kafka.contracts.readingprogress.CreateBookProgressEvent,update_book_progress_event:com.vellumhub.kafka.contracts.readingprogress.UpdateBookProgressEvent",
         "management.health.kafka.enabled=false",
-        "jwt.secret=dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM="
+        "jwt.public-key-location=classpath:security/test-public.pem"
 })
 class ReadingProgressKafkaFlowIntegrationTest {
     @Container

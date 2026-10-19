@@ -300,11 +300,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-At minimum, configure a Base64-compatible `JWT_KEY`, database credentials, `JWT_EXPIRATION_MS`, and `GOOGLE_CLIENT_ID`. Generate a local JWT key with:
-
-```bash
-openssl rand -base64 32
-```
+At minimum, generate an RSA key pair, configure `JWT_PUBLIC_KEY_PATH` and `JWT_PRIVATE_KEY_PATH` in `.env`, plus database credentials, `JWT_EXPIRATION_MS`, and `GOOGLE_CLIENT_ID`. Only the User Service mounts the private key. See [RS256 operations](docs/SECURITY_RS256.md) for the exact generation commands and synchronized cutover requirements.
 
 ### Local entry points
 
@@ -441,7 +437,7 @@ replicated reading history come from Engagement, with explicit provenance. This 
 
 ## HTTP perimeter security (SEC-01 / #302)
 
-Gateway and downstream services retain independently validated HS256 bearer JWTs until the scheduled cryptographic migration. The Gateway now has an explicit POST-only public login/register/Google allowlist, strips untrusted identity headers, and ignores client-supplied X-Forwarded-For unless the immediate proxy is within `VELLUM_TRUSTED_PROXY_CIDRS`. Centralized API documentation is opt-in through `VELLUM_DOCS_ENABLED`, enabled in local Compose and disabled by default. Production Ingress must expose only API routes; internal health/Prometheus scrapes remain reachable through the service network. See [HTTP boundary runbook](docs/SECURITY_HTTP_BOUNDARY.md) for routing, CORS, tests, risks and rollback. This is not an OAuth2/OIDC migration.
+On the #163 implementation branch, the User Service signs RS256 bearer JWTs and the Gateway and downstream services validate signatures independently using only the public key. A coordinated deployment and new login are required at cutover. The Gateway now has an explicit POST-only public login/register/Google allowlist, strips untrusted identity headers, and ignores client-supplied X-Forwarded-For unless the immediate proxy is within `VELLUM_TRUSTED_PROXY_CIDRS`. Centralized API documentation is opt-in through `VELLUM_DOCS_ENABLED`, enabled in local Compose and disabled by default. Production Ingress must expose only API routes; internal health/Prometheus scrapes remain reachable through the service network. See [HTTP boundary runbook](docs/SECURITY_HTTP_BOUNDARY.md) for routing, CORS, tests, risks and rollback. This is not an OAuth2/OIDC migration.
 
 ## Google identity linkage (SEC-02 / #303)
 

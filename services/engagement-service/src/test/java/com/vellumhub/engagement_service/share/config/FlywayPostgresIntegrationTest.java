@@ -216,7 +216,7 @@ class FlywayPostgresIntegrationTest {
                 "SPRING_DATASOURCE_USERNAME", POSTGRES.getUsername(),
                 "SPRING_DATASOURCE_PASSWORD", POSTGRES.getPassword(),
                 "KAFKA_BOOTSTRAP_SERVERS", "localhost:65535",
-                "JWT_KEY", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=");
+                "JWT_PUBLIC_KEY_LOCATION", "classpath:security/test-public.pem");
     }
 
     private static Map<String, Object> runtimeProperties() {
@@ -228,7 +228,7 @@ class FlywayPostgresIntegrationTest {
                 "spring.kafka.listener.auto-startup", "false",
                 "spring.kafka.admin.fail-fast", "false",
                 "management.health.kafka.enabled", "false",
-                "jwt.secret", "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLXdpdGgtYXQtbGVhc3QtMjU2LWJpdHM=",
+                "jwt.public-key-location", "classpath:security/test-public.pem",
                 "server.port", "0");
     }
 

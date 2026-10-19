@@ -1,92 +1,108 @@
 package com.vellumhub.user_service.share.security.token;
 
 import com.vellumhub.user_service.module.auth.infrastructure.security.token.JwtTokenProvider;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
-import java.util.Date;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
-import javax.crypto.SecretKey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JwtTokenProviderTest {
+    private static final long EXPIRATION_MS = 60_000;
 
-    private static final String SECRET_KEY =
-            "VGhpcy1pcy1hLXZlcnktc2VjdXJlLWJhc2U2NC1zZWNyZXQ="; // base64
-    private static final long EXPIRATION_MS = 60_000; // 1 minute
+    private JwtTokenProvider provider() throws Exception {
+        return new JwtTokenProvider(TestRsaKeyMaterial.privateResource(), EXPIRATION_MS);
+    }
 
-    private final JwtTokenProvider tokenProvider =
-            new JwtTokenProvider(SECRET_KEY, EXPIRATION_MS);
+    private NimbusJwtDecoder decoder() {
+        return NimbusJwtDecoder.withPublicKey(TestRsaKeyMaterial.publicKey())
+                .signatureAlgorithm(SignatureAlgorithm.RS256).build();
+    }
 
     @Test
-    @DisplayName("Should create a valid JWT with email, userId and roles")
-    void shouldCreateValidJwtToken() {
-        String email = "user@test.com";
+    void issuesAnRs256JwtValidatedWithoutAccessToThePrivateKey() throws Exception {
         UUID userId = UUID.randomUUID();
+        String token = provider().createToken("user@test.com", userId, List.of("USER", "ADMIN"));
+        Jwt jwt = decoder().decode(token);
 
-        List<SimpleGrantedAuthority> authorities = List.of(
-                new SimpleGrantedAuthority("ROLE_USER"),
-                new SimpleGrantedAuthority("ROLE_ADMIN")
-        );
-
-        String token = tokenProvider.createToken(email, userId, authorities.stream().map(SimpleGrantedAuthority::getAuthority).toList());
-
-        assertThat(token).isNotBlank();
-
-        Claims claims = parseToken(token);
-
-        assertThat(claims.getSubject()).isEqualTo(email);
-        assertThat(claims.get("user_id", String.class))
-                .isEqualTo(userId.toString());
-        assertThat(claims.get("roles", List.class))
-                .containsExactlyInAnyOrder("ROLE_USER", "ROLE_ADMIN");
-        assertThat(claims.getExpiration()).isAfter(new Date());
-        assertThat(claims.getIssuedAt()).isBeforeOrEqualTo(new Date());
+        assertThat(jwt.getHeaders()).containsEntry("alg", "RS256");
+        assertThat(jwt.getSubject()).isEqualTo("user@test.com");
+        assertThat(jwt.getClaimAsString("user_id")).isEqualTo(userId.toString());
+        assertThat(jwt.getClaimAsStringList("roles")).containsExactly("USER", "ADMIN");
+        assertThat(jwt.getExpiresAt()).isAfter(jwt.getIssuedAt());
     }
 
     @Test
-    @DisplayName("Should reject JWT expiration below one minute")
-    void shouldRejectJwtExpirationBelowOneMinute() {
-        assertThatThrownBy(() -> new JwtTokenProvider(SECRET_KEY, 59_999))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("jwt.expiration-ms")
-                .hasMessageContaining("60000");
+    void rejectsAlteredPayload() throws Exception {
+        String token = provider().createToken("user@test.com", UUID.randomUUID(), List.of("USER"));
+        String[] parts = token.split("\\.");
+        String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+        String alteredPayload = payload.replace("user@test.com", "admin@test.com");
+        String alteredToken = parts[0] + "." + Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(alteredPayload.getBytes(StandardCharsets.UTF_8)) + "." + parts[2];
+
+        assertThat(alteredPayload).isNotEqualTo(payload);
+        assertThatThrownBy(() -> decoder().decode(alteredToken)).isInstanceOf(JwtException.class);
     }
 
     @Test
-    @DisplayName("Should reject JWT secret that is not Base64 encoded")
-    void shouldRejectJwtSecretThatIsNotBase64Encoded() {
-        assertThatThrownBy(() -> new JwtTokenProvider("not-a-base64-secret!", EXPIRATION_MS))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("jwt.secret")
-                .hasMessageContaining("Base64");
+    void rejectsWrongRsaSignature() throws Exception {
+        var generator = java.security.KeyPairGenerator.getInstance("RSA");
+        generator.initialize(2048);
+        var other = generator.generateKeyPair();
+        var encoded = java.util.Base64.getMimeEncoder(64, new byte[]{'\n'})
+                .encodeToString(other.getPrivate().getEncoded());
+        var pem = "-----BEGIN PRIVATE KEY-----\n" + encoded + "\n-----END PRIVATE KEY-----\n";
+        String forged = new JwtTokenProvider(
+                new ByteArrayResource(pem.getBytes(StandardCharsets.US_ASCII)), EXPIRATION_MS)
+                .createToken("user@test.com", UUID.randomUUID(), List.of("USER"));
+
+        assertThatThrownBy(() -> decoder().decode(forged)).isInstanceOf(JwtException.class);
     }
 
     @Test
-    @DisplayName("Should reject JWT secret shorter than 32 decoded bytes")
-    void shouldRejectJwtSecretShorterThanThirtyTwoDecodedBytes() {
-        assertThatThrownBy(() -> new JwtTokenProvider("dG9vLXNob3J0", EXPIRATION_MS))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("jwt.secret")
-                .hasMessageContaining("32 bytes");
+    void rejectsLegacyHs256AfterCutover() {
+        String legacy = Jwts.builder().subject("user@test.com")
+                .signWith(Keys.hmacShaKeyFor(new byte[32]), Jwts.SIG.HS256).compact();
+        assertThatThrownBy(() -> decoder().decode(legacy)).isInstanceOf(JwtException.class);
     }
 
-    private Claims parseToken(String token) {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
-        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
+    @Test
+    void rejectsInvalidExpiration() {
+        assertThatThrownBy(() -> new JwtTokenProvider(TestRsaKeyMaterial.privateResource(), 59_999))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("jwt.expiration-ms");
+    }
 
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+    @Test
+    void rejectsWeakRsaPrivateKeys() throws Exception {
+        var generator = java.security.KeyPairGenerator.getInstance("RSA");
+        generator.initialize(1024);
+        var weak = generator.generateKeyPair();
+        String encoded = Base64.getMimeEncoder(64, new byte[]{'\n'})
+                .encodeToString(weak.getPrivate().getEncoded());
+        String pem = "-----BEGIN PRIVATE KEY-----\n" + encoded + "\n-----END PRIVATE KEY-----\n";
+
+        assertThatThrownBy(() -> new JwtTokenProvider(
+                new ByteArrayResource(pem.getBytes(StandardCharsets.US_ASCII)), EXPIRATION_MS))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("2048");
+    }
+
+    @Test
+    void rejectsInvalidPrivateKeyMaterial() {
+        assertThatThrownBy(() -> new JwtTokenProvider(
+                new ByteArrayResource("not a PKCS8 PEM".getBytes(StandardCharsets.US_ASCII)),
+                EXPIRATION_MS)).isInstanceOf(RuntimeException.class);
     }
 }

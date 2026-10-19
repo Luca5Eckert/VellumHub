@@ -47,7 +47,9 @@ if [ ! -f .env ]; then
 # Temporary test values - NOT FOR PRODUCTION USE
 POSTGRES_USER=test_user
 POSTGRES_PASSWORD=dummy_password_for_validation_only
-JWT_KEY=VGhpcy1pcy1hLXZlcnktc2VjdXJlLWJhc2U2NC1zZWNyZXQ=
+# Dummy local paths for Compose config parsing; no signing keys are created by this checker.
+JWT_PUBLIC_KEY_PATH=./.local/keys/public.pem
+JWT_PRIVATE_KEY_PATH=./.local/keys/private.pem
 JWT_EXPIRATION_MS=86400000
 ENVEOF
     TEMP_ENV_CREATED=true

@@ -80,9 +80,15 @@ jobs:
         shell: bash
         run: |
           cp .env.example .env
-          # .env.example intentionally contains a non-secret placeholder. The runtime
-          # decodes JWT_KEY as Base64, so CI needs a valid ephemeral HS256 key.
-          sed -i 's|^JWT_KEY=.*|JWT_KEY=dmVsbHVtaHViLXBvc3RtYW4tY2ktc2VjcmV0LWtleS0zMg==|' .env
+          # Ephemeral RSA keypair for contract generation; no signing material is committed.
+          mkdir -p .local/keys
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out .local/keys/private.pem
+          openssl pkey -in .local/keys/private.pem -pubout -out .local/keys/public.pem
+          # Containers run as non-root UID 10001; grant only that UID read access.
+          sudo chown 10001:10001 .local/keys/private.pem
+          sudo chmod 600 .local/keys/private.pem
+          chmod 644 .local/keys/public.pem
+          # .env.example resolves JWT_PUBLIC_KEY_PATH and JWT_PRIVATE_KEY_PATH to these mounts.
 
       - name: Start VellumHub
         run: docker compose up -d --build
@@ -116,6 +122,9 @@ jobs:
           echo "OpenAPI contracts did not become available."
           docker compose ps
           exit 1
+
+      - name: Verify real RS256 login and authorization across services
+        run: python3 infra/scripts/security/verify_rs256_compose.py
 
       - name: Regenerate collection
         run: |
