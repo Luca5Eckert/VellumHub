@@ -444,3 +444,8 @@ On the #163 implementation branch, the User Service signs RS256 bearer JWTs and 
 Google login is resolved by verified `issuer + subject` rather than email. The User Service keeps the stable local UUID and does not automatically merge legacy accounts sharing an email claim. New Google-only accounts have no password and cannot authenticate with local password. Existing password accounts can explicitly associate or remove a verified Google identity after proving their current local password. The database holds unique binding constraints and an immutable audit log (hashed subject, never the provider ID token). Flyway V2 expands password nullability without auto-backfilling unknown external identities.
 
 See [Google identity linkage runbook](docs/SECURITY_GOOGLE_IDENTITY.md) for route contracts, recovery of legacy users, migration/rollback and tests. This is not an OAuth2 Authorization Server or frontend PKCE migration.
+
+
+### JWKS distribution and RFC 9068 access tokens (security issues #304/#305)
+
+The security upgrade in draft PR #321 moves from a fixed public-key verifier to a trusted JWKS endpoint inside the User Service and changes JWT subject to an immutable user UUID. A shared `lib/jwt-security` module validates issuer, audience, type, algorithms and claims in all services; only User Service holds signing material. This is **not** an implemented OAuth/OIDC Authorization Server or evidence of production deployment. Deployment, rotation, emergency handling and bounded coexistence of `user_id` are documented in [JWKS/RFC 9068 runbook](docs/SECURITY_JWKS_RFC9068.md). The original [RS256 cutover runbook](docs/SECURITY_RS256.md) describes the completed cryptographic prerequisite (#163).

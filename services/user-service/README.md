@@ -163,3 +163,8 @@ The Google ID token is validated for signature, issuer, audience, expiration, ve
 New Google users have `password=NULL`. Passwordless users cannot unlink their only sign-in method; users whose previous Google identity cannot be established through a linked subject require authenticated local-password association or manual verified recovery. No automatic email-based backfill is performed.
 
 Flyway `V2__external_identity_binding.sql` creates `external_identities` and `external_identity_audit` and makes local passwords nullable. PostgreSQL advisory transaction locks serialize first-login/link/unlink across replicas. H2 local profile lacks distributed locks and must not be used to claim concurrency guarantees. Read the [SEC-02 runbook](../../docs/SECURITY_GOOGLE_IDENTITY.md) before deployment.
+
+
+### Security JWT/JWKS transition (#304, #305)
+
+In draft PR #321, JWT verifiers fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. The User Service alone signs tokens with `JWT_ACTIVE_KID` and externally provisioned private PEMs. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
