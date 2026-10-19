@@ -23,9 +23,12 @@ class JwtKeyRingTest {
         var result = new JwksController(ring).keys();
         assertThat(result.getStatusCode().value()).isEqualTo(200);
         var jwk = (Map<?, ?>) ((java.util.List<?>) result.getBody().get("keys")).get(0);
-        assertThat(jwk).containsEntry("kid", "key-a").containsEntry("kty", "RSA")
-                .containsEntry("alg", "RS256").containsKey("n").containsKey("e");
-        assertThat(jwk).doesNotContainKeys("d", "p", "q", "dp", "dq", "qi", "oth");
+        assertThat(jwk.get("kid")).isEqualTo("key-a");
+        assertThat(jwk.get("kty")).isEqualTo("RSA");
+        assertThat(jwk.get("alg")).isEqualTo("RS256");
+        var names = jwk.keySet().stream().map(Object::toString).toList();
+        assertThat(names).contains("n", "e", "kid", "alg", "kty")
+                .doesNotContain("d", "p", "q", "dp", "dq", "qi", "oth");
     }
 
     @Test
