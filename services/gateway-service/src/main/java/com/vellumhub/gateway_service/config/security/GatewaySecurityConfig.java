@@ -1,5 +1,6 @@
 package com.vellumhub.gateway_service.config.security;
 
+import com.vellumhub.security.jwt.JwtAccessToken;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,17 @@ import reactor.core.publisher.Mono;
 @Configuration
 @EnableWebFluxSecurity
 public class GatewaySecurityConfig {
+    @Value("${JWT_JWKS_URI:http://user-service:8080/.well-known/jwks.json}")
+    private String jwksUri = "http://user-service:8080/.well-known/jwks.json";
+
+    @Value("${JWT_ISSUER:https://auth.vellumhub.local}")
+    private String issuer = "https://auth.vellumhub.local";
+
+    @Value("${JWT_AUDIENCE:api://vellumhub}")
+    private String audience = "api://vellumhub";
+
+    @Value("${JWT_CLOCK_SKEW_SECONDS:30}")
+    private long clockSkewSeconds = 30;
 
     private final Resource publicKeyResource;
     private final boolean publicDocumentation;
@@ -82,18 +94,11 @@ public class GatewaySecurityConfig {
 
     @Bean
     public ReactiveJwtDecoder reactiveJwtDecoder() {
-        RSAPublicKey publicKey;
-        try (InputStream inputStream = publicKeyResource.getInputStream()) {
-            publicKey = Objects.requireNonNull(RsaKeyConverters.x509().convert(inputStream),
-                    "Invalid X.509 RSA public key");
-        } catch (IOException exception) {
-            throw new IllegalStateException("JWT public key cannot be read", exception);
-        }
-        if (publicKey.getModulus().bitLength() < 2048) {
-            throw new IllegalArgumentException("JWT verification RSA key must have at least 2048 bits");
-        }
-        return NimbusReactiveJwtDecoder.withPublicKey(publicKey)
-                .signatureAlgorithm(SignatureAlgorithm.RS256)
+        NimbusReactiveJwtDecoder decoder = NimbusReactiveJwtDecoder.withJwkSetUri(jwksUri)
+                .jwsAlgorithm(SignatureAlgorithm.RS256)
+                .validateType(false)
                 .build();
+        decoder.setJwtValidator(JwtAccessToken.validator(issuer, audience, clockSkewSeconds));
+        return decoder;
     }
 }

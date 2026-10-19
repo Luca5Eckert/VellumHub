@@ -17,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import com.vellumhub.security.jwt.JwtAccessToken;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -34,8 +35,18 @@ import java.util.Objects;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${jwt.public-key-location}")
-    private Resource publicKeyResource;
+    @Value("${JWT_JWKS_URI:http://user-service:8080/.well-known/jwks.json}")
+    private String jwksUri;
+
+    @Value("${JWT_ISSUER:https://auth.vellumhub.local}")
+    private String issuer;
+
+    @Value("${JWT_AUDIENCE:api://vellumhub}")
+    private String audience;
+
+    @Value("${JWT_CLOCK_SKEW_SECONDS:30}")
+    private long clockSkewSeconds;
+
 
     private final UserRepository userRepository;
 
@@ -71,30 +82,17 @@ public class SecurityConfig {
 
 
     private JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
-
-        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
-        return jwtAuthenticationConverter;
+        return JwtAccessToken.servletConverter();
     }
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        RSAPublicKey publicKey;
-        try (InputStream inputStream = publicKeyResource.getInputStream()) {
-            publicKey = Objects.requireNonNull(RsaKeyConverters.x509().convert(inputStream),
-                    "Invalid X.509 RSA public key");
-        } catch (IOException exception) {
-            throw new IllegalStateException("JWT public key cannot be read", exception);
-        }
-        if (publicKey.getModulus().bitLength() < 2048) {
-            throw new IllegalArgumentException("JWT verification RSA key must have at least 2048 bits");
-        }
-        return NimbusJwtDecoder.withPublicKey(publicKey)
-                .signatureAlgorithm(SignatureAlgorithm.RS256)
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwksUri)
+                .jwsAlgorithm(SignatureAlgorithm.RS256)
+                .validateType(false)
                 .build();
+        decoder.setJwtValidator(JwtAccessToken.validator(issuer, audience, clockSkewSeconds));
+        return decoder;
     }
 
     @Bean
