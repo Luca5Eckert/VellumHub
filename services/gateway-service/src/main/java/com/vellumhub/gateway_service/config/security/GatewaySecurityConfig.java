@@ -122,7 +122,10 @@ public class GatewaySecurityConfig {
         decoder.setJwtValidator(JwtAccessToken.validator(issuer, audience, clockSkewSeconds));
         // A trusted JWKS outage with an unknown kid must be an authentication failure (401),
         // not an unhandled infrastructure error (500). Cached known keys remain usable.
-        return token -> decoder.decode(token)
+        // Nimbus can throw before returning a Mono (e.g. when a kid is missing and
+        // the configured JWKS endpoint is unavailable). Defer decoding so both
+        // synchronous and reactive key-fetch failures become invalid-token errors.
+        return token -> Mono.defer(() -> decoder.decode(token))
                 .onErrorMap(IllegalStateException.class, failure ->
                         new BadJwtException("Unable to verify JWT signing key", failure));
     }
