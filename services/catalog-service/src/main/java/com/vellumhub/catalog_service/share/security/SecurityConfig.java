@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.BadJwtException;
 import com.vellumhub.security.jwt.JwtAccessToken;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -114,7 +115,14 @@ public class SecurityConfig {
                 .validateType(false)
                 .build();
         decoder.setJwtValidator(JwtAccessToken.validator(issuer, audience, clockSkewSeconds));
-        return decoder;
+        // Treat JWKS retrieval errors as invalid authentication while retaining trusted cache.
+        return token -> {
+            try {
+                return decoder.decode(token);
+            } catch (IllegalStateException failure) {
+                throw new BadJwtException("Unable to verify JWT signing key", failure);
+            }
+        };
     }
 
 }

@@ -13,6 +13,7 @@ import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -119,6 +120,10 @@ public class GatewaySecurityConfig {
                 .validateType(false)
                 .build();
         decoder.setJwtValidator(JwtAccessToken.validator(issuer, audience, clockSkewSeconds));
-        return decoder;
+        // A trusted JWKS outage with an unknown kid must be an authentication failure (401),
+        // not an unhandled infrastructure error (500). Cached known keys remain usable.
+        return token -> decoder.decode(token)
+                .onErrorMap(IllegalStateException.class, failure ->
+                        new BadJwtException("Unable to verify JWT signing key", failure));
     }
 }
