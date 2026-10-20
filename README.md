@@ -327,6 +327,8 @@ For service-specific configuration and standalone execution, use the README insi
 
 ## Verification Strategy
 
+**Architecture fitness functions (proposed):** [Implementation guide](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md) defines planned ArchUnit structural boundaries, distributed reliability properties, Recommendation read-autonomy checks, CI policy, and links to the normative Obsidian architecture source of truth. These are not new enforced gates until implementing issues land with CI evidence.
+
 The test portfolio uses the narrowest boundary capable of proving each behavior:
 
 | Level | What it protects |
