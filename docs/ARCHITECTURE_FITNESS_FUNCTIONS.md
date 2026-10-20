@@ -59,6 +59,14 @@ mvn -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -Dgroups=distrib
 
 See [Recommendation benchmark](../services/recommendation-service/benchmark/README.md) for its intentionally separate per-suite invocation. New commands will be documented when their tests are actually added and run.
 
+## Large implementation issues
+
+- [#323 — AFF-01: ArchUnit and service boundaries](https://github.com/Luca5Eckert/VellumHub/issues/323): static guards, Maven graph, baseline and PR gate.
+- [#324 — AFF-02: Event delivery invariants](https://github.com/Luca5Eckert/VellumHub/issues/324): Outbox, idempotency, ordering, Kafka compatibility and distributed evidence.
+- [#325 — AFF-03: Read autonomy and evidence](https://github.com/Luca5Eckert/VellumHub/issues/325): Recommendation autonomy, benchmark traceability and CI execution.
+
+These remain open implementation work items. Their creation does not change runtime guarantees or test coverage.
+
 ## Scope boundaries
 
 This initiative does not implement OAuth2/OIDC, #272 replay functionality, full hexagonal restructuring, a new observability platform, universal exactly-once, a production SLO or a generic fitness-function framework. It codifies decisions already made and makes architectural drift visible with the cheapest appropriate verification boundary.
