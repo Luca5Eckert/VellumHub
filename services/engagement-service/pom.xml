@@ -178,6 +178,34 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>aff-bound-003-transitive-service-isolation</id>
+                        <phase>validate</phase>
+                        <goals><goal>enforce</goal></goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>com.mrs:catalog-service</exclude>
+                                        <exclude>com.mrs:engagement-service</exclude>
+                                        <exclude>com.mrs:user-service</exclude>
+                                        <exclude>com.mrs:recommendation-service</exclude>
+                                        <exclude>com.mrs:gateway-service</exclude>
+                                    </excludes>
+                                    <message>AFF-BOUND-003: deployable service-to-service dependencies are forbidden; use contracts instead.</message>
+                                </bannedDependencies>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <annotationProcessorPaths>
