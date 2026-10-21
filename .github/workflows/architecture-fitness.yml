@@ -1,0 +1,28 @@
+name: Architecture fitness (static boundaries)
+
+on:
+  pull_request:
+    paths:
+      - 'pom.xml'
+      - 'services/**/pom.xml'
+      - 'tools/architecture/**'
+      - '.github/workflows/architecture-fitness.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'pom.xml'
+      - 'services/**/pom.xml'
+      - 'tools/architecture/**'
+
+jobs:
+  boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Negative fixtures and boundary rules
+        run: |
+          python -m unittest discover -s tools/architecture -p 'test_*.py' -v
+          python tools/architecture/check_service_boundaries.py
