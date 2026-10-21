@@ -46,7 +46,7 @@ flowchart LR
   REC[Recommendation] --> P4[(recommendation_db)]
 ```
 
-The Compose ownership checker confirms distinct PostgreSQL endpoints and declared database names. **It does not prove credentials, network ACLs, or database authorization isolation**: local Compose currently uses shared POSTGRES_USER and POSTGRES_PASSWORD values across database instances. Remediation and negative authorization tests remain pending before AFF-DATA-004 can be enforced.
+The Compose ownership checker confirms distinct PostgreSQL endpoints and declared database names. **It does not prove credentials, network ACLs, or database authorization isolation**: local Compose currently uses shared POSTGRES_USER and POSTGRES_PASSWORD values across database instances. A real PostgreSQL negative authorization fixture (`DatabaseOwnershipPostgresFitnessTest`) now verifies a restricted Catalog role can query its own schema but receives SQLSTATE 42501 when reading an Engagement schema. **This is a role-model test, not proof that Compose/deployment credentials are currently isolated.** The local Compose still shares POSTGRES_USER/PASSWORD values; production credential isolation and wiring verification remain pending before AFF-DATA-004 is enforced.
 
 ### AFF-EVT-005 to AFF-EVT-007
 
