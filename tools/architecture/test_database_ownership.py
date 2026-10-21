@@ -39,14 +39,14 @@ class DatabaseOwnershipTest(unittest.TestCase):
         for owner in ("catalog", "engagement", "user", "recommendation"):
             key = owner.upper()
             source = source.replace(
-                f"  {owner}-service:\\n    environment:\\n",
-                f"  {owner}-service:\\n    environment:\\n"
-                f"      SPRING_DATASOURCE_USERNAME: ${{POSTGRES_{key}_USER:?required}}\\n"
-                f"      SPRING_DATASOURCE_PASSWORD: ${{POSTGRES_{key}_PASSWORD:?required}}\\n"
+                f"  {owner}-service:\n    environment:\n",
+                f"  {owner}-service:\n    environment:\n"
+                f"      SPRING_DATASOURCE_USERNAME: ${{POSTGRES_{key}_USER:?required}}\n"
+                f"      SPRING_DATASOURCE_PASSWORD: ${{POSTGRES_{key}_PASSWORD:?required}}\n"
             ).replace(
-                f"  postgres-{owner}:\\n    environment:\\n",
-                f"  postgres-{owner}:\\n    environment:\\n"
-                f"      POSTGRES_USER: ${{POSTGRES_{key}_USER:?required}}\\n"
-                f"      POSTGRES_PASSWORD: ${{POSTGRES_{key}_PASSWORD:?required}}\\n"
+                f"  postgres-{owner}:\n    environment:\n",
+                f"  postgres-{owner}:\n    environment:\n"
+                f"      POSTGRES_USER: ${{POSTGRES_{key}_USER:?required}}\n"
+                f"      POSTGRES_PASSWORD: ${{POSTGRES_{key}_PASSWORD:?required}}\n"
             )
         self.assertEqual([], check(source))
