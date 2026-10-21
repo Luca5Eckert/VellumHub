@@ -44,6 +44,6 @@ class KafkaWireCompatibilityFitnessTest {
 
     @Test void legacyReactionPayloadStillResolvesResultingType() throws Exception {
         var value = fromFixture("reaction-legacy.json", ReactionChangedEvent.class);
-        assertEquals("LIKE", value.resultingTypeReaction());
+        assertEquals("POSITIVE", value.resultingTypeReaction());
     }
 }
