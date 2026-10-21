@@ -358,4 +358,29 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
                 Long.class, Long.toString(ratingId))).isEqualTo(2L);
     }
 
+    /** AFF-EVT-007: Reaction updates cannot skip the durable aggregate revision. */
+    @Test
+    void reactionRevisionGapDoesNotPersistIdentityOrAdvanceOffset() {
+        UUID user = UUID.randomUUID(), book = UUID.randomUUID();
+        long reactionId = 899992L;
+        saveBookFeature(book);
+        var initial = new com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent(
+                UUID.randomUUID(), Instant.now(), reactionId, user, book,
+                null, "LIKE", "LIKE", 0L);
+        assertThat(engagement.apply(initial)).isEqualTo(EventProcessingOutcome.APPLIED);
+        double score = profiles.findById(user).orElseThrow().getTotalEngagementScore();
+        var future = new com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent(
+                UUID.randomUUID(), Instant.now(), reactionId, user, book,
+                "LIKE", "DISLIKE", "DISLIKE", 2L);
+        assertThatThrownBy(() -> engagement.apply(future))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Missing engagement revision");
+        assertThat(jdbc.queryForObject(
+                "SELECT last_revision FROM engagement_event_offsets WHERE aggregate_type='REACTION' AND aggregate_id=?",
+                Long.class, Long.toString(reactionId))).isZero();
+        assertThat(count("processed_engagement_events", "event_id", future.eventId())).isZero();
+        assertThat(profiles.findById(user).orElseThrow().getTotalEngagementScore())
+                .isEqualTo(score);
+    }
+
 }
