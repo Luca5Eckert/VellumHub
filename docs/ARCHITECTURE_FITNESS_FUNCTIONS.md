@@ -123,3 +123,31 @@ Latest confirmed static boundary workflow passed at commit `e6b1655f981f8e4dab51
 - Baseline `c9a2bb75e822defb03408970f6d7abdddabe45dc`: [Maven and distributed verify](https://github.com/Luca5Eckert/VellumHub/actions/runs/39614547962) and [static architecture / wire fixtures](https://github.com/Luca5Eckert/VellumHub/actions/runs/39614548517) passed.
 - `beedacd785b6a1d53d77564036e247da2a172ee0`: distributed run failed: Reaction test used invalid enum `LIKE` (runtime supports `POSITIVE`, `NEGATIVE`, `VERY_POSITIVE`).
 - `4c2eadb56a1fbce584e44de84f247db9531bb05a`: test corrected; result must be checked at [PR #326](https://github.com/Luca5Eckert/VellumHub/pull/326). Passing on an earlier SHA is not passing on this commit.
+
+## Architecture fitness review / Definition of Done
+
+- **STR-001/002:** Five service-local ArchUnit suites; Catalog negative bytecode fixtures.
+- **BOUND-003:** Python reactor checker plus Maven Enforcer transitive ban, with explicit
+  contract/test support exceptions and an opt-in E2E module.
+- **DATA-004:** Compose enforces distinct per-domain environment variable keys and endpoint
+  wiring; a PostgreSQL Testcontainers negative privilege fixture proves SQLSTATE 42501.
+  Persistent Docker volumes need a deliberate role migration before local rollout.
+- **EVT-005:** Producer-side PostgreSQL rollback test coverage for Book, BookProgress,
+  Rating and Reaction; Catalog publisher tests prove ACK/mark ambiguity, fenced lease
+  reclaim and injected transport timeout followed by real Kafka recovery.
+- **EVT-006:** Recommendation PostgreSQL checkpoints and projection idempotence for Book,
+  BookProgress, Rating and Reaction, including a forced checkpoint failure after a
+  Rating profile update and subsequent retry.
+- **EVT-007:** Per-stream revision gap checks for Book, BookProgress, Rating and Reaction.
+- **CON-008:** Frozen JSON fixtures and schema tests in Kafka contracts; actual Kafka
+  type-header verification in distributed service tests.
+
+Evidence is bounded to **tested code paths**. The older legacy Reaction topic
+does not have stable event IDs or revisions and cannot be made canonically
+idempotent without a migration. Universal DLT replay and deployment-specific
+network policies are independent concerns and are **not** asserted by these
+fitness functions. See `docs/REACTION_EVENT_CONTRACTS.md` and issue #272.
+
+All CI claims must cite the exact run and commit. Passing earlier commits does
+not validate the latest branch HEAD; leave this record as implementation evidence
+until the PR checks finish.

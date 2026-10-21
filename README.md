@@ -449,3 +449,28 @@ See [Google identity linkage runbook](docs/SECURITY_GOOGLE_IDENTITY.md) for rout
 ### JWKS distribution and RFC 9068 access tokens (security issues #304/#305)
 
 The security upgrade in draft PR #321 moves from a fixed public-key verifier to a trusted JWKS endpoint inside the User Service and changes JWT subject to an immutable user UUID. A shared `lib/jwt-security` module validates issuer, audience, type, algorithms and claims in all services; only User Service holds signing material. This is **not** an implemented OAuth/OIDC Authorization Server or evidence of production deployment. Deployment, rotation, emergency handling and bounded coexistence of `user_id` are documented in [JWKS/RFC 9068 runbook](docs/SECURITY_JWKS_RFC9068.md). The original [RS256 cutover runbook](docs/SECURITY_RS256.md) describes the completed cryptographic prerequisite (#163).
+
+## Architecture fitness and regression gates
+
+The architecture is protected by executable rules rather than package conventions alone:
+ArchUnit checks service-specific domain boundaries and module cycles; Maven Enforcer checks
+transitive dependencies between deployable services; Python checks the Maven reactor and
+isolated local Compose database wiring. Distributed PostgreSQL and Kafka Testcontainers tests
+verify Outbox atomicity, publisher retry, checkpoint rollback, revision gaps and canonical
+event contract compatibility.
+
+Run from the reactor root:
+
+```bash
+python -m unittest discover -s tools/architecture -p 'test_*.py' -v
+python tools/architecture/check_service_boundaries.py
+python tools/architecture/check_database_ownership.py
+mvn -B verify
+mvn -B -Pdistributed-e2e verify
+```
+
+The distributed suite requires a working Docker daemon. These tests enforce specific
+invariants, not global exactly-once delivery, guaranteed DLT replay, or production rollout.
+New developers should read [the architecture fitness guide](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md),
+[distributed testing](docs/DISTRIBUTED_TESTING.md) and
+[database ownership migration](docs/DATABASE_OWNERSHIP_MIGRATION.md).

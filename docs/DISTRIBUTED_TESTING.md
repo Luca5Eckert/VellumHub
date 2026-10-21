@@ -203,3 +203,17 @@ Toxiproxy, network latency/fault injection, metrics-level retry assertions, and 
 ## Ordered Kafka recovery (#272)
 
 `OrderedKafkaRecoveryTest` verifies bounded policy construction and the installed record/rebalance callbacks. The extended Recommendation distributed idempotency test sends an intentionally failing canonical Book event to actual Kafka and verifies the DLT provenance headers, durable quarantine and absence of committed projection checkpoints. The recovery CLI additionally defaults to dry run. See [Kafka Recovery Runbook](KAFKA_RECOVERY_RUNBOOK.md) for crash-window and reprocessing limitations.
+
+## Architecture Fitness Functions #323/#324
+
+Distributed invariant tests reuse the existing Kafka and PostgreSQL Testcontainers infrastructure.
+Catalog verifies Book and BookProgress Outbox rollback, Kafka publication, retry and fencing;
+Engagement verifies Rating and Reaction Outbox rollback and ordered publisher claims;
+Recommendation verifies durable consumer idempotency, revision gaps and atomic projection/
+checkpoint behavior under injected SQL failures. Contract fixtures live in
+`lib/kafka-contracts/src/test/resources/contract-fixtures/v1`.
+
+For full command lines, an evidence matrix per canonical stream and deliberate non-guarantees,
+see [Architecture Fitness Functions](ARCHITECTURE_FITNESS_FUNCTIONS.md).
+Tests prove **at-least-once delivery with idempotent effects in the covered paths**, not
+exactly-once publication or universal dead-letter replay.
