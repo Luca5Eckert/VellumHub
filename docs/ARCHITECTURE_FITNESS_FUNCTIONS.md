@@ -81,6 +81,7 @@ New test scenarios added to the existing suites:
 - Catalog: lease expiration and stale claim token prevent obsolete ACKs from marking an event published.
 - Catalog Kafka/PostgreSQL: ACK received, PUBLISHED marking deliberately fails, recovery republishes same event ID.
 - Recommendation: tests for Book/ReadingProgress revision gaps against persistent checkpoints.
+- Recommendation: Rating revision-gap regression fixture now asserts unchanged projection, uncommitted event identity, retained offset and eventual application of revision N+1 after N.
 - Existing Recommendation distributed idempotency tests are labeled as AFF-EVT-006 and retain real Kafka/PostgreSQL coverage.
 
 Remaining proof obligations include exhaustive consumer/stream coverage, Kafka broker unavailability after business commit, consumer crash windows, and complete DLT/recovery boundaries. At-least-once delivery is expected; **no globally exactly-once claim**.

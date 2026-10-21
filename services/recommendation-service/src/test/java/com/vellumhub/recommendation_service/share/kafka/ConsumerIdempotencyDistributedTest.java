@@ -321,4 +321,41 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
         return new BookChangedEvent(UUID.randomUUID(),Instant.now(),id,0,
                 BookChangedEvent.Kind.CREATED,snapshot);
     }
+    /** AFF-EVT-007: Rating updates cannot skip persisted revisions. */
+    @Test
+    void ratingRevisionGapDoesNotChangeProfileCheckpointOrProcessedIdentity() {
+        UUID user = UUID.randomUUID(), book = UUID.randomUUID();
+        long ratingId = 899991L;
+        saveBookFeature(book);
+        var created = new RatingCreatedEvent(UUID.randomUUID(), Instant.now(),
+                ratingId, user, book, 4, 0);
+        assertThat(engagement.apply(created)).isEqualTo(EventProcessingOutcome.APPLIED);
+        double initialScore = profiles.findById(user).orElseThrow().getTotalEngagementScore();
+
+        var future = new com.vellumhub.kafka.contracts.engagement.RatingUpdatedEvent(
+                UUID.randomUUID(), Instant.now(), ratingId, user, book,
+                4, 1, false, 2);
+        assertThatThrownBy(() -> engagement.apply(future))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Missing engagement revision");
+        assertThat(jdbc.queryForObject(
+                "SELECT last_revision FROM engagement_event_offsets WHERE aggregate_type='RATING' AND aggregate_id=?",
+                Long.class, Long.toString(ratingId))).isZero();
+        assertThat(count("processed_engagement_events", "event_id", future.eventId())).isZero();
+        assertThat(profiles.findById(user).orElseThrow().getTotalEngagementScore())
+                .isEqualTo(initialScore);
+
+        var next = new com.vellumhub.kafka.contracts.engagement.RatingUpdatedEvent(
+                UUID.randomUUID(), Instant.now(), ratingId, user, book,
+                4, 3, false, 1);
+        assertThat(engagement.apply(next)).isEqualTo(EventProcessingOutcome.APPLIED);
+        assertThat(jdbc.queryForObject(
+                "SELECT last_revision FROM engagement_event_offsets WHERE aggregate_type='RATING' AND aggregate_id=?",
+                Long.class, Long.toString(ratingId))).isEqualTo(1L);
+        assertThat(engagement.apply(future)).isEqualTo(EventProcessingOutcome.APPLIED);
+        assertThat(jdbc.queryForObject(
+                "SELECT last_revision FROM engagement_event_offsets WHERE aggregate_type='RATING' AND aggregate_id=?",
+                Long.class, Long.toString(ratingId))).isEqualTo(2L);
+    }
+
 }
