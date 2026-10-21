@@ -77,6 +77,7 @@ sequenceDiagram
 New test scenarios added to the existing suites:
 
 - Catalog and Engagement: Outbox insert constraint failure rolls back simultaneous domain writes.
+- Catalog: transport timeout injected after durable append, retry state preserved in real PostgreSQL; healthy production Kafka transport publishes the original event ID after recovery. This simulates broker unavailability at the transport boundary, not an actual network partition of the Kafka container.
 - Catalog: lease expiration and stale claim token prevent obsolete ACKs from marking an event published.
 - Catalog Kafka/PostgreSQL: ACK received, PUBLISHED marking deliberately fails, recovery republishes same event ID.
 - Recommendation: tests for Book/ReadingProgress revision gaps against persistent checkpoints.

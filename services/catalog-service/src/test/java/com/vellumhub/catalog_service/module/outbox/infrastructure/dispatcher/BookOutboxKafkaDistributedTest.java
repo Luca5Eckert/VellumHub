@@ -133,5 +133,72 @@ class BookOutboxKafkaDistributedTest extends KafkaIntegrationTestSupport {
         }
     }
 
+    /**
+     * AFF-EVT-005: a transport outage after the local commit must not lose the
+     * durable outbox intent. Once delivery becomes available, the exact event
+     * identity is published without repeating the domain transaction.
+     *
+     * Failure is injected at the transport boundary; recovery uses real Kafka
+     * and the production transport implementation.
+     */
+    @Test void brokerTransportFailurePreservesCommittedOutboxUntilRecovery() {
+        var props = new java.util.HashMap<String,Object>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA.getBootstrapServers());
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        props.put("spring.json.add.type.headers", true);
+        props.put("spring.json.type.mapping",
+                "book_changed_event:com.vellumhub.kafka.contracts.book.BookChangedEvent");
+        var producerFactory = new DefaultKafkaProducerFactory<String,Object>(props);
+        try {
+            UUID book = UUID.randomUUID(), eventId = UUID.randomUUID();
+            var fact = new BookChangedEvent(eventId, Instant.now(), book, 0,
+                    BookChangedEvent.Kind.CREATED,
+                    new BookChangedEvent.State("Outage book", "SF", 2026, null,
+                            "Author", "ISBN", 100, "Publisher", List.of("SF")));
+            var store = new JdbcOutboxStore(jdbc);
+            new JdbcOutboxWriter(jdbc).append(OutboxMessage.book(fact));
+
+            var unavailable = org.mockito.Mockito.mock(KafkaOutboxTransport.class);
+            org.mockito.Mockito.when(unavailable.send(org.mockito.ArgumentMatchers.any()))
+                    .thenReturn(java.util.concurrent.CompletableFuture.failedFuture(
+                            new org.apache.kafka.common.errors.TimeoutException("broker unavailable")));
+            var failedDispatcher = new OutboxDispatcher(store, unavailable, new SimpleMeterRegistry());
+            failedDispatcher.dispatch();
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                assertThat(jdbc.queryForObject(
+                        "SELECT status FROM outbox_events WHERE event_id=?", String.class, eventId))
+                        .isEqualTo("PENDING");
+                assertThat(jdbc.queryForObject(
+                        "SELECT attempts FROM outbox_events WHERE event_id=?", Integer.class, eventId))
+                        .isGreaterThanOrEqualTo(1);
+            });
+
+            // Retry backoff is advanced explicitly, without sleeping or
+            // relying on any scheduler to wake up.
+            jdbc.update("UPDATE outbox_events SET next_attempt_at=now() WHERE event_id=?", eventId);
+            try (var probe = KafkaProbe.subscribe(KAFKA.getBootstrapServers(),
+                    KafkaTopics.BOOK_EVENTS, "outage-recovery-aff")) {
+                var healthyDispatcher = new OutboxDispatcher(store,
+                        new KafkaOutboxTransport(new KafkaTemplate<>(producerFactory)),
+                        new SimpleMeterRegistry());
+                healthyDispatcher.dispatch();
+                var delivered = probe.awaitRecord(KafkaTopics.BOOK_EVENTS, book.toString(),
+                        ASYNC_TIMEOUT, ASYNC_POLL_INTERVAL);
+                assertThat(new String(delivered.value(), StandardCharsets.UTF_8))
+                        .contains(eventId.toString());
+                await().atMost(Duration.ofSeconds(15)).untilAsserted(() ->
+                        assertThat(jdbc.queryForObject(
+                                "SELECT status FROM outbox_events WHERE event_id=?",
+                                String.class, eventId)).isEqualTo("PUBLISHED"));
+                assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM outbox_events WHERE event_id=?",
+                        Integer.class, eventId)).isEqualTo(1);
+            }
+        } finally {
+            producerFactory.destroy();
+        }
+    }
+
 }
 
