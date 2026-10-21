@@ -1,4 +1,4 @@
-package com.vellumhub.recommendation_service.module.book_feature.domain.port;
+package com.vellumhub.recommendation_service.module.recommendation.domain.port;
 
 import com.vellumhub.recommendation_service.module.recommendation.domain.model.Recommendation;
 import org.springframework.web.bind.annotation.RequestBody;

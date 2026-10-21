@@ -59,7 +59,7 @@ fi
 echo ""
 echo -e "${BLUE}Test 2: Catalog Client Port${NC}"
 
-catalog_client_port="$PROJECT_ROOT/services/recommendation-service/src/main/java/com/vellumhub/recommendation_service/module/book_feature/domain/port/CatalogClient.java"
+catalog_client_port="$PROJECT_ROOT/services/recommendation-service/src/main/java/com/vellumhub/recommendation_service/module/recommendation/domain/port/CatalogClient.java"
 
 if [ -f "$catalog_client_port" ]; then
     print_result "CatalogClient Port" "PASS" "Catalog client port exists"
