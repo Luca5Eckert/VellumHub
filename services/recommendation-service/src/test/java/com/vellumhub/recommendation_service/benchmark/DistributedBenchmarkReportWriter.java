@@ -62,6 +62,7 @@ final class DistributedBenchmarkReportWriter {
                 .append("Successful reads: ").append(autonomy.successfulReads()).append("/")
                 .append(autonomy.requestedReads()).append(" (")
                 .append(percent(autonomy.successRate())).append(")  \n")
+                .append("AFF-REC-009 outbound HTTP attempts: ").append(autonomy.outboundHttpAttempts()).append("  \n")
                 .append("Latency: p50 ").append(millis(autonomy.latency().p50Millis()))
                 .append(" · p95 ").append(millis(autonomy.latency().p95Millis()))
                 .append(" · p99 ").append(millis(autonomy.latency().p99Millis())).append("\n\n")

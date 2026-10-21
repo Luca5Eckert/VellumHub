@@ -45,8 +45,8 @@ public abstract class DistributedIntegrationTestSupport extends KafkaPgvectorInt
         registry.add("jwt.public-key-location", () -> "classpath:security/test-public.pem");
         registry.add("server.port", () -> "0");
 
-        registry.add("catalog-service.ribbon.listOfServers", () -> "http://127.0.0.1:1");
-        registry.add("user-service.ribbon.listOfServers", () -> "http://127.0.0.1:1");
-        registry.add("engagement-service.ribbon.listOfServers", () -> "http://127.0.0.1:1");
+        registry.add("catalog-service.ribbon.listOfServers", UnavailableUpstreamProbe::endpoint);
+        registry.add("user-service.ribbon.listOfServers", UnavailableUpstreamProbe::endpoint);
+        registry.add("engagement-service.ribbon.listOfServers", UnavailableUpstreamProbe::endpoint);
     }
 }

@@ -1,6 +1,7 @@
 package com.vellumhub.recommendation_service.benchmark;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vellumhub.recommendation_service.support.UnavailableUpstreamProbe;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.book.CreateBookEvent;
@@ -36,6 +37,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -131,7 +134,12 @@ class DistributedRecommendationBenchmarkIT extends DistributedIntegrationTestSup
                     assertThat(result.unexpectedDltEvents()).isZero();
                     assertThat(result.catchUpTimeMillis()).isLessThan(BENCHMARK_TIMEOUT.toMillis());
                 });
-        assertThat(readExecution.result().successRate()).isEqualTo(1.0);
+        assertThat(readExecution.result().successRate())
+                .as("AFF-REC-009: authenticated reads must return correct materialized IDs")
+                .isEqualTo(1.0);
+        assertThat(readExecution.result().outboundHttpAttempts())
+                .as("AFF-REC-009: synchronous upstream HTTP attempts are forbidden, even with fallback")
+                .isZero();
         assertThat(output.resolve("run-metadata.json")).exists();
         assertThat(output.resolve("raw-results.json")).exists();
         assertThat(output.resolve("summary.md")).exists();
@@ -274,15 +282,18 @@ class DistributedRecommendationBenchmarkIT extends DistributedIntegrationTestSup
         ).get(5, TimeUnit.SECONDS);
         awaitProjections(List.of(profileSignal));
 
+        Set<UUID> expectedIds = new HashSet<>(books);
+        long initialOutboundAttempts = UnavailableUpstreamProbe.attempts();
+
         for (int index = 0; index < configuration.readWarmupRequests(); index++) {
-            DistributedBenchmarkReport.ReadMeasurement warmup = recommendationRead(readUserId, -1 - index);
+            DistributedBenchmarkReport.ReadMeasurement warmup = recommendationRead(readUserId, -1 - index, expectedIds);
             assertThat(warmup.httpStatus()).isEqualTo(200);
             assertThat(warmup.resultCount()).isPositive();
         }
 
         List<DistributedBenchmarkReport.ReadMeasurement> measurements = new ArrayList<>();
         for (int index = 0; index < configuration.readMeasuredRequests(); index++) {
-            measurements.add(recommendationRead(readUserId, index));
+            measurements.add(recommendationRead(readUserId, index, expectedIds));
         }
 
         int successful = (int) measurements.stream()
@@ -295,8 +306,9 @@ class DistributedRecommendationBenchmarkIT extends DistributedIntegrationTestSup
                         .toList()
         );
 
-        String upstreamMode = "User, Catalog, and Engagement are intentionally not started; "
-                + "their test endpoints resolve to 127.0.0.1:1. Reads execute only against Recommendation local projections.";
+        long outboundAttempts = UnavailableUpstreamProbe.attempts() - initialOutboundAttempts;
+        String upstreamMode = "User, Catalog and Engagement do not run. Their configured endpoints "
+                + "are an instrumented loopback HTTP 503 canary; all connection attempts are counted.";
 
         return new ReadExecution(
                 List.copyOf(measurements),
@@ -305,7 +317,8 @@ class DistributedRecommendationBenchmarkIT extends DistributedIntegrationTestSup
                         successful,
                         successful / (double) measurements.size(),
                         latency,
-                        upstreamMode
+                        upstreamMode,
+                        outboundAttempts
                 )
         );
     }
@@ -355,7 +368,7 @@ class DistributedRecommendationBenchmarkIT extends DistributedIntegrationTestSup
         throw new IllegalStateException("Timed out materializing recommendation catalog");
     }
 
-    private DistributedBenchmarkReport.ReadMeasurement recommendationRead(UUID userId, int index) {
+    private DistributedBenchmarkReport.ReadMeasurement recommendationRead(UUID userId, int index, Set<UUID> expectedIds) {
         long started = System.nanoTime();
         try {
             var result = mockMvc.perform(get("/recommendations")
@@ -369,9 +382,23 @@ class DistributedRecommendationBenchmarkIT extends DistributedIntegrationTestSup
 
             double latencyMillis = nanosToMillis(System.nanoTime() - started);
             int status = result.getResponse().getStatus();
-            int resultCount = status == 200
-                    ? objectMapper.readTree(result.getResponse().getContentAsString()).size()
-                    : 0;
+            int resultCount = 0;
+            if (status == 200) {
+                var payload = objectMapper.readTree(result.getResponse().getContentAsString());
+                if (!payload.isArray() || payload.isEmpty()) {
+                    throw new IllegalStateException("AFF-REC-009: missing materialized recommendations");
+                }
+                for (var recommendation : payload) {
+                    if (!recommendation.hasNonNull("id") || !recommendation.hasNonNull("title")) {
+                        throw new IllegalStateException("AFF-REC-009: malformed recommendation");
+                    }
+                    UUID id = UUID.fromString(recommendation.get("id").asText());
+                    if (!expectedIds.contains(id) || !recommendation.get("title").asText().startsWith("Benchmark Book ")) {
+                        throw new IllegalStateException("AFF-REC-009: response contains an unexpected projection: " + id);
+                    }
+                    resultCount++;
+                }
+            }
             return new DistributedBenchmarkReport.ReadMeasurement(
                     index, status, latencyMillis, resultCount, null
             );
