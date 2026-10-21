@@ -52,7 +52,7 @@ def check(root: Path) -> list[str]:
 
 
 def main() -> int:
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     findings = check(root)
     if findings:
         print("\n".join(findings), file=sys.stderr)
