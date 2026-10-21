@@ -1,0 +1,63 @@
+name: Architecture fitness (static boundaries)
+
+on:
+  pull_request:
+    paths:
+      - 'pom.xml'
+      - 'services/**/pom.xml'
+      - 'services/**/src/**'
+      - 'tools/architecture/**'
+      - 'docker-compose.yml'
+      - 'lib/kafka-contracts/**'
+      - '.github/workflows/architecture-fitness.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'pom.xml'
+      - 'services/**/pom.xml'
+      - 'services/**/src/**'
+      - 'tools/architecture/**'
+
+jobs:
+  boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Negative fixtures and boundary rules
+        run: |
+          python -m unittest discover -s tools/architecture -p 'test_*.py' -v
+          python tools/architecture/check_service_boundaries.py
+          python tools/architecture/check_database_ownership.py
+
+  archunit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Run five service architecture suites
+        run: >-
+          mvn -B
+          -pl services/catalog-service,services/engagement-service,services/user-service,services/recommendation-service,services/gateway-service
+          -am
+          -Dtest='*ArchitectureFitnessTest'
+          -Dsurefire.failIfNoSpecifiedTests=false
+          test
+
+  kafka-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Run canonical wire compatibility fixtures
+        run: mvn -B -f lib/kafka-contracts/pom.xml test

@@ -8,7 +8,6 @@ import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
-import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,7 +88,7 @@ public class CreateBookHandler {
      */
     private Genre findGenre(String name) {
         return genreRepository.findByName(name)
-                .orElseThrow(() -> new BookRequestDomainException("Genre not found: " + name));
+                .orElseThrow(() -> new InvalidBookException("Genre not found: " + name));
     }
 
 }

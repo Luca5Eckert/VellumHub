@@ -11,7 +11,6 @@ import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
 import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequest;
-import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -92,7 +91,7 @@ class UpdateBookHandlerTest {
         when(genres.findByName("missing")).thenReturn(Optional.empty());
         assertThatThrownBy(()->handler.execute(id,new UpdateBookRequest(
             null,null,0,null,null,null,0,null,Set.of("missing"))))
-            .isInstanceOf(BookRequestDomainException.class);
+            .isInstanceOf(InvalidBookException.class);
         verifyNoInteractions(changes);
     }
 }

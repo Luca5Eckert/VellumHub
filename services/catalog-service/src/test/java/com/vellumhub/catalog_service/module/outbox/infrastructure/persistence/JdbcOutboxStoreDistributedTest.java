@@ -68,5 +68,25 @@ class JdbcOutboxStoreDistributedTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM outbox_events WHERE aggregate_id=?",
                 Integer.class,aggregate)).isZero();
     }
+    /** AFF-EVT-005/007: lease expiry must fence a stale publisher confirmation. */
+    @Test void leaseExpiryReclaimsEventAndRejectsStaleAck() {
+        var message = event(UUID.randomUUID(), 0);
+        writer.append(message);
+        var first = store.claimNext(Duration.ofSeconds(30)).orElseThrow();
+        jdbc.update("UPDATE outbox_events SET lease_until=now() - interval '1 second' WHERE event_id=?",
+                first.eventId());
+
+        var recovered = store.claimNext(Duration.ofSeconds(30)).orElseThrow();
+        assertThat(recovered.eventId()).isEqualTo(first.eventId());
+        assertThat(recovered.claimToken()).isNotEqualTo(first.claimToken());
+
+        store.published(first.eventId(), first.claimToken());
+        assertThat(jdbc.queryForObject("SELECT status FROM outbox_events WHERE event_id=?",
+                String.class, first.eventId())).isEqualTo("IN_FLIGHT");
+
+        store.published(recovered.eventId(), recovered.claimToken());
+        assertThat(jdbc.queryForObject("SELECT status FROM outbox_events WHERE event_id=?",
+                String.class, recovered.eventId())).isEqualTo("PUBLISHED");
+    }
 }
 

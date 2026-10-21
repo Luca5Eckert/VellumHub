@@ -9,7 +9,6 @@ import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
-import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -143,7 +142,7 @@ class CreateBookHandlerTest {
         }
 
         @Test
-        @DisplayName("Should throw BookRequestDomainException when genre does not exist")
+        @DisplayName("Should throw InvalidBookException when genre does not exist")
         void shouldThrowExceptionWhenGenreNotFound() {
             var command = new CreateBookCommand(
                     "Title", "Desc", 2024, "Author", "ISBN",
@@ -156,7 +155,7 @@ class CreateBookHandlerTest {
             given(genreRepository.findByName("Unknown Genre")).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> createBookHandler.execute(command))
-                    .isInstanceOf(BookRequestDomainException.class)
+                    .isInstanceOf(InvalidBookException.class)
                     .hasMessageContaining("Genre not found: Unknown Genre");
 
             then(bookRepository).should(never()).save(any());

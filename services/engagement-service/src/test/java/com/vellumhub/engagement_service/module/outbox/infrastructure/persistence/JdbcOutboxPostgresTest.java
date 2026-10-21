@@ -70,5 +70,47 @@ class JdbcOutboxPostgresTest {
         assertThat(next.eventId()).isEqualTo(two.eventId());
         store.published(next.eventId(),next.claimToken());
     }
+    /** AFF-EVT-005: database failure while inserting Outbox cannot commit a rating. */
+    @Test void outboxConstraintFailureRollsBackRating() {
+        var existing = message(603L, 5, 0);
+        writer.append(existing);
+        var transaction = new TransactionTemplate(new DataSourceTransactionManager(ds));
+        assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
+            jdbc.update("INSERT INTO rating(id,user_id,book_id,stars,version) VALUES(?,?,?,?,0)",
+                    603L, UUID.randomUUID(), UUID.randomUUID(), 5);
+            writer.append(existing);
+        })).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM rating WHERE id=603",
+                Integer.class)).isZero();
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM outbox_events WHERE event_id=?",
+                Integer.class, existing.eventId())).isEqualTo(1);
+    }
+    /** AFF-EVT-005: Reaction state and outbox intent share an atomic transaction. */
+    @Test void outboxConstraintFailureRollsBackReactionMutation() {
+        long reactionId = 899995L;
+        UUID user = UUID.randomUUID(), book = UUID.randomUUID();
+        var fact = new com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent(
+                UUID.randomUUID(), Instant.now(), reactionId, user, book,
+                null, "POSITIVE", "POSITIVE", 0L);
+        var duplicate = new OutboxMessage(fact.eventId(), "REACTION",
+                Long.toString(reactionId), 0, "ReactionChangedEvent",
+                KafkaTopics.ENGAGEMENT_REACTIONS, user.toString(), fact);
+        writer.append(duplicate);
+
+        var transaction = new TransactionTemplate(new DataSourceTransactionManager(ds));
+        assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
+            jdbc.update("""
+                    INSERT INTO reactions(id,user_id,type_reaction) VALUES (?,?,?)
+                    """, reactionId, user, "POSITIVE");
+            writer.append(duplicate);
+        })).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM reactions WHERE id=?", Integer.class, reactionId)).isZero();
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM outbox_events WHERE event_id=?",
+                Integer.class, duplicate.eventId())).isEqualTo(1);
+    }
+
 }
 

@@ -1,7 +1,6 @@
 package com.vellumhub.recommendation_service.share.kafka;
 
 import com.vellumhub.testing.distributed.kafka.KafkaProbe;
-import com.vellumhub.testing.distributed.kafka.KafkaProbe;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.recommendation_service.share.application.EventProcessingOutcome;
 import com.vellumhub.kafka.contracts.KafkaTopics;
@@ -19,6 +18,7 @@ import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.recommendation_service.support.DistributedIntegrationTestSupport;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,6 +107,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — Book redelivery has one durable effect")
     void bookRedeliveryDoesNotRebuildVectorAndPersistsEventIdentity() {
         var event=bookEvent(UUID.randomUUID());
         assertThat(books.execute(event)).isEqualTo(EventProcessingOutcome.APPLIED);
@@ -117,6 +118,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — failed projection rolls back checkpoint")
     void failedBookProjectionRollsBackBothCheckpointAndProcessedEvent() {
         var event=bookEvent(UUID.randomUUID());
         when(embeddings.of(any(),any(),any(),any()))
@@ -145,6 +147,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — ReadingProgress redelivery is idempotent")
     void readingProgressRedeliveryCannotIncreaseUserProfileTwice() {
         UUID user=UUID.randomUUID(),book=UUID.randomUUID(),aggregate=UUID.randomUUID();
         saveBookFeature(book);
@@ -158,6 +161,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — missing dependency prevents checkpoint")
     void missingBookFeatureRollsBackReadingProgressCheckpoint() {
         var event=new ReadingProgressChangedEvent(UUID.randomUUID(),Instant.now(),UUID.randomUUID(),
                 UUID.randomUUID(),UUID.randomUUID(),"READING",0,80,0,
@@ -170,6 +174,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — event identity collision rejects second aggregate")
     void engagementIdentityCollisionDoesNotAcknowledgeSecondAggregate() {
         UUID id=UUID.randomUUID(),user=UUID.randomUUID(),book=UUID.randomUUID();
         saveBookFeature(book);
@@ -220,6 +225,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — Kafka redelivery has no duplicate rating effect")
     void ratingRedeliveryThroughRealKafkaIsAcknowledgedWithoutAnotherProfileDelta() throws Exception {
         UUID id=UUID.randomUUID(),user=UUID.randomUUID(),book=UUID.randomUUID();
         saveBookFeature(book);
@@ -252,6 +258,40 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
         assertThat(profiles.findById(user).orElseThrow().getTotalEngagementScore()).isEqualTo(score);
     }
 
+
+    /** AFF-EVT-007: a future Book revision must not advance the durable offset. */
+    @Test
+    void bookRevisionGapDoesNotAdvancePostgresCheckpoint() {
+        UUID bookId = UUID.randomUUID();
+        var initial = bookEvent(bookId);
+        assertThat(books.execute(initial)).isEqualTo(EventProcessingOutcome.APPLIED);
+        var future = new BookChangedEvent(UUID.randomUUID(), Instant.now(), bookId, 3,
+                BookChangedEvent.Kind.UPDATED, initial.state());
+        assertThatThrownBy(() -> books.execute(future)).isInstanceOf(IllegalStateException.class);
+        assertThat(count("book_event_offsets", "book_id", bookId)).isEqualTo(1);
+        assertThat(count("processed_events", "event_id", future.eventId())).isZero();
+        verify(embeddings, times(1)).of(any(), any(), any(), any());
+    }
+
+    /** AFF-EVT-007: reading progress must not jump over a missing revision. */
+    @Test
+    void readingProgressRevisionGapDoesNotChangeProfileOrCheckpoint() {
+        UUID userId = UUID.randomUUID(), bookId = UUID.randomUUID(), aggregateId = UUID.randomUUID();
+        saveBookFeature(bookId);
+        var initial = new ReadingProgressChangedEvent(UUID.randomUUID(), Instant.now(),
+                aggregateId, userId, bookId, "READING", 0, 40, 0,
+                ReadingProgressChangedEvent.Kind.CREATED);
+        assertThat(progress.execute(initial)).isEqualTo(EventProcessingOutcome.APPLIED);
+        double score = profiles.findById(userId).orElseThrow().getTotalEngagementScore();
+        var future = new ReadingProgressChangedEvent(UUID.randomUUID(), Instant.now(),
+                aggregateId, userId, bookId, "READING", 40, 80, 3,
+                ReadingProgressChangedEvent.Kind.UPDATED);
+        assertThatThrownBy(() -> progress.execute(future)).isInstanceOf(IllegalStateException.class);
+        assertThat(count("reading_progress_offsets", "aggregate_id", aggregateId)).isEqualTo(1);
+        assertThat(count("processed_events", "event_id", future.eventId())).isZero();
+        assertThat(profiles.findById(userId).orElseThrow().getTotalEngagementScore()).isEqualTo(score);
+    }
+
     private double duplicateCount() {
         var counter=registry.find(VellumHubMetrics.KAFKA_EVENTS_DUPLICATE)
                 .tags("topic","engagement-events","event_type","RatingCreatedEvent",
@@ -281,4 +321,134 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
         return new BookChangedEvent(UUID.randomUUID(),Instant.now(),id,0,
                 BookChangedEvent.Kind.CREATED,snapshot);
     }
+    /** AFF-EVT-007: Rating updates cannot skip persisted revisions. */
+    @Test
+    void ratingRevisionGapDoesNotChangeProfileCheckpointOrProcessedIdentity() {
+        UUID user = UUID.randomUUID(), book = UUID.randomUUID();
+        long ratingId = 899991L;
+        saveBookFeature(book);
+        var created = new RatingCreatedEvent(UUID.randomUUID(), Instant.now(),
+                ratingId, user, book, 4, 0);
+        assertThat(engagement.apply(created)).isEqualTo(EventProcessingOutcome.APPLIED);
+        double initialScore = profiles.findById(user).orElseThrow().getTotalEngagementScore();
+
+        var future = new com.vellumhub.kafka.contracts.engagement.RatingUpdatedEvent(
+                UUID.randomUUID(), Instant.now(), ratingId, user, book,
+                4, 1, false, 2);
+        assertThatThrownBy(() -> engagement.apply(future))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Missing engagement revision");
+        assertThat(jdbc.queryForObject(
+                "SELECT last_revision FROM engagement_event_offsets WHERE aggregate_type='RATING' AND aggregate_id=?",
+                Long.class, Long.toString(ratingId))).isZero();
+        assertThat(count("processed_engagement_events", "event_id", future.eventId())).isZero();
+        assertThat(profiles.findById(user).orElseThrow().getTotalEngagementScore())
+                .isEqualTo(initialScore);
+
+        var next = new com.vellumhub.kafka.contracts.engagement.RatingUpdatedEvent(
+                UUID.randomUUID(), Instant.now(), ratingId, user, book,
+                4, 3, false, 1);
+        assertThat(engagement.apply(next)).isEqualTo(EventProcessingOutcome.APPLIED);
+        assertThat(jdbc.queryForObject(
+                "SELECT last_revision FROM engagement_event_offsets WHERE aggregate_type='RATING' AND aggregate_id=?",
+                Long.class, Long.toString(ratingId))).isEqualTo(1L);
+        assertThat(engagement.apply(future)).isEqualTo(EventProcessingOutcome.APPLIED);
+        assertThat(jdbc.queryForObject(
+                "SELECT last_revision FROM engagement_event_offsets WHERE aggregate_type='RATING' AND aggregate_id=?",
+                Long.class, Long.toString(ratingId))).isEqualTo(2L);
+    }
+
+    /** AFF-EVT-007: Reaction updates cannot skip the durable aggregate revision. */
+    @Test
+    void reactionRevisionGapDoesNotPersistIdentityOrAdvanceOffset() {
+        UUID user = UUID.randomUUID(), book = UUID.randomUUID();
+        long reactionId = 899992L;
+        saveBookFeature(book);
+        var initial = new com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent(
+                UUID.randomUUID(), Instant.now(), reactionId, user, book,
+                null, "POSITIVE", "POSITIVE", 0L);
+        assertThat(engagement.apply(initial)).isEqualTo(EventProcessingOutcome.APPLIED);
+        double score = profiles.findById(user).orElseThrow().getTotalEngagementScore();
+        var future = new com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent(
+                UUID.randomUUID(), Instant.now(), reactionId, user, book,
+                "POSITIVE", "NEGATIVE", "NEGATIVE", 2L);
+        assertThatThrownBy(() -> engagement.apply(future))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Missing engagement revision");
+        assertThat(jdbc.queryForObject(
+                "SELECT last_revision FROM engagement_event_offsets WHERE aggregate_type='REACTION' AND aggregate_id=?",
+                Long.class, Long.toString(reactionId))).isZero();
+        assertThat(count("processed_engagement_events", "event_id", future.eventId())).isZero();
+        assertThat(profiles.findById(user).orElseThrow().getTotalEngagementScore())
+                .isEqualTo(score);
+    }
+
+    /** AFF-EVT-006: replay of a committed Reaction is a durable no-op. */
+    @Test
+    void reactionRedeliveryPreservesProfileAndSingleCheckpoint() {
+        UUID user = UUID.randomUUID(), book = UUID.randomUUID();
+        long reactionId = 899993L;
+        saveBookFeature(book);
+        var event = new com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent(
+                UUID.randomUUID(), Instant.now(), reactionId, user, book,
+                null, "POSITIVE", "POSITIVE", 0L);
+        assertThat(engagement.apply(event)).isEqualTo(EventProcessingOutcome.APPLIED);
+        double score = profiles.findById(user).orElseThrow().getTotalEngagementScore();
+        assertThat(engagement.apply(event)).isEqualTo(EventProcessingOutcome.DUPLICATE);
+        assertThat(count("processed_engagement_events", "event_id", event.eventId()))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                "SELECT last_revision FROM engagement_event_offsets WHERE aggregate_type='REACTION' AND aggregate_id=?",
+                Long.class, Long.toString(reactionId))).isZero();
+        assertThat(profiles.findById(user).orElseThrow().getTotalEngagementScore())
+                .isEqualTo(score);
+    }
+
+    /**
+     * AFF-EVT-006: a database failure AFTER the profile delta but BEFORE the
+     * durable checkpoint must roll the entire consumer transaction back.
+     */
+    @Test
+    void checkpointWriteFailureRollsBackRatingProfileAndCanBeRetried() {
+        long ratingId = 899994L;
+        UUID user = UUID.randomUUID(), book = UUID.randomUUID();
+        saveBookFeature(book);
+        var fact = new RatingCreatedEvent(UUID.randomUUID(), Instant.now(),
+                ratingId, user, book, 5, 0);
+        jdbc.execute("""
+                CREATE OR REPLACE FUNCTION aff_reject_rating_checkpoint()
+                RETURNS trigger AS $$
+                BEGIN
+                  IF NEW.aggregate_type = 'RATING' AND NEW.aggregate_id = '899994' THEN
+                    RAISE EXCEPTION 'AFF-EVT-006 checkpoint failure';
+                  END IF;
+                  RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql
+                """);
+        jdbc.execute("""
+                CREATE TRIGGER aff_reject_rating_checkpoint_trigger
+                BEFORE UPDATE OF last_revision ON engagement_event_offsets
+                FOR EACH ROW EXECUTE FUNCTION aff_reject_rating_checkpoint()
+                """);
+        try {
+            assertThatThrownBy(() -> engagement.apply(fact))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("AFF-EVT-006 checkpoint failure");
+            assertThat(count("processed_engagement_events", "event_id", fact.eventId()))
+                    .isZero();
+            assertThat(jdbc.queryForObject("""
+                    SELECT count(*) FROM engagement_event_offsets
+                    WHERE aggregate_type='RATING' AND aggregate_id='899994'
+                    """, Integer.class)).isZero();
+            assertThat(profiles.findById(user)).isEmpty();
+        } finally {
+            jdbc.execute("DROP TRIGGER IF EXISTS aff_reject_rating_checkpoint_trigger ON engagement_event_offsets");
+            jdbc.execute("DROP FUNCTION IF EXISTS aff_reject_rating_checkpoint()");
+        }
+        assertThat(engagement.apply(fact)).isEqualTo(EventProcessingOutcome.APPLIED);
+        assertThat(count("processed_engagement_events", "event_id", fact.eventId())).isEqualTo(1);
+        assertThat(profiles.findById(user)).isPresent();
+    }
+
 }
