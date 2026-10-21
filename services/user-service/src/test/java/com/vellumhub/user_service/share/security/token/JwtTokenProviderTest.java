@@ -1,6 +1,7 @@
 package com.vellumhub.user_service.share.security.token;
 
 import com.vellumhub.user_service.module.auth.infrastructure.security.token.JwtTokenProvider;
+import com.vellumhub.security.jwt.JwtAccessToken;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
@@ -26,8 +27,10 @@ class JwtTokenProviderTest {
     }
 
     private NimbusJwtDecoder decoder() {
-        return NimbusJwtDecoder.withPublicKey(TestRsaKeyMaterial.publicKey())
-                .signatureAlgorithm(SignatureAlgorithm.RS256).build();
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(TestRsaKeyMaterial.publicKey())
+                .signatureAlgorithm(SignatureAlgorithm.RS256).validateType(false).build();
+        decoder.setJwtValidator(JwtAccessToken.validator("https://auth.vellumhub.local", "api://vellumhub", 30));
+        return decoder;
     }
 
     @Test
@@ -37,7 +40,12 @@ class JwtTokenProviderTest {
         Jwt jwt = decoder().decode(token);
 
         assertThat(jwt.getHeaders()).containsEntry("alg", "RS256");
-        assertThat(jwt.getSubject()).isEqualTo("user@test.com");
+        assertThat(jwt.getSubject()).isEqualTo(userId.toString());
+        assertThat(jwt.getHeaders()).containsEntry("typ", "at+jwt").containsEntry("kid", "local-test-key");
+        assertThat(jwt.getIssuer().toString()).isEqualTo("https://auth.vellumhub.local");
+        assertThat(jwt.getAudience()).containsExactly("api://vellumhub");
+        assertThat(jwt.getId()).isNotBlank();
+        assertThat(jwt.getClaimAsString("client_id")).isEqualTo("vellumhub-web");
         assertThat(jwt.getClaimAsString("user_id")).isEqualTo(userId.toString());
         assertThat(jwt.getClaimAsStringList("roles")).containsExactly("USER", "ADMIN");
         assertThat(jwt.getExpiresAt()).isAfter(jwt.getIssuedAt());
@@ -48,7 +56,7 @@ class JwtTokenProviderTest {
         String token = provider().createToken("user@test.com", UUID.randomUUID(), List.of("USER"));
         String[] parts = token.split("\\.");
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-        String alteredPayload = payload.replace("user@test.com", "admin@test.com");
+        String alteredPayload = payload.replace("api://vellumhub", "api://forged");
         String alteredToken = parts[0] + "." + Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(alteredPayload.getBytes(StandardCharsets.UTF_8)) + "." + parts[2];
 

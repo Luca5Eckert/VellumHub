@@ -1,5 +1,6 @@
 package com.vellumhub.gateway_service.config.rate;
 
+import com.vellumhub.security.jwt.JwtAccessToken;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.context.annotation.Bean;
@@ -31,10 +32,7 @@ public class RateLimiterConfig {
     public KeyResolver userKeyResolver() {
         return exchange -> exchange.getPrincipal()
                 .ofType(JwtAuthenticationToken.class)
-                .map(jwtAuth -> {
-                    String userId = jwtAuth.getToken().getClaimAsString("user_id");
-                    return "user:" + Objects.requireNonNullElseGet(userId, jwtAuth::getName);
-                })
+                .map(jwtAuth -> "user:" + JwtAccessToken.userId(jwtAuth.getToken()))
                 .switchIfEmpty(Mono.fromSupplier(() -> "ip:" + extractClientIp(exchange)))
                 .onErrorResume(error -> Mono.fromSupplier(() -> "ip:" + extractClientIp(exchange)));
     }

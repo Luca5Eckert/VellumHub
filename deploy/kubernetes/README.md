@@ -49,3 +49,8 @@ CI updates only the SHA/digest in an overlay `images` block. It receives no clus
 4. Confirm all five rollouts and smoke tests are healthy.
 
 The resource baseline is intentionally modest: gateway/user 512Mi request, catalog/engagement 640Mi, recommendation 1Gi because its embedding model has higher startup and heap demand. These are starting measurements for local operation, not production sizing; tune from JVM/container metrics before enabling HPA. HPA is deferred until Metrics Server and a measured baseline exist.
+
+
+### Security JWT/JWKS transition (#304, #305)
+
+In draft PR #321, JWT verifiers fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. The User Service alone signs tokens with `JWT_ACTIVE_KID` and externally provisioned private PEMs. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [JWKS runbook](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.

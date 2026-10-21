@@ -53,15 +53,14 @@ spec:
             - {name: VELLUM_DOCS_ENABLED, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_DOCS_ENABLED}}}
             - {name: VELLUM_TRUSTED_PROXY_CIDRS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_TRUSTED_PROXY_CIDRS}}}
             - {name: CORS_ALLOWED_ORIGINS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CORS_ALLOWED_ORIGINS}}}
-            - {name: JWT_PUBLIC_KEY_LOCATION, value: "file:/etc/vellumhub/keys/public.pem"}
+            - {name: JWT_JWKS_URI, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: JWT_JWKS_URI}}}
+            - {name: JWT_ISSUER, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: JWT_ISSUER}}}
+            - {name: JWT_AUDIENCE, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: JWT_AUDIENCE}}}
+            - {name: JWT_CLOCK_SKEW_SECONDS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: JWT_CLOCK_SKEW_SECONDS}}}
           volumeMounts:
-            - {name: jwt-public-key, mountPath: /etc/vellumhub/keys, readOnly: true}
           resources: {requests: {cpu: 200m, memory: 512Mi}, limits: {cpu: "1", memory: 768Mi}}
           securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, runAsNonRoot: true, runAsUser: 10001, capabilities: {drop: [ALL]}}
           startupProbe: {httpGet: {path: /actuator/health/liveness, port: http}, periodSeconds: 5, failureThreshold: 24}
           livenessProbe: {httpGet: {path: /actuator/health/liveness, port: http}, periodSeconds: 15, failureThreshold: 3}
           readinessProbe: {httpGet: {path: /actuator/health/readiness, port: http}, periodSeconds: 10, failureThreshold: 3}
 
-      volumes:
-        - name: jwt-public-key
-          configMap: {name: vellumhub-jwt-public, items: [{key: public.pem, path: public.pem}]}

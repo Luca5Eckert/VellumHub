@@ -1,5 +1,12 @@
 package com.vellumhub.gateway_service.config.security;
 
+import org.springframework.security.web.server.authorization.ServerAccessDeniedHandler;
+import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
+import com.vellumhub.security.jwt.JwtAccessToken;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import java.nio.charset.StandardCharsets;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +15,7 @@ import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -27,6 +35,17 @@ import reactor.core.publisher.Mono;
 @Configuration
 @EnableWebFluxSecurity
 public class GatewaySecurityConfig {
+    @Value("${JWT_JWKS_URI:http://user-service:8080/.well-known/jwks.json}")
+    private String jwksUri = "http://user-service:8080/.well-known/jwks.json";
+
+    @Value("${JWT_ISSUER:https://auth.vellumhub.local}")
+    private String issuer = "https://auth.vellumhub.local";
+
+    @Value("${JWT_AUDIENCE:api://vellumhub}")
+    private String audience = "api://vellumhub";
+
+    @Value("${JWT_CLOCK_SKEW_SECONDS:30}")
+    private long clockSkewSeconds = 30;
 
     private final Resource publicKeyResource;
     private final boolean publicDocumentation;
@@ -43,6 +62,22 @@ public class GatewaySecurityConfig {
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) throws IOException {
+        ServerAuthenticationEntryPoint authenticationEntryPoint = (exchange, error) -> {
+            var response = exchange.getResponse();
+            response.setStatusCode(HttpStatus.UNAUTHORIZED);
+            response.getHeaders().set(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            byte[] body = "{\"code\":\"UNAUTHORIZED\",\"message\":\"Missing or invalid access token\"}".getBytes(StandardCharsets.UTF_8);
+            return response.writeWith(Mono.just(response.bufferFactory().wrap(body)));
+        };
+        ServerAccessDeniedHandler accessDeniedHandler = (exchange, error) -> {
+            var response = exchange.getResponse();
+            response.setStatusCode(HttpStatus.FORBIDDEN);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            byte[] body = "{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permission\"}".getBytes(StandardCharsets.UTF_8);
+            return response.writeWith(Mono.just(response.bufferFactory().wrap(body)));
+        };
+
         return http
                 // Stateless bearer-token API. Revisit CSRF if browser cookies become authenticators.
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -57,7 +92,12 @@ public class GatewaySecurityConfig {
                                 Mono.just(new AuthorizationDecision(publicDocumentation)))
                         .anyExchange().authenticated()
                 )
+                .exceptionHandling(errors -> errors
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                         .jwt(jwt -> jwt.jwtDecoder(reactiveJwtDecoder())))
                 .build();
     }
@@ -82,18 +122,18 @@ public class GatewaySecurityConfig {
 
     @Bean
     public ReactiveJwtDecoder reactiveJwtDecoder() {
-        RSAPublicKey publicKey;
-        try (InputStream inputStream = publicKeyResource.getInputStream()) {
-            publicKey = Objects.requireNonNull(RsaKeyConverters.x509().convert(inputStream),
-                    "Invalid X.509 RSA public key");
-        } catch (IOException exception) {
-            throw new IllegalStateException("JWT public key cannot be read", exception);
-        }
-        if (publicKey.getModulus().bitLength() < 2048) {
-            throw new IllegalArgumentException("JWT verification RSA key must have at least 2048 bits");
-        }
-        return NimbusReactiveJwtDecoder.withPublicKey(publicKey)
-                .signatureAlgorithm(SignatureAlgorithm.RS256)
+        NimbusReactiveJwtDecoder decoder = NimbusReactiveJwtDecoder.withJwkSetUri(jwksUri)
+                .jwsAlgorithm(SignatureAlgorithm.RS256)
+                .validateType(false)
                 .build();
+        decoder.setJwtValidator(JwtAccessToken.validator(issuer, audience, clockSkewSeconds));
+        // A trusted JWKS outage with an unknown kid must be an authentication failure (401),
+        // not an unhandled infrastructure error (500). Cached known keys remain usable.
+        // Nimbus can throw before returning a Mono (e.g. when a kid is missing and
+        // the configured JWKS endpoint is unavailable). Defer decoding so both
+        // synchronous and reactive key-fetch failures become invalid-token errors.
+        return token -> Mono.defer(() -> decoder.decode(token))
+                .onErrorMap(IllegalStateException.class, failure ->
+                        new BadJwtException("Unable to verify JWT signing key", failure));
     }
 }

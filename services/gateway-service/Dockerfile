@@ -2,8 +2,12 @@ FROM maven:3.9.9-eclipse-temurin-21 AS build
 
 WORKDIR /workspace
 
+COPY lib/jwt-security/pom.xml lib/jwt-security/pom.xml
+COPY lib/jwt-security/src lib/jwt-security/src
+
 COPY services/gateway-service/pom.xml services/gateway-service/pom.xml
-RUN mvn -B -ntp -f services/gateway-service/pom.xml dependency:go-offline
+RUN mvn -B -ntp -f lib/jwt-security/pom.xml install -Dmaven.test.skip=true \
+    && mvn -B -ntp -f services/gateway-service/pom.xml dependency:go-offline
 
 COPY services/gateway-service/src services/gateway-service/src
 RUN mvn -B -ntp -f services/gateway-service/pom.xml package -DskipTests

@@ -43,6 +43,24 @@ class UserSecurityBoundaryTest {
     JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
     @Test
+    void invalidBearerUsesTheJsonAuthenticationContract() throws Exception {
+        mockMvc.perform(get("/users").header("Authorization", "Bearer malformed-token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string("WWW-Authenticate", "Bearer"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json("{\"code\":\"UNAUTHORIZED\",\"message\":\"Missing or invalid access token\"}"));
+    }
+
+    @Test
+    void authenticatedAccessDeniedUsesTheJsonAuthorizationContract() throws Exception {
+        mockMvc.perform(get("/v3/api-docs").with(jwt()))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json("{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permission\"}"));
+    }
+
+    @Test
     void googleLoginIsPublicWithoutOpeningTheEntireAuthPath() throws Exception {
         when(authService.login(any(com.vellumhub.user_service.module.auth.application.dto.LoginExternalRequest.class)))
                 .thenReturn("test-jwt");
@@ -83,12 +101,12 @@ class UserSecurityBoundaryTest {
                 .content(unlinkPayload)).andExpect(status().isUnauthorized());
 
         mockMvc.perform(post("/auth/google/link").with(jwt().jwt(token ->
-                    token.claim("user_id", userId.toString())))
+                    token.subject(userId.toString()).claim("user_id", userId.toString())))
                 .contentType(MediaType.APPLICATION_JSON).content(linkPayload))
                 .andExpect(status().isNoContent());
         verify(authService).linkGoogle(userId, "verified-id-token", "password");
         mockMvc.perform(delete("/auth/google/link").with(jwt().jwt(token ->
-                    token.claim("user_id", userId.toString())))
+                    token.subject(userId.toString()).claim("user_id", userId.toString())))
                 .contentType(MediaType.APPLICATION_JSON).content(unlinkPayload))
                 .andExpect(status().isNoContent());
         verify(authService).unlinkGoogle(userId, "password");

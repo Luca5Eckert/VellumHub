@@ -1,5 +1,7 @@
 package com.vellumhub.user_service.share.security.config;
 
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import com.vellumhub.user_service.module.auth.infrastructure.security.user.UserDetailsServiceImpl;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +19,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.BadJwtException;
+import com.vellumhub.security.jwt.JwtAccessToken;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -34,8 +38,18 @@ import java.util.Objects;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${jwt.public-key-location}")
-    private Resource publicKeyResource;
+    @Value("${JWT_JWKS_URI:http://user-service:8080/.well-known/jwks.json}")
+    private String jwksUri;
+
+    @Value("${JWT_ISSUER:https://auth.vellumhub.local}")
+    private String issuer;
+
+    @Value("${JWT_AUDIENCE:api://vellumhub}")
+    private String audience;
+
+    @Value("${JWT_CLOCK_SKEW_SECONDS:30}")
+    private long clockSkewSeconds;
+
 
     private final UserRepository userRepository;
 
@@ -48,6 +62,18 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        AuthenticationEntryPoint authenticationEntryPoint = (request, response, error) -> {
+            response.setStatus(401);
+            response.setHeader("WWW-Authenticate", "Bearer");
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"Missing or invalid access token\"}");
+        };
+        AccessDeniedHandler accessDeniedHandler = (request, response, error) -> {
+            response.setStatus(403);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permission\"}");
+        };
+
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
@@ -55,11 +81,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health/**", "/actuator/prometheus").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register", "/auth/google").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/.well-known/jwks.json").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html")
                         .access((authentication, context) -> new AuthorizationDecision(documentationEnabled))
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(errors -> errors
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                         .jwt(jwt -> jwt
                                 .decoder(jwtDecoder())
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
@@ -70,30 +102,24 @@ public class SecurityConfig {
 
 
     private JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
-
-        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
-        return jwtAuthenticationConverter;
+        return JwtAccessToken.servletConverter();
     }
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        RSAPublicKey publicKey;
-        try (InputStream inputStream = publicKeyResource.getInputStream()) {
-            publicKey = Objects.requireNonNull(RsaKeyConverters.x509().convert(inputStream),
-                    "Invalid X.509 RSA public key");
-        } catch (IOException exception) {
-            throw new IllegalStateException("JWT public key cannot be read", exception);
-        }
-        if (publicKey.getModulus().bitLength() < 2048) {
-            throw new IllegalArgumentException("JWT verification RSA key must have at least 2048 bits");
-        }
-        return NimbusJwtDecoder.withPublicKey(publicKey)
-                .signatureAlgorithm(SignatureAlgorithm.RS256)
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwksUri)
+                .jwsAlgorithm(SignatureAlgorithm.RS256)
+                .validateType(false)
                 .build();
+        decoder.setJwtValidator(JwtAccessToken.validator(issuer, audience, clockSkewSeconds));
+        // Treat JWKS retrieval errors as invalid authentication while retaining trusted cache.
+        return token -> {
+            try {
+                return decoder.decode(token);
+            } catch (IllegalStateException failure) {
+                throw new BadJwtException("Unable to verify JWT signing key", failure);
+            }
+        };
     }
 
     @Bean

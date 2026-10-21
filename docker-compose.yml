@@ -38,13 +38,14 @@ services:
       CATALOG_SERVICE_URL: http://catalog-service:8080
       ENGAGEMENT_SERVICE_URL: http://engagement-service:8080
       RECOMMENDATION_SERVICE_URL: http://recommendation-service:8080
-      JWT_PUBLIC_KEY_LOCATION: file:/run/keys/public.pem
+      JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api://vellumhub}
+      JWT_CLOCK_SKEW_SECONDS: ${JWT_CLOCK_SKEW_SECONDS:-30}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       VELLUM_ENVIRONMENT: local
       VELLUM_DOCS_ENABLED: "true"
 
-    volumes:
-      - ${JWT_PUBLIC_KEY_PATH:?JWT_PUBLIC_KEY_PATH must be set}:/run/keys/public.pem:ro
     networks:
       - vellum-network
     depends_on:
@@ -344,13 +345,14 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JWT_PUBLIC_KEY_LOCATION: file:/run/keys/public.pem
+      JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api://vellumhub}
+      JWT_CLOCK_SKEW_SECONDS: ${JWT_CLOCK_SKEW_SECONDS:-30}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       VELLUM_ENVIRONMENT: local
       VELLUM_DOCS_ENABLED: "true"
 
-    volumes:
-      - ${JWT_PUBLIC_KEY_PATH:?JWT_PUBLIC_KEY_PATH must be set}:/run/keys/public.pem:ro
     networks:
       - vellum-network
     depends_on:
@@ -382,13 +384,14 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JWT_PUBLIC_KEY_LOCATION: file:/run/keys/public.pem
+      JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api://vellumhub}
+      JWT_CLOCK_SKEW_SECONDS: ${JWT_CLOCK_SKEW_SECONDS:-30}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       VELLUM_ENVIRONMENT: local
       VELLUM_DOCS_ENABLED: "true"
 
-    volumes:
-      - ${JWT_PUBLIC_KEY_PATH:?JWT_PUBLIC_KEY_PATH must be set}:/run/keys/public.pem:ro
     networks:
       - vellum-network
     depends_on:
@@ -420,8 +423,15 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api://vellumhub}
+      JWT_CLOCK_SKEW_SECONDS: ${JWT_CLOCK_SKEW_SECONDS:-30}
       JWT_PUBLIC_KEY_LOCATION: file:/run/keys/public.pem
       JWT_PRIVATE_KEY_LOCATION: file:/run/keys/private.pem
+      JWT_ACTIVE_KID: ${JWT_ACTIVE_KID:-local-key-1}
+      JWT_EXTRA_PUBLIC_KEYS: ${JWT_EXTRA_PUBLIC_KEYS:-}
+      JWT_CLIENT_ID: ${JWT_CLIENT_ID:-vellumhub-web}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
@@ -431,6 +441,7 @@ services:
     volumes:
       - ${JWT_PUBLIC_KEY_PATH:?JWT_PUBLIC_KEY_PATH must be set}:/run/keys/public.pem:ro
       - ${JWT_PRIVATE_KEY_PATH:?JWT_PRIVATE_KEY_PATH must be set}:/run/keys/private.pem:ro
+      - ./.local/jwks-public:/run/jwks-public:ro
     networks:
       - vellum-network
     depends_on:
@@ -463,13 +474,14 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JWT_PUBLIC_KEY_LOCATION: file:/run/keys/public.pem
+      JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api://vellumhub}
+      JWT_CLOCK_SKEW_SECONDS: ${JWT_CLOCK_SKEW_SECONDS:-30}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       VELLUM_ENVIRONMENT: local
       VELLUM_DOCS_ENABLED: "true"
 
-    volumes:
-      - ${JWT_PUBLIC_KEY_PATH:?JWT_PUBLIC_KEY_PATH must be set}:/run/keys/public.pem:ro
     networks:
       - vellum-network
     depends_on:

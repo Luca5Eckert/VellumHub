@@ -1,6 +1,7 @@
 package com.vellumhub.catalog_service.share.service;
 
 import com.vellumhub.catalog_service.share.exception.UserNotAuthenticatedException;
+import com.vellumhub.security.jwt.JwtAccessToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -16,8 +17,7 @@ public class AuthenticationService {
                 .getPrincipal();
 
         if (principal instanceof Jwt jwt) {
-            String userId = jwt.getClaimAsString("user_id");
-            return UUID.fromString(userId);
+            return JwtAccessToken.userId(jwt);
         }
 
         throw new UserNotAuthenticatedException("User not authenticated or invalid token");

@@ -18,3 +18,10 @@ data:
   CATALOG_DATASOURCE_URL: jdbc:postgresql://catalog-postgres:5432/catalog_db
   ENGAGEMENT_DATASOURCE_URL: jdbc:postgresql://engagement-postgres:5432/engagement_db
   RECOMMENDATION_DATASOURCE_URL: jdbc:postgresql://recommendation-postgres:5432/recommendation_db
+  JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
+  JWT_ISSUER: https://auth.example.invalid
+  JWT_AUDIENCE: api://vellumhub
+  JWT_CLOCK_SKEW_SECONDS: "30"
+  JWT_ACTIVE_KID: local-key-1
+  JWT_CLIENT_ID: vellumhub-web
+  JWT_EXTRA_PUBLIC_KEYS: ""

@@ -1,6 +1,6 @@
 # SEC-03: JWT RSA/RS256 cutover (issue #163)
 
-**Status:** Implementation proposed in `feat/163-rs256-jwt`. This document describes the intended runtime, not evidence of a merged deployment. JWKS/rotation (#304), issuer/audience/profile changes (#305), OAuth/OIDC Authorization Server and permissions changes are intentionally out of scope.
+**Status:** Implemented in merged PR #320 (merge commit `a34fd10cca9a0a7f3414e2e3d5849e864662807b`, 2026-10-19); production deployment not evidenced. JWKS/rotation (#304) and issuer/audience/profile changes (#305) are being implemented separately in draft PR #321; see docs/SECURITY_JWKS_RFC9068.md. OAuth/OIDC Authorization Server and permissions remain outside #163.
 
 ## Contract and trust boundary
 
