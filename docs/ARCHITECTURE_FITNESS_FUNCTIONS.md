@@ -105,3 +105,21 @@ The `lib/kafka-contracts` test suite now checks a frozen field/type baseline for
 ## Operational status
 
 Latest confirmed static boundary workflow passed at commit `e6b1655f981f8e4dab51f25ffb29b4afb421bb98`; Recommendation benchmark passed for the same commit. An earlier general Maven verify run was unsuccessful and the log could not be retrieved in full through the connector because it exceeded its size limit. Do not merge solely on isolated workflow successes. Record the final PR run URL, commit SHA, test summary and any known limitations before changing statuses in the Obsidian source of truth.
+
+## Canonical stream failure coverage matrix (AFF-02)
+
+| Property | Book | BookProgress | Rating | Reaction |
+| --- | --- | --- | --- | --- |
+| Outbox atomic rollback | Catalog Postgres | Catalog service: existing domain tests; gap in explicit injected rollback fixture | Engagement Postgres | Engagement: inspect corresponding producer fixture |
+| Kafka publish and recovery | Catalog Kafka outbox replay and injected timeout | Producer retry not individually established by this suite | Engagement publisher retry with PostgreSQL, Kafka failure unverified | Engagement publisher retry with PostgreSQL, Kafka failure unverified |
+| Consumer idempotency | Recommendation Book duplicate + checkpoint | Recommendation duplicate + checkpoint | Recommendation Kafka re-delivery + profile | Existing processor tests; repeat delivery scenario pending |
+| Out-of-order revision | Recommendation PostgreSQL gap | Recommendation PostgreSQL gap | Recommendation PostgreSQL gap and subsequent catchup | Recommendation PostgreSQL gap |
+| Wire backward compatibility | Book fixture | ReadingProgress fixture | Rating fixture | Reaction legacy fixture |
+
+**Interpretation**: a test against one type is not evidence of coverage for all streams. Existing E2E Catalog producer -> Recommendation projection proves one full pipeline, not an all-stream guarantee. Kafka ACK after database commit can be ambiguous and physical duplicates remain valid under at-least-once delivery. For each future stream, add test evidence before changing this matrix. The Reaction/Ratings revision-gap tests use real PostgreSQL in the Recommendation distributed harness.
+
+### CI evidence by commit
+
+- Baseline `c9a2bb75e822defb03408970f6d7abdddabe45dc`: [Maven and distributed verify](https://github.com/Luca5Eckert/VellumHub/actions/runs/39614547962) and [static architecture / wire fixtures](https://github.com/Luca5Eckert/VellumHub/actions/runs/39614548517) passed.
+- `beedacd785b6a1d53d77564036e247da2a172ee0`: distributed run failed: Reaction test used invalid enum `LIKE` (runtime supports `POSITIVE`, `NEGATIVE`, `VERY_POSITIVE`).
+- `4c2eadb56a1fbce584e44de84f247db9531bb05a`: test corrected; result must be checked at [PR #326](https://github.com/Luca5Eckert/VellumHub/pull/326). Passing on an earlier SHA is not passing on this commit.
