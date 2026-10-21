@@ -70,5 +70,21 @@ class JdbcOutboxPostgresTest {
         assertThat(next.eventId()).isEqualTo(two.eventId());
         store.published(next.eventId(),next.claimToken());
     }
+    /** AFF-EVT-005: database failure while inserting Outbox cannot commit a rating. */
+    @Test void outboxConstraintFailureRollsBackRating() {
+        var existing = message(603L, 5, 0);
+        writer.append(existing);
+        var transaction = new TransactionTemplate(new DataSourceTransactionManager(ds));
+        assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
+            jdbc.update("INSERT INTO rating(id,user_id,book_id,stars,version) VALUES(?,?,?,?,0)",
+                    603L, UUID.randomUUID(), UUID.randomUUID(), 5);
+            writer.append(existing);
+        })).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM rating WHERE id=603",
+                Integer.class)).isZero();
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM outbox_events WHERE event_id=?",
+                Integer.class, existing.eventId())).isEqualTo(1);
+    }
 }
 
