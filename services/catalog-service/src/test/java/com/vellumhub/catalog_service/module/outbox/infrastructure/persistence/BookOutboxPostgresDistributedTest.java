@@ -99,5 +99,30 @@ class BookOutboxPostgresDistributedTest {
                 Integer.class, duplicate.eventId())).isEqualTo(1);
     }
 
+    /** AFF-EVT-005: BookProgress Outbox insertion failure cannot commit domain state. */
+    @Test void readingProgressOutboxConstraintFailureRollsBackDomainMutation() {
+        UUID progress = UUID.randomUUID();
+        var event = new com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent(
+                UUID.randomUUID(), Instant.now(), progress, UUID.randomUUID(), UUID.randomUUID(),
+                "READING", 0, 10, 0,
+                com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent.Kind.CREATED);
+        var duplicate = OutboxMessage.readingProgress(event);
+        writer.append(duplicate);
+        jdbc.execute("CREATE TABLE IF NOT EXISTS aff_progress_mutations (id uuid PRIMARY KEY)");
+        var transaction = new TransactionTemplate(new DataSourceTransactionManager(ds));
+        assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
+            // Use a test-scoped table so this invariant does not rely on a
+            // particular historical BookProgress aggregate migration.
+            jdbc.update("INSERT INTO aff_progress_mutations(id) VALUES(?)", progress);
+            writer.append(duplicate);
+        })).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM aff_progress_mutations WHERE id=?", Integer.class, progress))
+                .isZero();
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM outbox_events WHERE event_id=?", Integer.class, event.eventId()))
+                .isEqualTo(1);
+    }
+
 }
 
