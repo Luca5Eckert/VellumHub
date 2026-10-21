@@ -383,4 +383,25 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
                 .isEqualTo(score);
     }
 
+    /** AFF-EVT-006: replay of a committed Reaction is a durable no-op. */
+    @Test
+    void reactionRedeliveryPreservesProfileAndSingleCheckpoint() {
+        UUID user = UUID.randomUUID(), book = UUID.randomUUID();
+        long reactionId = 899993L;
+        saveBookFeature(book);
+        var event = new com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent(
+                UUID.randomUUID(), Instant.now(), reactionId, user, book,
+                null, "POSITIVE", "POSITIVE", 0L);
+        assertThat(engagement.apply(event)).isEqualTo(EventProcessingOutcome.APPLIED);
+        double score = profiles.findById(user).orElseThrow().getTotalEngagementScore();
+        assertThat(engagement.apply(event)).isEqualTo(EventProcessingOutcome.DUPLICATE);
+        assertThat(count("processed_engagement_events", "event_id", event.eventId()))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                "SELECT last_revision FROM engagement_event_offsets WHERE aggregate_type='REACTION' AND aggregate_id=?",
+                Long.class, Long.toString(reactionId))).isZero();
+        assertThat(profiles.findById(user).orElseThrow().getTotalEngagementScore())
+                .isEqualTo(score);
+    }
+
 }
