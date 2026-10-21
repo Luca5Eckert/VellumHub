@@ -1,7 +1,6 @@
 package com.vellumhub.recommendation_service.share.kafka;
 
 import com.vellumhub.testing.distributed.kafka.KafkaProbe;
-import com.vellumhub.testing.distributed.kafka.KafkaProbe;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.recommendation_service.share.application.EventProcessingOutcome;
 import com.vellumhub.kafka.contracts.KafkaTopics;
@@ -19,6 +18,7 @@ import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.recommendation_service.support.DistributedIntegrationTestSupport;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,6 +107,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — Book redelivery has one durable effect")
     void bookRedeliveryDoesNotRebuildVectorAndPersistsEventIdentity() {
         var event=bookEvent(UUID.randomUUID());
         assertThat(books.execute(event)).isEqualTo(EventProcessingOutcome.APPLIED);
@@ -117,6 +118,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — failed projection rolls back checkpoint")
     void failedBookProjectionRollsBackBothCheckpointAndProcessedEvent() {
         var event=bookEvent(UUID.randomUUID());
         when(embeddings.of(any(),any(),any(),any()))
@@ -145,6 +147,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — ReadingProgress redelivery is idempotent")
     void readingProgressRedeliveryCannotIncreaseUserProfileTwice() {
         UUID user=UUID.randomUUID(),book=UUID.randomUUID(),aggregate=UUID.randomUUID();
         saveBookFeature(book);
@@ -158,6 +161,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — missing dependency prevents checkpoint")
     void missingBookFeatureRollsBackReadingProgressCheckpoint() {
         var event=new ReadingProgressChangedEvent(UUID.randomUUID(),Instant.now(),UUID.randomUUID(),
                 UUID.randomUUID(),UUID.randomUUID(),"READING",0,80,0,
@@ -170,6 +174,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — event identity collision rejects second aggregate")
     void engagementIdentityCollisionDoesNotAcknowledgeSecondAggregate() {
         UUID id=UUID.randomUUID(),user=UUID.randomUUID(),book=UUID.randomUUID();
         saveBookFeature(book);
@@ -220,6 +225,7 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("AFF-EVT-006 — Kafka redelivery has no duplicate rating effect")
     void ratingRedeliveryThroughRealKafkaIsAcknowledgedWithoutAnotherProfileDelta() throws Exception {
         UUID id=UUID.randomUUID(),user=UUID.randomUUID(),book=UUID.randomUUID();
         saveBookFeature(book);
