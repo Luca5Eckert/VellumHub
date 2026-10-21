@@ -35,6 +35,17 @@ class JwtAccessTokenTest {
     }
 
     @Test
+    void rejectsMissingBlankOrNonStringSigningKeyIds() {
+        Jwt valid = jwt(ISSUER, List.of(AUDIENCE), USER_ID, "at+jwt", "RS256", USER_ID, true);
+        assertInvalid(Jwt.withTokenValue("fixture").headers(h -> h.putAll(valid.getHeaders()))
+                .headers(h -> h.remove("kid")).claims(c -> c.putAll(valid.getClaims())).build());
+        for (Object kid : List.of("", "  ", 123)) {
+            assertInvalid(Jwt.withTokenValue("fixture").headers(h -> h.putAll(valid.getHeaders()))
+                    .header("kid", kid).claims(c -> c.putAll(valid.getClaims())).build());
+        }
+    }
+
+    @Test
     void enforcesConfigSanityAndDistinguishesAuthorities() {
         assertThatThrownBy(() -> JwtAccessToken.validator(ISSUER, AUDIENCE, 121))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -57,7 +68,7 @@ class JwtAccessTokenTest {
                     String alg, String legacyUserId, boolean clientId) {
         Instant now = Instant.now();
         Jwt.Builder b = Jwt.withTokenValue("fixture")
-                .header("alg", alg).header("typ", typ)
+                .header("alg", alg).header("typ", typ).header("kid", "key-a")
                 .claim("iss", issuer).claim("aud", audience)
                 .claim("sub", subject)
                 .claim("iat", now.minusSeconds(10))

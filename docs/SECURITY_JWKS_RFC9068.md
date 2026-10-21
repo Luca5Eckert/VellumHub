@@ -84,3 +84,62 @@ For a botched normal promotion, restore previous issuer signing material and kee
 * `docker compose config --quiet`, Kubernetes `kubectl kustomize deploy/kubernetes/base`, and static Postman contract drift.
 
 Do not call this deployed or merged until CI, SHA and deployment evidence are available. The source of truth remains in Obsidian Vault; #306 may later replace the temporary User Service issuer without changing the Resource Server trust contract.
+
+## HTTP failure contract
+
+Both the general security exception handler and the OAuth2 Resource Server filter
+use the same response handlers in each service. A malformed or rejected bearer
+must not fall back to an empty framework-default response:
+
+- Missing/invalid token: HTTP 401, `WWW-Authenticate: Bearer`, JSON
+  `{"code":"UNAUTHORIZED","message":"Missing or invalid access token"}`.
+- Authenticated request denied by the security filter: HTTP 403, JSON
+  `{"code":"FORBIDDEN","message":"Insufficient permission"}`.
+
+CORS rejections and domain-specific ownership/not-found responses are separate
+contracts. Boundary regressions cover a malformed bearer through the servlet and
+reactive filters and an authenticated servlet denial. Decoder tests separately
+cover trusted-key rotation and JWKS outage; these do not prove a multi-replica
+production rotation or an expired-cache recovery drill.
+
+### Review evidence (20 October 2026)
+
+At `2b0d69caf1331277e9cd66116639c23edeb72de6`, Actions run
+[39511787678](https://github.com/Luca5Eckert/VellumHub/actions/runs/39511787678)
+passed Maven verify, distributed tests and all five image builds/scans. CodeQL,
+Postman validation and the recommendation benchmark also passed for that SHA.
+These results do not validate subsequent changes to this branch.
+
+The earlier run
+[39406469035](https://github.com/Luca5Eckert/VellumHub/actions/runs/39406469035)
+failed its Maven verify job at `62e71b523b01330f37e614b1a626bd454df584e8`;
+distributed tests passed and image builds were skipped. Job logs could not be
+retrieved, but the failure was reproduced from that exact commit locally:
+`JwtSignatureVerificationTest.prepublicationAndRetirementOfKeysMaintainExpectedTrustBoundary`
+in Gateway expected `JwtException` and received
+`IllegalStateException: Could not obtain the keys` when JWKS was offline.
+Subsequent commits map JWKS lookup failures to `BadJwtException`, including
+synchronous reactive-decoder failures via `Mono.defer`.
+
+Compose configuration and the Kustomize base rendered locally with example
+configuration; all five deployments reference JWKS and only User Service receives
+the private-key location. Rendering does not validate real secrets, connectivity,
+NetworkPolicy enforcement, readiness or the running Compose smoke test. Those
+runtime checks and final-SHA CI remain required before treating this as ready to
+merge. The Vault implementation note retains the proposed/not-deployed status.
+
+The review additionally requires a nonblank string `kid` in the shared validator;
+otherwise a correctly signed token without `kid` can match the sole published
+key. All five decoder suites now reject that case. The focused Java 21 reactor
+run passed **36 tests, 0 failures, 0 errors, 0 skipped**, including the HTTP
+contract regressions, token issuance and rotation suites. Command:
+
+```sh
+mvn -B -ntp -Dtest=UserSecurityBoundaryTest,GatewaySecurityBoundaryTest,JwtSignatureVerificationTest,JwtAccessTokenTest,JwtKeyRingTest,JwtTokenProviderTest -Dsurefire.failIfNoSpecifiedTests=false test
+```
+
+The local runtime required Mockito 5.20.0 as an explicit `-javaagent` because
+self-attachment is unavailable there; no production/runtime JVM configuration
+was changed. Kustomize base and local overlay rendered successfully. Full
+`clean verify` and distributed/container execution for the new commit must be
+confirmed by CI; this focused run does not replace them.

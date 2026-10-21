@@ -50,6 +50,8 @@ class JwtSignatureVerificationTest {
                     .extracting(Jwt::getSubject).isEqualTo(USER_ID);
             assertThatThrownBy(() -> decode(decoder, signed(unrelated, "key-a", "at+jwt", ISSUER, "api://vellumhub", false)))
                     .isInstanceOf(JwtException.class);
+            assertThatThrownBy(() -> decode(decoder, signed(a, null, "at+jwt", ISSUER, "api://vellumhub", false)))
+                    .isInstanceOf(JwtException.class);
             assertThatThrownBy(() -> decode(decoder, signed(a, "unknown", "at+jwt", ISSUER, "api://vellumhub", false)))
                     .isInstanceOf(JwtException.class);
             assertThatThrownBy(() -> decode(decoder, signed(a, "key-a", "JWT", ISSUER, "api://vellumhub", false)))

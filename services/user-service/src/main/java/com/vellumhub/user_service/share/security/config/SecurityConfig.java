@@ -1,5 +1,7 @@
 package com.vellumhub.user_service.share.security.config;
 
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import com.vellumhub.user_service.module.auth.infrastructure.security.user.UserDetailsServiceImpl;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,6 +62,18 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        AuthenticationEntryPoint authenticationEntryPoint = (request, response, error) -> {
+            response.setStatus(401);
+            response.setHeader("WWW-Authenticate", "Bearer");
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"Missing or invalid access token\"}");
+        };
+        AccessDeniedHandler accessDeniedHandler = (request, response, error) -> {
+            response.setStatus(403);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permission\"}");
+        };
+
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
@@ -73,18 +87,11 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(errors -> errors
-                        .authenticationEntryPoint((request, response, error) -> {
-                            response.setStatus(401);
-                            response.setHeader("WWW-Authenticate", "Bearer");
-                            response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"Missing or invalid access token\"}");
-                        })
-                        .accessDeniedHandler((request, response, error) -> {
-                            response.setStatus(403);
-                            response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permission\"}");
-                        }))
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                         .jwt(jwt -> jwt
                                 .decoder(jwtDecoder())
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())

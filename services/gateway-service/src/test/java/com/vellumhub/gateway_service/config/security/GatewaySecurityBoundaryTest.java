@@ -23,6 +23,16 @@ class GatewaySecurityBoundaryTest {
     }
 
     @Test
+    void invalidBearerUsesTheJsonAuthenticationContract() {
+        client().get().uri("/api/v1/catalog/books")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer malformed-token")
+                .exchange().expectStatus().isUnauthorized()
+                .expectHeader().valueEquals(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+                .expectHeader().contentTypeCompatibleWith(org.springframework.http.MediaType.APPLICATION_JSON)
+                .expectBody().json("{\"code\":\"UNAUTHORIZED\",\"message\":\"Missing or invalid access token\"}");
+    }
+
+    @Test
     void protectedServiceWithoutTokenIsUnauthorized() {
         client().get().uri("/api/v1/catalog/books").exchange().expectStatus().isUnauthorized();
     }

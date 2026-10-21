@@ -1,5 +1,7 @@
 package com.vellumhub.gateway_service.config.security;
 
+import org.springframework.security.web.server.authorization.ServerAccessDeniedHandler;
+import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
 import com.vellumhub.security.jwt.JwtAccessToken;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -60,6 +62,22 @@ public class GatewaySecurityConfig {
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) throws IOException {
+        ServerAuthenticationEntryPoint authenticationEntryPoint = (exchange, error) -> {
+            var response = exchange.getResponse();
+            response.setStatusCode(HttpStatus.UNAUTHORIZED);
+            response.getHeaders().set(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            byte[] body = "{\"code\":\"UNAUTHORIZED\",\"message\":\"Missing or invalid access token\"}".getBytes(StandardCharsets.UTF_8);
+            return response.writeWith(Mono.just(response.bufferFactory().wrap(body)));
+        };
+        ServerAccessDeniedHandler accessDeniedHandler = (exchange, error) -> {
+            var response = exchange.getResponse();
+            response.setStatusCode(HttpStatus.FORBIDDEN);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            byte[] body = "{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permission\"}".getBytes(StandardCharsets.UTF_8);
+            return response.writeWith(Mono.just(response.bufferFactory().wrap(body)));
+        };
+
         return http
                 // Stateless bearer-token API. Revisit CSRF if browser cookies become authenticators.
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -75,22 +93,11 @@ public class GatewaySecurityConfig {
                         .anyExchange().authenticated()
                 )
                 .exceptionHandling(errors -> errors
-                        .authenticationEntryPoint((exchange, error) -> {
-                            var response = exchange.getResponse();
-                            response.setStatusCode(HttpStatus.UNAUTHORIZED);
-                            response.getHeaders().set(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
-                            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                            byte[] body = "{\"code\":\"UNAUTHORIZED\",\"message\":\"Missing or invalid access token\"}".getBytes(StandardCharsets.UTF_8);
-                            return response.writeWith(Mono.just(response.bufferFactory().wrap(body)));
-                        })
-                        .accessDeniedHandler((exchange, error) -> {
-                            var response = exchange.getResponse();
-                            response.setStatusCode(HttpStatus.FORBIDDEN);
-                            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                            byte[] body = "{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permission\"}".getBytes(StandardCharsets.UTF_8);
-                            return response.writeWith(Mono.just(response.bufferFactory().wrap(body)));
-                        }))
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                         .jwt(jwt -> jwt.jwtDecoder(reactiveJwtDecoder())))
                 .build();
     }

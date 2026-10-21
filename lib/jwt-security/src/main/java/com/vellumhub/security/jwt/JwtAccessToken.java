@@ -32,6 +32,9 @@ public final class JwtAccessToken {
                     || !"at+jwt".equals(jwt.getHeaders().get("typ"))) {
                 return invalid("Unexpected access-token algorithm or type");
             }
+            if (!(jwt.getHeaders().get("kid") instanceof String kid) || kid.isBlank()) {
+                return invalid("Missing access-token signing key ID");
+            }
             if (jwt.getAudience() == null || !jwt.getAudience().contains(audience)) {
                 return invalid("Invalid access-token audience");
             }
