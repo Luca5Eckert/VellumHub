@@ -366,12 +366,12 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
         saveBookFeature(book);
         var initial = new com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent(
                 UUID.randomUUID(), Instant.now(), reactionId, user, book,
-                null, "LIKE", "LIKE", 0L);
+                null, "POSITIVE", "POSITIVE", 0L);
         assertThat(engagement.apply(initial)).isEqualTo(EventProcessingOutcome.APPLIED);
         double score = profiles.findById(user).orElseThrow().getTotalEngagementScore();
         var future = new com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent(
                 UUID.randomUUID(), Instant.now(), reactionId, user, book,
-                "LIKE", "DISLIKE", "DISLIKE", 2L);
+                "POSITIVE", "NEGATIVE", "NEGATIVE", 2L);
         assertThatThrownBy(() -> engagement.apply(future))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Missing engagement revision");
