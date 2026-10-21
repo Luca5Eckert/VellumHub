@@ -20,7 +20,7 @@ def compose(url="jdbc:postgresql://postgres-catalog:5432/catalog_db", duplicated
 
 class DatabaseOwnershipTest(unittest.TestCase):
     def test_correct_isolation_wiring(self):
-        self.assertEqual([], check(compose()))
+        self.assertEqual([], check(self.with_domain_credentials(compose())))
 
     def test_wrong_database_endpoint_is_rejected(self):
         self.assertTrue(check(compose(url="jdbc:postgresql://postgres-user:5432/user_db")))
@@ -34,8 +34,8 @@ class DatabaseOwnershipTest(unittest.TestCase):
     def test_shared_database_credentials_are_rejected(self):
         self.assertTrue(any("POSTGRES_CATALOG_USER" in issue for issue in check(compose())))
 
-    def test_domain_credentials_are_required(self):
-        source = compose()
+    @staticmethod
+    def with_domain_credentials(source):
         for owner in ("catalog", "engagement", "user", "recommendation"):
             key = owner.upper()
             source = source.replace(
@@ -49,4 +49,7 @@ class DatabaseOwnershipTest(unittest.TestCase):
                 f"      POSTGRES_USER: ${{POSTGRES_{key}_USER:?required}}\n"
                 f"      POSTGRES_PASSWORD: ${{POSTGRES_{key}_PASSWORD:?required}}\n"
             )
-        self.assertEqual([], check(source))
+        return source
+
+    def test_domain_credentials_are_required(self):
+        self.assertEqual([], check(self.with_domain_credentials(compose())))
