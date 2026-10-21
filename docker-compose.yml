@@ -342,8 +342,8 @@ services:
       JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: catalog-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-catalog:5432/catalog_db
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_CATALOG_USER:?POSTGRES_CATALOG_USER required}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_CATALOG_PASSWORD:?POSTGRES_CATALOG_PASSWORD required}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
       JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
@@ -381,8 +381,8 @@ services:
       JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: engagement-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-engagement:5432/engagement_db
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_ENGAGEMENT_USER:?POSTGRES_ENGAGEMENT_USER required}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ENGAGEMENT_PASSWORD:?POSTGRES_ENGAGEMENT_PASSWORD required}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
       JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
@@ -420,8 +420,8 @@ services:
       JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: user-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/user_db
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_USER:?POSTGRES_USER_USER required}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_USER_PASSWORD:?POSTGRES_USER_PASSWORD required}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
       JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
@@ -471,8 +471,8 @@ services:
       JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: recommendation-service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-recommendation:5432/recommendation_db
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_RECOMMENDATION_USER:?POSTGRES_RECOMMENDATION_USER required}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_RECOMMENDATION_PASSWORD:?POSTGRES_RECOMMENDATION_PASSWORD required}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
       JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
