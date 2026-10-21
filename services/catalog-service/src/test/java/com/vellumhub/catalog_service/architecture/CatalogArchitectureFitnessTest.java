@@ -51,4 +51,24 @@ class CatalogArchitectureFitnessTest {
                 .allowEmptyShould(false);
         rule.check(production);
     }
+    @Test
+    void negativeFixtureRejectsDomainInfrastructureDependency() {
+        JavaClasses fixtures = new ClassFileImporter().importPackages(
+                ROOT + ".architecture.fixtures");
+        ArchRule rule = noClasses().that().resideInAPackage("..domain..")
+                .should().dependOnClassesThat().resideInAPackage("..infrastructure..")
+                .allowEmptyShould(false);
+        org.junit.jupiter.api.Assertions.assertThrows(AssertionError.class,
+                () -> rule.check(fixtures), "AFF-STR-001 must detect a forbidden dependency");
+    }
+
+    @Test
+    void negativeFixtureRejectsModuleCycle() {
+        JavaClasses fixtures = new ClassFileImporter().importPackages(
+                ROOT + ".architecture.fixtures");
+        org.junit.jupiter.api.Assertions.assertThrows(AssertionError.class,
+                () -> slices().matching("..module.(*)..")
+                        .should().beFreeOfCycles().check(fixtures),
+                "AFF-STR-002 must detect a deliberately cyclic module graph");
+    }
 }
