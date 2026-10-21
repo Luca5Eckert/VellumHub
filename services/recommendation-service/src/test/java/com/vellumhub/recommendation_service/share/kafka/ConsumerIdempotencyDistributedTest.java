@@ -258,6 +258,40 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
         assertThat(profiles.findById(user).orElseThrow().getTotalEngagementScore()).isEqualTo(score);
     }
 
+
+    /** AFF-EVT-007: a future Book revision must not advance the durable offset. */
+    @Test
+    void bookRevisionGapDoesNotAdvancePostgresCheckpoint() {
+        UUID bookId = UUID.randomUUID();
+        var initial = bookEvent(bookId);
+        assertThat(books.execute(initial)).isEqualTo(EventProcessingOutcome.APPLIED);
+        var future = new BookChangedEvent(UUID.randomUUID(), Instant.now(), bookId, 3,
+                BookChangedEvent.Kind.UPDATED, initial.state());
+        assertThatThrownBy(() -> books.execute(future)).isInstanceOf(IllegalStateException.class);
+        assertThat(count("book_event_offsets", "book_id", bookId)).isEqualTo(1);
+        assertThat(count("processed_events", "event_id", future.eventId())).isZero();
+        verify(embeddings, times(1)).of(any(), any(), any(), any());
+    }
+
+    /** AFF-EVT-007: reading progress must not jump over a missing revision. */
+    @Test
+    void readingProgressRevisionGapDoesNotChangeProfileOrCheckpoint() {
+        UUID userId = UUID.randomUUID(), bookId = UUID.randomUUID(), aggregateId = UUID.randomUUID();
+        saveBookFeature(bookId);
+        var initial = new ReadingProgressChangedEvent(UUID.randomUUID(), Instant.now(),
+                aggregateId, userId, bookId, "READING", 0, 40, 0,
+                ReadingProgressChangedEvent.Kind.CREATED);
+        assertThat(progress.execute(initial)).isEqualTo(EventProcessingOutcome.APPLIED);
+        double score = profiles.findById(userId).orElseThrow().getTotalEngagementScore();
+        var future = new ReadingProgressChangedEvent(UUID.randomUUID(), Instant.now(),
+                aggregateId, userId, bookId, "READING", 40, 80, 3,
+                ReadingProgressChangedEvent.Kind.UPDATED);
+        assertThatThrownBy(() -> progress.execute(future)).isInstanceOf(IllegalStateException.class);
+        assertThat(count("reading_progress_offsets", "aggregate_id", aggregateId)).isEqualTo(1);
+        assertThat(count("processed_events", "event_id", future.eventId())).isZero();
+        assertThat(profiles.findById(userId).orElseThrow().getTotalEngagementScore()).isEqualTo(score);
+    }
+
     private double duplicateCount() {
         var counter=registry.find(VellumHubMetrics.KAFKA_EVENTS_DUPLICATE)
                 .tags("topic","engagement-events","event_type","RatingCreatedEvent",
