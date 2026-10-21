@@ -6,6 +6,7 @@ on:
       - 'pom.xml'
       - 'services/**/pom.xml'
       - 'tools/architecture/**'
+      - 'docker-compose.yml'
       - '.github/workflows/architecture-fitness.yml'
   push:
     branches: [main]
@@ -26,3 +27,4 @@ jobs:
         run: |
           python -m unittest discover -s tools/architecture -p 'test_*.py' -v
           python tools/architecture/check_service_boundaries.py
+          python tools/architecture/check_database_ownership.py
