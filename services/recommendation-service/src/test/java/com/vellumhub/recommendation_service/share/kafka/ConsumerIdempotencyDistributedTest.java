@@ -404,4 +404,51 @@ class ConsumerIdempotencyDistributedTest extends DistributedIntegrationTestSuppo
                 .isEqualTo(score);
     }
 
+    /**
+     * AFF-EVT-006: a database failure AFTER the profile delta but BEFORE the
+     * durable checkpoint must roll the entire consumer transaction back.
+     */
+    @Test
+    void checkpointWriteFailureRollsBackRatingProfileAndCanBeRetried() {
+        long ratingId = 899994L;
+        UUID user = UUID.randomUUID(), book = UUID.randomUUID();
+        saveBookFeature(book);
+        var fact = new RatingCreatedEvent(UUID.randomUUID(), Instant.now(),
+                ratingId, user, book, 5, 0);
+        jdbc.execute("""
+                CREATE OR REPLACE FUNCTION aff_reject_rating_checkpoint()
+                RETURNS trigger AS $$
+                BEGIN
+                  IF NEW.aggregate_type = 'RATING' AND NEW.aggregate_id = '899994' THEN
+                    RAISE EXCEPTION 'AFF-EVT-006 checkpoint failure';
+                  END IF;
+                  RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql
+                """);
+        jdbc.execute("""
+                CREATE TRIGGER aff_reject_rating_checkpoint_trigger
+                BEFORE UPDATE OF last_revision ON engagement_event_offsets
+                FOR EACH ROW EXECUTE FUNCTION aff_reject_rating_checkpoint()
+                """);
+        try {
+            assertThatThrownBy(() -> engagement.apply(fact))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("AFF-EVT-006 checkpoint failure");
+            assertThat(count("processed_engagement_events", "event_id", fact.eventId()))
+                    .isZero();
+            assertThat(jdbc.queryForObject("""
+                    SELECT count(*) FROM engagement_event_offsets
+                    WHERE aggregate_type='RATING' AND aggregate_id='899994'
+                    """, Integer.class)).isZero();
+            assertThat(profiles.findById(user)).isEmpty();
+        } finally {
+            jdbc.execute("DROP TRIGGER IF EXISTS aff_reject_rating_checkpoint_trigger ON engagement_event_offsets");
+            jdbc.execute("DROP FUNCTION IF EXISTS aff_reject_rating_checkpoint()");
+        }
+        assertThat(engagement.apply(fact)).isEqualTo(EventProcessingOutcome.APPLIED);
+        assertThat(count("processed_engagement_events", "event_id", fact.eventId())).isEqualTo(1);
+        assertThat(profiles.findById(user)).isPresent();
+    }
+
 }
