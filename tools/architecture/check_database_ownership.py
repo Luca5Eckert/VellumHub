@@ -48,6 +48,24 @@ def check(compose: str) -> list[str]:
             errors.append(f"AFF-DATA-004: {owner}-service expected {expected}, got {configured}")
         if not re.search(rf"(?m)^\s+POSTGRES_DB:\s*{re.escape(database)}\s*$", postgres):
             errors.append(f"AFF-DATA-004: {host} does not own {database}")
+
+        # Application and database must reference the same domain-specific
+        # credentials. Fail closed on shared credential interpolation keys.
+        key = owner.upper()
+        for setting, expected_var in (
+            ("SPRING_DATASOURCE_USERNAME", f"POSTGRES_{key}_USER"),
+            ("SPRING_DATASOURCE_PASSWORD", f"POSTGRES_{key}_PASSWORD"),
+        ):
+            match = re.search(rf"(?m)^\\s+{setting}:\\s*\\$\\{{([A-Z_]+):\\?[^}}]+}}\\s*$", service)
+            if match is None or match.group(1) != expected_var:
+                errors.append(f"AFF-DATA-004: {owner}-service must use {expected_var} for {setting}")
+        for setting, expected_var in (
+            ("POSTGRES_USER", f"POSTGRES_{key}_USER"),
+            ("POSTGRES_PASSWORD", f"POSTGRES_{key}_PASSWORD"),
+        ):
+            match = re.search(rf"(?m)^\\s+{setting}:\\s*\\$\\{{([A-Z_]+):\\?[^}}]+}}\\s*$", postgres)
+            if match is None or match.group(1) != expected_var:
+                errors.append(f"AFF-DATA-004: {host} must use {expected_var} for {setting}")
         endpoints.update(configured)
     if len(endpoints) != len(OWNERS):
         errors.append("AFF-DATA-004: service PostgreSQL endpoints are not unique")
