@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "policy": "No historical violations are allowlisted. ArchUnit and Maven Enforcer must fail on any new violation. Exception proposals require issue, AFF ID, affected module, owner, rationale and explicit review deadline before they may be recorded.",
+  "review_owner": "VellumHub maintainers",
+  "accepted_exceptions": []
+}
