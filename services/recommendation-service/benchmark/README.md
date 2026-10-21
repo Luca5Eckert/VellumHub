@@ -81,7 +81,7 @@ CI uses `benchmark.profile=smoke`, which executes the same architectural paths w
 
 The benchmark materializes a local recommendation catalog via real `created-book` Kafka events, then creates a user profile through a real rating event.
 
-User, Catalog, and Engagement are intentionally **not started** by the distributed test stack; their test endpoints are configured to an unreachable loopback address. The benchmark then performs warm-up authenticated reads, executes a fixed measured batch, records success rate and p50/p95/p99 latency, and verifies that all reads succeed from Recommendation-owned state.
+User, Catalog and Engagement are **not started**. Their known test endpoints point to an instrumented loopback canary returning HTTP 503. The probe counts actual TCP connection attempts even if an HTTP client swallows the 503 and falls back silently. The benchmark materializes local state via real Kafka events, then performs authenticated warm-up and measured reads, validates response IDs and titles against its projected fixture, records success rate and p50/p95/p99 latency, and asserts **zero canary connections**. An additional AFF-REC-009 ArchUnit negative fixture rejects synchronous HTTP client dependencies introduced into the protected recommendation-serving package. Unknown or newly configured transports still require explicit probe wiring and coverage; this is not a network-level guarantee for arbitrary code.
 
 The test is specifically about serving already-materialized reads. It does not claim that new upstream events can arrive while their producers are down.
 
@@ -142,3 +142,21 @@ CI intentionally has no absolute p95, throughput, capacity, or freshness thresho
 - No exactly-once claim is made.
 - The strongest public latency claim is the retained **event-to-recommendation freshness p95**, because it measures the complete interaction-to-changed-ranking path rather than adding separately measured projection and read percentiles.
 - Quantitative resume/portfolio claims should use only values from a retained reference artifact tied to a commit SHA.
+
+## Architecture fitness evidence (AFF-03 / #325)
+
+The existing suites are the normative implementation of **AFF-REC-009** (read autonomy) and **AFF-OPS-010** (event-to-projection and event-to-visible-ranking). Do not create a parallel benchmark.
+
+- Smoke fails on projection loss, unexpected DLT, invalid materialized response IDs, synchronous attempts observed by the canary, or a deterministic ranking that never changes. It **does not** fail on absolute runner-dependent p95/throughput.
+- The CI benchmark workflow checks the linked Surefire XML **and** the raw benchmark JSON against its own commit SHA. Missing/invalid reports and cross-SHA evidence are failures of the corresponding AFF gates.
+- Per-job evidence is in `target/architecture-evidence/fitness-evidence.json` and `fitness-evidence.md`; the benchmark retains `run-metadata.json`, `raw-results.json`, `summary.md`, `recommendation-freshness.json`, and `recommendation-freshness.md`.
+- The configured HTTP canary proves zero outbound connections to **known** User/Catalog/Engagement test endpoints in this read scenario; the paired ArchUnit rule protects the serving package from known synchronous client APIs. Explicitly extend both when introducing a new client/transport. A successful local read does **not** guarantee fresh events during an upstream outage or production availability.
+
+To generate a report after both Maven smoke suites have completed on the same checkout, run:
+
+```bash
+python3 tools/architecture/generate_evidence.py --profile smoke \
+  --sha <same-commit-sha-passed-to-benchmark.commitSha> \
+  --benchmark-dir services/recommendation-service/target/distributed-benchmark/smoke \
+  --require AFF-REC-009 --require AFF-OPS-010
+```

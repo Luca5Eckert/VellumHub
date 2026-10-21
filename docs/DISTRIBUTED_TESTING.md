@@ -130,10 +130,10 @@ The distributed job:
 2. pre-pulls Ryuk, Kafka, and pgvector images;
 3. activates the `distributed-e2e` Maven profile and warms the selected reactor slice;
 4. runs Catalog distributed tests, Recommendation distributed tests, and the dedicated cross-service E2E module through `-am`;
-5. enforces a 120-second post-warm execution budget;
+5. enforces a 150-second post-warm execution budget;
 6. has a five-minute hard job timeout for infrastructure failures.
 
-The 120-second budget preserves a bounded post-warm execution gate while allowing hosted-runner variance and the additional framework startup cost observed after the Spring Boot 4 security upgrade. It remains a guard against accidental expansion into a slow platform E2E suite; the five-minute hard job timeout remains unchanged.
+The 150-second budget preserves a bounded post-warm execution gate while allowing hosted-runner variance and the additional framework startup cost observed after the Spring Boot 4 security upgrade. It remains a guard against accidental expansion into a slow platform E2E suite; the five-minute hard job timeout remains unchanged.
 
 If the post-warm distributed run becomes unstable near the budget, shard by infrastructure cost rather than by arbitrary test count: keep the Kafka-only Catalog producer suite in one job and the Kafka + pgvector Recommendation/E2E slice in another. Each shard must retain its own explicit budget.
 
@@ -217,3 +217,9 @@ For full command lines, an evidence matrix per canonical stream and deliberate n
 see [Architecture Fitness Functions](ARCHITECTURE_FITNESS_FUNCTIONS.md).
 Tests prove **at-least-once delivery with idempotent effects in the covered paths**, not
 exactly-once publication or universal dead-letter replay.
+
+## AFF-03 evidence and read autonomy
+
+After the existing distributed Maven run, the CI job executes `tools/architecture/generate_evidence.py --profile behavioral` against the Surefire XML present in **that same job**, then uploads a versioned JSON/Markdown artifact. No additional Kafka/PostgreSQL suite is started for reporting. Missing tests are explicitly `NOT_RUN`, and skipped tests cannot become green.
+
+The Recommendation benchmark is intentionally separate from this five-minute E2E budget. Its smoke profile exercises authenticated GET /recommendations against real materialized Kafka/pgvector projections while configured upstream services return HTTP 503 via an instrumented local attempt probe. It asserts expected IDs and zero synchronous outbound attempts, with an additional static rule for the serving path. See `services/recommendation-service/benchmark/README.md` and `docs/ARCHITECTURE_FITNESS_FUNCTIONS.md`.

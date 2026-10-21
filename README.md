@@ -474,3 +474,7 @@ invariants, not global exactly-once delivery, guaranteed DLT replay, or producti
 New developers should read [the architecture fitness guide](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md),
 [distributed testing](docs/DISTRIBUTED_TESTING.md) and
 [database ownership migration](docs/DATABASE_OWNERSHIP_MIGRATION.md).
+
+### Architecture fitness evidence (AFF-03)
+
+The [Architecture Fitness Functions guide](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md) now links implemented service boundaries and distributed Kafka guarantees to a reproducible per-commit evidence catalog (`tools/architecture/fitness-catalog.json`). Run `python3 tools/architecture/generate_evidence.py --help` for report options. The Recommendation [distributed benchmark](services/recommendation-service/benchmark/README.md) verifies local-projection read autonomy with HTTP attempt detection and separate projection/freshness metrics. CI publishes JSON/Markdown artifacts scoped to each workflow and SHA; unexecuted tests are never reported as passing. No benchmark figure is a production SLA.

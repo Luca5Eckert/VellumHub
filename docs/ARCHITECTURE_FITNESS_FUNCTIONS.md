@@ -1,6 +1,6 @@
 # Architecture Fitness Functions — implementation and evidence
 
-> Issues [#323](https://github.com/Luca5Eckert/VellumHub/issues/323) and [#324](https://github.com/Luca5Eckert/VellumHub/issues/324). **Implementation in progress.** Do not claim enforced status for a rule until its actual tests have passed and CI evidence is attached.
+> AFF-01/#323 and AFF-02/#324 were merged through PR #326. AFF-03/#325 extends the evidence pipeline on its own branch. Maturity never implies a suite ran in a particular CI job.
 
 ## System topology and test layers
 
@@ -151,3 +151,30 @@ fitness functions. See `docs/REACTION_EVENT_CONTRACTS.md` and issue #272.
 All CI claims must cite the exact run and commit. Passing earlier commits does
 not validate the latest branch HEAD; leave this record as implementation evidence
 until the PR checks finish.
+
+## AFF-03: Read autonomy, convergence and evidence
+
+- **AFF-REC-009** — the #283 distributed Recommendation benchmark creates books by real Kafka events, materializes user profiles, and asserts authenticated GET responses contain only expected local projection IDs and titles. A loopback HTTP-503 canary records all calls to the configured test User/Catalog/Engagement endpoints: even swallowed failures increment the count, and **zero** calls is an invariant. A Recommendation serving-path ArchUnit test blocks known synchronous HTTP client dependencies. The canary is bounded to configured endpoints; extending the stack requires extending the instrumented coverage. New upstream events are not guaranteed during producer failure.
+- **AFF-OPS-010** — the benchmark retains separate measurements for event-to-projection (publish to local row observed) and event-to-visible-ranking (publish to first authenticated ranking change). Raw events, seed, warmups, environment and commit metadata remain under the existing #283 report directory. Reference p50/p95/p99 and throughput are **not** gates on hosted runner hardware; smoke gates only semantic invariants.
+- **AFF-RES-011** — per-flow degradation is catalogued against existing outbox, retry/DLT, revision-gap and checkpoint behavior. Replay and quarantine claims require their own tested evidence. No universal replay or global exactly-once claim.
+
+### Catalog and CI execution evidence
+
+The executable index is `tools/architecture/fitness-catalog.json` (AFF-STR-001 through AFF-RES-011). Each record has an owner, ADR, scope, expected suites, command, maturity, baseline, exceptions, cadence, cost and limitations. Statuses: PROPOSED = only proposed; BASELINE = inventory/coverage assessed without an enforced complete rule; ENFORCED = rule is an effective regression gate with prior evidence; MONITORED = measured/reference behavior (without unconditional performance threshold). Maturity is not a per-run result.
+
+`tools/architecture/generate_evidence.py` gathers executed Maven Surefire XML, actually runs the Python structural negative fixtures when `--run-static` is passed, and validates the benchmark raw JSON. It emits `target/architecture-evidence/fitness-evidence.json` and `fitness-evidence.md` tagged with workflow run ID and full HEAD SHA, with distinct PASS/FAIL/SKIPPED/NOT_RUN. Required gates fail if their suites or raw evidence are absent. Results of separate jobs are separate artifacts; **never** claim an aggregated green status merely because another job or previous commit passed.
+
+```bash
+python3 tools/architecture/generate_evidence.py --run-static --profile static --require AFF-BOUND-003 --require AFF-DATA-004
+python3 -m unittest discover -s tools/architecture -p 'test_*.py' -v
+# After actually running the benchmark's two distinct Maven processes:
+python3 tools/architecture/generate_evidence.py --profile smoke --sha <benchmark-commit-sha> \
+  --benchmark-dir services/recommendation-service/target/distributed-benchmark/smoke \
+  --require AFF-REC-009 --require AFF-OPS-010
+```
+
+Workflows now upload per-SHA evidence from static, ArchUnit, wire contracts, reactor, distributed behavior and benchmark jobs. They do not restart expensive distributed suites just to create a report. Each failing AFF includes the decision, test, failure and correction guide. An intentional outbound call and an incompatible/absent projection must make the smoke fail; variable p95 alone must not.
+
+### Maintenance and baseline changes
+
+If a new flow cannot maintain read autonomy, document the scoped exception and the affected ADR **before** relaxing the gate. Add fixture tests for each newly supported client/upstream. Re-run the exact suites on the PR HEAD and record the GitHub Actions artifact URL and commit; evidence from a different SHA cannot validate that change. Do not upgrade maturity based on tests not executed, do not introduce a new fitness service, and separate local test evidence from a production rollout.
