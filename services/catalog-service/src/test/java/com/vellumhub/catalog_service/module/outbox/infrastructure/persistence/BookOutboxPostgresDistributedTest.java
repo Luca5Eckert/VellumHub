@@ -74,5 +74,30 @@ class BookOutboxPostgresDistributedTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM outbox_events WHERE aggregate_id=?",
             Integer.class,book)).isZero();
     }
+    /**
+     * AFF-EVT-005: an Outbox unique-constraint failure must abort a simultaneous
+     * aggregate mutation; a preexisting event remains durable.
+     */
+    @Test void outboxInsertFailureRollsBackBusinessMutation() {
+        UUID book = UUID.randomUUID();
+        OutboxMessage duplicate = event(book, 0, BookChangedEvent.Kind.CREATED);
+        writer.append(duplicate);
+        var transaction = new TransactionTemplate(new DataSourceTransactionManager(ds));
+
+        assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
+            jdbc.update("""
+                INSERT INTO books(id,title,release_year,author,isbn,page_count,publisher,version,created_at)
+                VALUES(?,?,?,?,?,?,?,0,now())
+                """, book, "Dune", 1965, "Herbert", "ISBN-2", 400, "Ace");
+            // Reusing the exact event ID forces a database uniqueness failure.
+            writer.append(duplicate);
+        })).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM books WHERE id=?",
+                Integer.class, book)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM outbox_events WHERE event_id=?",
+                Integer.class, duplicate.eventId())).isEqualTo(1);
+    }
+
 }
 
