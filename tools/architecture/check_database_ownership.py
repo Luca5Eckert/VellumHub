@@ -56,14 +56,14 @@ def check(compose: str) -> list[str]:
             ("SPRING_DATASOURCE_USERNAME", f"POSTGRES_{key}_USER"),
             ("SPRING_DATASOURCE_PASSWORD", f"POSTGRES_{key}_PASSWORD"),
         ):
-            match = re.search(rf"(?m)^\\s+{setting}:\\s*\\$\\{{([A-Z_]+):\\?[^}}]+}}\\s*$", service)
+            match = re.search(rf"(?m)^\s+{setting}:\s*\$\{{([A-Z_]+):\?[^}}]+}}\s*$", service)
             if match is None or match.group(1) != expected_var:
                 errors.append(f"AFF-DATA-004: {owner}-service must use {expected_var} for {setting}")
         for setting, expected_var in (
             ("POSTGRES_USER", f"POSTGRES_{key}_USER"),
             ("POSTGRES_PASSWORD", f"POSTGRES_{key}_PASSWORD"),
         ):
-            match = re.search(rf"(?m)^\\s+{setting}:\\s*\\$\\{{([A-Z_]+):\\?[^}}]+}}\\s*$", postgres)
+            match = re.search(rf"(?m)^\s+{setting}:\s*\$\{{([A-Z_]+):\?[^}}]+}}\s*$", postgres)
             if match is None or match.group(1) != expected_var:
                 errors.append(f"AFF-DATA-004: {host} must use {expected_var} for {setting}")
         endpoints.update(configured)

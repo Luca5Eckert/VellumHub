@@ -89,15 +89,15 @@ services:
     command: postgres -c shared_buffers=256MB -c max_connections=200 -c work_mem=16MB
     env_file: .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_CATALOG_USER:?POSTGRES_CATALOG_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_CATALOG_PASSWORD:?POSTGRES_CATALOG_PASSWORD required}
       POSTGRES_DB: catalog_db
     volumes:
       - postgres_catalog_data:/var/lib/postgresql/data
     networks:
       - vellum-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d catalog_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_CATALOG_USER:?POSTGRES_CATALOG_USER required} -d catalog_db"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -110,15 +110,15 @@ services:
     command: postgres -c shared_buffers=256MB -c max_connections=200 -c work_mem=16MB
     env_file: .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_ENGAGEMENT_USER:?POSTGRES_ENGAGEMENT_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_ENGAGEMENT_PASSWORD:?POSTGRES_ENGAGEMENT_PASSWORD required}
       POSTGRES_DB: engagement_db
     volumes:
       - postgres_engagement_data:/var/lib/postgresql/data
     networks:
       - vellum-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d engagement_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_ENGAGEMENT_USER:?POSTGRES_ENGAGEMENT_USER required} -d engagement_db"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -131,15 +131,15 @@ services:
     command: postgres -c shared_buffers=256MB -c max_connections=200 -c work_mem=16MB
     env_file: .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER_USER:?POSTGRES_USER_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_USER_PASSWORD:?POSTGRES_USER_PASSWORD required}
       POSTGRES_DB: user_db
     volumes:
       - postgres_user_data:/var/lib/postgresql/data
     networks:
       - vellum-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d user_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_USER:?POSTGRES_USER_USER required} -d user_db"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -151,15 +151,15 @@ services:
     shm_size: 256mb
     command: postgres -c shared_buffers=256MB -c max_connections=200 -c work_mem=16MB
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_RECOMMENDATION_USER:?POSTGRES_RECOMMENDATION_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_RECOMMENDATION_PASSWORD:?POSTGRES_RECOMMENDATION_PASSWORD required}
       POSTGRES_DB: recommendation_db
     volumes:
       - postgres_recommendation_data:/var/lib/postgresql/data
     networks:
       - vellum-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d recommendation_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_RECOMMENDATION_USER:?POSTGRES_RECOMMENDATION_USER required} -d recommendation_db"]
       interval: 10s
       timeout: 5s
       retries: 5
