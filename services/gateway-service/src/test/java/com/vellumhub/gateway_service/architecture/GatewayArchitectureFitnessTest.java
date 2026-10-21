@@ -7,6 +7,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -16,6 +17,20 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class GatewayArchitectureFitnessTest {
     private static final String ROOT = "com.vellumhub.gateway_service";
+
+    @Test
+    void moduleSlicesMustNotFormDependencyCycles() {
+        JavaClasses production = new ClassFileImporter()
+                .withImportOption(new ImportOption.DoNotIncludeTests())
+                .importPackages(ROOT);
+        long moduleCount = production.stream()
+                .filter(c -> c.getPackageName().contains(".module."))
+                .count();
+        org.junit.jupiter.api.Assumptions.assumeTrue(moduleCount > 0,
+                "AFF-STR-002 not applicable: no module package in " + ROOT);
+        slices().matching("..module.(*)..").should().beFreeOfCycles()
+                .check(production);
+    }
 
     @Test
     void domainMustNotDependOnAdaptersOrControllers() {
