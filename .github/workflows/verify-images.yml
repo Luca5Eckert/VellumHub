@@ -21,6 +21,19 @@ jobs:
       - name: Verify reactor and non-distributed integration tests
         run: mvn -B -ntp -DexcludedGroups=distributed clean verify
 
+
+      - name: Generate reactor AFF evidence
+        if: always()
+        run: python3 tools/architecture/generate_evidence.py --profile reactor --sha ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Upload reactor AFF evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aff-reactor-${{ github.event.pull_request.head.sha || github.sha }}
+          path: target/architecture-evidence/
+          if-no-files-found: warn
+          retention-days: 30
+
   distributed-integration:
     name: Distributed integration + cross-service E2E
     runs-on: ubuntu-latest
@@ -54,6 +67,19 @@ jobs:
             echo "Distributed integration suite exceeded the 150 second execution budget."
             exit 1
           fi
+
+
+      - name: Generate distributed behavioral AFF evidence
+        if: always()
+        run: python3 tools/architecture/generate_evidence.py --profile behavioral --sha ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Upload behavioral AFF evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aff-behavioral-${{ github.event.pull_request.head.sha || github.sha }}
+          path: target/architecture-evidence/
+          if-no-files-found: warn
+          retention-days: 30
 
   build-and-scan:
     name: Build and scan ${{ matrix.service }}
