@@ -32,6 +32,13 @@
 		<tomcat.version>11.0.25</tomcat.version>
 	</properties>
 	<dependencies>
+        <!-- AFF-STR-001/002: test-only architectural invariants -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.4.1</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.vellumhub</groupId>
             <artifactId>jwt-security</artifactId>
