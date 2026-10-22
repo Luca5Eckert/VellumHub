@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "normativeReference": "ADR-018; Obsidian: projects/vellum-hub/architecture/Architecture Fitness Functions - Fonte da Verdade.md",
+  "rules": [
+    {
+      "owner": "VellumHub maintainers",
+      "adr": "ADR-018",
+      "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
+      "exceptions": [],
+      "baseline": "PR #326; review exceptions against recorded test scope",
+      "cost": "small",
+      "cadence": "relevant PR",
+      "limitations": [
+        "Gateway has no eligible domain/module packages: JUnit assumptions skip and are reported as not covered, not PASS."
+      ],
+      "id": "AFF-STR-001",
+      "status": "ENFORCED",
+      "assertion": "Service-local domain dependency direction",
+      "scope": "ArchUnit five deployable services",
+      "command": "mvn -B -Dtest='*ArchitectureFitnessTest' test",
+      "suites": [
+        "*ArchitectureFitnessTest"
+      ],
+      "minSuites": 4,
+      "allowedSkippedSuites": [
+        "*GatewayArchitectureFitnessTest"
+      ],
+      "excludedSuites": [
+        "*ReadAutonomyArchitectureFitnessTest"
+      ]
+    },
+    {
+      "owner": "VellumHub maintainers",
+      "adr": "ADR-018",
+      "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
+      "exceptions": [],
+      "baseline": "PR #326; review exceptions against recorded test scope",
+      "cost": "small",
+      "cadence": "relevant PR",
+      "limitations": [
+        "Gateway has no eligible domain/module packages: JUnit assumptions skip and are reported as not covered, not PASS."
+      ],
+      "id": "AFF-STR-002",
+      "status": "ENFORCED",
+      "assertion": "Module dependency cycles",
+      "scope": "ArchUnit module slices where applicable",
+      "command": "mvn -B -Dtest='*ArchitectureFitnessTest' test",
+      "suites": [
+        "*ArchitectureFitnessTest"
+      ],
+      "minSuites": 4,
+      "allowedSkippedSuites": [
+        "*GatewayArchitectureFitnessTest"
+      ],
+      "excludedSuites": [
+        "*ReadAutonomyArchitectureFitnessTest"
+      ]
+    },
+    {
+      "owner": "VellumHub maintainers",
+      "adr": "ADR-018",
+      "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
+      "exceptions": [],
+      "baseline": "PR #326; review exceptions against recorded test scope",
+      "cost": "small",
+      "cadence": "relevant PR",
+      "limitations": [],
+      "id": "AFF-BOUND-003",
+      "status": "ENFORCED",
+      "assertion": "No deployable-to-deployable Maven dependencies",
+      "scope": "Maven Enforcer + Python boundary check",
+      "command": "python tools/architecture/check_service_boundaries.py",
+      "suites": [],
+      "minSuites": 0
+    },
+    {
+      "owner": "VellumHub maintainers",
+      "adr": "ADR-018",
+      "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
+      "exceptions": [],
+      "baseline": "PR #326; review exceptions against recorded test scope",
+      "cost": "medium",
+      "cadence": "relevant PR",
+      "limitations": [
+        "Deployment roles, external secrets and network ACLs are not proven by local fixtures."
+      ],
+      "id": "AFF-DATA-004",
+      "status": "MONITORED",
+      "assertion": "Database ownership and isolated credential variables",
+      "scope": "Compose checker and PostgreSQL negative privilege fixture; deployment ACLs unproven",
+      "command": "python tools/architecture/check_database_ownership.py",
+      "suites": [
+        "*DatabaseOwnershipPostgresFitnessTest"
+      ],
+      "minSuites": 1
+    },
+    {
+      "owner": "VellumHub maintainers",
+      "adr": "ADR-018",
+      "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
+      "exceptions": [],
+      "baseline": "PR #326; review exceptions against recorded test scope",
+      "cost": "large",
+      "cadence": "affected PR + manual reference",
+      "limitations": [],
+      "id": "AFF-EVT-005",
+      "status": "ENFORCED",
+      "assertion": "Transactional outbox rollback and recovery",
+      "scope": "Testcontainers producer-side rollback/recovery; not exhaustive for every crash window",
+      "command": "mvn -B -Pdistributed-e2e verify",
+      "suites": [
+        "*BookOutboxPostgresDistributedTest",
+        "*JdbcOutboxPostgresTest",
+        "*BookOutboxKafkaDistributedTest"
+      ],
+      "minSuites": 2
+    },
+    {
+      "owner": "VellumHub maintainers",
+      "adr": "ADR-018",
+      "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
+      "exceptions": [],
+      "baseline": "PR #326; review exceptions against recorded test scope",
+      "cost": "large",
+      "cadence": "affected PR + manual reference",
+      "limitations": [],
+      "id": "AFF-EVT-006",
+      "status": "ENFORCED",
+      "assertion": "Consumer idempotency and atomic checkpoint",
+      "scope": "Recommendation real PostgreSQL and Kafka; at-least-once delivery",
+      "command": "mvn -B -Pdistributed-e2e verify",
+      "suites": [
+        "*ConsumerIdempotencyDistributedTest"
+      ],
+      "minSuites": 1
+    },
+    {
+      "owner": "VellumHub maintainers",
+      "adr": "ADR-018",
+      "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
+      "exceptions": [],
+      "baseline": "PR #326; review exceptions against recorded test scope",
+      "cost": "large",
+      "cadence": "affected PR + manual reference",
+      "limitations": [],
+      "id": "AFF-EVT-007",
+      "status": "ENFORCED",
+      "assertion": "Per-stream revision ordering/gaps",
+      "scope": "Per-stream tested policies; no global ordering claim",
+      "command": "mvn -B -Pdistributed-e2e verify",
+      "suites": [
+        "*ConsumerIdempotencyDistributedTest"
+      ],
+      "minSuites": 1
+    },
+    {
+      "owner": "VellumHub maintainers",
+      "adr": "ADR-018",
+      "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
+      "exceptions": [],
+      "baseline": "PR #326; review exceptions against recorded test scope",
+      "cost": "small",
+      "cadence": "relevant PR",
+      "limitations": [],
+      "id": "AFF-CON-008",
+      "status": "ENFORCED",
+      "assertion": "Kafka wire backward compatibility fixtures",
+      "scope": "Versioned supported fixtures only",
+      "command": "mvn -B -f lib/kafka-contracts/pom.xml test",
+      "suites": [
+        "*KafkaContractShapeFitnessTest",
+        "*KafkaWireCompatibilityFitnessTest"
+      ],
+      "minSuites": 2
+    },
+    {
+      "owner": "VellumHub maintainers",
+      "adr": "ADR-018",
+      "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
+      "exceptions": [],
+      "baseline": "PR #326; review exceptions against recorded test scope",
+      "cost": "large",
+      "cadence": "affected PR + manual reference",
+      "limitations": [
+        "Configured known upstream transports are captured by a 503 canary; new clients need explicit wiring and coverage.",
+        "Cannot guarantee new events during upstream outage or production availability."
+      ],
+      "id": "AFF-REC-009",
+      "status": "BASELINE",
+      "assertion": "Authenticated local recommendation read autonomy",
+      "scope": "Kafka/pgvector materialized projections, expected IDs and zero 503 canary connections",
+      "command": "mvn -B -pl services/recommendation-service -am -Dtest=DistributedRecommendationBenchmarkIT -Dsurefire.failIfNoSpecifiedTests=false -Dgroups=distributed-benchmark -Dbenchmark.profile=smoke test",
+      "suites": [
+        "*DistributedRecommendationBenchmarkIT"
+      ],
+      "minSuites": 1
+    },
+    {
+      "owner": "VellumHub maintainers",
+      "adr": "ADR-018",
+      "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
+      "exceptions": [],
+      "baseline": "PR #326; review exceptions against recorded test scope",
+      "cost": "large",
+      "cadence": "affected PR + manual reference",
+      "limitations": [
+        "Hosted runner timing is not a latency SLA; benchmark includes polling overhead."
+      ],
+      "id": "AFF-OPS-010",
+      "status": "MONITORED",
+      "assertion": "Event-to-projection and event-to-visible-ranking freshness",
+      "scope": "Reproducible smoke/reference; no absolute p95 gate",
+      "command": "mvn -B -pl services/recommendation-service -am -Dgroups=distributed-benchmark -Dbenchmark.profile=reference test",
+      "suites": [
+        "*DistributedRecommendationBenchmarkIT",
+        "*RecommendationFreshnessBenchmarkIT"
+      ],
+      "minSuites": 2
+    },
+    {
+      "owner": "VellumHub maintainers",
+      "adr": "ADR-018",
+      "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
+      "exceptions": [],
+      "baseline": "Recovery runbook #272; two service-specific fail-closed configuration tests plus architecture inventory",
+      "cost": "medium",
+      "cadence": "relevant PR",
+      "limitations": [
+        "Unit tests enforce bounded retry and fail-closed setup; not an end-to-end proof of every DLT/restart path.",
+        "Existing #272 behavior permits reviewed resume at original ordered source offset; independent legacy replay is not universal.",
+        "Production rollout and operator success remain separate."
+      ],
+      "id": "AFF-RES-011",
+      "status": "MONITORED",
+      "assertion": "Per-flow implemented degradation behavior",
+      "scope": "Recommendation and Engagement ordered Kafka recovery policy invariants plus versioned inventory; no universal DLT replay claim",
+      "command": "mvn -B -Pdistributed-e2e verify",
+      "suites": [
+        "*OrderedKafkaRecoveryTest"
+      ],
+      "minSuites": 2,
+      "policyInventory": "tools/architecture/resilience-policies.json"
+    }
+  ]
+}

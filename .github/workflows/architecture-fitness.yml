@@ -26,11 +26,20 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Negative fixtures and boundary rules
-        run: |
-          python -m unittest discover -s tools/architecture -p 'test_*.py' -v
-          python tools/architecture/check_service_boundaries.py
-          python tools/architecture/check_database_ownership.py
+      - name: Verify static AFFs and export evidence
+        run: >-
+          python tools/architecture/generate_evidence.py
+          --run-static --profile static
+          --sha ${{ github.event.pull_request.head.sha || github.sha }}
+          --require AFF-BOUND-003 --require AFF-DATA-004
+      - name: Upload static AFF evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aff-static-${{ github.event.pull_request.head.sha || github.sha }}
+          path: target/architecture-evidence/
+          if-no-files-found: warn
+          retention-days: 30
 
   archunit:
     runs-on: ubuntu-latest
@@ -50,6 +59,22 @@ jobs:
           -Dsurefire.failIfNoSpecifiedTests=false
           test
 
+
+      - name: Validate ArchUnit fitness coverage and publish evidence
+        if: always()
+        run: >-
+          python3 tools/architecture/generate_evidence.py
+          --profile archunit --sha ${{ github.event.pull_request.head.sha || github.sha }}
+          --require AFF-STR-001 --require AFF-STR-002
+      - name: Upload ArchUnit AFF evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aff-archunit-${{ github.event.pull_request.head.sha || github.sha }}
+          path: target/architecture-evidence/
+          if-no-files-found: warn
+          retention-days: 30
+
   kafka-contracts:
     runs-on: ubuntu-latest
     steps:
@@ -61,3 +86,18 @@ jobs:
           cache: maven
       - name: Run canonical wire compatibility fixtures
         run: mvn -B -f lib/kafka-contracts/pom.xml test
+
+      - name: Validate contract AFF evidence
+        if: always()
+        run: >-
+          python3 tools/architecture/generate_evidence.py
+          --profile kafka-contracts --sha ${{ github.event.pull_request.head.sha || github.sha }}
+          --require AFF-CON-008
+      - name: Upload contract AFF evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aff-contracts-${{ github.event.pull_request.head.sha || github.sha }}
+          path: target/architecture-evidence/
+          if-no-files-found: warn
+          retention-days: 30

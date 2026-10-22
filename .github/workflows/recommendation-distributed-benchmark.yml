@@ -73,11 +73,22 @@ jobs:
           -Dbenchmark.outputDir=${GITHUB_WORKSPACE}/services/recommendation-service/target/distributed-benchmark/${BENCHMARK_PROFILE}
           test
 
+      - name: Assert AFF-REC-009 and AFF-OPS-010 from JUnit and raw evidence
+        if: always()
+        run: >-
+          python3 tools/architecture/generate_evidence.py
+          --profile ${BENCHMARK_PROFILE}
+          --sha ${{ github.event.pull_request.head.sha || github.sha }}
+          --benchmark-dir services/recommendation-service/target/distributed-benchmark/${BENCHMARK_PROFILE}
+          --require AFF-REC-009 --require AFF-OPS-010
+
       - name: Upload benchmark evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: recommendation-distributed-benchmark-${{ env.BENCHMARK_PROFILE }}-${{ github.event.pull_request.head.sha || github.sha }}
-          path: services/recommendation-service/target/distributed-benchmark/${{ env.BENCHMARK_PROFILE }}/
+          path: |
+            services/recommendation-service/target/distributed-benchmark/${{ env.BENCHMARK_PROFILE }}/
+            target/architecture-evidence/
           if-no-files-found: error
           retention-days: 30

@@ -88,7 +88,8 @@ public final class DistributedBenchmarkReport {
             int successfulReads,
             double successRate,
             LatencySummary latency,
-            String upstreamMode
+            String upstreamMode,
+            long outboundHttpAttempts
     ) {
     }
 

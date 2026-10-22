@@ -65,7 +65,7 @@ class DistributedBenchmarkReportWriterTest {
                 )),
                 List.of(new DistributedBenchmarkReport.ReadMeasurement(0, 200, 2.0, 10, null)),
                 new DistributedBenchmarkReport.ReadAutonomyResult(
-                        1, 1, 1.0, latency, "upstreams intentionally unavailable"
+                        1, 1, 1.0, latency, "upstreams intentionally unavailable", 0
                 )
         );
 
@@ -80,6 +80,7 @@ class DistributedBenchmarkReportWriterTest {
                 .contains("not a production SLA/SLO")
                 .contains("Event-to-projection convergence")
                 .contains("Recommendation read autonomy")
+                .contains("AFF-REC-009 outbound HTTP attempts: 0")
                 .contains("CI smoke validates convergence");
     }
 }

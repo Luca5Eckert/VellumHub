@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "description": "AFF-RES-011 implemented flow-specific degradation inventory; only referenced tested behavior may count as proven.",
+  "policies": [
+    {
+      "id": "RES-READ-LOCAL",
+      "flow": "Recommendation authenticated materialized GET",
+      "fault": "User/Catalog/Engagement unavailable after projection",
+      "policy": "Serve local pgvector/PostgreSQL projection with no synchronous domain HTTP fanout",
+      "unavailableData": "New producer facts cannot arrive while producers are unavailable",
+      "testPath": "services/recommendation-service/src/test/java/com/vellumhub/recommendation_service/benchmark/DistributedRecommendationBenchmarkIT.java",
+      "verification": "AFF-REC-009",
+      "replay": "not_applicable"
+    },
+    {
+      "id": "RES-READ-DB",
+      "flow": "Recommendation authenticated GET",
+      "fault": "Recommendation-owned PostgreSQL unavailable",
+      "policy": "No cross-domain synchronous fallback; error is propagated by use case",
+      "unavailableData": "No read availability guaranteed without local database",
+      "testPath": "services/recommendation-service/src/main/java/com/vellumhub/recommendation_service/module/recommendation/application/use_case/GetRecommendationsUseCase.java",
+      "verification": "code_contract_not_failure_injection",
+      "replay": "not_applicable"
+    },
+    {
+      "id": "RES-OUTBOX-CATALOG",
+      "flow": "Catalog transactional outbox",
+      "fault": "Kafka transport fails after durable business commit",
+      "policy": "Remain recoverable in PostgreSQL and retry; ACK/mark ambiguity may cause physical duplicates",
+      "unavailableData": "Propagation delayed until broker/publisher recovery",
+      "testPath": "services/catalog-service/src/test/java/com/vellumhub/catalog_service/module/outbox/infrastructure/dispatcher/BookOutboxKafkaDistributedTest.java",
+      "verification": "AFF-EVT-005",
+      "replay": "outbox_retry"
+    },
+    {
+      "id": "RES-OUTBOX-ENGAGEMENT",
+      "flow": "Engagement transactional outbox",
+      "fault": "Kafka fails after commit",
+      "policy": "Outbox persists and dispatch retries; at-least-once delivery",
+      "unavailableData": "Propagation delayed until broker/publisher recovery",
+      "testPath": "services/engagement-service/src/test/java/com/vellumhub/engagement_service/module/outbox/infrastructure/persistence/JdbcOutboxPostgresTest.java",
+      "verification": "AFF-EVT-005",
+      "replay": "outbox_retry"
+    },
+    {
+      "id": "RES-ORDERED-REC",
+      "flow": "Recommendation canonical Book/Progress/Rating/Reaction consumers",
+      "fault": "Revision gap or transient processing error",
+      "policy": "Do not advance checkpoint for missing predecessor; bounded retries, source-coordinate quarantine and affected partition pause after exhaustion",
+      "unavailableData": "Subsequent events in blocked partition cannot progress without recovery",
+      "testPath": "services/recommendation-service/src/test/java/com/vellumhub/recommendation_service/share/kafka/recovery/OrderedKafkaRecoveryTest.java",
+      "verification": "AFF-EVT-007 + AFF-RES-011 configuration; downstream full failure injection remains flow-specific",
+      "replay": "review_and_resume_source_offset"
+    },
+    {
+      "id": "RES-ORDERED-ENG",
+      "flow": "Engagement canonical Book/Progress consumers",
+      "fault": "Exhausted ordered consumer failure",
+      "policy": "Blocked partition and quarantine; require operator-reviewed source-offset resume",
+      "unavailableData": "Subsequent events in blocked partition cannot progress without recovery",
+      "testPath": "services/engagement-service/src/test/java/com/vellumhub/engagement_service/share/kafka/recovery/OrderedKafkaRecoveryTest.java",
+      "verification": "AFF-RES-011 configuration-level",
+      "replay": "review_and_resume_source_offset"
+    },
+    {
+      "id": "RES-LEGACY-DLT",
+      "flow": "Legacy Kafka retry topics",
+      "fault": "Processing fails after configured attempts",
+      "policy": "Existing retry topic/DLT; payload may lack canonical identity and cannot be assumed safe for automatic replay",
+      "unavailableData": "Legacy result requires manual reconciliation",
+      "testPath": "services/recommendation-service/src/main/java/com/vellumhub/recommendation_service/share/kafka/config/KafkaRetryConfig.java",
+      "verification": "code_contract_not_universal_replay",
+      "replay": "manual_reconciliation_only"
+    }
+  ]
+}
