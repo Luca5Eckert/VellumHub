@@ -162,7 +162,8 @@ def run():
         "Authorization": "Bearer " + tokens["id_token"],
         "Accept": "application/json"})
     assert id_as_access.status == 401, "API incorrectly accepted OIDC ID Token"
-    assert exchange(code, verifier).status == 400, "Authorization code reuse accepted"
+    replay = exchange(code, verifier)
+    assert replay.status == 400, f"Authorization code replay must return 400 invalid_grant, got HTTP {replay.status}"
 
     second, second_verifier, _nonce = create_authorization_code()
     assert exchange(second, random_token()).status == 400, "Wrong PKCE verifier accepted"
