@@ -478,3 +478,15 @@ New developers should read [the architecture fitness guide](docs/ARCHITECTURE_FI
 ### Architecture fitness evidence (AFF-03)
 
 The [Architecture Fitness Functions guide](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md) now links implemented service boundaries and distributed Kafka guarantees to a reproducible per-commit evidence catalog (`tools/architecture/fitness-catalog.json`). Run `python3 tools/architecture/generate_evidence.py --help` for report options. The Recommendation [distributed benchmark](services/recommendation-service/benchmark/README.md) verifies local-projection read autonomy with HTTP attempt detection and separate projection/freshness metrics. CI publishes JSON/Markdown artifacts scoped to each workflow and SHA; unexecuted tests are never reported as passing. No benchmark figure is a production SLA.
+
+## SEC-06/SEC-09 — Opt-in OIDC integration (PR #331)
+
+The Spring Authorization Server protocol PoC was merged in PR #330. PR #331 adds a **separate opt-in** integration path: Auth generates one UUIDv7 and owns credential hashes; User receives an idempotent private profile command with that same UUID, without a password. The account remains PENDING_PROFILE and cannot log in until profile confirmation.
+
+The Gateway forwards only Spring Security-validated JWTs; it strips externally supplied identity headers and never emits its own bearer. The default Compose configuration continues using the legacy issuer. Enabling docker-compose.oidc-lote2.yml is an **explicit** issuer/JWKS switch for local integration only, not a dual-issuer downgrade or production cutover.
+
+Registration at /v1/identity/register is disabled by default and only enabled via VELLUM_IDENTITY_REGISTRATION_ENABLED. Internal provisioning at /internal/identity/profiles is private to Auth -> User and requires a unique 32+ character VELLUM_INTERNAL_PROVISION_KEY and private networking. Workload identity/mTLS and rate limiting must be reviewed before deployment. The demo SPA is not a fully validated production OIDC client.
+
+Run Maven verification with: mvn -B -ntp -Pauth-poc -pl services/auth-service,services/user-service,services/gateway-service -am verify.
+Run distributed integration using: bash infra/scripts/security/run_oidc_lote2_e2e.sh (Docker and a disposable environment required).
+See docs/SECURITY_OIDC_LOTE2.md for test gates and rollback. **No merge or production rollout is claimed for PR #331.**
