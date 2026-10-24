@@ -41,3 +41,9 @@ vellum:
       enabled: false
       login: ${VELLUM_POC_LOGIN:}
       password: ${VELLUM_POC_PASSWORD:}
+
+  identity:
+    registration-enabled: ${VELLUM_IDENTITY_REGISTRATION_ENABLED:false}
+    shared-secret: ${VELLUM_INTERNAL_PROVISION_KEY:}
+    user-service-url: ${VELLUM_IDENTITY_USER_URL:}
+    reconcile-delay-ms: ${VELLUM_IDENTITY_RECONCILE_DELAY_MS:30000}
