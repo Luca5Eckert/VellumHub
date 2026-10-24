@@ -130,8 +130,8 @@ def run():
     for key in keys["keys"]:
         assert "d" not in key, "Private key exposed in JWKS"
 
-    _invalid, _verifier, _nonce = create_authorization_code(method="plain")
     code, verifier, nonce = create_authorization_code(login_first=True)
+    _invalid, _verifier, _nonce = create_authorization_code(method="plain")
     ok = exchange(code, verifier)
     assert ok.status == 200, f"Token exchange failed: HTTP {ok.status}, {ok.read()[:600]!r}"
     tokens = json.load(ok)
