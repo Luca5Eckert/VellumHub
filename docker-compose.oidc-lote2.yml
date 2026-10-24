@@ -66,5 +66,8 @@ services:
     environment:
       JWT_ISSUER: http://127.0.0.1:9000
       JWT_JWKS_URI: http://auth-service:9000/oauth2/jwks
+networks:
+  vellum-network:
+    driver: bridge
 volumes:
   oidc-auth-data:
