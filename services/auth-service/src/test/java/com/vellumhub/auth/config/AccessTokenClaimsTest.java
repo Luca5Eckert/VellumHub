@@ -57,6 +57,6 @@ class AccessTokenClaimsTest {
         when(context.getClaims()).thenReturn(claims);
         config.accessTokenClaims("api://vellumhub").customize(context);
         assertThat(header.build().getType()).isNotEqualTo("at+jwt");
-        assertThat(claims.build().getAudience()).isEmpty();
+        assertThat(claims.build().getAudience()).isNullOrEmpty();
     }
 }
