@@ -24,3 +24,14 @@ if [ "$status" != 400 ]; then
 fi
 echo "Discovery, public-only JWKS and invalid-code denial: OK"
 echo "This smoke does NOT prove login, DB restart, API authorization, Google or CI; see services/auth-service/README.md."
+
+# The browser client sends a CORS preflight when posting an authorization code.
+headers="$(curl --silent --show-error --include -X OPTIONS "$issuer/oauth2/token" \
+  -H 'Origin: http://127.0.0.1:9100' \
+  -H 'Access-Control-Request-Method: POST' \
+  -H 'Access-Control-Request-Headers: content-type')"
+printf '%s' "$headers" | grep -iq '^access-control-allow-origin: http://127.0.0.1:9100' || {
+  echo "SPA token endpoint preflight lacks explicit allowed origin" >&2
+  exit 1
+}
+echo "SPA token CORS preflight: OK"

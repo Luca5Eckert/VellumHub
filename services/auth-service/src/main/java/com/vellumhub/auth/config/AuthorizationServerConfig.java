@@ -39,6 +39,23 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServerConfig {
 
+    // Browser preflights may not match OAuth endpoint matchers (which can be POST-only).
+    // Handle OPTIONS independently and allow ONLY the configured SPA origin.
+    @Bean
+    @Order(0)
+    SecurityFilterChain browserPreflightChain(HttpSecurity http,
+            @Value("${vellum.poc.origin}") String origin) throws Exception {
+        http.securityMatcher(request -> "OPTIONS".equals(request.getMethod())
+                && ("/oauth2/token".equals(request.getServletPath())
+                    || "/oauth2/jwks".equals(request.getServletPath())
+                    || request.getServletPath().startsWith("/.well-known/")
+                    || request.getServletPath().startsWith("/poc/api/")))
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+            .cors(cors -> cors.configurationSource(corsSource(origin)))
+            .csrf(csrf -> csrf.disable());
+        return http.build();
+    }
+
     @Bean
     @Order(1)
     SecurityFilterChain authorizationServerChain(HttpSecurity http,
