@@ -23,6 +23,7 @@ class IdentityRegistrationServiceTest {
         service = new IdentityRegistrationService(store, profiles, uuid, passwords);
         when(uuid.next()).thenReturn(id);
         when(passwords.encode(anyString())).thenReturn("{bcrypt}stored-only");
+        when(store.activate(id)).thenReturn(true);
     }
 
     @Test
