@@ -5,6 +5,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.vellumhub.security.jwt.JwtAccessToken;
 import java.util.List;
 import java.util.UUID;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,11 +14,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.oauth2.core.OAuth2TokenType;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
@@ -49,12 +50,18 @@ public class AuthorizationServerConfig {
         http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
             .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
                     new LoginUrlAuthenticationEntryPoint("/login"),
-                    new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
+                    htmlRequests()))
             .csrf(csrf -> csrf.ignoringRequestMatchers(
                     PathPatternRequestMatcher.pathPattern("/oauth2/token")))
             .cors(cors -> cors.configurationSource(corsSource(origin)))
             .addFilterBefore(s256OnlyFilter(), OAuth2AuthorizationEndpointFilter.class);
         return http.build();
+    }
+
+    private MediaTypeRequestMatcher htmlRequests() {
+        var matcher = new MediaTypeRequestMatcher(MediaType.TEXT_HTML);
+        matcher.setIgnoredMediaTypes(Set.of(MediaType.ALL));
+        return matcher;
     }
 
     private OncePerRequestFilter s256OnlyFilter() {
