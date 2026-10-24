@@ -2,6 +2,7 @@ package com.vellumhub.auth.config;
 
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.vellumhub.security.jwt.JwtAccessToken;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +15,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -47,6 +50,24 @@ public class AuthorizationServerConfig {
 
     @Bean
     @Order(2)
+    SecurityFilterChain pocResourceServerChain(HttpSecurity http,
+            @Value("${vellum.auth.issuer}") String issuer,
+            @Value("${vellum.auth.api-audience:api://vellumhub}") String audience,
+            @Value("${vellum.poc.origin}") String origin) throws Exception {
+        var decoder = NimbusJwtDecoder.withJwkSetUri(issuer + "/oauth2/jwks")
+                .jwsAlgorithm(SignatureAlgorithm.RS256)
+                .build();
+        decoder.setJwtValidator(JwtAccessToken.validator(issuer, audience, 30));
+        http.securityMatcher("/poc/api/**")
+            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.decoder(decoder)))
+            .cors(cors -> cors.configurationSource(corsSource(origin)))
+            .csrf(csrf -> csrf.disable());
+        return http.build();
+    }
+
+    @Bean
+    @Order(3)
     SecurityFilterChain applicationChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
@@ -62,12 +83,13 @@ public class AuthorizationServerConfig {
         var policy = new CorsConfiguration();
         policy.setAllowedOrigins(List.of(origin));
         policy.setAllowedMethods(List.of("POST", "OPTIONS", "GET"));
-        policy.setAllowedHeaders(List.of("Content-Type"));
+        policy.setAllowedHeaders(List.of("Content-Type", "Authorization"));
         policy.setMaxAge(300L);
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/oauth2/token", policy);
         source.registerCorsConfiguration("/.well-known/**", policy);
         source.registerCorsConfiguration("/oauth2/jwks", policy);
+        source.registerCorsConfiguration("/poc/api/**", policy);
         return source;
     }
 

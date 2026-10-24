@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src http://127.0.0.1:9000; form-action 'self' http://127.0.0.1:9000; base-uri 'none'; frame-ancestors 'none'">
+  <title>VellumHub OIDC / PKCE PoC</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="poc.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1>OIDC Authorization Code + PKCE</h1>
+    <p>SEC-05 test client. No client secret. Tokens are stored only in JavaScript memory and disappear on reload.</p>
+    <button id="login">Sign in via Authorization Server</button>
+    <button id="api" disabled>Call protected test API</button>
+    <button id="logout" disabled>End local token session</button>
+    <pre id="status" role="status">Not authenticated</pre>
+    <small>Only use on 127.0.0.1 for the local PoC. Do not deploy this manual demo client as a production OIDC library.</small>
+  </main>
+</body>
+</html>
