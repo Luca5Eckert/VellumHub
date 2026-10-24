@@ -51,7 +51,7 @@ class AccessTokenClaimsTest {
     void doesNotConvertOidcIdTokenIntoApiAccessToken() {
         var context = mock(JwtEncodingContext.class);
         var header = JwsHeader.with(SignatureAlgorithm.RS256);
-        var claims = JwtClaimsSet.builder();
+        var claims = JwtClaimsSet.builder().subject("oidc-subject");
         when(context.getTokenType()).thenReturn(new OAuth2TokenType("id_token"));
         when(context.getJwsHeader()).thenReturn(header);
         when(context.getClaims()).thenReturn(claims);

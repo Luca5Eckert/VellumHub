@@ -26,7 +26,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -54,7 +54,7 @@ public class AuthorizationServerConfig {
             .csrf(csrf -> csrf.ignoringRequestMatchers(
                     PathPatternRequestMatcher.pathPattern("/oauth2/token")))
             .cors(cors -> cors.configurationSource(corsSource(origin)))
-            .addFilterBefore(s256OnlyFilter(), OAuth2AuthorizationEndpointFilter.class);
+            .addFilterBefore(s256OnlyFilter(), SecurityContextHolderFilter.class);
         return http.build();
     }
 
