@@ -47,6 +47,7 @@ class AuthPersistenceIntegrationTest {
     @Autowired IdentityRepository identities;
     @Autowired IdentityDetailsService details;
     @Autowired UuidV7 ids;
+    @Autowired com.vellumhub.auth.identity.OnboardingIdentityRepository onboarding;
 
     @Test
     void persistsPublicPkceClientAndCanonicalUserIdentity() {
@@ -67,6 +68,25 @@ class AuthPersistenceIntegrationTest {
         assertThat(identities.createIfAbsent(ids.next(), "test@example.invalid", "{noop}other")).isZero();
         assertThat(details.loadUserByUsername("TEST@example.invalid").getUsername())
                 .isEqualTo(id.toString());
+    }
+
+
+    @Test
+    void pendingIdentityCannotAuthenticateUntilConfirmedByUserService() {
+        var id = ids.next();
+        var email = "pending-" + id + "@example.invalid";
+        assertThat(onboarding.insertPending(id, "New User", email, "{noop}test-only"))
+                .isTrue();
+        var detailsBefore = details.loadUserByUsername(email);
+        assertThat(detailsBefore.getUsername()).isEqualTo(id.toString());
+        assertThat(detailsBefore.isEnabled()).isFalse();
+        assertThat(onboarding.pending(50)).anySatisfy(p -> {
+            if (p.id().equals(id)) {
+                assertThat(p.displayName()).isEqualTo("New User");
+            }
+        });
+        assertThat(onboarding.activate(id)).isTrue();
+        assertThat(details.loadUserByUsername(email).isEnabled()).isTrue();
     }
 
     private static Path makeKeys() {
