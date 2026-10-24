@@ -20,6 +20,8 @@ services:
       context: .
       dockerfile: services/auth-service/Dockerfile
     profiles: [auth-poc]
+    # Match the host owner of mode-0600 private key files; never chmod keys world-readable.
+    user: ${VELLUM_POC_RUN_AS:?Set to the UID:GID owning local signing keys}
     ports:
       - "127.0.0.1:9000:9000"
     environment:

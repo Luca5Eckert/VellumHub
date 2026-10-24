@@ -36,6 +36,7 @@ jobs:
           VELLUM_AUTH_DB_PASSWORD: ci-only-not-a-real-secret
           VELLUM_POC_LOGIN: test@example.invalid
           VELLUM_POC_PASSWORD: test-only-password-not-used-in-prod
+          VELLUM_POC_RUN_AS: 1000:1000
         run: docker compose -f docker-compose.auth-poc.yml --profile auth-poc config --quiet
       - name: Boot the isolated OAuth service and run HTTP/PKCE smoke
         env:
@@ -44,6 +45,7 @@ jobs:
           VELLUM_POC_PASSWORD: ci-test-credential-not-production-1234
         run: |
           sh infra/scripts/security/generate_auth_poc_keys.sh
+          export VELLUM_POC_RUN_AS="$(id -u):$(id -g)"
           docker compose -f docker-compose.auth-poc.yml --profile auth-poc up -d --build
           trap 'docker compose -f docker-compose.auth-poc.yml --profile auth-poc down -v' EXIT
           ready=0

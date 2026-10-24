@@ -17,6 +17,8 @@ Prerequisites: Docker Compose, openssl, Python 3 and Java 21/Maven for JVM tests
 
 ```sh
 sh infra/scripts/security/generate_auth_poc_keys.sh
+# The container process must have the exact numeric owner UID:GID of the protected 0600 PEMs.
+export VELLUM_POC_RUN_AS="$(id -u):$(id -g)"
 export VELLUM_AUTH_DB_PASSWORD='replace-with-strong-local-db-password'
 export VELLUM_POC_LOGIN='test@example.invalid'
 export VELLUM_POC_PASSWORD='replace-with-unique-strong-test-password'
