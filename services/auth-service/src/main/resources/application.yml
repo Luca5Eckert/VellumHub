@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: ${VELLUM_AUTH_DB_URL:jdbc:postgresql://127.0.0.1:5433/vellum_auth}
+    username: ${VELLUM_AUTH_DB_USERNAME:vellum_auth}
+    password: ${VELLUM_AUTH_DB_PASSWORD:}
+  flyway:
+    enabled: true
+  security:
+    user:
+      name: unused
+      password: ${VELLUM_UNUSED_BOOT_USER_PASSWORD:unused}
+server:
+  port: 9000
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+        same-site: lax
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+vellum:
+  auth:
+    issuer: ${VELLUM_AUTH_ISSUER:}
+    api-audience: ${VELLUM_AUTH_API_AUDIENCE:api://vellumhub}
+    keys:
+      private-key-path: ${VELLUM_AUTH_PRIVATE_KEY_PATH:}
+      public-key-path: ${VELLUM_AUTH_PUBLIC_KEY_PATH:}
+      kid: ${VELLUM_AUTH_ACTIVE_KID:}
+  poc:
+    origin: ${VELLUM_POC_SPA_ORIGIN:}
+    client-id: vellumhub-spa-poc
+    redirect-uri: ${VELLUM_POC_REDIRECT_URI:}
+    post-logout-uri: ${VELLUM_POC_LOGOUT_URI:}
+    fixture:
+      enabled: false
+      login: ${VELLUM_POC_LOGIN:}
+      password: ${VELLUM_POC_PASSWORD:}

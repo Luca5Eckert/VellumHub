@@ -1,0 +1,106 @@
+package com.vellumhub.auth.config;
+
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+@Configuration(proxyBeanMethods = false)
+public class AuthorizationServerConfig {
+
+    @Bean
+    @Order(1)
+    SecurityFilterChain authorizationServerChain(HttpSecurity http,
+            @Value("${vellum.poc.origin}") String origin) throws Exception {
+        http.oauth2AuthorizationServer(as -> {
+            http.securityMatcher(as.getEndpointsMatcher());
+            as.oidc(Customizer.withDefaults());
+        });
+        http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+            .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
+                    new LoginUrlAuthenticationEntryPoint("/login"),
+                    new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
+            .csrf(csrf -> csrf.ignoringRequestMatchers(
+                    new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/oauth2/token")))
+            .cors(cors -> cors.configurationSource(corsSource(origin)));
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    SecurityFilterChain applicationChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
+                .anyRequest().authenticated())
+            .formLogin(Customizer.withDefaults());
+        return http.build();
+    }
+
+    private UrlBasedCorsConfigurationSource corsSource(String origin) {
+        if (origin.isBlank() || "*".equals(origin)) {
+            throw new IllegalArgumentException("One explicit SPA origin is required");
+        }
+        var policy = new CorsConfiguration();
+        policy.setAllowedOrigins(List.of(origin));
+        policy.setAllowedMethods(List.of("POST", "OPTIONS", "GET"));
+        policy.setAllowedHeaders(List.of("Content-Type"));
+        policy.setMaxAge(300L);
+        var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/oauth2/token", policy);
+        source.registerCorsConfiguration("/.well-known/**", policy);
+        source.registerCorsConfiguration("/oauth2/jwks", policy);
+        return source;
+    }
+
+    @Bean
+    AuthorizationServerSettings authorizationServerSettings(
+            @Value("${vellum.auth.issuer}") String issuer) {
+        if (issuer.isBlank()) {
+            throw new IllegalStateException("A stable OAuth issuer is required");
+        }
+        return AuthorizationServerSettings.builder().issuer(issuer).build();
+    }
+
+    @Bean
+    JwtDecoder jwtDecoder(JWKSource<SecurityContext> keys) {
+        return OAuth2AuthorizationServerConfiguration.jwtDecoder(keys);
+    }
+
+    @Bean
+    OAuth2TokenCustomizer<JwtEncodingContext> accessTokenClaims(
+            @Value("${vellum.auth.api-audience:api://vellumhub}") String audience) {
+        return context -> {
+            if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+                return; // OIDC ID tokens keep their own typ/aud semantics.
+            }
+            String subject = context.getPrincipal().getName();
+            UUID.fromString(subject); // Fail closed if username/email leaks into the principal.
+            context.getJwsHeader().type("at+jwt");
+            context.getClaims()
+                    .subject(subject)
+                    .audience(List.of(audience))
+                    .id(UUID.randomUUID().toString())
+                    .claim("client_id", context.getRegisteredClient().getClientId())
+                    .claim("roles", List.of("USER"));
+        };
+    }
+}
