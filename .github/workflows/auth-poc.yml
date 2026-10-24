@@ -1,0 +1,39 @@
+name: SEC-05 Authorization Server PoC
+
+on:
+  pull_request:
+    paths:
+      - 'services/auth-service/**'
+      - 'lib/jwt-security/**'
+      - 'pom.xml'
+      - 'docker-compose.auth-poc.yml'
+      - 'infra/auth-poc/**'
+      - 'infra/scripts/security/**'
+      - '.github/workflows/auth-poc.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'services/auth-service/**'
+      - 'lib/jwt-security/**'
+      - 'pom.xml'
+
+jobs:
+  auth-poc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Verify PoC and shared JWT contract with PostgreSQL Testcontainers
+        run: mvn -B -ntp -Pauth-poc -pl services/auth-service -am clean verify
+      - name: Validate isolated Compose spec
+        env:
+          VELLUM_AUTH_DB_PASSWORD: ci-only-not-a-real-secret
+          VELLUM_POC_LOGIN: test@example.invalid
+          VELLUM_POC_PASSWORD: test-only-password-not-used-in-prod
+        run: docker compose -f docker-compose.auth-poc.yml --profile auth-poc config --quiet

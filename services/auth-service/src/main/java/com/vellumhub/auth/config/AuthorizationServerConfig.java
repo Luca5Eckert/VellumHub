@@ -24,6 +24,14 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
+import org.springframework.web.filter.OncePerRequestFilter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -43,9 +51,28 @@ public class AuthorizationServerConfig {
                     new LoginUrlAuthenticationEntryPoint("/login"),
                     new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
             .csrf(csrf -> csrf.ignoringRequestMatchers(
-                    new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/oauth2/token")))
-            .cors(cors -> cors.configurationSource(corsSource(origin)));
+                    PathPatternRequestMatcher.pathPattern("/oauth2/token")))
+            .cors(cors -> cors.configurationSource(corsSource(origin)))
+            .addFilterBefore(s256OnlyFilter(), OAuth2AuthorizationEndpointFilter.class);
         return http.build();
+    }
+
+    private OncePerRequestFilter s256OnlyFilter() {
+        return new OncePerRequestFilter() {
+            @Override
+            protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                            FilterChain chain) throws ServletException, IOException {
+                if ("/oauth2/authorize".equals(request.getServletPath())
+                        && "code".equals(request.getParameter("response_type"))
+                        && (!"S256".equals(request.getParameter("code_challenge_method"))
+                        || request.getParameter("code_challenge") == null
+                        || request.getParameter("code_challenge").isBlank())) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "PKCE S256 required");
+                    return;
+                }
+                chain.doFilter(request, response);
+            }
+        };
     }
 
     @Bean
