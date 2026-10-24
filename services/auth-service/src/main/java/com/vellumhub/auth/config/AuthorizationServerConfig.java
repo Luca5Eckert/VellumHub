@@ -4,6 +4,7 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.vellumhub.security.jwt.JwtAccessToken;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
@@ -170,10 +171,10 @@ public class AuthorizationServerConfig {
             context.getJwsHeader().type("at+jwt");
             context.getClaims()
                     .subject(subject)
-                    .audience(List.of(audience))
+                    .audience(new ArrayList<>(List.of(audience)))
                     .id(UUID.randomUUID().toString())
                     .claim("client_id", context.getRegisteredClient().getClientId())
-                    .claim("roles", List.of("USER"));
+                    .claim("roles", new ArrayList<>(List.of("USER")));
         };
     }
 }
