@@ -12,3 +12,6 @@ infra
 README.md
 docker-compose.yml
 maven-local-settings.xml
+
+# Never send local private signing keys into a Docker build context
+.local/

@@ -1,0 +1,47 @@
+# Isolated local proof of concept. Does NOT change the existing docker-compose.yml.
+# docker compose -f docker-compose.auth-poc.yml up --build
+services:
+  auth-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: vellum_auth
+      POSTGRES_USER: vellum_auth
+      POSTGRES_PASSWORD: ${VELLUM_AUTH_DB_PASSWORD:?Set a nonempty PoC DB password in the environment}
+    volumes:
+      - auth-poc-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vellum_auth -d vellum_auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    networks: [auth-poc]
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    profiles: [auth-poc]
+    # Match the host owner of mode-0600 private key files; never chmod keys world-readable.
+    user: ${VELLUM_POC_RUN_AS:?Set to the UID:GID owning local signing keys}
+    ports:
+      - "127.0.0.1:9000:9000"
+    environment:
+      SPRING_PROFILES_ACTIVE: local-poc
+      VELLUM_AUTH_DB_URL: jdbc:postgresql://auth-postgres:5432/vellum_auth
+      VELLUM_AUTH_DB_USERNAME: vellum_auth
+      VELLUM_AUTH_DB_PASSWORD: ${VELLUM_AUTH_DB_PASSWORD:?Required}
+      VELLUM_AUTH_PRIVATE_KEY_PATH: /run/keys/signing-private.pem
+      VELLUM_AUTH_PUBLIC_KEY_PATH: /run/keys/signing-public.pem
+      VELLUM_AUTH_ACTIVE_KID: ${VELLUM_AUTH_ACTIVE_KID:-poc-key-1}
+      VELLUM_POC_LOGIN: ${VELLUM_POC_LOGIN:?Set a local fixture email}
+      VELLUM_POC_PASSWORD: ${VELLUM_POC_PASSWORD:?Set a 12+ character local fixture password}
+    volumes:
+      - ./.local/auth-poc:/run/keys:ro
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+    networks: [auth-poc]
+volumes:
+  auth-poc-pgdata:
+networks:
+  auth-poc:
+    internal: false

@@ -1,0 +1,15 @@
+# Deliberately not production settings. Plain HTTP only on loopback for local browser PoC.
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+vellum:
+  auth:
+    issuer: ${VELLUM_AUTH_ISSUER:http://127.0.0.1:9000}
+  poc:
+    origin: ${VELLUM_POC_SPA_ORIGIN:http://127.0.0.1:9100}
+    redirect-uri: ${VELLUM_POC_REDIRECT_URI:http://127.0.0.1:9100/index.html}
+    post-logout-uri: ${VELLUM_POC_LOGOUT_URI:http://127.0.0.1:9100/index.html}
+    fixture:
+      enabled: true

@@ -21,6 +21,11 @@
     </modules>
 
     <profiles>
+        <!-- SEC-05 PoC is opt-in; existing application builds and deployments stay unchanged. -->
+        <profile>
+            <id>auth-poc</id>
+            <modules><module>services/auth-service</module></modules>
+        </profile>
         <profile>
             <id>distributed-e2e</id>
             <modules>

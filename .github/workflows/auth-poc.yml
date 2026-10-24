@@ -1,0 +1,61 @@
+name: SEC-05 Authorization Server PoC
+
+on:
+  pull_request:
+    paths:
+      - 'services/auth-service/**'
+      - 'lib/jwt-security/**'
+      - 'pom.xml'
+      - 'docker-compose.auth-poc.yml'
+      - 'infra/auth-poc/**'
+      - 'infra/scripts/security/**'
+      - '.github/workflows/auth-poc.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'services/auth-service/**'
+      - 'lib/jwt-security/**'
+      - 'pom.xml'
+
+jobs:
+  auth-poc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Verify PoC and shared JWT contract with PostgreSQL Testcontainers
+        run: mvn -B -ntp -Pauth-poc -pl services/auth-service -am clean verify
+      - name: Validate isolated Compose spec
+        env:
+          VELLUM_AUTH_DB_PASSWORD: ci-only-not-a-real-secret
+          VELLUM_POC_LOGIN: test@example.invalid
+          VELLUM_POC_PASSWORD: test-only-password-not-used-in-prod
+          VELLUM_POC_RUN_AS: 1000:1000
+        run: docker compose -f docker-compose.auth-poc.yml --profile auth-poc config --quiet
+      - name: Boot the isolated OAuth service and run HTTP/PKCE smoke
+        env:
+          VELLUM_AUTH_DB_PASSWORD: ci-only-db-password-not-production
+          VELLUM_POC_LOGIN: ci@example.invalid
+          VELLUM_POC_PASSWORD: ci-test-credential-not-production-1234
+        run: |
+          sh infra/scripts/security/generate_auth_poc_keys.sh
+          export VELLUM_POC_RUN_AS="$(id -u):$(id -g)"
+          docker compose -f docker-compose.auth-poc.yml --profile auth-poc up -d --build
+          trap 'status=$?; if [ "$status" -ne 0 ]; then docker compose -f docker-compose.auth-poc.yml --profile auth-poc logs --no-color --tail=180 auth-service | sed -E "s/(Bearer |access_token=|refresh_token=)[A-Za-z0-9._-]+/\\1[REDACTED]/g" || true; fi; docker compose -f docker-compose.auth-poc.yml --profile auth-poc down -v; exit "$status"' EXIT
+          ready=0
+          for i in $(seq 1 40); do
+            if curl --silent --fail http://127.0.0.1:9000/actuator/health >/dev/null; then ready=1; break; fi
+            sleep 3
+          done
+          if [ "$ready" -ne 1 ]; then
+            docker compose -f docker-compose.auth-poc.yml --profile auth-poc logs --tail=80
+            exit 1
+          fi
+          sh infra/scripts/security/verify_auth_poc.sh
+          python3 infra/scripts/security/verify_auth_poc_flow.py
