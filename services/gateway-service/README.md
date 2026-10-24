@@ -177,3 +177,9 @@ The Gateway permits only POST /api/v1/auth/login, /api/v1/auth/register and /api
 ### Security JWT/JWKS transition (#304, #305)
 
 In draft PR #321, JWT verifiers fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. The User Service alone signs tokens with `JWT_ACTIVE_KID` and externally provisioned private PEMs. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
+
+## SEC-09 — Verified bearer relay (opt-in issuer change)
+
+`VerifiedBearerRelayFilter` removes untrusted incoming Authorization headers and forwards only the access token from a validated `JwtAuthenticationToken`, never an ID Token or forwarded username. Public legacy login routes do not receive Authorization. SecurityChain verifies RS256 JWKS, issuer, audience and RFC 9068 type before Gateway filtering. Internal provisioning paths are denied and not routed.
+
+The Compose default **remains legacy**. The dedicated `docker-compose.oidc-lote2.yml` overlay changes **JWT_ISSUER/JWT_JWKS_URI** in Gateway, User, Catalog, Engagement and Recommendation together; there is NO silent dual issuer fallback. User Auth and Google legacy remain until #317/#308. Read [SEC-06/09 runbook](../../docs/SECURITY_OIDC_LOTE2.md) before enabling overlay.
