@@ -24,6 +24,8 @@ spring:
       server:
         webflux:
           routes:
+            # SEC-09: VellumHub's browser speaks directly to the AS's canonical issuer.
+            # Do not proxy authorize/token via Gateway unless external issuer/discovery URLs match.
             - id: user
               uri: ${USER_SERVICE_URL:http://user-service:8080}
               predicates:

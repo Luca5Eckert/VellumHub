@@ -24,7 +24,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return new UserDetailImpl(
                 user.getId(),
                 user.getEmail(),
-                user.getPassword(),
+                user.getPassword() == null ? "{noop}AUTH_OWNED_ACCOUNT_LOGIN_DISABLED" : user.getPassword(),
                 user.getRole()
         );
     }
