@@ -54,3 +54,18 @@ jobs:
           # services' images/build; validate its actual composition with base.
           touch .env
           docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml config --quiet
+
+  distributed-oidc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Real Auth User Gateway Catalog PKCE E2E and AS outage
+        run: bash infra/scripts/security/run_oidc_lote2_e2e.sh

@@ -6,6 +6,7 @@ Requires all services from the docker-compose.oidc-lote2.yml overlay to be start
 import json
 import os
 import secrets
+import subprocess
 import urllib.parse
 import urllib.request
 
@@ -57,3 +58,13 @@ assert id_token.status == 401, "Gateway accepted an ID Token as bearer"
 malformed = get("/api/v1/users/me", "not-a-jwt")
 assert malformed.status == 401, "Gateway accepted malformed JWT"
 print("Real Auth UUIDv7 -> User persisted profile -> Gateway relay -> Catalog read/403 and ID Token rejection: OK")
+
+if os.environ.get("VELLUM_VERIFY_OFFLINE") == "1":
+    cmd = ["docker", "compose", "-f", "docker-compose.yml", "-f", "docker-compose.oidc-lote2.yml"]
+    subprocess.run(cmd + ["stop", "auth-service"], check=True)
+    try:
+        cached = get("/api/v1/users/me", access)
+        assert cached.status == 200, f"Warm JWKS JWT failed when AS offline: HTTP {cached.status}"
+        print("Auth offline, Gateway + User cached JWT: OK")
+    finally:
+        subprocess.run(cmd + ["start", "auth-service"], check=True)
