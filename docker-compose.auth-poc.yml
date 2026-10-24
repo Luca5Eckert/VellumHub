@@ -29,7 +29,7 @@ services:
       VELLUM_AUTH_DB_PASSWORD: ${VELLUM_AUTH_DB_PASSWORD:?Required}
       VELLUM_AUTH_PRIVATE_KEY_PATH: /run/keys/signing-private.pem
       VELLUM_AUTH_PUBLIC_KEY_PATH: /run/keys/signing-public.pem
-      VELLUM_AUTH_ACTIVE_KID: ${VELLUM_AUTH_ACTIVE_KID:poc-key-1}
+      VELLUM_AUTH_ACTIVE_KID: ${VELLUM_AUTH_ACTIVE_KID:-poc-key-1}
       VELLUM_POC_LOGIN: ${VELLUM_POC_LOGIN:?Set a local fixture email}
       VELLUM_POC_PASSWORD: ${VELLUM_POC_PASSWORD:?Set a 12+ character local fixture password}
     volumes:

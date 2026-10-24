@@ -24,6 +24,8 @@ docker compose -f docker-compose.auth-poc.yml --profile auth-poc up --build
 # another terminal:
 python3 -m http.server 9100 --bind 127.0.0.1 --directory infra/auth-poc/spa
 sh infra/scripts/security/verify_auth_poc.sh
+# automated browser-like login test (uses configured VELLUM_POC_LOGIN/PASSWORD):
+python3 infra/scripts/security/verify_auth_poc_flow.py
 ```
 
 Visit `http://127.0.0.1:9100/index.html`, click **Sign in**, enter the configured test credentials, then **Call protected test API**. The authorization server listens on `127.0.0.1:9000` and exposes `/.well-known/openid-configuration`, `/oauth2/jwks`, `/oauth2/authorize` and `/oauth2/token`. Redirect URI is registered exactly; SPA origin is allowed only for the token endpoint/discovery. The static browser harness demonstrates the protocol and nonce/state but **does not cryptographically verify the ID Token**; it must be replaced with a maintained OIDC library before using a real SPA. This is **not** evidence of a production-ready web client.

@@ -37,3 +37,23 @@ jobs:
           VELLUM_POC_LOGIN: test@example.invalid
           VELLUM_POC_PASSWORD: test-only-password-not-used-in-prod
         run: docker compose -f docker-compose.auth-poc.yml --profile auth-poc config --quiet
+      - name: Boot the isolated OAuth service and run HTTP/PKCE smoke
+        env:
+          VELLUM_AUTH_DB_PASSWORD: ci-only-db-password-not-production
+          VELLUM_POC_LOGIN: ci@example.invalid
+          VELLUM_POC_PASSWORD: ci-test-credential-not-production-1234
+        run: |
+          sh infra/scripts/security/generate_auth_poc_keys.sh
+          docker compose -f docker-compose.auth-poc.yml --profile auth-poc up -d --build
+          trap 'docker compose -f docker-compose.auth-poc.yml --profile auth-poc down -v' EXIT
+          ready=0
+          for i in $(seq 1 40); do
+            if curl --silent --fail http://127.0.0.1:9000/actuator/health >/dev/null; then ready=1; break; fi
+            sleep 3
+          done
+          if [ "$ready" -ne 1 ]; then
+            docker compose -f docker-compose.auth-poc.yml --profile auth-poc logs --tail=80
+            exit 1
+          fi
+          sh infra/scripts/security/verify_auth_poc.sh
+          python3 infra/scripts/security/verify_auth_poc_flow.py
