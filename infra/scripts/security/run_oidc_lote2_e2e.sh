@@ -32,8 +32,8 @@ export POSTGRES_USER_PASSWORD=ci-user-db
 export POSTGRES_RECOMMENDATION_USER=ci_recommendation
 export POSTGRES_RECOMMENDATION_PASSWORD=ci-recommendation-db
 # Auth and legacy private keys are NOT shared.
-sudo chown 10001:10001 .local/legacy-oidc-test/private.pem
 chmod 600 .local/legacy-oidc-test/private.pem
+sudo chown 10001:10001 .local/legacy-oidc-test/private.pem
 chmod 644 .local/legacy-oidc-test/public.pem
 cleanup() {
   status=$?
