@@ -71,8 +71,7 @@ public class AuthorizationServerConfig {
                     new LoginUrlAuthenticationEntryPoint("/login"),
                     htmlRequests()))
             .csrf(csrf -> csrf.ignoringRequestMatchers(
-                    PathPatternRequestMatcher.pathPattern("/oauth2/token"),
-                    PathPatternRequestMatcher.pathPattern("/v1/identity/register")))
+                    PathPatternRequestMatcher.pathPattern("/oauth2/token")))
             .cors(cors -> cors.configurationSource(corsSource(origin)))
             .addFilterBefore(s256OnlyFilter(), SecurityContextHolderFilter.class);
         return http.build();
@@ -127,6 +126,10 @@ public class AuthorizationServerConfig {
                 .requestMatchers(HttpMethod.POST, "/v1/identity/register").permitAll()
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                 .anyRequest().authenticated())
+            // Registration is a stateless JSON operation and cannot obtain a browser CSRF token.
+            // Scope this exemption to this path; retain CSRF for the interactive login flow.
+            .csrf(csrf -> csrf.ignoringRequestMatchers(
+                    PathPatternRequestMatcher.pathPattern("/v1/identity/register")))
             .formLogin(Customizer.withDefaults());
         return http.build();
     }
