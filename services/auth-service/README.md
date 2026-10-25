@@ -1,6 +1,6 @@
 # SEC-05 — Spring Security 7 Authorization Server PoC
 
-**Status: implemented in branch only; not a production cutover.** This independent experimental service is opt-in and does not replace the existing User Service JWT issuer. Tracks [#306](https://github.com/Luca5Eckert/VellumHub/issues/306) and [ADR-015](https://github.com/Luca5Eckert/obsidian-vault/blob/main/projects/vellum-hub/architecture/adr/ADR-015-identidade-e-authorization-server.md).
+**Status: Lote 1 PoC and Lote 2 integration are merged; Lote 3 is in draft PR #334, without production cutover.** This independent experimental service is opt-in and does not replace the existing User Service JWT issuer. Tracks [#306](https://github.com/Luca5Eckert/VellumHub/issues/306) and [ADR-015](https://github.com/Luca5Eckert/obsidian-vault/blob/main/projects/vellum-hub/architecture/adr/ADR-015-identidade-e-authorization-server.md).
 
 ## Boundaries
 
@@ -69,3 +69,13 @@ Code is committed as a PoC; **full Maven verify, Docker Compose runtime, PKCE br
 This is a development-only integration until TLS, M2M identity, login/registration throttling, backup/recovery and issuer rollout are validated. The PoC fixture remains separately controlled by the local-poc profile and is NOT a production enrollment path.
 
 [Runbook](../../docs/SECURITY_OIDC_LOTE2.md) · [#307](https://github.com/Luca5Eckert/VellumHub/issues/307).
+
+## SEC-07 / SEC-08 — federated Google login and session lifecycle (PR #334 draft)
+
+`application-google-oidc.yml` activates the official Spring Security OAuth2/OIDC client only with profile `google-oidc`. Set `VELLUM_GOOGLE_CLIENT_ID` and `VELLUM_GOOGLE_CLIENT_SECRET` from a secret store; register the exact callback URL `{authBaseUrl}/login/oauth2/code/google` with Google. Use `local-poc,google-oidc` on loopback only, and `VELLUM_IDENTITY_REGISTRATION_ENABLED=true` to activate the existing private Auth→User provisioner. Always provide the private `VELLUM_INTERNAL_PROVISION_KEY` and `VELLUM_IDENTITY_USER_URL`.
+
+The `V3__google_federated_identities.sql` migration gives Auth sole ownership of new provider bindings, keyed by `(issuer,subject)`. No email auto-link, no Google token as API bearer, no password fallback for Google-only accounts. User Service retains legacy bindings exclusively for old API compatibility until #317; there is no new dual-write. Unlinked existing-email identities fail closed pending a proven manual possession flow.
+
+`V4__jdbc_http_sessions.sql` introduces Spring Session JDBC persistence through Flyway. Inactive sessions expire after 30 minutes; `VELLUM_AUTH_SESSION_ABSOLUTE_SECONDS` defaults to 43200. The AS retains the OIDC `/connect/logout` endpoint and a CSRF-protected `POST /logout` for per-device logout. Reauthorization requires new top-level Authorization Code + PKCE S256. The initial SPA receives no refresh token, and previously issued JWTs remain valid until expiry.
+
+Verification: `mvn -B -ntp -Pauth-poc -pl services/auth-service -am clean verify`. CI does not replace live Google credentials, HTTPS deployment checks, provider-driven E2E, or multi-instance session validation. See [runbook](../../docs/SECURITY_OIDC_LOTE3.md) for the negative cases, rollback and explicit gaps.

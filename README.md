@@ -501,5 +501,13 @@ Registration at /v1/identity/register is disabled by default and only enabled vi
 
 Run Maven verification with: mvn -B -ntp -Pauth-poc -pl services/auth-service,services/user-service,services/gateway-service -am verify.
 Run distributed integration using: bash infra/scripts/security/run_oidc_lote2_e2e.sh (Docker and a disposable environment required).
-See docs/SECURITY_OIDC_LOTE2.md for test gates and rollback. **No merge or production rollout is claimed for PR #331.**
+See docs/SECURITY_OIDC_LOTE2.md for test gates and rollback. **PR #331 is merged; this does not establish a production rollout.**
 
+
+## SEC-07/SEC-08 — Google OIDC federation and session lifecycle (PR #334 draft)
+
+The opt-in Auth integration adds Google as an upstream OIDC provider while keeping the VellumHub issuer and UUIDv7 `sub` stable. External identities are keyed by verified `(issuer, subject)`, never automatically linked by email. Auth stores disabled `PENDING_PROFILE` identities and provisions User idempotently before allowing login. Google-only accounts have no password login. The legacy `/auth/google` remains available until an explicit #317 cutover.
+
+Spring Session JDBC persists the Auth browser session, with 30-minute idle timeout and a 12-hour absolute limit. The Authorization Server uses a Spring Session-backed `SessionRegistry` for its OIDC logout endpoint; a local `POST /logout` remains CSRF protected. Already issued API JWTs remain valid up to `exp`; public SPA refresh tokens remain disabled. Concurrent per-device sessions are permitted; logout invalidates the current session.
+
+Enable explicitly with `docker-compose.oidc-lote3.yml` on top of the base and Lote 2 overlay, with external Google client ID/secret and the exact OAuth callback `/login/oauth2/code/google`. See [Lote 3 runbook](docs/SECURITY_OIDC_LOTE3.md). **PR #334 is draft, not merged or deployed; Google-provider E2E and authenticated manual linking for existing local accounts are not accepted yet.**
