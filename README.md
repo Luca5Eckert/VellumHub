@@ -365,26 +365,13 @@ CI keeps distributed verification separate from the regular reactor checks so ap
 
 ## Observability and Operational Feedback
 
-An event-driven architecture is not understandable from HTTP responses alone: a write can commit while event publication waits, consumers can fall behind, and an autonomous read can remain available while its projection is stale. **The design must make those states observable from outside the service.**
+Reliable distributed systems need more than passing tests: engineers must be able to understand failures, resource pressure and asynchronous state as the system runs. In VellumHub, this matters because an event may be committed before downstream projections converge, while local recommendation reads continue independently.
 
-Two complementary influences shape this approach: *Designing Data-Intensive Applications* emphasizes explicit consistency, failures and data ownership; *A Philosophy of Software Design* highlights cognitive load, change amplification, and hidden complexity. Short feedback cycles combine tests of architectural invariants with runtime signals **before** introducing a cache, adding retries or splitting a service.
+The engineering approach connects **architectural invariants** (tested through integration and distributed tests), **operational signals** (metrics, structured logs and traces), and **explicit trade-offs** (consistency, latency and availability). Observability helps investigate the behavior of the services; it does not replace the correctness guarantees of Outbox, idempotent consumers or local read models.
 
-### Local telemetry architecture
+The project uses **Micrometer/Prometheus**, **OpenTelemetry**, and **Grafana with Loki, Tempo and Alloy** for local monitoring and investigation, with dashboards and runbooks. The complete technical setup and validation scope belong in [the observability guide](docs/OBSERVABILITY.md), not in an ever-changing project introduction.
 
-| Signal | Instrumentation and collection | Query / operator view |
-|---|---|---|
-| HTTP, JVM, database, Kafka and recommendation metrics | Spring Actuator + Micrometer → Prometheus | Grafana dashboards and alert rules |
-| Structured application logs | JSON stdout → Docker logs → Grafana Alloy | Loki / LogQL in Grafana Explore |
-| Distributed traces | OpenTelemetry Java Agent → OTLP → Alloy | Tempo and Grafana trace drilldown |
-| Investigation | Versioned alerts, queries, runbooks | Operational response and targeted changes |
-
-The local stack includes five provisioned dashboards spanning platform, HTTP, JVM/database, Kafka and recommendation health. It can help answer: Which routes return 5xx? Is JVM memory or Hikari pool demand growing? Was an event published, processed and reflected in a local read model? Are empty recommendations caused by projection lag or retrieval logic?
-
-**Telemetry contract:** structured timestamp, service, environment, severity, operation and available correlation/trace context; low-cardinality Prometheus and Loki labels. No passwords, JWTs, cookies, private keys or raw Kafka payload dumps in logs/spans. IDs useful in a sanitized log body must not become unbounded metric dimensions.
-
-**Evidence boundary:** these pipelines, dashboards and runbooks are versioned for **local development**. [OBS-09 / #214](https://github.com/Luca5Eckert/VellumHub/issues/214) still tracks executable end-to-end proof that signals are emitted, ingested and queryable. Prometheus scrape jobs and Alloy discovery cover the original five services; the newer OAuth2 `auth-service` still requires explicit instrumentation/collection. Cross-Kafka trace continuity and trace-to-log navigation require scenario-based evidence. No production SLO, incident-detection improvement or complete Auth coverage is claimed.
-
-[Stack and setup](docs/OBSERVABILITY.md) · [Incident runbooks](docs/OBSERVABILITY_RUNBOOKS.md) · [Architecture fitness functions](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md)
+[Observability guide](docs/OBSERVABILITY.md) · [Incident runbooks](docs/OBSERVABILITY_RUNBOOKS.md) · [Architecture fitness functions](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md)
 
 ## Delivery
 
