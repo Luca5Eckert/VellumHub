@@ -34,5 +34,30 @@ public class IdentityRepository {
                 """, id, login.strip(), encodedPassword);
     }
 
+    public Optional<Identity> findById(UUID id) {
+        return jdbc.query("""
+                SELECT id, login, password_hash, active FROM auth_identity WHERE id = ?
+                """, (rs, row) -> new Identity(rs.getObject("id", UUID.class),
+                        rs.getString("login"), rs.getString("password_hash"),
+                        rs.getBoolean("active")), id).stream().findFirst();
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void linkVerifiedGoogle(UUID userId, String issuer, String subject) {
+        int inserted = jdbc.update("""
+                INSERT INTO auth_external_identity (issuer, subject, user_id)
+                VALUES (?, ?, ?) ON CONFLICT DO NOTHING
+                """, issuer, subject, userId);
+        if (inserted == 0) {
+            var existing = jdbc.query("""
+                    SELECT user_id FROM auth_external_identity WHERE issuer = ? AND subject = ?
+                    """, (rs, row) -> rs.getObject(1, UUID.class), issuer, subject);
+            // A replay for the same binding is idempotent; a different owner is never reassigned.
+            if (existing.isEmpty() || !existing.getFirst().equals(userId)) {
+                throw new FederatedIdentityRepository.FederationConflictException();
+            }
+        }
+    }
+
     public record Identity(UUID id, String login, String passwordHash, boolean active) { }
 }
