@@ -28,6 +28,10 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -121,7 +125,9 @@ public class AuthorizationServerConfig {
 
     @Bean
     @Order(3)
-    SecurityFilterChain applicationChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain applicationChain(HttpSecurity http,
+            @Value("${vellum.google.enabled:false}") boolean googleEnabled,
+            ObjectProvider<OAuth2UserService<OidcUserRequest, OidcUser>> federatedUsers) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/v1/identity/register").permitAll()
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
@@ -130,7 +136,15 @@ public class AuthorizationServerConfig {
             // Scope this exemption to this path; retain CSRF for the interactive login flow.
             .csrf(csrf -> csrf.ignoringRequestMatchers(
                     PathPatternRequestMatcher.pathPattern("/v1/identity/register")))
-            .formLogin(Customizer.withDefaults());
+            .formLogin(Customizer.withDefaults())
+            .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout")
+                    .invalidateHttpSession(true).clearAuthentication(true)
+                    .deleteCookies("SESSION", "JSESSIONID"));
+        if (googleEnabled) {
+            // Enable only with a configured provider and external credentials.
+            http.oauth2Login(oauth -> oauth.userInfoEndpoint(userInfo ->
+                    userInfo.oidcUserService(federatedUsers.getObject())));
+        }
         return http.build();
     }
 
