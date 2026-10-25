@@ -7,6 +7,10 @@ spring:
     password: ${VELLUM_AUTH_DB_PASSWORD:}
   flyway:
     enabled: true
+  session:
+    timeout: 30m
+    jdbc:
+      initialize-schema: never
   security:
     user:
       name: unused
@@ -42,6 +46,8 @@ vellum:
       login: ${VELLUM_POC_LOGIN:}
       password: ${VELLUM_POC_PASSWORD:}
 
+  session:
+    absolute-seconds: ${VELLUM_AUTH_SESSION_ABSOLUTE_SECONDS:43200}
   identity:
     registration-enabled: ${VELLUM_IDENTITY_REGISTRATION_ENABLED:false}
     shared-secret: ${VELLUM_INTERNAL_PROVISION_KEY:}
