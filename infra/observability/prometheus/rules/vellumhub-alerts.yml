@@ -11,7 +11,7 @@ groups:
         annotations:
           summary: "Gateway is unavailable to Prometheus."
           description: "Prometheus cannot scrape gateway-service for at least one minute."
-          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#gateway-unavailable-or-5xx-high"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#gateway-unavailable-or-5xx-high"
 
       - alert: PrometheusTargetDown
         expr: up{job=~".*-service"} == 0
@@ -21,7 +21,7 @@ groups:
         annotations:
           summary: "A VellumHub application target is down."
           description: "Prometheus target {{ $labels.job }} is down."
-          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#prometheus-target-down"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#prometheus-target-down"
 
       - alert: GatewayHigh5xxRate
         expr: |
@@ -36,7 +36,7 @@ groups:
         annotations:
           summary: "Gateway 5xx ratio is above 5%."
           description: "Gateway is returning a sustained elevated 5xx ratio."
-          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#gateway-unavailable-or-5xx-high"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#gateway-unavailable-or-5xx-high"
 
       - alert: GatewayHighP95Latency
         expr: |
@@ -51,7 +51,7 @@ groups:
         annotations:
           summary: "Gateway p95 latency is above 2 seconds."
           description: "Gateway request latency stayed above the initial conservative threshold."
-          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#gateway-unavailable-or-5xx-high"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#gateway-unavailable-or-5xx-high"
 
       - alert: HikariPendingConnections
         expr: sum by (job) (hikaricp_connections_pending{job=~".*-service"}) > 0
@@ -61,7 +61,7 @@ groups:
         annotations:
           summary: "Hikari pending connections detected."
           description: "Service {{ $labels.job }} has sustained pending database connections."
-          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#database-saturated-or-hikari-exhausted"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#database-saturated-or-hikari-exhausted"
 
       - alert: JvmHeapNearLimit
         expr: |
@@ -76,7 +76,7 @@ groups:
         annotations:
           summary: "JVM heap usage is near the configured maximum."
           description: "Service {{ $labels.job }} is above 85% heap usage for a sustained period."
-          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#database-saturated-or-hikari-exhausted"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#database-saturated-or-hikari-exhausted"
 
       - alert: KafkaDltEventsDetected
         expr: increase(vellumhub_kafka_dlt_events_total[5m]) > 0
@@ -86,7 +86,7 @@ groups:
         annotations:
           summary: "A Kafka event reached a Dead Letter Topic."
           description: "DLT events were observed in the last five minutes."
-          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#event-sent-to-dlt"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#event-sent-to-dlt"
 
       - alert: KafkaConsumerLagHigh
         expr: max by (job) (kafka_consumer_fetch_manager_records_lag_max{job=~".*-service"}) > 1000
@@ -96,7 +96,7 @@ groups:
         annotations:
           summary: "Kafka consumer lag is above the initial threshold."
           description: "Service {{ $labels.job }} has Kafka consumer lag above 1000."
-          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#kafka-consumer-lag-high"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#kafka-consumer-lag-high"
 
       - alert: KafkaPublishFailures
         expr: increase(vellumhub_kafka_events_publish_failed_total[5m]) > 0
@@ -106,7 +106,7 @@ groups:
         annotations:
           summary: "Kafka publish failures detected."
           description: "One or more Kafka publish failures were counted in the last five minutes."
-          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#kafka-consumer-lag-high"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#kafka-consumer-lag-high"
 
       - alert: RecommendationEmptyResultsHigh
         expr: |
@@ -121,7 +121,7 @@ groups:
         annotations:
           summary: "Recommendation empty-result ratio is high."
           description: "More than 30% of recommendation requests returned empty results."
-          runbook: "docs/OBSERVABILITY_RUNBOOKS.md#recommendation-slow-or-empty"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#recommendation-slow-or-empty"
 
       - alert: KafkaOrderedRecordQuarantined
         expr: increase(vellumhub_kafka_recovery_quarantined_total[5m]) > 0
@@ -131,4 +131,5 @@ groups:
         annotations:
           summary: "An ordered Kafka partition has been quarantined."
           description: "An unapplied event exhausted bounded retries. The source offset must not advance."
-          runbook: "docs/KAFKA_RECOVERY_RUNBOOK.md"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/KAFKA_RECOVERY_RUNBOOK.md"
+

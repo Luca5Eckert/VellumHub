@@ -12,11 +12,11 @@
       "id": 1,
       "type": "timeseries",
       "title": "Published Events",
-      "description": "Future business metric from #210.",
+      "description": "Application counter; absent series remain No data until emitted.",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_producer_events_total[5m])) or vector(0)", "legendFormat": "{{service}} {{topic}}" }
+        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_events_published_total[5m]))", "legendFormat": "{{service}} {{topic}}" }
       ],
       "fieldConfig": { "defaults": { "unit": "eps" }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
@@ -25,11 +25,11 @@
       "id": 2,
       "type": "timeseries",
       "title": "Consumed Events",
-      "description": "Future business metric from #210.",
+      "description": "Application counter; absent series remain No data until emitted.",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_consumer_events_total[5m])) or vector(0)", "legendFormat": "{{service}} {{topic}}" }
+        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_events_consumed_total[5m]))", "legendFormat": "{{service}} {{topic}}" }
       ],
       "fieldConfig": { "defaults": { "unit": "eps" }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
@@ -41,8 +41,8 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_producer_failures_total[5m])) or vector(0)", "legendFormat": "publish {{service}} {{topic}}" },
-        { "refId": "B", "expr": "sum by (service, topic) (rate(vellumhub_kafka_consumer_failures_total[5m])) or vector(0)", "legendFormat": "consume {{service}} {{topic}}" }
+        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_events_publish_failed_total[5m]))", "legendFormat": "publish {{service}} {{topic}}" },
+        { "refId": "B", "expr": "sum by (service, topic) (rate(vellumhub_kafka_events_consume_failed_total[5m]))", "legendFormat": "consume {{service}} {{topic}}" }
       ],
       "fieldConfig": { "defaults": { "unit": "eps" }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
@@ -55,7 +55,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "refId": "A", "expr": "max by (job) (kafka_consumer_fetch_manager_records_lag_max{job=~\".*-service\"}) or vector(0)", "legendFormat": "{{job}}" }
+        { "refId": "A", "expr": "max by (job) (kafka_consumer_fetch_manager_records_lag_max{job=~\".*-service\"})", "legendFormat": "{{job}}" }
       ],
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
@@ -75,14 +75,15 @@
       "id": 6,
       "type": "timeseries",
       "title": "DLT Metrics",
-      "description": "Future DLT counter from #210.",
+      "description": "Application DLT counter; absent series remain No data until emitted.",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_dlt_events_total[5m])) or vector(0)", "legendFormat": "{{service}} {{topic}}" }
+        { "refId": "A", "expr": "sum by (service, topic) (rate(vellumhub_kafka_dlt_events_total[5m]))", "legendFormat": "{{service}} {{topic}}" }
       ],
       "fieldConfig": { "defaults": { "unit": "eps" }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
     }
   ]
 }
+

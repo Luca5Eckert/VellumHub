@@ -167,8 +167,12 @@ management:
       export:
         enabled: true
   metrics:
+    distribution:
+      percentiles-histogram:
+        "http.server.requests": true
     tags:
       service: ${spring.application.name}
 
   lifecycle:
     timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:30s}
+
