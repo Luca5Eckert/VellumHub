@@ -84,6 +84,7 @@ public class GatewaySecurityConfig {
                 .cors(cors -> cors.configurationSource(corsSource()))
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.OPTIONS, "/api/v1/**").permitAll()
+                        .pathMatchers("/api/v1/internal/**", "/api/v1/users/internal/**").denyAll()
                         .pathMatchers("/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/v1/auth/login",
                                 "/api/v1/auth/register", "/api/v1/auth/google").permitAll()

@@ -51,8 +51,39 @@ class FlywayPostgresIntegrationTest {
         assertThat(indexExists(jdbcTemplate, "uk_tb_users_email")).isTrue();
     }
 
+
     @Test
     @Order(2)
+    void provisionsAuthOwnedUuidV7IdempotentlyWithoutCopyingPassword(@Autowired JdbcTemplate jdbc) {
+        assertThat(jdbc.queryForObject(
+                "select count(*) from flyway_schema_history where version = '3' and success", Integer.class))
+                .isEqualTo(1);
+        var endpoint = new com.vellumhub.user_service.module.user.infrastructure.provisioning
+                .ProfileProvisioningController(jdbc, "local-integration-secret-of-32-chars");
+        var id = java.util.UUID.fromString("019a0000-1111-7000-8000-000000000001");
+        var value = new com.vellumhub.user_service.module.user.infrastructure.provisioning
+                .ProfileProvisioningController.NewProfile(id, "Ada", "ada@example.org");
+        assertThat(endpoint.create("local-integration-secret-of-32-chars", value)
+                .getStatusCode().value()).isEqualTo(201);
+        assertThat(endpoint.create("local-integration-secret-of-32-chars", value)
+                .getStatusCode().value()).isEqualTo(204);
+        assertThat(jdbc.queryForObject("select password from tb_users where id = ?",
+                String.class, id)).isNull();
+        assertThat(jdbc.queryForObject("select role from tb_users where id = ?",
+                String.class, id)).isEqualTo("USER");
+        var colliding = new com.vellumhub.user_service.module.user.infrastructure.provisioning
+                .ProfileProvisioningController.NewProfile(
+                    java.util.UUID.fromString("019a0000-1111-7000-8000-000000000002"),
+                    "Other", "ada@example.org");
+        assertThat(endpoint.create("local-integration-secret-of-32-chars", colliding)
+                .getStatusCode().value()).isEqualTo(409);
+        assertThat(jdbc.queryForObject(
+                "select count(*) from tb_users where lower(email) = 'ada@example.org'", Integer.class))
+                .isEqualTo(1);
+    }
+
+    @Test
+    @Order(3)
     void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(@Autowired JdbcTemplate jdbcTemplate) {
         jdbcTemplate.execute("alter table tb_users drop column email");
 

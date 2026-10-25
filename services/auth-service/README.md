@@ -61,3 +61,11 @@ The RSA key pair lives in `.local/auth-poc` (gitignored), mounted read-only. The
 ### Validation evidence
 
 Code is committed as a PoC; **full Maven verify, Docker Compose runtime, PKCE browser E2E, JWKS cache/AS-outage and deployment have not been executed within this assistant environment**. CI results must be checked on the final PR SHA; no success or rollout is claimed without evidence. Follow the [Obsidian execution plan](https://github.com/Luca5Eckert/obsidian-vault/blob/main/projects/vellum-hub/plan/08%20-%20Plano%20SEC-05%20Spring%20Authorization%20Server%20SPA.md).
+
+## SEC-06 registration and durable onboarding (opt-in)
+
+`VELLUM_IDENTITY_REGISTRATION_ENABLED=true` exposes `POST /v1/identity/register`. The request validates email/name/password, stores only a BCrypt-encoded credential in `auth_db`, and generates an RFC 9562 UUIDv7 once. An account starts `PENDING_PROFILE` and **cannot log in**; Auth invokes User's private profile endpoint, then transitions to ACTIVE. Failure returns HTTP 503, leaves the identity pending and schedules idempotent reconciliation with its **original UUID**. Duplicate email returns 409. Auth never makes a synchronous User call for JWT verification. Configuration requires `VELLUM_IDENTITY_USER_URL` plus `VELLUM_INTERNAL_PROVISION_KEY` (32+ random characters). Profile is not to be provisioned via the public Gateway.
+
+This is a development-only integration until TLS, M2M identity, login/registration throttling, backup/recovery and issuer rollout are validated. The PoC fixture remains separately controlled by the local-poc profile and is NOT a production enrollment path.
+
+[Runbook](../../docs/SECURITY_OIDC_LOTE2.md) · [#307](https://github.com/Luca5Eckert/VellumHub/issues/307).

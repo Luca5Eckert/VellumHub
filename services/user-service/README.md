@@ -168,3 +168,9 @@ Flyway `V2__external_identity_binding.sql` creates `external_identities` and `ex
 ### Security JWT/JWKS transition (#304, #305)
 
 In draft PR #321, JWT verifiers fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. The User Service alone signs tokens with `JWT_ACTIVE_KID` and externally provisioned private PEMs. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
+
+## SEC-06 — Auth-owned profile provisioning
+
+Opt-in `VELLUM_IDENTITY_PROVISIONING_ENABLED=true` enables `POST /internal/identity/profiles`; only the Auth workload with a 32+-character `VELLUM_INTERNAL_PROVISION_KEY` may invoke it on the **internal network**. Gateway does not proxy the route. The command accepts a UUIDv7 `userId`, name and email, returns 201 for creation, 204 for exact replay and 409 on collision. DB migration `V3__auth_owned_profile.sql` makes password nullable for accounts with credentials **owned only by Auth**, with no hash replicated. Legacy login remains for legacy users, but Auth-owned profiles cannot authenticate through that path. Configure and validate mTLS/workload identity before production.
+
+[Runbook](../../docs/SECURITY_OIDC_LOTE2.md) · [#307](https://github.com/Luca5Eckert/VellumHub/issues/307).

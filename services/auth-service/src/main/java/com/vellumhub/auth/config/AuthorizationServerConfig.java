@@ -50,7 +50,8 @@ public class AuthorizationServerConfig {
                 && ("/oauth2/token".equals(request.getServletPath())
                     || "/oauth2/jwks".equals(request.getServletPath())
                     || request.getServletPath().startsWith("/.well-known/")
-                    || request.getServletPath().startsWith("/poc/api/")))
+                    || request.getServletPath().startsWith("/poc/api/")
+                    || "/v1/identity/register".equals(request.getServletPath())))
             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
             .cors(cors -> cors.configurationSource(corsSource(origin)))
             .csrf(csrf -> csrf.disable());
@@ -122,8 +123,13 @@ public class AuthorizationServerConfig {
     @Order(3)
     SecurityFilterChain applicationChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.POST, "/v1/identity/register").permitAll()
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                 .anyRequest().authenticated())
+            // Registration is a stateless JSON operation and cannot obtain a browser CSRF token.
+            // Scope this exemption to this path; retain CSRF for the interactive login flow.
+            .csrf(csrf -> csrf.ignoringRequestMatchers(
+                    PathPatternRequestMatcher.pathPattern("/v1/identity/register")))
             .formLogin(Customizer.withDefaults());
         return http.build();
     }
@@ -142,6 +148,7 @@ public class AuthorizationServerConfig {
         source.registerCorsConfiguration("/.well-known/**", policy);
         source.registerCorsConfiguration("/oauth2/jwks", policy);
         source.registerCorsConfiguration("/poc/api/**", policy);
+        source.registerCorsConfiguration("/v1/identity/register", policy);
         return source;
     }
 

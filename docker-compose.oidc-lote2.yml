@@ -1,0 +1,73 @@
+# Explicit opt-in integration overlay. Base Compose alone remains legacy.
+# docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml --profile oidc-lote2 up --build
+# Never deploy this loopback HTTP setup on a public host.
+services:
+  auth-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: vellum_auth
+      POSTGRES_USER: vellum_auth
+      POSTGRES_PASSWORD: ${VELLUM_AUTH_DB_PASSWORD:?Required}
+    volumes:
+      - oidc-auth-data:/var/lib/postgresql/data
+    networks: [vellum-network]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vellum_auth -d vellum_auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    user: ${VELLUM_POC_RUN_AS:?UID:GID of 0600 PEM owner required}
+    ports: ["127.0.0.1:9000:9000"]
+    volumes:
+      - ./.local/auth-poc:/run/keys:ro
+    networks: [vellum-network]
+    environment:
+      SPRING_PROFILES_ACTIVE: local-poc
+      VELLUM_AUTH_ISSUER: http://127.0.0.1:9000
+      VELLUM_AUTH_DB_URL: jdbc:postgresql://auth-postgres:5432/vellum_auth
+      VELLUM_AUTH_DB_USERNAME: vellum_auth
+      VELLUM_AUTH_DB_PASSWORD: ${VELLUM_AUTH_DB_PASSWORD:?Required}
+      VELLUM_AUTH_PRIVATE_KEY_PATH: /run/keys/signing-private.pem
+      VELLUM_AUTH_PUBLIC_KEY_PATH: /run/keys/signing-public.pem
+      VELLUM_AUTH_ACTIVE_KID: ${VELLUM_AUTH_ACTIVE_KID:-local-oidc-key}
+      VELLUM_POC_LOGIN: ${VELLUM_POC_LOGIN:?Required for existing local-poc profile fixture}
+      VELLUM_POC_PASSWORD: ${VELLUM_POC_PASSWORD:?Required}
+      VELLUM_IDENTITY_REGISTRATION_ENABLED: "true"
+      VELLUM_INTERNAL_PROVISION_KEY: ${VELLUM_INTERNAL_PROVISION_KEY:?At least 32 chars}
+      VELLUM_IDENTITY_USER_URL: http://user-service:8080
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+  user-service:
+    environment:
+      VELLUM_IDENTITY_PROVISIONING_ENABLED: "true"
+      VELLUM_INTERNAL_PROVISION_KEY: ${VELLUM_INTERNAL_PROVISION_KEY:?Required}
+      JWT_ISSUER: http://127.0.0.1:9000
+      JWT_JWKS_URI: http://auth-service:9000/oauth2/jwks
+  gateway-service:
+    environment:
+      JWT_ISSUER: http://127.0.0.1:9000
+      JWT_JWKS_URI: http://auth-service:9000/oauth2/jwks
+  catalog-service:
+    environment:
+      JWT_ISSUER: http://127.0.0.1:9000
+      JWT_JWKS_URI: http://auth-service:9000/oauth2/jwks
+  engagement-service:
+    environment:
+      JWT_ISSUER: http://127.0.0.1:9000
+      JWT_JWKS_URI: http://auth-service:9000/oauth2/jwks
+  recommendation-service:
+    environment:
+      JWT_ISSUER: http://127.0.0.1:9000
+      JWT_JWKS_URI: http://auth-service:9000/oauth2/jwks
+networks:
+  vellum-network:
+    driver: bridge
+volumes:
+  oidc-auth-data:
