@@ -25,7 +25,11 @@ body = json.dumps({
 }).encode()
 created = oauth.fetch(oauth.ISSUER + "/v1/identity/register", data=body,
         headers={"Content-Type":"application/json", "Accept":"application/json"})
-assert created.status == 201, f"Auth->User provisioning failed HTTP {created.status}"
+assert created.status == 201, (
+    f"Auth->User provisioning failed: HTTP {created.status}; "
+    f"final_url={created.geturl()}; "
+    f"content_type={created.headers.get('Content-Type', '<missing>')}"
+)
 canonical_id = json.load(created)["userId"]
 
 code, verifier, nonce = oauth.create_authorization_code(login_first=True)
