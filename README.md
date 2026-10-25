@@ -369,7 +369,13 @@ Reliable distributed systems need more than passing tests: engineers must be abl
 
 The engineering approach connects **architectural invariants** (tested through integration and distributed tests), **operational signals** (metrics, structured logs and traces), and **explicit trade-offs** (consistency, latency and availability). Observability helps investigate the behavior of the services; it does not replace the correctness guarantees of Outbox, idempotent consumers or local read models.
 
-The project uses **Micrometer/Prometheus**, **OpenTelemetry**, and **Grafana with Loki, Tempo and Alloy** for local monitoring and investigation, with dashboards and runbooks. The complete technical setup and validation scope belong in [the observability guide](docs/OBSERVABILITY.md), not in an ever-changing project introduction.
+The implemented local profile makes three explicit collection decisions:
+
+- **Metrics:** Five Java/Spring services expose Actuator/Micrometer endpoints scraped by **Prometheus**. The Java Agent does not duplicate metrics export. HTTP error/latency, JVM and connection-pool pressure, Kafka processing/DLT and recommendation-health signals drive versioned dashboards and conservative alerts.
+- **Logs:** Structured **JSON console logs** are discovered from Docker by **Grafana Alloy** and shipped to **Loki**. Labels remain low-cardinality (service, level and environment); identifiers and trace context stay in the log body rather than exploding index cardinality, while credentials and raw event payloads are excluded.
+- **Traces:** The **OpenTelemetry Java Agent** exports OTLP spans through **Alloy to Tempo**, with Grafana as the investigation surface. HTTP/JDBC auto-instrumentation is configured; Kafka producer-to-consumer trace continuity still needs end-to-end proof.
+
+Five provisioned Grafana dashboards cover platform overview, gateway/HTTP, JVM/database, Kafka flow and recommendation health. Alert rules link to operational runbooks. This design recognizes the trade-off: independent services and eventual projections improve read autonomy but make asynchronous lag, retries, resource pressure and failure attribution harder to diagnose. Telemetry is evidence for diagnosis, **not a substitute for correctness tests or architecture fitness functions**. The profile is configured locally; comprehensive ingestion validation (#214) and the newer Auth-service instrumentation are separate work.
 
 [Observability guide](docs/OBSERVABILITY.md) · [Incident runbooks](docs/OBSERVABILITY_RUNBOOKS.md) · [Architecture fitness functions](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md)
 
