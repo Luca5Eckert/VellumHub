@@ -16,7 +16,7 @@ The central engineering problem is **serving recommendations without depending o
 
 **Engineering evidence:** Controlled distributed runs measured sub-0.8 s p95 interaction-to-visible ranking and 60/60 successful reads while User, Catalog, and Engagement were unavailable. Recent hardening introduced ordered Transactional Outbox streams ([Catalog progress #295](https://github.com/Luca5Eckert/VellumHub/pull/295), [Catalog books #296](https://github.com/Luca5Eckert/VellumHub/pull/296), [Engagement #297](https://github.com/Luca5Eckert/VellumHub/pull/297)) and transactional consumer idempotency for canonical streams ([#299](https://github.com/Luca5Eckert/VellumHub/pull/299)). **Merged code does not establish a coordinated production cutover, global exactly-once guarantees or DLT replay readiness**.
 
-**Explore:** [Measured behavior](#measured-recommendation-behavior) · [Architecture](#architecture) · [API documentation](#explore-the-api) · [Run locally](#run-locally) · [Quality](#verification-strategy) · [Roadmap](#current-status-and-roadmap)
+**Explore:** [Measured behavior](#measured-recommendation-behavior) · [Architecture](#architecture) · [API documentation](#explore-the-api) · [Run locally](#run-locally) · [Quality](#verification-strategy) · [Observability](#observability-and-operational-feedback) · [Roadmap](#current-status-and-roadmap)
 
 ---
 
@@ -363,15 +363,30 @@ mvn -B -ntp -pl services/recommendation-service -am \
 
 CI keeps distributed verification separate from the regular reactor checks so application failures remain distinguishable from Kafka or Testcontainers infrastructure failures. The dedicated Recommendation benchmark workflow also uploads raw evidence rather than turning machine-dependent latency percentiles into pass/fail gates.
 
-## Observability and Delivery
+## Observability and Operational Feedback
 
-The optional local observability profile provides:
+An event-driven architecture is not understandable from HTTP responses alone: a write can commit while event publication waits, consumers can fall behind, and an autonomous read can remain available while its projection is stale. **The design must make those states observable from outside the service.**
 
-- Prometheus metrics and alert rules;
-- five Grafana dashboards for platform, HTTP, Kafka, JVM/database, and recommendation health;
-- structured logs collected by Alloy and queried through Loki;
-- OpenTelemetry Java Agent traces exported through Alloy to Tempo;
-- custom HTTP, catalog, engagement, recommendation, Kafka, retry, and DLT metrics.
+Two complementary influences shape this approach: *Designing Data-Intensive Applications* emphasizes explicit consistency, failures and data ownership; *A Philosophy of Software Design* highlights cognitive load, change amplification, and hidden complexity. Short feedback cycles combine tests of architectural invariants with runtime signals **before** introducing a cache, adding retries or splitting a service.
+
+### Local telemetry architecture
+
+| Signal | Instrumentation and collection | Query / operator view |
+|---|---|---|
+| HTTP, JVM, database, Kafka and recommendation metrics | Spring Actuator + Micrometer → Prometheus | Grafana dashboards and alert rules |
+| Structured application logs | JSON stdout → Docker logs → Grafana Alloy | Loki / LogQL in Grafana Explore |
+| Distributed traces | OpenTelemetry Java Agent → OTLP → Alloy | Tempo and Grafana trace drilldown |
+| Investigation | Versioned alerts, queries, runbooks | Operational response and targeted changes |
+
+The local stack includes five provisioned dashboards spanning platform, HTTP, JVM/database, Kafka and recommendation health. It can help answer: Which routes return 5xx? Is JVM memory or Hikari pool demand growing? Was an event published, processed and reflected in a local read model? Are empty recommendations caused by projection lag or retrieval logic?
+
+**Telemetry contract:** structured timestamp, service, environment, severity, operation and available correlation/trace context; low-cardinality Prometheus and Loki labels. No passwords, JWTs, cookies, private keys or raw Kafka payload dumps in logs/spans. IDs useful in a sanitized log body must not become unbounded metric dimensions.
+
+**Evidence boundary:** these pipelines, dashboards and runbooks are versioned for **local development**. [OBS-09 / #214](https://github.com/Luca5Eckert/VellumHub/issues/214) still tracks executable end-to-end proof that signals are emitted, ingested and queryable. Prometheus scrape jobs and Alloy discovery cover the original five services; the newer OAuth2 `auth-service` still requires explicit instrumentation/collection. Cross-Kafka trace continuity and trace-to-log navigation require scenario-based evidence. No production SLO, incident-detection improvement or complete Auth coverage is claimed.
+
+[Stack and setup](docs/OBSERVABILITY.md) · [Incident runbooks](docs/OBSERVABILITY_RUNBOOKS.md) · [Architecture fitness functions](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md)
+
+## Delivery
 
 The delivery path uses Git as the deployment boundary:
 
@@ -400,7 +415,7 @@ Detailed guides:
 | JVM embeddings and local pgvector ranking | Implemented | [Recommendation engine](#recommendation-engine) |
 | Central Kafka contract library | Implemented | [#199](https://github.com/Luca5Eckert/VellumHub/issues/199) |
 | Flyway migrations and PostgreSQL verification | Implemented | [#205](https://github.com/Luca5Eckert/VellumHub/issues/205) |
-| Metrics, logs, traces, dashboards, and alerts | Implemented locally | [Observability](docs/OBSERVABILITY.md) |
+| Metrics, JSON logs, traces, dashboards and alerts | Configured locally; end-to-end proof #214 and Auth coverage pending | [Observability](docs/OBSERVABILITY.md) |
 | CI, immutable images, Kubernetes, Kustomize, and Argo CD | Implemented | [Kubernetes](deploy/kubernetes/README.md) |
 | Central Swagger UI and service-owned OpenAPI | Implemented | [API documentation](docs/api-documentation.md) |
 | Contract-derived Postman collection and workflows | Implemented | [Postman](postman/README.md) |
@@ -411,6 +426,10 @@ Detailed guides:
 | Broader cross-service E2E coverage | Selected real-boundary flows covered; failure/recovery coverage continues | [Distributed testing](docs/DISTRIBUTED_TESTING.md) |
 
 ## Design Principles
+
+- **Contain complexity:** keep abstractions and ownership explicit to reduce cognitive load and change amplification.
+- **Close feedback loops:** combine tests, CI architecture fitness functions and measured runtime signals in small, reproducible steps.
+- **Investigate before optimizing:** latency, errors, JVM pressure and event lag should inform cache, query and recovery decisions.
 
 - **Own data at the domain boundary:** databases are private implementation details of their services.
 - **Replicate for autonomy:** use local projections when critical queries would otherwise require synchronous fan-out.
