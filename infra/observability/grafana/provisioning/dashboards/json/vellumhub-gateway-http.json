@@ -39,7 +39,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "refId": "A", "expr": "histogram_quantile(0.95, sum by (le, uri) (rate(http_server_requests_seconds_bucket{job=\"gateway-service\"}[5m]))) or max by (uri) (http_server_requests_seconds_max{job=\"gateway-service\"})", "legendFormat": "p95 {{uri}}" }
+        { "refId": "A", "expr": "histogram_quantile(0.95, sum by (le, uri) (rate(http_server_requests_seconds_bucket{job=\"gateway-service\"}[5m])))", "legendFormat": "p95 {{uri}}" }
       ],
       "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
@@ -65,8 +65,8 @@
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "refId": "A", "expr": "sum(rate(redis_commands_duration_seconds_count{job=\"gateway-service\"}[5m])) or vector(0)", "legendFormat": "commands/s" },
-        { "refId": "B", "expr": "max(redis_commands_duration_seconds_max{job=\"gateway-service\"}) or vector(0)", "legendFormat": "max latency" }
+        { "refId": "A", "expr": "sum(rate(redis_commands_duration_seconds_count{job=\"gateway-service\"}[5m]))", "legendFormat": "commands/s" },
+        { "refId": "B", "expr": "max(redis_commands_duration_seconds_max{job=\"gateway-service\"})", "legendFormat": "max latency" }
       ],
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
@@ -84,3 +84,4 @@
     }
   ]
 }
+

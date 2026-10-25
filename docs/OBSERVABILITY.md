@@ -52,7 +52,7 @@ Provisioned dashboards:
 - `Kafka Flow`
 - `Recommendation Health`
 
-The dashboards use the provisioned `Prometheus`, `Loki`, and `Tempo` datasources. Panels based on custom Kafka and business metrics use tolerant queries and remain empty or zero until local traffic emits those series.
+The dashboards are versioned definitions; successful provisioning and ingestion still require validation under #214. The dashboards use the provisioned `Prometheus`, `Loki`, and `Tempo` datasources. Panels based on custom Kafka and business metrics remain No data until local traffic emits those series. Missing series must not be interpreted as zero errors, zero lag, or a healthy service. The popularity-fallback series is omitted because no corresponding counter is implemented.
 
 Validate dashboards locally:
 
@@ -120,6 +120,8 @@ curl "http://localhost:9090/api/v1/query?query=vellumhub_kafka_dlt_events_total"
 curl "http://localhost:9090/api/v1/query?query=vellumhub_recommendations_generated_total"
 curl "http://localhost:9090/api/v1/query?query=vellumhub_recommendation_generation_duration_seconds_count"
 ```
+
+HTTP request histogram buckets are enabled in the five instrumented services for p95/p99 panels and the gateway latency alert. The recommendation-generation timer also exports histogram buckets. Percentile panels require `_bucket` series and never substitute a maximum for a percentile. After generating traffic, verify `http_server_requests_seconds_bucket` and `vellumhub_recommendation_generation_duration_seconds_bucket` in Prometheus; configuration alone does not prove ingestion.
 
 ## Alerts
 
@@ -228,7 +230,7 @@ When validating logs, avoid relying on visual spot checks only. Search represent
 docker compose logs gateway-service user-service catalog-service engagement-service recommendation-service
 ```
 
-The expected behavior is:
+Alloy forwards log bodies without redaction. JSON formatting and low-cardinality labels do not guarantee sensitive-data removal. The following are application logging requirements, pending representative validation under #214:
 
 - no complete JWT values;
 - no passwords or secrets;
@@ -250,3 +252,4 @@ The expected behavior is:
 | `docs/OBSERVABILITY_RUNBOOKS.md` | Operational investigation guides linked from alerts. |
 
 Manual domain spans remain outside this issue; metrics continue to use Prometheus/Micrometer.
+

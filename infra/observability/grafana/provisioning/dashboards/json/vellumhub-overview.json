@@ -8,7 +8,7 @@
   "refresh": "15s",
   "time": { "from": "now-1h", "to": "now" },
   "links": [
-    { "title": "Runbooks", "url": "docs/OBSERVABILITY_RUNBOOKS.md", "targetBlank": true }
+    { "title": "Runbooks", "url": "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md", "targetBlank": true }
   ],
   "templating": {
     "list": [
@@ -84,11 +84,11 @@
       "id": 3,
       "type": "stat",
       "title": "DLT Events",
-      "description": "Uses custom metrics when available; otherwise stays at 0 until #210 adds counters.",
+      "description": "Application counter; missing telemetry remains No data, not a healthy zero.",
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "refId": "A", "expr": "sum(increase(vellumhub_kafka_dlt_events_total[15m])) or vector(0)", "instant": true }
+        { "refId": "A", "expr": "sum(increase(vellumhub_kafka_dlt_events_total[15m]))", "instant": true }
       ],
       "fieldConfig": {
         "defaults": {
@@ -109,11 +109,11 @@
       "id": 4,
       "type": "stat",
       "title": "Empty Recommendations",
-      "description": "Future business metric from #210.",
+      "description": "Application counter; absent series remain No data until emitted.",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "refId": "A", "expr": "sum(increase(vellumhub_recommendation_empty_results_total[15m])) or vector(0)", "instant": true }
+        { "refId": "A", "expr": "sum(increase(vellumhub_recommendation_empty_results_total[15m]))", "instant": true }
       ],
       "fieldConfig": {
         "defaults": {
@@ -156,7 +156,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_requests_seconds_bucket{job=~\"$service\"}[5m]))) or max by (job) (http_server_requests_seconds_max{job=~\"$service\"})",
+          "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_requests_seconds_bucket{job=~\"$service\"}[5m])))",
           "legendFormat": "p95 {{job}}"
         },
         {
@@ -184,13 +184,13 @@
       "id": 8,
       "type": "timeseries",
       "title": "Kafka and DLT Signals",
-      "description": "Shows business Kafka counters after #210; until then only custom metrics that exist will appear.",
+      "description": "Application Kafka counters; missing telemetry remains No data, not a healthy zero.",
       "gridPos": { "h": 7, "w": 8, "x": 8, "y": 12 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "refId": "A", "expr": "sum(rate(vellumhub_kafka_producer_events_total[5m])) or vector(0)", "legendFormat": "published" },
-        { "refId": "B", "expr": "sum(rate(vellumhub_kafka_consumer_events_total[5m])) or vector(0)", "legendFormat": "consumed" },
-        { "refId": "C", "expr": "sum(rate(vellumhub_kafka_dlt_events_total[5m])) or vector(0)", "legendFormat": "dlt" }
+        { "refId": "A", "expr": "sum(rate(vellumhub_kafka_events_published_total[5m]))", "legendFormat": "published" },
+        { "refId": "B", "expr": "sum(rate(vellumhub_kafka_events_consumed_total[5m]))", "legendFormat": "consumed" },
+        { "refId": "C", "expr": "sum(rate(vellumhub_kafka_dlt_events_total[5m]))", "legendFormat": "dlt" }
       ],
       "fieldConfig": { "defaults": { "unit": "eps" }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom" } }
@@ -208,3 +208,4 @@
     }
   ]
 }
+
