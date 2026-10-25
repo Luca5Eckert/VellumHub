@@ -7,7 +7,7 @@
 - Google is an upstream OIDC provider only. Spring Security validates its ID Token, issuer/audience/time and OAuth callback; Auth resolves the verified `(issuer, subject)` to one VellumHub UUIDv7 and issues its own RS256 `at+jwt` for the Gateway and APIs.
 - `auth_db` owns the new `auth_external_identity` binding, password credentials and JDBC authorization/session state. `user_db` retains profile data and the old Google implementation only while the #317 legacy cutover remains outstanding.
 - A new Google subject creates one passwordless Auth identity in `PENDING_PROFILE`; Auth provisions User via the existing idempotent internal endpoint, then marks the Auth identity ACTIVE. A failed commit/timeout retains the pending record for reconciliation. No distributed transaction is claimed.
-- An existing email without an existing linked Google subject is rejected. No automatic account linking is ever performed by email. Manual authenticated linking is a **remaining acceptance gap** in #308.
+- An existing email without an existing linked Google subject is rejected. No automatic account linking is ever performed by email. Manual linking is implemented as a **separate opt-in two-POST flow** requiring the local user's current password plus a new, signed Google ID Token carrying a session-bound 5-minute one-use nonce. It does not automatically link by email. Live Google browser verification remains an acceptance gap.
 - SPA uses Authorization Code + PKCE S256, public client, no secret or refresh token, access token held only in memory. Do not reuse upstream Google ID tokens as API bearers.
 
 ## Prerequisites and local startup
@@ -28,6 +28,17 @@ docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml -f docker-
 ```
 
 Never use local HTTP or PoC fixture settings on a shared or public host. Behind HTTPS, validate the trusted forwarded-header setup, issuer and callback equality, cookie Secure/HttpOnly/SameSite policies, CORS allowlist and secrets mounts. Production needs authenticated inter-service transport, DB encryption/backup/rotation, login throttling and incident handling.
+
+## Manual verified Google linking (existing local account)
+
+This is **not** performed by matching the email in a Google login. Sign in locally to the Auth Service, obtain the CSRF token for the active browser session, then use:
+
+1. `POST /v1/identity/google/link/challenge` JSON `{"currentPassword":"..."}` (authenticated, CSRF protected). On valid password, returns `{"nonce":"..."}`, stored in the current session for at most 5 minutes.
+2. Present the nonce as the `nonce` parameter to Google Identity Services using the configured **same client ID** and obtain a fresh signed ID Token.
+3. `POST /v1/identity/google/link` JSON `{"idToken":"..."}` with the same active session and CSRF token. Server pins the Google certificate URL, RS256, issuer, `aud`, nonce, verified email flag and subject; inserts the unique `(issuer,subject)` Auth binding for the already authenticated UUID.
+4. Challenge is consumed even on error. A Google subject attached to another user or an existing different Google binding on this user returns a conflict; neither account is reassigned.
+
+No raw Google ID Token is accepted as a VellumHub API bearer. Sensitive token request bodies must not be logged. This route is not exposed by the Gateway unless explicitly allowlisted during future #317 cutover.
 
 ## Session lifecycle
 
@@ -51,4 +62,4 @@ Never use local HTTP or PoC fixture settings on a shared or public host. Behind 
 
 Disable the `google-oidc` profile and drop the Lote 3 Compose overlay; keep the Lote 2/legacy route available. Preserve auth_db migrations, session and identity data for audit; don't destructively roll back schema or overwrite claims. No deploy or cutover is claimed.
 
-Remaining gaps: authenticated local→Google manual linking and proof of possession, live Google-provider E2E, multi-instance and production HTTPS behavior. A successful unit/Compose CI check is **not** proof of these guarantees. Keep PR #334 draft until verified.
+Remaining gaps: live end-to-end browser proof for the manual local→Google linking contract, full Google-provider E2E, multi-instance and production HTTPS behavior. A successful unit/Compose CI check is **not** proof of these guarantees. Keep PR #334 draft until verified.
