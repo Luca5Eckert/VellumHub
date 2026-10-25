@@ -60,6 +60,6 @@ No raw Google ID Token is accepted as a VellumHub API bearer. Sensitive token re
 
 ## Rollback and known limits
 
-Disable the `google-oidc` profile and drop the Lote 3 Compose overlay; keep the Lote 2/legacy route available. Preserve auth_db migrations, session and identity data for audit; don't destructively roll back schema or overwrite claims. No deploy or cutover is claimed.
+Disable the `google-oidc` profile and drop the Lote 3 Compose overlay to restore default legacy Google writes via User; keep the Lote 2/legacy route available. Preserve auth_db migrations, session and identity data for audit; don't destructively roll back schema or overwrite claims. No deploy or cutover is claimed.
 
 Remaining gaps: live end-to-end browser proof for the manual local→Google linking contract, full Google-provider E2E, multi-instance and production HTTPS behavior. A successful unit/Compose CI check is **not** proof of these guarantees. Keep PR #334 draft until verified.

@@ -8,3 +8,9 @@ services:
       VELLUM_GOOGLE_CLIENT_ID: ${VELLUM_GOOGLE_CLIENT_ID:?Google OIDC client ID required}
       VELLUM_GOOGLE_CLIENT_SECRET: ${VELLUM_GOOGLE_CLIENT_SECRET:?Google OIDC client secret required}
       VELLUM_AUTH_SESSION_ABSOLUTE_SECONDS: ${VELLUM_AUTH_SESSION_ABSOLUTE_SECONDS:-43200}
+
+  user-service:
+    environment:
+      # Only the opt-in Google federation overlay transfers ownership of new bindings to Auth.
+      # Base Compose preserves User /auth/google until the #317 client cutover.
+      VELLUM_LEGACY_GOOGLE_WRITES_ENABLED: "false"
