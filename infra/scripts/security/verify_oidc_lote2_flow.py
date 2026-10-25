@@ -54,9 +54,24 @@ assert json.load(profile)["id"] == canonical_id
 # A protected read must succeed and a USER cannot mutate ADMIN-only Catalog content.
 books = get("/api/v1/catalog/books", access)
 assert books.status == 200, f"Gateway->Catalog JWT validation failed HTTP {books.status}"
-denied = oauth.fetch(gateway + "/api/v1/catalog/books", data=b"{}",
+# Use a valid mutation payload: an empty object fails Bean Validation with 400
+# before @PreAuthorize can demonstrate the USER -> ADMIN boundary.
+valid_book = json.dumps({
+    "title": "OIDC Security Smoke",
+    "description": "Authorization check only",
+    "releaseYear": 2026,
+    "coverUrl": "https://example.invalid/cover.jpg",
+    "author": "CI Runner",
+    "isbn": "9780132350884",
+    "pageCount": 150,
+    "publisher": "VellumHub CI",
+    "genres": ["FICTION"]
+}).encode()
+denied = oauth.fetch(gateway + "/api/v1/catalog/books", data=valid_book,
         headers={"Authorization": "Bearer " + access, "Content-Type": "application/json"})
-assert denied.status == 403, f"USER bypassed Catalog ADMIN authorization: {denied.status}"
+assert denied.status == 403, (
+    f"Valid Catalog ADMIN-only request returned HTTP {denied.status}, expected 403"
+)
 id_token = get("/api/v1/users/me", tokens["id_token"])
 assert id_token.status == 401, "Gateway accepted an ID Token as bearer"
 malformed = get("/api/v1/users/me", "not-a-jwt")
