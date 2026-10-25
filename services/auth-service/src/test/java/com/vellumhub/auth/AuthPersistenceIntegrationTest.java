@@ -1,6 +1,7 @@
 package com.vellumhub.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.vellumhub.auth.identity.IdentityDetailsService;
 import com.vellumhub.auth.identity.IdentityRepository;
@@ -48,6 +49,7 @@ class AuthPersistenceIntegrationTest {
     @Autowired IdentityDetailsService details;
     @Autowired UuidV7 ids;
     @Autowired com.vellumhub.auth.identity.OnboardingIdentityRepository onboarding;
+    @Autowired com.vellumhub.auth.identity.FederatedIdentityRepository federated;
 
     @Test
     void persistsPublicPkceClientAndCanonicalUserIdentity() {
@@ -87,6 +89,30 @@ class AuthPersistenceIntegrationTest {
         });
         assertThat(onboarding.activate(id)).isTrue();
         assertThat(details.loadUserByUsername(email).isEnabled()).isTrue();
+    }
+
+    @Test
+    void federationBindingsAreUniqueAndPasswordlessWithoutEmailAutoLink() {
+        var id = ids.next();
+        var email = "google-" + id + "@example.invalid";
+        assertThat(federated.resolveOrCreate("https://accounts.google.com", "google-subject-" + id,
+                email, "Google User", id)).isEqualTo(id);
+        assertThat(federated.findLinked("https://accounts.google.com", "google-subject-" + id))
+                .isEqualTo(id);
+        assertThat(federated.state(id).active()).isFalse();
+        // Nullable password does not make this account eligible for form login.
+        assertThatThrownBy(() -> details.loadUserByUsername(email))
+                .isInstanceOf(org.springframework.security.core.userdetails.UsernameNotFoundException.class);
+        assertThatThrownBy(() -> federated.resolveOrCreate("https://accounts.google.com",
+                "other-subject", email, "Other", ids.next()))
+                .isInstanceOf(com.vellumhub.auth.identity.FederatedIdentityRepository.FederationConflictException.class);
+        assertThat(federated.findLinked("https://accounts.google.com", "other-subject")).isNull();
+    }
+
+    @Test
+    void springSessionSchemasExistAfterFlyway() {
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM SPRING_SESSION", Long.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM SPRING_SESSION_ATTRIBUTES", Long.class)).isZero();
     }
 
     private static Path makeKeys() {
