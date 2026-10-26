@@ -199,6 +199,48 @@ class FederatedOidcLifecycleIntegrationTest {
         return b.post("/login", "username=" + enc(login) + "&password=" + enc(password) + "&_csrf=" + enc(matcher.group(1)));
     }
 
+    @Test void sessionReauthorizationAndLogoutWorkAcrossRunningReplicaAndRestart() throws Exception {
+        Browser b = new Browser();
+        var tokens = googleTokens(b);
+        String id = SignedJWT.parse((String) tokens.get("access_token")).getJWTClaimsSet().getSubject();
+        try (var replica = replica()) {
+            String base = "http://127.0.0.1:" + ((org.springframework.boot.web.server.context.WebServerApplicationContext) replica).getWebServer().getPort();
+            String redirect = b.get(base + authorize()).headers().firstValue("location").orElseThrow();
+            String code = params(URI.create(redirect).getRawQuery()).get("code");
+            var result = b.post(base + "/oauth2/token", "grant_type=authorization_code&client_id=vellumhub-spa-poc&code=" + enc(code)
+                    + "&redirect_uri=" + enc("http://127.0.0.1:9100/index.html") + "&code_verifier=" + enc(VERIFIER));
+            assertThat(result.statusCode()).as(result.body()).isEqualTo(200);
+            assertThat(SignedJWT.parse((String) json(result.body()).get("access_token")).getJWTClaimsSet().getSubject()).isEqualTo(id);
+        }
+        // A replacement application has no prior in-memory servlet/security state.
+        try (var replacement = replica()) {
+            String base = "http://127.0.0.1:" + ((org.springframework.boot.web.server.context.WebServerApplicationContext) replacement).getWebServer().getPort();
+            assertThat(b.get(base + authorize()).headers().firstValue("location").orElse("")).contains("code=");
+            var matcher = Pattern.compile("name=\"_csrf\"[^>]*value=\"([^\"]+)\"").matcher(b.get(base + "/logout").body());
+            assertThat(matcher.find()).isTrue();
+            assertThat(b.post(base + "/logout", "_csrf=" + enc(matcher.group(1))).statusCode()).isEqualTo(302);
+        }
+        assertThat(b.get(authorize()).headers().firstValue("location").orElse("")).contains("/login");
+    }
+
+    private org.springframework.context.ConfigurableApplicationContext replica() {
+        return new org.springframework.boot.builder.SpringApplicationBuilder(AuthServiceApplication.class).run(
+                "--spring.profiles.active=local-poc,google-oidc", "--server.port=0", "--management.server.port=0",
+                "--spring.datasource.url=" + postgres.getJdbcUrl(), "--spring.datasource.username=" + postgres.getUsername(),
+                "--spring.datasource.password=" + postgres.getPassword(), "--vellum.poc.fixture.enabled=false",
+                "--vellum.auth.issuer=http://127.0.0.1:" + AUTH_PORT,
+                "--vellum.auth.keys.private-key-path=" + keys.resolve("private.pem"),
+                "--vellum.auth.keys.public-key-path=" + keys.resolve("public.pem"), "--vellum.auth.keys.kid=local-test-key",
+                "--vellum.identity.registration-enabled=true", "--vellum.identity.shared-secret=test-only-internal-key-at-least-32-chars",
+                "--vellum.identity.user-service-url=" + providerUrl(), "--vellum.identity.reconcile-delay-ms=3600000",
+                "--spring.security.oauth2.client.registration.google.client-id=controlled-client",
+                "--spring.security.oauth2.client.registration.google.client-secret=controlled-secret",
+                "--spring.security.oauth2.client.provider.google.authorization-uri=" + providerUrl() + "/authorize",
+                "--spring.security.oauth2.client.provider.google.token-uri=" + providerUrl() + "/token",
+                "--spring.security.oauth2.client.provider.google.user-info-uri=" + providerUrl() + "/userinfo",
+                "--spring.security.oauth2.client.provider.google.jwk-set-uri=" + providerUrl() + "/jwks");
+    }
+
     @Test void concurrentFirstLoginConvergesOnOneCanonicalIdentityWithoutOrphans() throws Exception {
         var user = new DefaultOidcUser(List.of(new SimpleGrantedAuthority("OIDC_USER")),
                 new OidcIdToken("already-verified-at-protocol-boundary", Instant.now(), Instant.now().plusSeconds(300),
