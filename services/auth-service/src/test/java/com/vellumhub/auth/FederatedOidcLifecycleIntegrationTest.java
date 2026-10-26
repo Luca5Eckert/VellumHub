@@ -43,6 +43,7 @@ import org.testcontainers.junit.jupiter.*;
         "spring.profiles.active=local-poc,google-oidc", "management.server.port=0", "vellum.poc.fixture.enabled=false",
         "vellum.identity.registration-enabled=true", "vellum.identity.shared-secret=test-only-internal-key-at-least-32-chars",
         "vellum.identity.reconcile-delay-ms=3600000"})
+@Timeout(60)
 class FederatedOidcLifecycleIntegrationTest {
     @Container static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
     static final int AUTH_PORT = freePort();
@@ -59,6 +60,7 @@ class FederatedOidcLifecycleIntegrationTest {
     @Autowired IdentityRepository identities;
     @Autowired org.springframework.security.crypto.password.PasswordEncoder passwords;
     @Autowired GoogleLinkChallengeRepository challenges;
+    @Autowired FederatedIdentityService federation;
     @Autowired JdbcIndexedSessionRepository sessions;
 
     @DynamicPropertySource
@@ -165,12 +167,13 @@ class FederatedOidcLifecycleIntegrationTest {
             var tokens = googleTokens(b);
             String id = SignedJWT.parse((String) tokens.get("access_token")).getJWTClaimsSet().getSubject();
             if (expiry.equals("idle")) {
-                jdbc.update("UPDATE SPRING_SESSION SET EXPIRY_TIME=? WHERE PRINCIPAL_NAME=?", System.currentTimeMillis() - 1000, id);
+                assertThat(jdbc.update("UPDATE SPRING_SESSION SET LAST_ACCESS_TIME=?, EXPIRY_TIME=? WHERE PRINCIPAL_NAME=?",
+                        System.currentTimeMillis() - java.time.Duration.ofMinutes(31).toMillis(), System.currentTimeMillis() - 1000, id)).isPositive();
             } else {
-                jdbc.update("UPDATE SPRING_SESSION SET CREATION_TIME=? WHERE PRINCIPAL_NAME=?",
-                        System.currentTimeMillis() - java.time.Duration.ofHours(13).toMillis(), id);
+                assertThat(jdbc.update("UPDATE SPRING_SESSION SET CREATION_TIME=? WHERE PRINCIPAL_NAME=?",
+                        System.currentTimeMillis() - java.time.Duration.ofHours(13).toMillis(), id)).isPositive();
             }
-            assertThat(b.get(authorize()).headers().firstValue("location").orElse("")).contains("/login");
+            assertThat(b.get(authorize()).headers().firstValue("location").orElse("")).as(expiry).contains("/login");
         }
     }
 
@@ -196,6 +199,22 @@ class FederatedOidcLifecycleIntegrationTest {
         return b.post("/login", "username=" + enc(login) + "&password=" + enc(password) + "&_csrf=" + enc(matcher.group(1)));
     }
 
+    @Test void concurrentFirstLoginConvergesOnOneCanonicalIdentityWithoutOrphans() throws Exception {
+        var user = new DefaultOidcUser(List.of(new SimpleGrantedAuthority("OIDC_USER")),
+                new OidcIdToken("already-verified-at-protocol-boundary", Instant.now(), Instant.now().plusSeconds(300),
+                        Map.of("iss", "https://accounts.google.com", "sub", subject, "email", email,
+                                "email_verified", true, "name", "Concurrent User")));
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var start = new CountDownLatch(1);
+            var first = pool.submit(() -> { start.await(); return federation.resolve(user); });
+            var second = pool.submit(() -> { start.await(); return federation.resolve(user); });
+            start.countDown();
+            assertThat(first.get(15, TimeUnit.SECONDS)).isEqualTo(second.get(15, TimeUnit.SECONDS));
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM auth_identity WHERE login=?", Integer.class, email)).isEqualTo(1);
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM auth_external_identity WHERE subject=?", Integer.class, subject)).isEqualTo(1);
+        }
+    }
+
     @Test void challengeHasExactlyOneConsumerAcrossIndependentRepositoryInstances() throws Exception {
         UUID id = UUID.randomUUID();
         identities.createIfAbsent(id, id + "@example.invalid", "{noop}test-only");
@@ -206,7 +225,7 @@ class FederatedOidcLifecycleIntegrationTest {
             var a = pool.submit(() -> { start.await(); return challenges.consume("session-" + id, id); });
             var c = pool.submit(() -> { start.await(); return other.consume("session-" + id, id); });
             start.countDown();
-            assertThat(Arrays.asList(a.get(), c.get())).containsExactlyInAnyOrder("one-time-nonce", null);
+            assertThat(Arrays.asList(a.get(15, TimeUnit.SECONDS), c.get(15, TimeUnit.SECONDS))).containsExactlyInAnyOrder("one-time-nonce", null);
         }
         challenges.issue("expired-" + id, id, "expired", Instant.now().minusSeconds(1));
         assertThat(other.consume("expired-" + id, id)).isNull();
@@ -267,7 +286,7 @@ class FederatedOidcLifecycleIntegrationTest {
                 .followRedirects(HttpClient.Redirect.NEVER).build();
         HttpResponse<String> get(String path) throws Exception { return get(path, null); }
         HttpResponse<String> get(String path, String bearer) throws Exception {
-            var builder = HttpRequest.newBuilder(uri(path)).timeout(java.time.Duration.ofSeconds(20)).header("Accept", "text/html");
+            var builder = HttpRequest.newBuilder(uri(path)).timeout(java.time.Duration.ofSeconds(20)).header("Accept", bearer == null ? "text/html" : "application/json");
             if (bearer != null) { builder.header("Authorization", "Bearer " + bearer); }
             return http.send(builder.GET().build(), HttpResponse.BodyHandlers.ofString());
         }
