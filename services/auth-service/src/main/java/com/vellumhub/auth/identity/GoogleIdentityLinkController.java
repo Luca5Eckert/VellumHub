@@ -30,23 +30,25 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1/identity/google")
 @ConditionalOnProperty(name = "vellum.google.enabled", havingValue = "true")
 public class GoogleIdentityLinkController {
-    static final String CHALLENGE_KEY = "vellum.google.link.challenge";
     private static final Duration CHALLENGE_TTL = Duration.ofMinutes(5);
     private final IdentityRepository identities;
     private final JwtDecoder googleTokens;
     private final PasswordEncoder passwords;
     private final String googleClientId;
+    private final GoogleLinkChallengeRepository challenges;
     private final SecureRandom random = new SecureRandom();
     private final Clock clock = Clock.systemUTC();
 
     public GoogleIdentityLinkController(IdentityRepository identities,
             @Qualifier("googleIdTokenDecoder") JwtDecoder googleTokens,
             PasswordEncoder passwords,
-            @Value("${spring.security.oauth2.client.registration.google.client-id}") String googleClientId) {
+            @Value("${spring.security.oauth2.client.registration.google.client-id}") String googleClientId,
+            GoogleLinkChallengeRepository challenges) {
         this.identities = identities;
         this.googleTokens = googleTokens;
         this.passwords = passwords;
         this.googleClientId = googleClientId;
+        this.challenges = challenges;
     }
 
     @PostMapping("/link/challenge")
@@ -62,8 +64,7 @@ public class GoogleIdentityLinkController {
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
         String nonce = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-        request.getSession(true).setAttribute(CHALLENGE_KEY,
-                new LinkChallenge(userId, nonce, clock.millis() + CHALLENGE_TTL.toMillis()));
+        challenges.issue(request.getSession(true).getId(), userId, nonce, clock.instant().plus(CHALLENGE_TTL));
         return ResponseEntity.ok(Map.of("nonce", nonce));
     }
 
@@ -75,18 +76,15 @@ public class GoogleIdentityLinkController {
         if (session == null) {
             throw new LinkForbiddenException();
         }
-        Object saved = session.getAttribute(CHALLENGE_KEY);
-        // Consume before verification (including failures); never allow stale nonce reuse.
-        session.removeAttribute(CHALLENGE_KEY);
-        if (!(saved instanceof LinkChallenge challenge)
-                || !challenge.userId().equals(userId) || clock.millis() >= challenge.expiryMillis()
+        String nonce = challenges.consume(session.getId(), userId);
+        if (nonce == null
                 || proof.idToken() == null || proof.idToken().isBlank()) {
             throw new LinkForbiddenException();
         }
         try {
             Jwt token = googleTokens.decode(proof.idToken());
             if (!token.getAudience().contains(googleClientId)
-                    || !challenge.nonce().equals(token.getClaimAsString("nonce"))
+                    || !nonce.equals(token.getClaimAsString("nonce"))
                     || !"https://accounts.google.com".equals(token.getIssuer().toString())
                     || !Boolean.TRUE.equals(token.getClaim("email_verified"))) {
                 throw new LinkForbiddenException();
@@ -95,6 +93,8 @@ public class GoogleIdentityLinkController {
             if (subject == null || subject.isBlank() || subject.length() > 255) {
                 throw new LinkForbiddenException();
             }
+            identities.findById(userId).filter(IdentityRepository.Identity::active)
+                    .orElseThrow(LinkForbiddenException::new);
             identities.linkVerifiedGoogle(userId, "https://accounts.google.com", subject);
             return ResponseEntity.noContent().build();
         } catch (JwtException | IllegalArgumentException exception) {
@@ -122,6 +122,5 @@ public class GoogleIdentityLinkController {
 
     public record PasswordProof(String currentPassword) { }
     public record GoogleIdTokenProof(String idToken) { }
-    public record LinkChallenge(UUID userId, String nonce, long expiryMillis) implements Serializable { }
     static class LinkForbiddenException extends RuntimeException { }
 }

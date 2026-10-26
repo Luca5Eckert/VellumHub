@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 
 class AccessTokenClaimsTest {
+    private final com.vellumhub.auth.identity.IdentityRepository identities = mock(com.vellumhub.auth.identity.IdentityRepository.class);
     private final AuthorizationServerConfig config = new AuthorizationServerConfig();
 
     @Test
@@ -38,7 +39,9 @@ class AccessTokenClaimsTest {
         when(context.getPrincipal()).thenReturn(new UsernamePasswordAuthenticationToken(subject, "irrelevant"));
         when(context.getRegisteredClient()).thenReturn(client);
 
-        config.accessTokenClaims("api://vellumhub").customize(context);
+        when(identities.findById(UUID.fromString(subject))).thenReturn(java.util.Optional.of(
+                new com.vellumhub.auth.identity.IdentityRepository.Identity(UUID.fromString(subject), "local", "hash", true)));
+        config.accessTokenClaims(identities, "api://vellumhub").customize(context);
 
         assertThat(header.build().getType()).isEqualTo("at+jwt");
         assertThat(claims.build().getSubject()).isEqualTo(subject);
@@ -55,7 +58,7 @@ class AccessTokenClaimsTest {
         when(context.getTokenType()).thenReturn(new OAuth2TokenType("id_token"));
         when(context.getJwsHeader()).thenReturn(header);
         when(context.getClaims()).thenReturn(claims);
-        config.accessTokenClaims("api://vellumhub").customize(context);
+        config.accessTokenClaims(identities, "api://vellumhub").customize(context);
         assertThat(header.build().getType()).isNotEqualTo("at+jwt");
         assertThat(claims.build().getAudience()).isNullOrEmpty();
     }

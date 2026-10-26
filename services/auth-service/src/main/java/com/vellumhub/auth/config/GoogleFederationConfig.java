@@ -20,12 +20,19 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 @ConditionalOnProperty(name = "vellum.google.enabled", havingValue = "true")
 public class GoogleFederationConfig {
     @Bean
-    OAuth2UserService<OidcUserRequest, OidcUser> federatedUsers(FederatedIdentityService identities) {
+    OAuth2UserService<OidcUserRequest, OidcUser> federatedUsers(FederatedIdentityService identities,
+            io.micrometer.core.instrument.MeterRegistry metrics) {
         var delegate = new OidcUserService();
         return request -> {
-            OidcUser googleUser = delegate.loadUser(request);
-            var id = identities.resolve(googleUser);
-            return new CanonicalOidcUser(id.toString(), googleUser);
+            try {
+                OidcUser googleUser = delegate.loadUser(request);
+                var id = identities.resolve(googleUser);
+                metrics.counter("vellum.auth.federation", "outcome", "resolved").increment();
+                return new CanonicalOidcUser(id.toString(), googleUser);
+            } catch (org.springframework.security.oauth2.core.OAuth2AuthenticationException denied) {
+                metrics.counter("vellum.auth.federation", "outcome", "rejected").increment();
+                throw denied;
+            }
         };
     }
 

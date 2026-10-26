@@ -115,7 +115,7 @@ class AuthPersistenceIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM SPRING_SESSION_ATTRIBUTES", Long.class)).isZero();
     }
 
-    private static Path makeKeys() {
+    static Path makeKeys() {
         try {
             var generator = KeyPairGenerator.getInstance("RSA");
             generator.initialize(2048);

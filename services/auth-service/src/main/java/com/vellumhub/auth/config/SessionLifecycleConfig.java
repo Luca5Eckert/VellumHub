@@ -21,12 +21,16 @@ public class SessionLifecycleConfig {
     }
 
     @Bean
-    @Order(Ordered.HIGHEST_PRECEDENCE + 10)
-    AbsoluteSessionLifetimeFilter absoluteSessionLifetimeFilter(
+    org.springframework.boot.web.servlet.FilterRegistrationBean<AbsoluteSessionLifetimeFilter> absoluteSessionLifetimeFilter(
             @Value("${vellum.session.absolute-seconds:43200}") long maxAgeSeconds) {
         if (maxAgeSeconds < 60) {
             throw new IllegalArgumentException("Absolute session TTL must be at least 60 seconds");
         }
-        return new AbsoluteSessionLifetimeFilter(Duration.ofSeconds(maxAgeSeconds), Clock.systemUTC());
+        var registration = new org.springframework.boot.web.servlet.FilterRegistrationBean<>(
+                new AbsoluteSessionLifetimeFilter(Duration.ofSeconds(maxAgeSeconds), Clock.systemUTC()));
+        // Explicit servlet ordering: Spring Session wraps the request first, then enforce
+        // absolute age before Spring Security can restore a context from the session.
+        registration.setOrder(org.springframework.session.web.http.SessionRepositoryFilter.DEFAULT_ORDER + 1);
+        return registration;
     }
 }

@@ -76,7 +76,32 @@ public class AuthorizationPersistenceConfig {
 
     @Bean
     OAuth2AuthorizationService authorizationService(JdbcTemplate jdbc, RegisteredClientRepository clients) {
-        return new JdbcOAuth2AuthorizationService(jdbc, clients);
+        var mapper = tools.jackson.databind.json.JsonMapper.builder()
+                .addModules(org.springframework.security.jackson.SecurityJacksonModules
+                        .getModules(getClass().getClassLoader()))
+                .addMixIn(GoogleFederationConfig.CanonicalOidcUser.class, CanonicalUserMixin.class)
+                .build();
+        var service = new JdbcOAuth2AuthorizationService(jdbc, clients);
+        service.setAuthorizationRowMapper(
+                new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationRowMapper(clients, mapper));
+        service.setAuthorizationParametersMapper(
+                new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationParametersMapper(mapper));
+        return service;
+    }
+
+    // Explicitly allow this one application type; never enable unrestricted default typing.
+    @com.fasterxml.jackson.annotation.JsonTypeInfo(use = com.fasterxml.jackson.annotation.JsonTypeInfo.Id.CLASS)
+    @com.fasterxml.jackson.annotation.JsonAutoDetect(
+            fieldVisibility = com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY,
+            getterVisibility = com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE,
+            isGetterVisibility = com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+    abstract static class CanonicalUserMixin {
+        @com.fasterxml.jackson.annotation.JsonCreator
+        CanonicalUserMixin(
+                @com.fasterxml.jackson.annotation.JsonProperty("canonicalId") String canonicalId,
+                @com.fasterxml.jackson.annotation.JsonProperty("upstream")
+                org.springframework.security.oauth2.core.oidc.user.OidcUser upstream) { }
     }
 
     @Bean

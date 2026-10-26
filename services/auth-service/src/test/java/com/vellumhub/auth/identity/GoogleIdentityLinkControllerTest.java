@@ -18,9 +18,10 @@ class GoogleIdentityLinkControllerTest {
     private final IdentityRepository identities = mock(IdentityRepository.class);
     private final JwtDecoder decoder = mock(JwtDecoder.class);
     private final PasswordEncoder passwords = mock(PasswordEncoder.class);
+    private final GoogleLinkChallengeRepository challenges = mock(GoogleLinkChallengeRepository.class);
     private final UUID id = UUID.fromString("019a0000-1111-7000-8000-000000000001");
     private final GoogleIdentityLinkController controller =
-            new GoogleIdentityLinkController(identities, decoder, passwords, "google-client");
+            new GoogleIdentityLinkController(identities, decoder, passwords, "google-client", challenges);
 
     private UsernamePasswordAuthenticationToken authentication() {
         return new UsernamePasswordAuthenticationToken(id.toString(), null,
@@ -34,27 +35,26 @@ class GoogleIdentityLinkControllerTest {
         var request = new MockHttpServletRequest();
         controller.challenge(new GoogleIdentityLinkController.PasswordProof("correct-password"),
                 authentication(), request);
+        when(challenges.consume(request.getSession().getId(), id)).thenReturn("test-nonce", (String) null);
         return request;
     }
 
     @Test
     void linksOnlyWithValidGoogleTokenAndMatchingOneTimeNonce() {
         var request = challengedRequest();
-        var challenge = (GoogleIdentityLinkController.LinkChallenge)
-                request.getSession().getAttribute(GoogleIdentityLinkController.CHALLENGE_KEY);
         Jwt jwt = Jwt.withTokenValue("signed-google-token")
                 .header("alg", "RS256")
                 .claim("iss", "https://accounts.google.com")
                 .claim("sub", "google-subject-1")
                 .claim("aud", List.of("google-client"))
                 .claim("email_verified", true)
-                .claim("nonce", challenge.nonce())
+                .claim("nonce", "test-nonce")
                 .build();
         when(decoder.decode("signed-google-token")).thenReturn(jwt);
         assertThat(controller.link(new GoogleIdentityLinkController.GoogleIdTokenProof("signed-google-token"),
                 authentication(), request).getStatusCode().value()).isEqualTo(204);
         verify(identities).linkVerifiedGoogle(id, "https://accounts.google.com", "google-subject-1");
-        assertThat(request.getSession().getAttribute(GoogleIdentityLinkController.CHALLENGE_KEY)).isNull();
+        verify(challenges).consume(request.getSession().getId(), id);
         assertThatThrownBy(() -> controller.link(
                 new GoogleIdentityLinkController.GoogleIdTokenProof("signed-google-token"),
                 authentication(), request))
