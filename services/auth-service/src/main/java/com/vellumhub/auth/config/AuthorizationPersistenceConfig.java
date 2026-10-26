@@ -108,7 +108,8 @@ public class AuthorizationPersistenceConfig {
         CanonicalUserMixin(
                 @com.fasterxml.jackson.annotation.JsonProperty("canonicalId") String canonicalId,
                 @com.fasterxml.jackson.annotation.JsonProperty("upstream")
-                org.springframework.security.oauth2.core.oidc.user.OidcUser upstream) { }
+                org.springframework.security.oauth2.core.oidc.user.OidcUser upstream,
+                @com.fasterxml.jackson.annotation.JsonProperty("authenticatedAt") java.time.Instant authenticatedAt) { }
     }
 
     @Bean

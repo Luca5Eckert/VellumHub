@@ -28,6 +28,11 @@ class FederatedAuthorizationSerializationTest {
         var authentication = (Authentication) restored.get("java.security.Principal");
         assertThat(authentication.getName()).isEqualTo(id);
         var canonical = (GoogleFederationConfig.CanonicalOidcUser) authentication.getPrincipal();
+        assertThat(canonical.authenticatedAt()).isEqualTo(user.authenticatedAt());
+        var factor = authentication.getAuthorities().stream()
+                .filter(org.springframework.security.core.authority.FactorGrantedAuthority.class::isInstance)
+                .map(org.springframework.security.core.authority.FactorGrantedAuthority.class::cast).findFirst().orElseThrow();
+        assertThat(factor.getIssuedAt()).isEqualTo(user.authenticatedAt());
         assertThat(canonical.getSubject()).isEqualTo("google-subject");
         assertThat(canonical.getIdToken().getTokenValue()).isEqualTo("signed-upstream-token");
     }

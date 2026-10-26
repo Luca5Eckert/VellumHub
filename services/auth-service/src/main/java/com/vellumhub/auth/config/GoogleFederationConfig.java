@@ -37,15 +37,24 @@ public class GoogleFederationConfig {
     }
 
     /** Keep the signed upstream ID token intact, override only the local Authentication name. */
-    public record CanonicalOidcUser(String canonicalId, OidcUser upstream)
+    public record CanonicalOidcUser(String canonicalId, OidcUser upstream, java.time.Instant authenticatedAt)
             implements OidcUser, Serializable {
+        public CanonicalOidcUser(String canonicalId, OidcUser upstream) {
+            this(canonicalId, upstream, java.time.Instant.now());
+        }
         @Override public String getName() { return canonicalId; }
         @Override public Map<String, Object> getClaims() { return upstream.getClaims(); }
         @Override public OidcUserInfo getUserInfo() { return upstream.getUserInfo(); }
         @Override public OidcIdToken getIdToken() { return upstream.getIdToken(); }
         @Override public Map<String, Object> getAttributes() { return upstream.getAttributes(); }
         @Override public Collection<? extends GrantedAuthority> getAuthorities() {
-            return upstream.getAuthorities();
+            var authorities = new java.util.ArrayList<GrantedAuthority>(upstream.getAuthorities());
+            // Spring Security 7's ID-token generator derives auth_time from factor
+            // authorities, not from an optional upstream Google auth_time claim.
+            authorities.add(org.springframework.security.core.authority.FactorGrantedAuthority
+                    .withAuthority(org.springframework.security.core.authority.FactorGrantedAuthority.AUTHORIZATION_CODE_AUTHORITY)
+                    .issuedAt(authenticatedAt).build());
+            return authorities;
         }
     }
 }
