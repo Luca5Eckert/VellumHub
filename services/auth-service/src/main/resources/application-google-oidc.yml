@@ -17,3 +17,10 @@ vellum:
   google:
     enabled: true
     issuer: https://accounts.google.com
+management:
+  server:
+    port: ${VELLUM_AUTH_MANAGEMENT_PORT:9001}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus

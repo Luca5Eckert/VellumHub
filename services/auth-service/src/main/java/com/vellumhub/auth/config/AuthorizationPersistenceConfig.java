@@ -76,17 +76,24 @@ public class AuthorizationPersistenceConfig {
 
     @Bean
     OAuth2AuthorizationService authorizationService(JdbcTemplate jdbc, RegisteredClientRepository clients) {
-        var mapper = tools.jackson.databind.json.JsonMapper.builder()
-                .addModules(org.springframework.security.jackson.SecurityJacksonModules
-                        .getModules(getClass().getClassLoader()))
-                .addMixIn(GoogleFederationConfig.CanonicalOidcUser.class, CanonicalUserMixin.class)
-                .build();
+        var mapper = authorizationJsonMapper();
         var service = new JdbcOAuth2AuthorizationService(jdbc, clients);
         service.setAuthorizationRowMapper(
                 new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationRowMapper(clients, mapper));
         service.setAuthorizationParametersMapper(
                 new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationParametersMapper(mapper));
         return service;
+    }
+
+    static tools.jackson.databind.json.JsonMapper authorizationJsonMapper() {
+        return tools.jackson.databind.json.JsonMapper.builder()
+                .addModules(org.springframework.security.jackson.SecurityJacksonModules
+                        .getModules(AuthorizationPersistenceConfig.class.getClassLoader(),
+                                tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator.builder()
+                                        .allowIfSubType(GoogleFederationConfig.CanonicalOidcUser.class)))
+                .addMixIn(GoogleFederationConfig.CanonicalOidcUser.class, CanonicalUserMixin.class)
+                .build();
+
     }
 
     // Explicitly allow this one application type; never enable unrestricted default typing.

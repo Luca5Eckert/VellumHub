@@ -33,10 +33,10 @@ Never use local HTTP or PoC fixture settings on a shared or public host. Behind 
 
 This is **not** performed by matching the email in a Google login. Sign in locally to the Auth Service, obtain the CSRF token for the active browser session, then use:
 
-1. `POST /v1/identity/google/link/challenge` JSON `{"currentPassword":"..."}` (authenticated, CSRF protected). On valid password, returns `{"nonce":"..."}`, stored in the current session for at most 5 minutes.
+1. `POST /v1/identity/google/link/challenge` JSON `{"currentPassword":"..."}` (authenticated, CSRF protected). On valid password, returns `{"nonce":"..."}`, bound to the current session for at most 5 minutes; only a SHA-256 digest of the session ID is stored in Auth DB.
 2. Present the nonce as the `nonce` parameter to Google Identity Services using the configured **same client ID** and obtain a fresh signed ID Token.
 3. `POST /v1/identity/google/link` JSON `{"idToken":"..."}` with the same active session and CSRF token. Server pins the Google certificate URL, RS256, issuer, `aud`, nonce, verified email flag and subject; inserts the unique `(issuer,subject)` Auth binding for the already authenticated UUID.
-4. Challenge is consumed even on error. A Google subject attached to another user or an existing different Google binding on this user returns a conflict; neither account is reassigned.
+4. A PostgreSQL `DELETE ... RETURNING` consumes the challenge atomically before token verification, including errors, across threads and replicas. A Google subject attached to another user or an existing different Google binding on this user returns a conflict; neither account is reassigned.
 
 No raw Google ID Token is accepted as a VellumHub API bearer. Sensitive token request bodies must not be logged. This route is not exposed by the Gateway unless explicitly allowlisted during future #317 cutover.
 
@@ -54,7 +54,7 @@ No raw Google ID Token is accepted as a VellumHub API bearer. Sensitive token re
 2. Compose overlay config with dummy external credentials, plus real runtime using explicitly provided development Google client credentials.
 3. Provider-backed browser E2E: new subject → pending identity → same UUID profile → Auth OIDC token → Gateway → two independent protected APIs, and existing subject retains UUID after repeat login.
 4. Negative OIDC: invalid `state`/`nonce`, wrong issuer/audience/redirect, unverified email, concurrent first login, duplicate external binding, same email/different subject and Google ID Token directly in Gateway.
-5. Session: form/CSRF and OIDC logout callbacks, cookies and redirects, idle and absolute expiry, multi-instance/restart behavior, fresh authorization after logout, and pre-logout JWT accepted only until `exp`.
+5. Session: form/CSRF and OIDC logout callbacks, cookies and redirects, idle and absolute expiry, shared-repository session restoration/deletion, fresh authorization after logout, and pre-logout JWT accepted only until `exp`. A repository round-trip is not a full two-running-replica or process-restart test.
 6. Regression: old User Google/login preserved, no User/Google network fan-out on JWT verification, JWKS warm-cache behavior under Auth outage, no credentials/tokens/cookies in logs.
 7. Security review, replay/conflict evidence, SHA-linked CI run, updated Vault and final acceptance reconciliation for #308/#309.
 
@@ -63,3 +63,25 @@ No raw Google ID Token is accepted as a VellumHub API bearer. Sensitive token re
 Disable the `google-oidc` profile and drop the Lote 3 Compose overlay to restore default legacy Google writes via User; keep the Lote 2/legacy route available. Preserve auth_db migrations, session and identity data for audit; don't destructively roll back schema or overwrite claims. No deploy or cutover is claimed.
 
 Remaining gaps: live end-to-end browser proof for the manual local→Google linking contract, full Google-provider E2E, multi-instance and production HTTPS behavior. A successful unit/Compose CI check is **not** proof of these guarantees. Keep PR #334 draft until verified.
+
+
+## Review corrections and automated evidence
+
+- The local issuer decoder is `@Primary`; the separately qualified Google decoder cannot become the AS UserInfo decoder. The full Spring context is tested with `local-poc,google-oidc`, not just a Compose parse.
+- JDBC OAuth authorization JSON explicitly permits `CanonicalOidcUser` using Spring Security's Jackson 3 polymorphic validator and a constructor mixin. Both JDBC mappers share the same policy. Unknown application types stay denied; upstream signed token claims remain intact.
+- V5 stores one five-minute link challenge per hashed session ID and consumes it atomically across replicas. New challenges replace older ones. Expired rows are removed on challenge issuance.
+- Absolute lifetime enforcement has explicit servlet registration after Spring Session and before Spring Security. It cannot read the original container session in place of the JDBC session.
+- Existing AS sessions are checked against local Auth identity state, and access-token issuance also rechecks active status. Disabling an identity prevents subsequent authorization/code redemption. This is an Auth-local DB check, not User/Google fan-out on API requests. Existing API JWTs retain their expiry window.
+- Role administration is not introduced here: the current contract emits the existing `USER` role. Dynamic role changes/RBAC are #311–#313; no claim of immediate role revocation is made. Re-evaluate session/token invalidation when those issues add mutable grants.
+- `FederatedOidcLifecycleIntegrationTest` runs a signed, controlled OIDC upstream and PostgreSQL: callback validation, repeat-login UUID, authorization-code exchange after JDBC deserialization, Google/ID-token rejection by the access-token validator, local login regression, form and RP logout, account deactivation, idle/absolute expiry, challenge consumption race, and independent JDBC session repository restore/delete.
+- The controlled User profile command stub in this test isolates federation. The separate Lote 2 distributed workflow remains the evidence for Auth→User→Gateway→APIs. Neither test is presented as a Google-production or real-SPA test.
+
+## Operational policy
+
+The application enforces a shared PostgreSQL fixed-window budget of **20 attempts/minute per remote address** for local login POSTs, Google authorization starts and manual-link proofs. Set `vellum.auth.attempts-per-minute` to tune it. It uses the servlet remote address, never an untrusted forwarded header. Configure a trusted reverse proxy before enabling forwarded-header support; shared NAT clients share the budget. The limit returns `429` with `Retry-After`. A fixed window can allow a boundary burst; perimeter/WAF limits remain necessary for a public production rollout. Raw addresses, identities, token values and cookies are never metric labels.
+
+With `google-oidc`, Prometheus metrics are exposed on the **separate internal management port 9001**, not published by the Compose overlay. Keep that port private. Enabling the `observability` profile along with the Lote 3 overlay mounts an opt-in file-discovery target; base deployments have no Auth target. Versioned alerts cover target outage, sustained throttling and identity-resolution rejection. `vellum_auth_federation_total` measures resolution after protocol validation; signature/state/nonce failures rejected earlier are not counted by that counter. Use HTTP 4xx/5xx and trusted perimeter telemetry for those failures.
+
+On alert: inspect Auth availability, DB latency/connectivity and aggregate HTTP failure counts; verify provider/network health, issuer/client configuration and provisioning availability without logging token bodies. For throttling, distinguish abuse from shared-NAT traffic before changing the budget. For urgent compromise, disable the Auth identity and terminate affected sessions; allow already issued JWTs to expire (up to the configured TTL plus verifier clock skew). No immediate JWT blacklist is implemented.
+
+The new schema is additive. Rollback preserves V5/V6 and all identity/session data. Do not roll back to legacy Google writes for Auth-created accounts without reconciling canonical UUIDs and bindings: the legacy implementation does not automatically read Auth-owned identities. Re-enabling the old overlay is a configuration rollback, not proof of identity/data rollback.

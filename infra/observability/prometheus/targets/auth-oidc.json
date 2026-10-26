@@ -1,0 +1,1 @@
+[{"targets":["auth-service:9001"],"labels":{"service":"auth-service"}}]

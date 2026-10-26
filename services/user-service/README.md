@@ -174,3 +174,8 @@ In draft PR #321, JWT verifiers fetch only trusted public RS256 keys from `JWT_J
 Opt-in `VELLUM_IDENTITY_PROVISIONING_ENABLED=true` enables `POST /internal/identity/profiles`; only the Auth workload with a 32+-character `VELLUM_INTERNAL_PROVISION_KEY` may invoke it on the **internal network**. Gateway does not proxy the route. The command accepts a UUIDv7 `userId`, name and email, returns 201 for creation, 204 for exact replay and 409 on collision. DB migration `V3__auth_owned_profile.sql` makes password nullable for accounts with credentials **owned only by Auth**, with no hash replicated. Legacy login remains for legacy users, but Auth-owned profiles cannot authenticate through that path. Configure and validate mTLS/workload identity before production.
 
 [Runbook](../../docs/SECURITY_OIDC_LOTE2.md) · [#307](https://github.com/Luca5Eckert/VellumHub/issues/307).
+
+
+## Google identity ownership during Lote 3
+
+Base deployments preserve the legacy Google login/link/unlink handlers. The explicit `docker-compose.oidc-lote3.yml` overlay sets `VELLUM_LEGACY_GOOGLE_WRITES_ENABLED=false`: those three mutations return **410 Gone** before calling the legacy service. Local legacy login is unchanged. New federated bindings are owned only by Auth; User retains profile ownership and the existing private idempotent provisioning command. This is an opt-in environment boundary, not the real-client cutover (#317). See [Lote 3 runbook](../../docs/SECURITY_OIDC_LOTE3.md) for setup and rollback limits.

@@ -39,12 +39,13 @@ import org.testcontainers.junit.jupiter.*;
 
 /** Signed, controlled upstream OIDC over HTTP + real Auth/Flyway/PostgreSQL. No Google credentials. */
 @Testcontainers
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-        "spring.profiles.active=local-poc,google-oidc", "vellum.poc.fixture.enabled=false",
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = {
+        "spring.profiles.active=local-poc,google-oidc", "management.server.port=0", "vellum.poc.fixture.enabled=false",
         "vellum.identity.registration-enabled=true", "vellum.identity.shared-secret=test-only-internal-key-at-least-32-chars",
         "vellum.identity.reconcile-delay-ms=3600000"})
 class FederatedOidcLifecycleIntegrationTest {
     @Container static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    static final int AUTH_PORT = freePort();
     static final Path keys = AuthPersistenceIntegrationTest.makeKeys();
     static final RSAKey upstreamKey = key();
     static final HttpServer upstream = provider();
@@ -56,11 +57,14 @@ class FederatedOidcLifecycleIntegrationTest {
     @LocalServerPort int port;
     @Autowired JdbcTemplate jdbc;
     @Autowired IdentityRepository identities;
+    @Autowired org.springframework.security.crypto.password.PasswordEncoder passwords;
     @Autowired GoogleLinkChallengeRepository challenges;
     @Autowired JdbcIndexedSessionRepository sessions;
 
     @DynamicPropertySource
     static void configure(DynamicPropertyRegistry p) {
+        p.add("server.port", () -> AUTH_PORT);
+        p.add("vellum.auth.issuer", () -> "http://127.0.0.1:" + AUTH_PORT);
         p.add("spring.datasource.url", postgres::getJdbcUrl);
         p.add("spring.datasource.username", postgres::getUsername);
         p.add("spring.datasource.password", postgres::getPassword);
@@ -92,7 +96,7 @@ class FederatedOidcLifecycleIntegrationTest {
         var claims = SignedJWT.parse((String) tokens.get("access_token")).getJWTClaimsSet();
         UUID id = UUID.fromString(claims.getSubject());
         assertThat(id.version()).isEqualTo(7);
-        assertThat(claims.getIssuer()).isEqualTo("http://127.0.0.1:9000");
+        assertThat(claims.getIssuer()).isEqualTo("http://127.0.0.1:" + AUTH_PORT);
         assertThat(claims.getSubject()).isNotEqualTo(subject);
         assertThat(identities.findById(id).orElseThrow().active()).isTrue();
         assertThat(identities.findById(id).orElseThrow().passwordHash()).isNull();
@@ -138,6 +142,58 @@ class FederatedOidcLifecycleIntegrationTest {
         jdbc.update("UPDATE auth_identity SET active=false WHERE id=?", id);
         assertThat(exchange(b, code).statusCode()).isEqualTo(400);
         assertThat(b.get(authorize()).headers().firstValue("location").orElse("")).contains("/login");
+    }
+
+    @Test void localPasswordLoginStillWorksAndPendingOrWrongPasswordFails() throws Exception {
+        UUID id = UUID.randomUUID();
+        String login = id + "@example.invalid";
+        identities.createIfAbsent(id, login, passwords.encode("a-long-test-password"));
+        Browser b = new Browser();
+        assertThat(localLogin(b, login, "wrong-password").headers().firstValue("location").orElse("")).contains("error");
+        assertThat(localLogin(b, login, "a-long-test-password").statusCode()).isEqualTo(302);
+        String code = params(URI.create(b.get(authorize()).headers().firstValue("location").orElseThrow()).getRawQuery()).get("code");
+        var tokens = exchange(b, code);
+        assertThat(tokens.statusCode()).isEqualTo(200);
+        assertThat(SignedJWT.parse((String) json(tokens.body()).get("access_token")).getJWTClaimsSet().getSubject()).isEqualTo(id.toString());
+        jdbc.update("UPDATE auth_identity SET active=false WHERE id=?", id);
+        assertThat(localLogin(new Browser(), login, "a-long-test-password").headers().firstValue("location").orElse("")).contains("error");
+    }
+
+    @Test void idleAndAbsoluteExpiryPreventSessionReauthorization() throws Exception {
+        for (String expiry : List.of("idle", "absolute")) {
+            Browser b = new Browser();
+            var tokens = googleTokens(b);
+            String id = SignedJWT.parse((String) tokens.get("access_token")).getJWTClaimsSet().getSubject();
+            if (expiry.equals("idle")) {
+                jdbc.update("UPDATE SPRING_SESSION SET EXPIRY_TIME=? WHERE PRINCIPAL_NAME=?", System.currentTimeMillis() - 1000, id);
+            } else {
+                jdbc.update("UPDATE SPRING_SESSION SET CREATION_TIME=? WHERE PRINCIPAL_NAME=?",
+                        System.currentTimeMillis() - java.time.Duration.ofHours(13).toMillis(), id);
+            }
+            assertThat(b.get(authorize()).headers().firstValue("location").orElse("")).contains("/login");
+        }
+    }
+
+    @Test void oidcLogoutRejectsForeignRedirectAndEndsOnlyCurrentSession() throws Exception {
+        Browser b = new Browser();
+        var tokens = googleTokens(b);
+        Browser other = new Browser();
+        googleTokens(other);
+        String hint = enc((String) tokens.get("id_token"));
+        assertThat(b.get("/connect/logout?id_token_hint=" + hint + "&post_logout_redirect_uri="
+                + enc("https://evil.invalid/")).statusCode()).isEqualTo(400);
+        var logout = b.get("/connect/logout?id_token_hint=" + hint + "&post_logout_redirect_uri="
+                + enc("http://127.0.0.1:9100/index.html") + "&state=logout-state");
+        assertThat(logout.statusCode()).isEqualTo(302);
+        assertThat(logout.headers().firstValue("location").orElse("")).contains("http://127.0.0.1:9100/index.html", "state=logout-state");
+        assertThat(b.get(authorize()).headers().firstValue("location").orElse("")).contains("/login");
+        assertThat(other.get(authorize()).headers().firstValue("location").orElse("")).contains("code=");
+    }
+
+    private HttpResponse<String> localLogin(Browser b, String login, String password) throws Exception {
+        var matcher = Pattern.compile("name=\"_csrf\"[^>]*value=\"([^\"]+)\"").matcher(b.get("/login").body());
+        assertThat(matcher.find()).isTrue();
+        return b.post("/login", "username=" + enc(login) + "&password=" + enc(password) + "&_csrf=" + enc(matcher.group(1)));
     }
 
     @Test void challengeHasExactlyOneConsumerAcrossIndependentRepositoryInstances() throws Exception {
@@ -207,16 +263,16 @@ class FederatedOidcLifecycleIntegrationTest {
                 + "&redirect_uri=" + enc("http://127.0.0.1:9100/index.html") + "&code_verifier=" + enc(VERIFIER));
     }
     private class Browser {
-        final HttpClient http = HttpClient.newBuilder().cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
+        final HttpClient http = HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(10)).cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
                 .followRedirects(HttpClient.Redirect.NEVER).build();
         HttpResponse<String> get(String path) throws Exception { return get(path, null); }
         HttpResponse<String> get(String path, String bearer) throws Exception {
-            var builder = HttpRequest.newBuilder(uri(path)).header("Accept", "text/html");
+            var builder = HttpRequest.newBuilder(uri(path)).timeout(java.time.Duration.ofSeconds(20)).header("Accept", "text/html");
             if (bearer != null) { builder.header("Authorization", "Bearer " + bearer); }
             return http.send(builder.GET().build(), HttpResponse.BodyHandlers.ofString());
         }
         HttpResponse<String> post(String path, String body) throws Exception {
-            return http.send(HttpRequest.newBuilder(uri(path)).header("Content-Type", "application/x-www-form-urlencoded")
+            return http.send(HttpRequest.newBuilder(uri(path)).timeout(java.time.Duration.ofSeconds(20)).header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(body)).build(), HttpResponse.BodyHandlers.ofString());
         }
         URI uri(String path) { return URI.create(path.startsWith("http") ? path : "http://127.0.0.1:" + port + path); }
@@ -254,6 +310,10 @@ class FederatedOidcLifecycleIntegrationTest {
             server.start();
             return server;
         } catch (Exception e) { throw new ExceptionInInitializerError(e); }
+    }
+    private static int freePort() {
+        try (var socket = new java.net.ServerSocket(0)) { return socket.getLocalPort(); }
+        catch (Exception e) { throw new ExceptionInInitializerError(e); }
     }
     private static RSAKey key() {
         try { return new RSAKeyGenerator(2048).keyID("upstream-key").generate(); }

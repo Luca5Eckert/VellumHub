@@ -79,3 +79,10 @@ The `V3__google_federated_identities.sql` migration gives Auth sole ownership of
 `V4__jdbc_http_sessions.sql` introduces Spring Session JDBC persistence through Flyway. Inactive sessions expire after 30 minutes; `VELLUM_AUTH_SESSION_ABSOLUTE_SECONDS` defaults to 43200. The AS retains the OIDC `/connect/logout` endpoint and a CSRF-protected `POST /logout` for per-device logout. Reauthorization requires new top-level Authorization Code + PKCE S256. The initial SPA receives no refresh token, and previously issued JWTs remain valid until expiry.
 
 Verification: `mvn -B -ntp -Pauth-poc -pl services/auth-service -am clean verify`. CI does not replace live Google credentials, HTTPS deployment checks, provider-driven E2E, or multi-instance session validation. The manual linking HTTP paths require a valid local session, a CSRF token and a fresh Google ID token intended for the configured Google client. See [runbook](../../docs/SECURITY_OIDC_LOTE3.md) for the negative cases, rollback and explicit gaps.
+
+
+### PR #334 review hardening
+
+The Google-enabled context has an explicit primary local JWT decoder. JDBC authorization serialization has a narrow allowlist for the canonical federated principal. V5 consumes manual-link challenges atomically in PostgreSQL across replicas; V6 enforces a shared authentication-attempt budget. AS sessions and new access-token issuance check the local identity's active state. Session absolute-age enforcement runs after Spring Session and before Spring Security. Initial role issuance remains `USER` until the separate RBAC work.
+
+Controlled-provider integration tests exercise signed callbacks, stable UUID, JDBC authorization/session restoration, local-login regression, logout and expiry. Live Google credentials, HTTPS/proxy checks and real-client cutover remain separate validation. With `google-oidc`, the separate private management listener defaults to port 9001; the Compose Lote 3 + observability profiles discover it without publishing that port. Metrics, alerts, configuration limits and incident response are in the runbook.

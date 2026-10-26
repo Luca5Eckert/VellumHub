@@ -3,16 +3,21 @@ on:
   pull_request:
     paths:
       - 'services/auth-service/**'
+      - 'services/user-service/**'
+      - 'infra/observability/prometheus/**'
       - 'docker-compose.oidc-lote3.yml'
       - '.github/workflows/oidc-lote3.yml'
   push:
     branches: [main]
     paths:
       - 'services/auth-service/**'
+      - 'services/user-service/**'
+      - 'infra/observability/prometheus/**'
       - 'docker-compose.oidc-lote3.yml'
 jobs:
   auth-federation-session:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -24,6 +29,8 @@ jobs:
           cache: maven
       - name: Compile and verify Auth and shared JWT contracts
         run: mvn -B -ntp -Pauth-poc -pl services/auth-service -am clean verify
+      - name: Validate Prometheus config and alert rules
+        run: docker run --rm --entrypoint promtool -v "$PWD/infra/observability/prometheus:/etc/prometheus:ro" prom/prometheus:v3.12.0 check config /etc/prometheus/prometheus.yml
       - name: Validate opt-in Compose with placeholders (never calls Google)
         env:
           JWT_ISSUER: http://127.0.0.1:9000
@@ -48,3 +55,12 @@ jobs:
         run: |
           touch .env
           docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml -f docker-compose.oidc-lote3.yml config --quiet
+
+      - name: Preserve test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oidc-lote3-test-reports
+          path: |
+            services/auth-service/target/surefire-reports/**
+            lib/jwt-security/target/surefire-reports/**

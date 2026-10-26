@@ -137,6 +137,7 @@ public class AuthorizationServerConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/v1/identity/register").permitAll()
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/actuator/prometheus").permitAll()
                 .anyRequest().authenticated())
             // Registration is a stateless JSON operation and cannot obtain a browser CSRF token.
             // Scope this exemption to this path; retain CSRF for the interactive login flow.
@@ -144,7 +145,7 @@ public class AuthorizationServerConfig {
                     PathPatternRequestMatcher.pathPattern("/v1/identity/register")))
             .addFilterAfter(new ActiveIdentitySessionFilter(identities), SecurityContextHolderFilter.class)
             .addFilterBefore(new AuthenticationThrottleFilter(jdbc, metrics, attemptsPerMinute, java.time.Clock.systemUTC()),
-                    org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
+                    org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter.class)
             .formLogin(Customizer.withDefaults())
             .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout")
                     .invalidateHttpSession(true).clearAuthentication(true)
