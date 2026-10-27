@@ -7,12 +7,15 @@ server:
 vellum:
   auth:
     issuer: ${VELLUM_AUTH_ISSUER:http://127.0.0.1:9000}
-    allowed-origin: ${VELLUM_AUTH_ALLOWED_ORIGIN:http://127.0.0.1:9100}
+    allowed-origin: ${VELLUM_POC_SPA_ORIGIN:http://127.0.0.1:9100}
   client:
     enabled: true
     id: vellumhub-spa-poc
-    redirect-uri: ${VELLUM_AUTH_CLIENT_REDIRECT_URI:http://127.0.0.1:9100/index.html}
-    post-logout-uri: ${VELLUM_AUTH_CLIENT_POST_LOGOUT_URI:http://127.0.0.1:9100/index.html}
+    redirect-uri: ${VELLUM_POC_REDIRECT_URI:http://127.0.0.1:9100/index.html}
+    post-logout-uri: ${VELLUM_POC_LOGOUT_URI:http://127.0.0.1:9100/index.html}
   poc:
     fixture:
       enabled: true
+management:
+  server:
+    port: 9000
