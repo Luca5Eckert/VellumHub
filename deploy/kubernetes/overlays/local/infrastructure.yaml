@@ -142,8 +142,8 @@ spec:
           ports: [{name: postgres, containerPort: 5432}]
           env:
             - {name: POSTGRES_DB, value: vellum_auth}
-            - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_USER}}}
-            - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_PASSWORD}}}
+            - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_AUTH_USER}}}
+            - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_AUTH_PASSWORD}}}
           resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
           volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
   volumeClaimTemplates: [{metadata: {name: data}, spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 2Gi}}}}]
