@@ -5,7 +5,6 @@ import com.vellumhub.user_service.module.user.application.controller.UserControl
 import com.vellumhub.user_service.module.user.application.dto.UpdateUserRequest;
 import com.vellumhub.user_service.module.user.application.dto.UserGetResponse;
 import com.vellumhub.user_service.module.user.application.exception.UserNotFoundException;
-import com.vellumhub.user_service.module.user.domain.RoleUser;
 import com.vellumhub.user_service.module.user.domain.service.UserService;
 import com.vellumhub.user_service.share.service.AuthenticationService;
 import org.junit.jupiter.api.DisplayName;
