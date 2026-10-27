@@ -28,11 +28,11 @@ mvn -B verify
 mvn -B -Pdistributed-e2e verify
 ```
 
-The default reactor has five deployable services and three shared libraries; `integration-tests/distributed-e2e` remains opt-in. The Python static checks have negative fixtures and a GitHub Actions workflow. The Maven Enforcer plugin in all five service POMs resolves and checks transitive dependencies at `validate`; only deployable-to-deployable artifacts are banned. Shared `lib/kafka-contracts` and test support remain available.
+The default reactor has six deployable services and three shared libraries; `integration-tests/distributed-e2e` remains opt-in. The Python static checks have negative fixtures and a GitHub Actions workflow. The Maven Enforcer plugin in the five domain/gateway service POMs resolves and checks transitive dependencies at `validate`; only deployable-to-deployable artifacts are banned. Shared `lib/kafka-contracts` and test support remain available.
 
 ### AFF-STR-001 and AFF-STR-002
 
-ArchUnit is test-scoped in all five modules. The domain boundary rule prohibits domain -> infrastructure/adapter/controller dependencies. The module rule checks slice cycles. Non-applicable package layouts use JUnit assumptions, so skipped tests do not claim coverage. Catalog also includes negative fixtures for forbidden dependencies and cycles.
+ArchUnit remains test-scoped in the five domain/gateway modules; Auth is covered by the deployable dependency and database-ownership checks. The domain boundary rule prohibits domain -> infrastructure/adapter/controller dependencies. The module rule checks slice cycles. Non-applicable package layouts use JUnit assumptions, so skipped tests do not claim coverage. Catalog also includes negative fixtures for forbidden dependencies and cycles.
 
 A real historical cycle `book -> book_request -> book` was discovered by CI and the Book handlers were refactored to use their own domain exception instead of an exception from BookRequest. This changes the exception type for invalid genres, while preserving existing BookDomainException handling.
 
