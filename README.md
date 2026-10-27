@@ -2,7 +2,7 @@
 
 PRs #320, #321, #330, #331 and #334 are merged. The Auth service is implemented and the OIDC integration overlay verifies Gateway and domain APIs against Auth-issued JWTs.
 
-The default runtime has not been cut over yet: base Compose and Kubernetes still use the User Service as the JWT/JWKS source. There is no real frontend to migrate today. Issue #317 now owns the backend cutover: migrate authentication data and minimum USER/ADMIN parity, switch all validators to Auth, then remove legacy authentication from User.
+The default runtime has not been cut over yet: base Compose and Kubernetes still use the User Service as the JWT/JWKS source. There is no real frontend or production user data to migrate today. Issue #317 now owns the backend cutover: finalize the Auth contract, switch all validators to Auth, then remove legacy authentication from User.
 
 # VellumHub
 
