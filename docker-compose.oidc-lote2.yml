@@ -6,8 +6,8 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: vellum_auth
-      POSTGRES_USER: vellum_auth
-      POSTGRES_PASSWORD: ${VELLUM_AUTH_DB_PASSWORD:?Required}
+      POSTGRES_USER: ${POSTGRES_AUTH_USER:?Required}
+      POSTGRES_PASSWORD: ${POSTGRES_AUTH_PASSWORD:?Required}
     volumes:
       - oidc-auth-data:/var/lib/postgresql/data
     networks: [vellum-network]
@@ -30,8 +30,8 @@ services:
       VELLUM_AUTH_MANAGEMENT_PORT: 9000
       VELLUM_AUTH_ISSUER: http://127.0.0.1:9000
       VELLUM_AUTH_DB_URL: jdbc:postgresql://auth-postgres:5432/vellum_auth
-      VELLUM_AUTH_DB_USERNAME: vellum_auth
-      VELLUM_AUTH_DB_PASSWORD: ${VELLUM_AUTH_DB_PASSWORD:?Required}
+      VELLUM_AUTH_DB_USERNAME: ${POSTGRES_AUTH_USER:?Required}
+      VELLUM_AUTH_DB_PASSWORD: ${POSTGRES_AUTH_PASSWORD:?Required}
       VELLUM_AUTH_PRIVATE_KEY_PATH: /run/keys/signing-private.pem
       VELLUM_AUTH_PUBLIC_KEY_PATH: /run/keys/signing-public.pem
       VELLUM_AUTH_ACTIVE_KID: ${VELLUM_AUTH_ACTIVE_KID:-local-oidc-key}
