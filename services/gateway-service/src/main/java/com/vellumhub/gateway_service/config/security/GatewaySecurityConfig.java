@@ -22,12 +22,6 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
-import org.springframework.core.io.Resource;
-import org.springframework.security.converter.RsaKeyConverters;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Objects;
 import java.util.Arrays;
 import java.util.List;
 import reactor.core.publisher.Mono;
@@ -47,21 +41,18 @@ public class GatewaySecurityConfig {
     @Value("${JWT_CLOCK_SKEW_SECONDS:30}")
     private long clockSkewSeconds = 30;
 
-    private final Resource publicKeyResource;
     private final boolean publicDocumentation;
     private final String allowedOrigins;
 
     public GatewaySecurityConfig(
-            @Value("${jwt.public-key-location}") Resource publicKeyResource,
             @Value("${VELLUM_DOCS_ENABLED:false}") boolean publicDocumentation,
             @Value("${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}") String allowedOrigins) {
-        this.publicKeyResource = publicKeyResource;
         this.publicDocumentation = publicDocumentation;
         this.allowedOrigins = allowedOrigins;
     }
 
     @Bean
-    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) throws IOException {
+    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         ServerAuthenticationEntryPoint authenticationEntryPoint = (exchange, error) -> {
             var response = exchange.getResponse();
             response.setStatusCode(HttpStatus.UNAUTHORIZED);
