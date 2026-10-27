@@ -73,7 +73,6 @@ class GatewaySecurityBoundaryTest {
     @Test
     void corsUsesOnlyExplicitOriginsAndPreservesExistingCredentialsMode() {
         var config = new GatewaySecurityConfig(
-                new org.springframework.core.io.ClassPathResource("security/test-public.pem"),
                 false, "https://frontend.example");
         var request = org.springframework.mock.http.server.reactive.MockServerHttpRequest
                 .options("/api/v1/auth/login")
