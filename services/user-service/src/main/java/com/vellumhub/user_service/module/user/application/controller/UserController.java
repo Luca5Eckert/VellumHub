@@ -1,6 +1,5 @@
 package com.vellumhub.user_service.module.user.application.controller;
 
-import com.vellumhub.user_service.module.user.application.dto.CreateUserRequest;
 import com.vellumhub.user_service.module.user.application.dto.UpdateUserRequest;
 import com.vellumhub.user_service.module.user.application.dto.UserGetResponse;
 import com.vellumhub.user_service.module.user.domain.service.UserService;
@@ -34,21 +33,6 @@ public class UserController {
     public UserController(UserService userService, AuthenticationService authenticationService) {
         this.userService = userService;
         this.authenticationService = authenticationService;
-    }
-
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create a new user", description = "Creates a new user in the system. Requires ADMIN role.")
-    @SecurityRequirement(name = "bearerAuth")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "User created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid data provided", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden: Administrator permission required", content = @Content)
-    })
-    public ResponseEntity<Void> create(@RequestBody @Valid CreateUserRequest createUserRequest) {
-        userService.create(createUserRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/{id}")
