@@ -1,5 +1,10 @@
 # SEC-05 — Spring Security 7 Authorization Server PoC
 
+## Security migration status — 27 October 2026
+
+The Auth service and OIDC integration are merged and validated in the opt-in integration path. The default Compose/Kubernetes runtime still uses the User Service JWT/JWKS path until #317. There is no real frontend today; #317 is now the backend/data cutover and legacy-auth removal.
+
+
 **Status: Lote 1 PoC and Lote 2 integration are merged; Lote 3 is in draft PR #334, without production cutover.** This independent experimental service is opt-in and does not replace the existing User Service JWT issuer. Tracks [#306](https://github.com/Luca5Eckert/VellumHub/issues/306) and [ADR-015](https://github.com/Luca5Eckert/obsidian-vault/blob/main/projects/vellum-hub/architecture/adr/ADR-015-identidade-e-authorization-server.md).
 
 ## Boundaries
