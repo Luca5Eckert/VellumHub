@@ -28,7 +28,7 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Compile and verify Auth and shared JWT contracts
-        run: mvn -B -ntp -Pauth-poc -pl services/auth-service -am clean verify
+        run: mvn -B -ntp -pl services/auth-service -am clean verify
       - name: Validate Prometheus config and alert rules
         run: docker run --rm --entrypoint promtool -v "$PWD/infra/observability/prometheus:/etc/prometheus:ro" prom/prometheus:v3.12.0 check config /etc/prometheus/prometheus.yml
       - name: Validate opt-in Compose with placeholders (never calls Google)
