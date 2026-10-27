@@ -108,9 +108,6 @@ spring:
       port: ${SPRING_DATA_REDIS_PORT:6379}
       connect-timeout: 2s
 
-jwt:
-  public-key-location: ${JWT_PUBLIC_KEY_LOCATION:}
-
 springdoc:
   api-docs:
     enabled: ${VELLUM_DOCS_ENABLED:false}
