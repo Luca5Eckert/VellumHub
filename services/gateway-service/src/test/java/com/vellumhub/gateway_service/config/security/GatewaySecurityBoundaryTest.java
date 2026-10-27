@@ -10,7 +10,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-        "JWT_PUBLIC_KEY_LOCATION=classpath:security/test-public.pem",
         "VELLUM_DOCS_ENABLED=false"
 })
 class GatewaySecurityBoundaryTest {
