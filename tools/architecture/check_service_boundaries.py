@@ -3,7 +3,7 @@
 
 Runs without third-party libraries and deliberately scans all POM dependency
 declarations (including profiles and dependencyManagement). Test-only E2E is
-excluded from the producer set; the five deployable services are not.
+excluded from the producer set; the six deployable services are not.
 """
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 NS = {"m": "http://maven.apache.org/POM/4.0.0"}
-SERVICES = ("catalog", "engagement", "user", "recommendation", "gateway")
+SERVICES = ("auth", "catalog", "engagement", "user", "recommendation", "gateway")
 
 
 def dependencies(pom: Path) -> set[tuple[str, str]]:
