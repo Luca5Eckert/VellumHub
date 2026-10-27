@@ -1,5 +1,7 @@
 package com.vellumhub.auth;
 
+import com.vellumhub.auth.identity.IdentityRole;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -66,8 +68,8 @@ class AuthPersistenceIntegrationTest {
         assertThat(reloaded.getId()).isEqualTo(client.getId());
 
         var id = ids.next();
-        assertThat(identities.createIfAbsent(id, "Test@Example.invalid", "{noop}test-password")).isEqualTo(1);
-        assertThat(identities.createIfAbsent(ids.next(), "test@example.invalid", "{noop}other")).isZero();
+        assertThat(identities.createIfAbsent(id, "Test@Example.invalid", "{noop}test-password", IdentityRole.USER)).isEqualTo(1);
+        assertThat(identities.createIfAbsent(ids.next(), "test@example.invalid", "{noop}other", IdentityRole.USER)).isZero();
         assertThat(details.loadUserByUsername("TEST@example.invalid").getUsername())
                 .isEqualTo(id.toString());
     }
