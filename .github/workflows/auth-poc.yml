@@ -30,7 +30,7 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Verify PoC and shared JWT contract with PostgreSQL Testcontainers
-        run: mvn -B -ntp -Pauth-poc -pl services/auth-service -am clean verify
+        run: mvn -B -ntp -pl services/auth-service -am clean verify
       - name: Validate isolated Compose spec
         env:
           VELLUM_AUTH_DB_PASSWORD: ci-only-not-a-real-secret
