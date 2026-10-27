@@ -1,7 +1,6 @@
 package com.vellumhub.user_service.share.config;
 
 import com.vellumhub.user_service.UserServiceApplication;
-import com.vellumhub.user_service.share.security.token.TestRsaKeyMaterial;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -54,9 +53,9 @@ class FlywayPostgresIntegrationTest {
 
     @Test
     @Order(2)
-    void provisionsAuthOwnedUuidV7IdempotentlyWithoutCopyingPassword(@Autowired JdbcTemplate jdbc) {
+    void provisionsAuthOwnedUuidV7IdempotentlyWithoutCredentialColumns(@Autowired JdbcTemplate jdbc) {
         assertThat(jdbc.queryForObject(
-                "select count(*) from flyway_schema_history where version = '3' and success", Integer.class))
+                "select count(*) from flyway_schema_history where version = '4' and success", Integer.class))
                 .isEqualTo(1);
         var endpoint = new com.vellumhub.user_service.module.user.infrastructure.provisioning
                 .ProfileProvisioningController(jdbc, "local-integration-secret-of-32-chars");
@@ -67,8 +66,9 @@ class FlywayPostgresIntegrationTest {
                 .getStatusCode().value()).isEqualTo(201);
         assertThat(endpoint.create("local-integration-secret-of-32-chars", value)
                 .getStatusCode().value()).isEqualTo(204);
-        assertThat(jdbc.queryForObject("select password from tb_users where id = ?",
-                String.class, id)).isNull();
+        assertThat(columnExists(jdbc, "tb_users", "password")).isFalse();
+        assertThat(tableExists(jdbc, "external_identities")).isFalse();
+        assertThat(tableExists(jdbc, "external_identity_audit")).isFalse();
         assertThat(jdbc.queryForObject("select role from tb_users where id = ?",
                 String.class, id)).isEqualTo("USER");
         var colliding = new com.vellumhub.user_service.module.user.infrastructure.provisioning
@@ -105,10 +105,7 @@ class FlywayPostgresIntegrationTest {
                 "SPRING_DATASOURCE_USERNAME", POSTGRES.getUsername(),
                 "SPRING_DATASOURCE_PASSWORD", POSTGRES.getPassword(),
                 "KAFKA_BOOTSTRAP_SERVERS", "localhost:65535",
-                "JWT_PUBLIC_KEY_LOCATION", TestRsaKeyMaterial.publicLocation(),
-                "JWT_PRIVATE_KEY_LOCATION", TestRsaKeyMaterial.privateLocation(),
-                "JWT_EXPIRATION_MS", "3600000",
-                "GOOGLE_CLIENT_ID", "test-client-id");
+                "JWT_JWKS_URI", "http://127.0.0.1:1/oauth2/jwks");
     }
     private static Map<String, Object> runtimeProperties() {
         return Map.ofEntries(
@@ -119,15 +116,18 @@ class FlywayPostgresIntegrationTest {
                 Map.entry("spring.kafka.listener.auto-startup", "false"),
                 Map.entry("spring.kafka.admin.fail-fast", "false"),
                 Map.entry("management.health.kafka.enabled", "false"),
-                Map.entry("jwt.public-key-location", TestRsaKeyMaterial.publicLocation()),
-                Map.entry("jwt.private-key-location", TestRsaKeyMaterial.privateLocation()),
-                Map.entry("jwt.expiration-ms", "3600000"),
-                Map.entry("google.client.id", "test-client-id"),
+                Map.entry("JWT_JWKS_URI", "http://127.0.0.1:1/oauth2/jwks"),
                 Map.entry("server.port", "0"));
     }
 
     private boolean tableExists(JdbcTemplate jdbcTemplate, String table) {
         return Boolean.TRUE.equals(jdbcTemplate.queryForObject("select exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = ?)", Boolean.class, table));
+    }
+
+    private boolean columnExists(JdbcTemplate jdbcTemplate, String table, String column) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                "select exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = ? and column_name = ?)",
+                Boolean.class, table, column));
     }
 
     private boolean indexExists(JdbcTemplate jdbcTemplate, String index) {
