@@ -18,8 +18,8 @@ public class OnboardingIdentityRepository {
     public boolean insertPending(UUID id, String name, String email, String encodedPassword) {
         return jdbc.update("""
                 INSERT INTO auth_identity
-                    (id, display_name, login, password_hash, active, provisioning_state)
-                VALUES (?, ?, ?, ?, false, 'PENDING_PROFILE')
+                    (id, display_name, login, password_hash, role, active, provisioning_state)
+                VALUES (?, ?, ?, ?, 'USER', false, 'PENDING_PROFILE')
                 ON CONFLICT DO NOTHING
                 """, id, name, email, encodedPassword) == 1;
     }
