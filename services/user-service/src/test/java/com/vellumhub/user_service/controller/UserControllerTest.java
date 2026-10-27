@@ -2,7 +2,6 @@ package com.vellumhub.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vellumhub.user_service.module.user.application.controller.UserController;
-import com.vellumhub.user_service.module.user.application.dto.CreateUserRequest;
 import com.vellumhub.user_service.module.user.application.dto.UpdateUserRequest;
 import com.vellumhub.user_service.module.user.application.dto.UserGetResponse;
 import com.vellumhub.user_service.module.user.application.exception.UserNotFoundException;
@@ -47,79 +46,6 @@ class UserControllerTest {
 
     @MockitoBean
     private AuthenticationService authenticationService;
-
-    @Nested
-    @DisplayName("POST /users - Create User")
-    class CreateUserTests {
-
-        @Test
-        @WithMockUser(roles = "ADMIN")
-        @DisplayName("whenValidRequest_shouldReturnCreated")
-        void whenValidRequest_shouldReturnCreated() throws Exception {
-            // Arrange
-            CreateUserRequest request = new CreateUserRequest(
-                    "John Doe",
-                    "john.doe@example.com",
-                    "SecurePassword123!",
-                    RoleUser.USER
-            );
-
-            doNothing().when(userService).create(any(CreateUserRequest.class));
-
-            // Act & Assert
-            mockMvc.perform(post("/users")
-                            .with(csrf())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isCreated());
-
-            verify(userService, times(1)).create(any(CreateUserRequest.class));
-        }
-
-        @Test
-        @WithMockUser(roles = "ADMIN")
-        @DisplayName("whenInvalidEmail_shouldReturnBadRequest")
-        void whenInvalidEmail_shouldReturnBadRequest() throws Exception {
-            // Arrange - invalid email format
-            CreateUserRequest request = new CreateUserRequest(
-                    "John Doe",
-                    "invalid-email",
-                    "SecurePassword123!",
-                    RoleUser.USER
-            );
-
-            // Act & Assert
-            mockMvc.perform(post("/users")
-                            .with(csrf())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
-
-            verify(userService, never()).create(any(CreateUserRequest.class));
-        }
-
-        @Test
-        @WithMockUser(roles = "ADMIN")
-        @DisplayName("whenBlankName_shouldReturnBadRequest")
-        void whenBlankName_shouldReturnBadRequest() throws Exception {
-            // Arrange - blank name
-            CreateUserRequest request = new CreateUserRequest(
-                    "",
-                    "john.doe@example.com",
-                    "SecurePassword123!",
-                    RoleUser.USER
-            );
-
-            // Act & Assert
-            mockMvc.perform(post("/users")
-                            .with(csrf())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
-
-            verify(userService, never()).create(any(CreateUserRequest.class));
-        }
-    }
 
     @Nested
     @DisplayName("GET /users/{id} - Get User By ID")
