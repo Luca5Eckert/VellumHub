@@ -151,7 +151,7 @@ class FederatedOidcLifecycleIntegrationTest {
     @Test void localPasswordLoginStillWorksAndPendingOrWrongPasswordFails() throws Exception {
         UUID id = UUID.randomUUID();
         String login = id + "@example.invalid";
-        identities.createIfAbsent(id, login, passwords.encode("a-long-test-password", IdentityRole.USER));
+        identities.createIfAbsent(id, login, passwords.encode("a-long-test-password"), IdentityRole.USER);
         Browser b = new Browser();
         assertThat(localLogin(b, login, "wrong-password").headers().firstValue("location").orElse("")).contains("error");
         assertThat(localLogin(b, login, "a-long-test-password").statusCode()).isEqualTo(302);
