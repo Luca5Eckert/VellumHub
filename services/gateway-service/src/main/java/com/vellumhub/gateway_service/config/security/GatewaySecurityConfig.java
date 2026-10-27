@@ -35,8 +35,8 @@ import reactor.core.publisher.Mono;
 @Configuration
 @EnableWebFluxSecurity
 public class GatewaySecurityConfig {
-    @Value("${JWT_JWKS_URI:http://user-service:8080/.well-known/jwks.json}")
-    private String jwksUri = "http://user-service:8080/.well-known/jwks.json";
+    @Value("${JWT_JWKS_URI:http://auth-service:9000/oauth2/jwks}")
+    private String jwksUri = "http://auth-service:9000/oauth2/jwks";
 
     @Value("${JWT_ISSUER:https://auth.vellumhub.local}")
     private String issuer = "https://auth.vellumhub.local";
@@ -86,8 +86,6 @@ public class GatewaySecurityConfig {
                         .pathMatchers(HttpMethod.OPTIONS, "/api/v1/**").permitAll()
                         .pathMatchers("/api/v1/internal/**", "/api/v1/users/internal/**").denyAll()
                         .pathMatchers("/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/api/v1/auth/login",
-                                "/api/v1/auth/register", "/api/v1/auth/google").permitAll()
                         .pathMatchers("/docs", "/docs/**", "/swagger-ui/**",
                                 "/v3/api-docs/**").access((authentication, context) ->
                                 Mono.just(new AuthorizationDecision(publicDocumentation)))
