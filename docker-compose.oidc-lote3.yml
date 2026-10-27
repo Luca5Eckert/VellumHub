@@ -1,0 +1,20 @@
+# SEC-07/08: explicitly opt in to Google upstream federation on top of the Lote 2 stack.
+# Local browser development only; production requires HTTPS issuer, trusted proxy/TLS and secrets.
+# docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml -f docker-compose.oidc-lote3.yml --profile oidc-lote2 up --build
+services:
+  auth-service:
+    environment:
+      SPRING_PROFILES_ACTIVE: local-poc,google-oidc
+      VELLUM_GOOGLE_CLIENT_ID: ${VELLUM_GOOGLE_CLIENT_ID:?Google OIDC client ID required}
+      VELLUM_GOOGLE_CLIENT_SECRET: ${VELLUM_GOOGLE_CLIENT_SECRET:?Google OIDC client secret required}
+      VELLUM_AUTH_SESSION_ABSOLUTE_SECONDS: ${VELLUM_AUTH_SESSION_ABSOLUTE_SECONDS:-43200}
+
+  user-service:
+    environment:
+      # Only the opt-in Google federation overlay transfers ownership of new bindings to Auth.
+      # Base Compose preserves User /auth/google until the #317 client cutover.
+      VELLUM_LEGACY_GOOGLE_WRITES_ENABLED: "false"
+
+  prometheus:
+    volumes:
+      - ./infra/observability/prometheus/targets/auth-oidc.json:/etc/prometheus/targets/auth-oidc.json:ro

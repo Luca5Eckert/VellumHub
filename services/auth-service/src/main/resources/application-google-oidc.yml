@@ -1,0 +1,26 @@
+# Opt-in only. Provider credentials must be injected; no placeholders or secrets in Git.
+spring:
+  config:
+    activate:
+      on-profile: google-oidc
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${VELLUM_GOOGLE_CLIENT_ID}
+            client-secret: ${VELLUM_GOOGLE_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,profile,email
+vellum:
+  google:
+    enabled: true
+    issuer: https://accounts.google.com
+management:
+  server:
+    port: ${VELLUM_AUTH_MANAGEMENT_PORT:9001}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus

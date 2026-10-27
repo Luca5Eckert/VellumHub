@@ -501,5 +501,16 @@ Registration at /v1/identity/register is disabled by default and only enabled vi
 
 Run Maven verification with: mvn -B -ntp -Pauth-poc -pl services/auth-service,services/user-service,services/gateway-service -am verify.
 Run distributed integration using: bash infra/scripts/security/run_oidc_lote2_e2e.sh (Docker and a disposable environment required).
-See docs/SECURITY_OIDC_LOTE2.md for test gates and rollback. **No merge or production rollout is claimed for PR #331.**
+See docs/SECURITY_OIDC_LOTE2.md for test gates and rollback. **PR #331 is merged; this does not establish a production rollout.**
 
+
+## SEC-07/SEC-08 — Google OIDC federation and session lifecycle (PR #334 draft)
+
+The opt-in Auth integration adds Google as an upstream OIDC provider while keeping the VellumHub issuer and UUIDv7 `sub` stable. External identities are keyed by verified `(issuer, subject)`, never automatically linked by email. Auth stores disabled `PENDING_PROFILE` identities and provisions User idempotently before allowing login. Google-only accounts have no password login. The base Compose legacy `/auth/google` remains available until an explicit #317 cutover; the Lote 3 opt-in overlay alone returns 410 for User's legacy Google login/link mutations to prevent competing external-identity writers.
+
+Spring Session JDBC persists the Auth browser session, with 30-minute idle timeout and a 12-hour absolute limit. The Authorization Server uses a Spring Session-backed `SessionRegistry` for its OIDC logout endpoint; a local `POST /logout` remains CSRF protected. Already issued API JWTs remain valid up to `exp`; public SPA refresh tokens remain disabled. Concurrent per-device sessions are permitted; logout invalidates the current session.
+
+Enable explicitly with `docker-compose.oidc-lote3.yml` on top of the base and Lote 2 overlay, with external Google client ID/secret and the exact OAuth callback `/login/oauth2/code/google`. See [Lote 3 runbook](docs/SECURITY_OIDC_LOTE3.md). **PR #334 is draft, not merged or deployed; Google-provider E2E and authenticated live browser verification of manual linking for existing local accounts remains an acceptance gate.**
+
+
+PR #334 review hardening adds atomic PostgreSQL consumption of manual-link challenges, a narrow Jackson 3 policy for federated principals, the Spring Security 7 authentication factor used by OIDC `auth_time`, explicit session-filter ordering and active-identity checks before AS reuse/issuance. Controlled-provider integration tests exercise code exchange, callback rejection, local-login regression, logout, expiry and concurrent first login. A shared attempt budget and private opt-in Prometheus target/alerts are documented in the runbook. These changes remain on the draft PR; they do not establish a real-client or production cutover.

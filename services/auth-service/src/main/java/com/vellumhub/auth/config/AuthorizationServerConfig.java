@@ -28,6 +28,10 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -61,6 +65,7 @@ public class AuthorizationServerConfig {
     @Bean
     @Order(1)
     SecurityFilterChain authorizationServerChain(HttpSecurity http,
+            com.vellumhub.auth.identity.IdentityRepository identities,
             @Value("${vellum.poc.origin}") String origin) throws Exception {
         http.oauth2AuthorizationServer(as -> {
             http.securityMatcher(as.getEndpointsMatcher());
@@ -73,7 +78,8 @@ public class AuthorizationServerConfig {
             .csrf(csrf -> csrf.ignoringRequestMatchers(
                     PathPatternRequestMatcher.pathPattern("/oauth2/token")))
             .cors(cors -> cors.configurationSource(corsSource(origin)))
-            .addFilterBefore(s256OnlyFilter(), SecurityContextHolderFilter.class);
+            .addFilterBefore(s256OnlyFilter(), SecurityContextHolderFilter.class)
+            .addFilterAfter(new ActiveIdentitySessionFilter(identities), SecurityContextHolderFilter.class);
         return http.build();
     }
 
@@ -121,16 +127,34 @@ public class AuthorizationServerConfig {
 
     @Bean
     @Order(3)
-    SecurityFilterChain applicationChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain applicationChain(HttpSecurity http,
+            com.vellumhub.auth.identity.IdentityRepository identities,
+            org.springframework.jdbc.core.JdbcTemplate jdbc,
+            io.micrometer.core.instrument.MeterRegistry metrics,
+            @Value("${vellum.auth.attempts-per-minute:20}") int attemptsPerMinute,
+            @Value("${vellum.google.enabled:false}") boolean googleEnabled,
+            ObjectProvider<OAuth2UserService<OidcUserRequest, OidcUser>> federatedUsers) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/v1/identity/register").permitAll()
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/actuator/prometheus").permitAll()
                 .anyRequest().authenticated())
             // Registration is a stateless JSON operation and cannot obtain a browser CSRF token.
             // Scope this exemption to this path; retain CSRF for the interactive login flow.
             .csrf(csrf -> csrf.ignoringRequestMatchers(
                     PathPatternRequestMatcher.pathPattern("/v1/identity/register")))
-            .formLogin(Customizer.withDefaults());
+            .addFilterAfter(new ActiveIdentitySessionFilter(identities), SecurityContextHolderFilter.class)
+            .addFilterBefore(new AuthenticationThrottleFilter(jdbc, metrics, attemptsPerMinute, java.time.Clock.systemUTC()),
+                    org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter.class)
+            .formLogin(Customizer.withDefaults())
+            .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout")
+                    .invalidateHttpSession(true).clearAuthentication(true)
+                    .deleteCookies("SESSION", "JSESSIONID"));
+        if (googleEnabled) {
+            // Enable only with a configured provider and external credentials.
+            http.oauth2Login(oauth -> oauth.userInfoEndpoint(userInfo ->
+                    userInfo.oidcUserService(federatedUsers.getObject())));
+        }
         return http.build();
     }
 
@@ -162,12 +186,14 @@ public class AuthorizationServerConfig {
     }
 
     @Bean
+    @org.springframework.context.annotation.Primary
     JwtDecoder jwtDecoder(JWKSource<SecurityContext> keys) {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(keys);
     }
 
     @Bean
     OAuth2TokenCustomizer<JwtEncodingContext> accessTokenClaims(
+            com.vellumhub.auth.identity.IdentityRepository identities,
             @Value("${vellum.auth.api-audience:api://vellumhub}") String audience) {
         return context -> {
             if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
@@ -175,6 +201,10 @@ public class AuthorizationServerConfig {
             }
             String subject = context.getPrincipal().getName();
             UUID.fromString(subject); // Fail closed if username/email leaks into the principal.
+            if (identities.findById(UUID.fromString(subject))
+                    .filter(com.vellumhub.auth.identity.IdentityRepository.Identity::active).isEmpty()) {
+                throw new org.springframework.security.oauth2.core.OAuth2AuthenticationException("invalid_grant");
+            }
             context.getJwsHeader().type("at+jwt");
             context.getClaims()
                     .subject(subject)

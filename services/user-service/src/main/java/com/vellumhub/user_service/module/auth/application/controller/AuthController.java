@@ -29,6 +29,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 @Tag(name = "Authentication", description = "Endpoints for user authentication and registration")
 public class AuthController {
+    // The default legacy deployment remains functional until #317. Only an explicitly
+    // opted-in Auth-as-owner environment disables Google identity writes in User.
+    @org.springframework.beans.factory.annotation.Value("${vellum.legacy.google-writes-enabled:true}")
+    private boolean legacyGoogleWritesEnabled = true;
+
+    private void requireLegacyGoogleWrites() {
+        if (!legacyGoogleWritesEnabled) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.GONE, "Legacy Google authentication is disabled in this OIDC environment");
+        }
+    }
+
 
     private final AuthService authService;
 
@@ -63,6 +75,7 @@ public class AuthController {
     public ResponseEntity<String> login(
             @Valid @RequestBody LoginExternalRequest request
     ) {
+        requireLegacyGoogleWrites();
         String token = authService.login(request);
         return ResponseEntity.ok(token);
     }
@@ -77,6 +90,7 @@ public class AuthController {
     })
     public ResponseEntity<Void> linkGoogle(@AuthenticationPrincipal Jwt jwt,
                                             @Valid @RequestBody LinkGoogleIdentityRequest request) {
+        requireLegacyGoogleWrites();
         authService.linkGoogle(JwtAccessToken.userId(jwt),
                 request.externalToken(), request.currentPassword());
         return ResponseEntity.noContent().build();
@@ -90,6 +104,7 @@ public class AuthController {
     })
     public ResponseEntity<Void> unlinkGoogle(@AuthenticationPrincipal Jwt jwt,
                                               @Valid @RequestBody UnlinkGoogleIdentityRequest request) {
+        requireLegacyGoogleWrites();
         authService.unlinkGoogle(JwtAccessToken.userId(jwt),
                 request.currentPassword());
         return ResponseEntity.noContent().build();

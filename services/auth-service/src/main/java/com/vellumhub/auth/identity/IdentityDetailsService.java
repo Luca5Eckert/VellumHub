@@ -21,6 +21,9 @@ public class IdentityDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
         return identities.findByLogin(login)
+                // Federated-only accounts have no password; do not enter form login.
+                .filter(identity -> identity.passwordHash() != null
+                        && !identity.passwordHash().isBlank())
                 .map(identity -> User.withUsername(identity.id().toString())
                         .password(identity.passwordHash())
                         .authorities("ROLE_USER")
