@@ -29,7 +29,7 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Compile and verify SEC-06/09 + JWT shared library
-        run: mvn -B -ntp -Pauth-poc -pl services/auth-service,services/user-service,services/gateway-service -am clean verify
+        run: mvn -B -ntp -pl services/auth-service,services/user-service,services/gateway-service -am clean verify
       - name: Validate explicit local OIDC Compose overlay
         env:
           JWT_ISSUER: http://127.0.0.1:9000
