@@ -1,5 +1,10 @@
 # SEC-05 — Spring Security 7 Authorization Server PoC
 
+## Security migration status — 27 October 2026
+
+The Auth service and OIDC integration are merged and validated in the opt-in integration path. The default Compose/Kubernetes runtime still uses the User Service JWT/JWKS path until #317. There is no real frontend today and no production user data to migrate; #317 is the backend runtime cutover and legacy-auth removal.
+
+
 **Status: Lote 1 PoC and Lote 2 integration are merged; Lote 3 is in draft PR #334, without production cutover.** This independent experimental service is opt-in and does not replace the existing User Service JWT issuer. Tracks [#306](https://github.com/Luca5Eckert/VellumHub/issues/306) and [ADR-015](https://github.com/Luca5Eckert/obsidian-vault/blob/main/projects/vellum-hub/architecture/adr/ADR-015-identidade-e-authorization-server.md).
 
 ## Boundaries
@@ -86,3 +91,8 @@ Verification: `mvn -B -ntp -Pauth-poc -pl services/auth-service -am clean verify
 The Google-enabled context has an explicit primary local JWT decoder. JDBC authorization serialization has a narrow allowlist for the canonical federated principal. V5 consumes manual-link challenges atomically in PostgreSQL across replicas; V6 enforces a shared authentication-attempt budget. AS sessions and new access-token issuance check the local identity's active state. Session absolute-age enforcement runs after Spring Session and before Spring Security. Initial role issuance remains `USER` until the separate RBAC work.
 
 Controlled-provider integration tests exercise signed callbacks, stable UUID, JDBC authorization/session restoration, local-login regression, logout and expiry. Live Google credentials, HTTPS/proxy checks and real-client cutover remain separate validation. With `google-oidc`, the separate private management listener defaults to port 9001; the Compose Lote 3 + observability profiles discover it without publishing that port. Metrics, alerts, configuration limits and incident response are in the runbook.
+
+
+### Password hashing policy
+
+The final Auth runtime uses **Argon2id** for new local credentials. There are no production users or legacy password hashes to preserve, so BCrypt compatibility is not a cutover requirement. The implementation should use the maintained Spring Security 7 Argon2 integration, select the Argon2id variant explicitly, and benchmark memory/time cost in the target runtime. The configured cost must not fall below the current OWASP Argon2id floor; authentication rate limiting remains a complementary protection against resource exhaustion.
