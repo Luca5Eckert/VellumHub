@@ -50,15 +50,22 @@ public class AuthorizationPersistenceConfig {
     @Bean
     RegisteredClientRepository registeredClientRepository(
             JdbcTemplate jdbc,
-            @Value("${vellum.poc.client-id:vellumhub-spa-poc}") String clientId,
-            @Value("${vellum.poc.redirect-uri}") String redirectUri,
-            @Value("${vellum.poc.post-logout-uri}") String postLogoutUri) {
+            @Value("${vellum.client.enabled:false}") boolean clientEnabled,
+            @Value("${vellum.client.id:vellumhub-spa-poc}") String clientId,
+            @Value("${vellum.client.redirect-uri:}") String redirectUri,
+            @Value("${vellum.client.post-logout-uri:}") String postLogoutUri) {
         var repository = new JdbcRegisteredClientRepository(jdbc);
+        if (!clientEnabled) {
+            return repository;
+        }
+        if (redirectUri.isBlank() || postLogoutUri.isBlank()) {
+            throw new IllegalStateException("Enabled OAuth client requires redirect and post-logout URIs");
+        }
         RegisteredClient existing = repository.findByClientId(clientId);
         if (existing == null) {
             RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString())
                     .clientId(clientId)
-                    .clientName("VellumHub SPA PoC")
+                    .clientName("VellumHub public OIDC client")
                     .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                     .redirectUri(redirectUri)
