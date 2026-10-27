@@ -35,8 +35,8 @@ spec:
             - {name: VELLUM_AUTH_API_AUDIENCE, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: JWT_AUDIENCE}}}
             - {name: VELLUM_AUTH_ALLOWED_ORIGIN, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_AUTH_ALLOWED_ORIGIN}}}
             - {name: VELLUM_AUTH_DB_URL, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: AUTH_DATASOURCE_URL}}}
-            - {name: VELLUM_AUTH_DB_USERNAME, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_USER}}}
-            - {name: VELLUM_AUTH_DB_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_PASSWORD}}}
+            - {name: VELLUM_AUTH_DB_USERNAME, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_AUTH_USER}}}
+            - {name: VELLUM_AUTH_DB_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: POSTGRES_AUTH_PASSWORD}}}
             - {name: VELLUM_AUTH_PRIVATE_KEY_PATH, value: /etc/vellumhub/private/private.pem}
             - {name: VELLUM_AUTH_PUBLIC_KEY_PATH, value: /etc/vellumhub/public/public.pem}
             - {name: VELLUM_AUTH_ACTIVE_KID, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_AUTH_ACTIVE_KID}}}
