@@ -69,8 +69,7 @@ class FlywayPostgresIntegrationTest {
         assertThat(columnExists(jdbc, "tb_users", "password")).isFalse();
         assertThat(tableExists(jdbc, "external_identities")).isFalse();
         assertThat(tableExists(jdbc, "external_identity_audit")).isFalse();
-        assertThat(jdbc.queryForObject("select role from tb_users where id = ?",
-                String.class, id)).isEqualTo("USER");
+        assertThat(columnExists(jdbc, "tb_users", "role")).isFalse();
         var colliding = new com.vellumhub.user_service.module.user.infrastructure.provisioning
                 .ProfileProvisioningController.NewProfile(
                     java.util.UUID.fromString("019a0000-1111-7000-8000-000000000002"),
