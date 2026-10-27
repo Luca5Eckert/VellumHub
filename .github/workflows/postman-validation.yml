@@ -8,6 +8,8 @@ on:
       - ".github/workflows/postman-validation.yml"
       - "docker-compose.yml"
       - ".env.example"
+      - "services/auth-service/src/main/**"
+      - "services/auth-service/pom.xml"
       - "services/user-service/src/main/**"
       - "services/user-service/pom.xml"
       - "services/catalog-service/src/main/**"
@@ -80,15 +82,23 @@ jobs:
         shell: bash
         run: |
           cp .env.example .env
-          # Ephemeral RSA keypair for contract generation; no signing material is committed.
-          mkdir -p .local/keys
-          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out .local/keys/private.pem
-          openssl pkey -in .local/keys/private.pem -pubout -out .local/keys/public.pem
-          # Containers run as non-root UID 10001; grant only that UID read access.
-          sudo chown 10001:10001 .local/keys/private.pem
-          sudo chmod 600 .local/keys/private.pem
-          chmod 644 .local/keys/public.pem
-          # .env.example resolves JWT_PUBLIC_KEY_PATH and JWT_PRIVATE_KEY_PATH to these mounts.
+          mkdir -p .local/auth-keys
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out .local/auth-keys/signing-private.pem
+          openssl pkey -in .local/auth-keys/signing-private.pem -pubout -out .local/auth-keys/signing-public.pem
+          sudo chown 10001:10001 .local/auth-keys/signing-private.pem
+          sudo chmod 600 .local/auth-keys/signing-private.pem
+          chmod 644 .local/auth-keys/signing-public.pem
+          cat >> .env <<EOF
+          VELLUM_AUTH_DB_PASSWORD=ci-auth-db-local
+          VELLUM_INTERNAL_PROVISION_KEY=ci-internal-provision-key-at-least-32
+          VELLUM_AUTH_KEY_DIR=$PWD/.local/auth-keys
+          VELLUM_AUTH_CLIENT_ENABLED=true
+          VELLUM_AUTH_CLIENT_ID=vellumhub-spa-poc
+          VELLUM_AUTH_CLIENT_REDIRECT_URI=http://127.0.0.1:9100/index.html
+          VELLUM_AUTH_CLIENT_POST_LOGOUT_URI=http://127.0.0.1:9100/index.html
+          JWT_ISSUER=http://127.0.0.1:9000
+          VELLUM_AUTH_ALLOWED_ORIGIN=http://127.0.0.1:9100
+          EOF
 
       - name: Start VellumHub
         run: docker compose up -d --build
@@ -123,8 +133,10 @@ jobs:
           docker compose ps
           exit 1
 
-      - name: Verify real RS256 login and authorization across services
-        run: python3 infra/scripts/security/verify_rs256_compose.py
+      - name: Verify canonical Auth login and authorization across services
+        env:
+          VELLUM_AUTH_ISSUER: http://127.0.0.1:9000
+        run: python3 infra/scripts/security/verify_oidc_lote2_flow.py
 
       - name: Regenerate collection
         run: |
