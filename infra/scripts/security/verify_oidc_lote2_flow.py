@@ -54,6 +54,14 @@ assert json.load(profile)["id"] == canonical_id
 # A protected read must succeed and a USER cannot mutate ADMIN-only Catalog content.
 books = get("/api/v1/catalog/books", access)
 assert books.status == 200, f"Gateway->Catalog JWT validation failed HTTP {books.status}"
+
+ratings = get("/api/v1/engagement/rating/me?pageNumber=0&pageSize=10", access)
+assert ratings.status == 200, f"Gateway->Engagement JWT validation failed HTTP {ratings.status}"
+
+recommendations = get("/api/v1/recommendations?limit=10&offset=0", access)
+assert recommendations.status == 200, (
+    f"Gateway->Recommendation JWT validation failed HTTP {recommendations.status}"
+)
 # Use a valid mutation payload: an empty object fails Bean Validation with 400
 # before @PreAuthorize can demonstrate the USER -> ADMIN boundary.
 valid_book = json.dumps({
@@ -76,7 +84,7 @@ id_token = get("/api/v1/users/me", tokens["id_token"])
 assert id_token.status == 401, "Gateway accepted an ID Token as bearer"
 malformed = get("/api/v1/users/me", "not-a-jwt")
 assert malformed.status == 401, "Gateway accepted malformed JWT"
-print("Real Auth UUIDv7 -> User persisted profile -> Gateway relay -> Catalog read/403 and ID Token rejection: OK")
+print("Real Auth UUIDv7 -> User profile -> Gateway -> User/Catalog/Engagement/Recommendation and negative JWT checks: OK")
 
 if os.environ.get("VELLUM_VERIFY_OFFLINE") == "1":
     cmd = ["docker", "compose", "-f", "docker-compose.yml", "-f", "docker-compose.oidc-lote2.yml"]
