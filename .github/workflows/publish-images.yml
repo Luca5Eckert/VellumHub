@@ -26,6 +26,9 @@ jobs:
           - service: gateway-service
             image: vellumhub-gateway
             dockerfile: services/gateway-service/Dockerfile
+          - service: auth-service
+            image: vellumhub-auth
+            dockerfile: services/auth-service/Dockerfile
           - service: user-service
             image: vellumhub-user
             dockerfile: services/user-service/Dockerfile
