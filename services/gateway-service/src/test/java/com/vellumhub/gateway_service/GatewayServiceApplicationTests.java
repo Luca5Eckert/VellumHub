@@ -6,7 +6,7 @@ import org.springframework.core.env.Environment;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest(properties = "JWT_PUBLIC_KEY_LOCATION=classpath:security/test-public.pem")
+@SpringBootTest(properties = "JWT_JWKS_URI=http://127.0.0.1:1/oauth2/jwks")
 class GatewayServiceApplicationTests {
 
 	@Autowired
