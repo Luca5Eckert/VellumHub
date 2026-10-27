@@ -27,6 +27,7 @@ services:
     networks: [vellum-network]
     environment:
       SPRING_PROFILES_ACTIVE: local-poc
+      VELLUM_AUTH_MANAGEMENT_PORT: 9000
       VELLUM_AUTH_ISSUER: http://127.0.0.1:9000
       VELLUM_AUTH_DB_URL: jdbc:postgresql://auth-postgres:5432/vellum_auth
       VELLUM_AUTH_DB_USERNAME: vellum_auth
