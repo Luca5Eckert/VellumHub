@@ -1,6 +1,6 @@
-# Explicit opt-in integration overlay. Base Compose alone remains legacy.
-# docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml --profile oidc-lote2 up --build
-# Never deploy this loopback HTTP setup on a public host.
+# Regression overlay for the local PKCE/OIDC harness. Base Compose already uses auth-service as the canonical issuer.
+# docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml up --build
+# Never deploy this loopback HTTP test setup on a public host.
 services:
   auth-postgres:
     image: postgres:16-alpine
