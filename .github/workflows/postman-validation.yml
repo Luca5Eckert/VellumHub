@@ -89,7 +89,8 @@ jobs:
           sudo chmod 600 .local/auth-keys/signing-private.pem
           chmod 644 .local/auth-keys/signing-public.pem
           cat >> .env <<EOF
-          VELLUM_AUTH_DB_PASSWORD=ci-auth-db-local
+          POSTGRES_AUTH_USER=ci_auth
+          POSTGRES_AUTH_PASSWORD=ci-auth-db-local
           VELLUM_INTERNAL_PROVISION_KEY=ci-internal-provision-key-at-least-32
           VELLUM_AUTH_KEY_DIR=$PWD/.local/auth-keys
           VELLUM_AUTH_CLIENT_ENABLED=true
