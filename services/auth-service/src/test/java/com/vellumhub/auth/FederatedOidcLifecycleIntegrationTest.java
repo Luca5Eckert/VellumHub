@@ -1,5 +1,7 @@
 package com.vellumhub.auth;
 
+import com.vellumhub.auth.identity.IdentityRole;
+
 import static org.assertj.core.api.Assertions.*;
 
 import com.nimbusds.jose.*;
@@ -149,7 +151,7 @@ class FederatedOidcLifecycleIntegrationTest {
     @Test void localPasswordLoginStillWorksAndPendingOrWrongPasswordFails() throws Exception {
         UUID id = UUID.randomUUID();
         String login = id + "@example.invalid";
-        identities.createIfAbsent(id, login, passwords.encode("a-long-test-password"));
+        identities.createIfAbsent(id, login, passwords.encode("a-long-test-password", IdentityRole.USER));
         Browser b = new Browser();
         assertThat(localLogin(b, login, "wrong-password").headers().firstValue("location").orElse("")).contains("error");
         assertThat(localLogin(b, login, "a-long-test-password").statusCode()).isEqualTo(302);
@@ -259,7 +261,7 @@ class FederatedOidcLifecycleIntegrationTest {
 
     @Test void challengeHasExactlyOneConsumerAcrossIndependentRepositoryInstances() throws Exception {
         UUID id = UUID.randomUUID();
-        identities.createIfAbsent(id, id + "@example.invalid", "{noop}test-only");
+        identities.createIfAbsent(id, id + "@example.invalid", "{noop}test-only", IdentityRole.USER);
         var other = new GoogleLinkChallengeRepository(jdbc);
         challenges.issue("session-" + id, id, "one-time-nonce", Instant.now().plusSeconds(60));
         try (var pool = Executors.newFixedThreadPool(2)) {
