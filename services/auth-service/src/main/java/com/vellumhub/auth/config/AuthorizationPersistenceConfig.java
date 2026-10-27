@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import com.password4j.Argon2Function;
+import com.password4j.types.Argon2;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.password4j.Argon2Password4jPasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -33,8 +35,16 @@ public class AuthorizationPersistenceConfig {
     }
 
     @Bean
-    PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    PasswordEncoder passwordEncoder(
+            @Value("${vellum.auth.password.argon2.memory-kib:19456}") int memoryKiB,
+            @Value("${vellum.auth.password.argon2.iterations:2}") int iterations,
+            @Value("${vellum.auth.password.argon2.parallelism:1}") int parallelism) {
+        if (memoryKiB < 19456 || iterations < 2 || parallelism < 1) {
+            throw new IllegalArgumentException(
+                    "Argon2id parameters must meet the configured security floor");
+        }
+        var argon2 = Argon2Function.getInstance(memoryKiB, iterations, parallelism, 32, Argon2.ID);
+        return new Argon2Password4jPasswordEncoder(argon2);
     }
 
     @Bean
