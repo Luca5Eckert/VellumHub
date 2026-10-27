@@ -2,7 +2,7 @@
 
 ## Security migration status — 27 October 2026
 
-The Auth service and OIDC integration are merged and validated in the opt-in integration path. The default Compose/Kubernetes runtime still uses the User Service JWT/JWKS path until #317. There is no real frontend today; #317 is now the backend/data cutover and legacy-auth removal.
+The Auth service and OIDC integration are merged and validated in the opt-in integration path. The default Compose/Kubernetes runtime still uses the User Service JWT/JWKS path until #317. There is no real frontend today and no production user data to migrate; #317 is the backend runtime cutover and legacy-auth removal.
 
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
