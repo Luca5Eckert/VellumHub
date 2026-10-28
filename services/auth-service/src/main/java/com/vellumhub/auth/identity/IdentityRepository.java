@@ -15,30 +15,32 @@ public class IdentityRepository {
 
     public Optional<Identity> findByLogin(String login) {
         return jdbc.query("""
-                SELECT id, login, password_hash, active
+                SELECT id, login, password_hash, role, active
                 FROM auth_identity WHERE lower(login) = lower(?)
                 """,
                 (rs, ignored) -> new Identity(
                         rs.getObject("id", UUID.class),
                         rs.getString("login"),
                         rs.getString("password_hash"),
+                        IdentityRole.valueOf(rs.getString("role")),
                         rs.getBoolean("active")),
                 login.strip()).stream().findFirst();
     }
 
-    public int createIfAbsent(UUID id, String login, String encodedPassword) {
+    public int createIfAbsent(UUID id, String login, String encodedPassword, IdentityRole role) {
         return jdbc.update("""
-                INSERT INTO auth_identity (id, login, password_hash, active)
-                VALUES (?, lower(?), ?, true)
+                INSERT INTO auth_identity (id, login, password_hash, role, active)
+                VALUES (?, lower(?), ?, ?, true)
                 ON CONFLICT DO NOTHING
-                """, id, login.strip(), encodedPassword);
+                """, id, login.strip(), encodedPassword, role.name());
     }
 
     public Optional<Identity> findById(UUID id) {
         return jdbc.query("""
-                SELECT id, login, password_hash, active FROM auth_identity WHERE id = ?
+                SELECT id, login, password_hash, role, active FROM auth_identity WHERE id = ?
                 """, (rs, row) -> new Identity(rs.getObject("id", UUID.class),
                         rs.getString("login"), rs.getString("password_hash"),
+                        IdentityRole.valueOf(rs.getString("role")),
                         rs.getBoolean("active")), id).stream().findFirst();
     }
 
@@ -59,5 +61,5 @@ public class IdentityRepository {
         }
     }
 
-    public record Identity(UUID id, String login, String passwordHash, boolean active) { }
+    public record Identity(UUID id, String login, String passwordHash, IdentityRole role, boolean active) { }
 }

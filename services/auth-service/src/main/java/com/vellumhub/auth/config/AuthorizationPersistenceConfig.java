@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import com.password4j.Argon2Function;
+import com.password4j.types.Argon2;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.password4j.Argon2Password4jPasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -33,22 +35,37 @@ public class AuthorizationPersistenceConfig {
     }
 
     @Bean
-    PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    PasswordEncoder passwordEncoder(
+            @Value("${vellum.auth.password.argon2.memory-kib:19456}") int memoryKiB,
+            @Value("${vellum.auth.password.argon2.iterations:2}") int iterations,
+            @Value("${vellum.auth.password.argon2.parallelism:1}") int parallelism) {
+        if (memoryKiB < 19456 || iterations < 2 || parallelism < 1) {
+            throw new IllegalArgumentException(
+                    "Argon2id parameters must meet the configured security floor");
+        }
+        var argon2 = Argon2Function.getInstance(memoryKiB, iterations, parallelism, 32, Argon2.ID);
+        return new Argon2Password4jPasswordEncoder(argon2);
     }
 
     @Bean
     RegisteredClientRepository registeredClientRepository(
             JdbcTemplate jdbc,
-            @Value("${vellum.poc.client-id:vellumhub-spa-poc}") String clientId,
-            @Value("${vellum.poc.redirect-uri}") String redirectUri,
-            @Value("${vellum.poc.post-logout-uri}") String postLogoutUri) {
+            @Value("${vellum.client.enabled:false}") boolean clientEnabled,
+            @Value("${vellum.client.id:vellumhub-spa-poc}") String clientId,
+            @Value("${vellum.client.redirect-uri:}") String redirectUri,
+            @Value("${vellum.client.post-logout-uri:}") String postLogoutUri) {
         var repository = new JdbcRegisteredClientRepository(jdbc);
+        if (!clientEnabled) {
+            return repository;
+        }
+        if (redirectUri.isBlank() || postLogoutUri.isBlank()) {
+            throw new IllegalStateException("Enabled OAuth client requires redirect and post-logout URIs");
+        }
         RegisteredClient existing = repository.findByClientId(clientId);
         if (existing == null) {
             RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString())
                     .clientId(clientId)
-                    .clientName("VellumHub SPA PoC")
+                    .clientName("VellumHub public OIDC client")
                     .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                     .redirectUri(redirectUri)

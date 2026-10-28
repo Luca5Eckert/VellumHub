@@ -26,7 +26,7 @@ public class IdentityDetailsService implements UserDetailsService {
                         && !identity.passwordHash().isBlank())
                 .map(identity -> User.withUsername(identity.id().toString())
                         .password(identity.passwordHash())
-                        .authorities("ROLE_USER")
+                        .authorities("ROLE_" + identity.role().name())
                         .disabled(!identity.active())
                         .build())
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));

@@ -20,15 +20,18 @@ public class PocIdentityFixture implements ApplicationRunner {
     private final PasswordEncoder passwords;
     private final String login;
     private final String password;
+    private final IdentityRole role;
 
     public PocIdentityFixture(IdentityRepository identities, UuidV7 ids, PasswordEncoder passwords,
                               @Value("${vellum.poc.fixture.login:}") String login,
-                              @Value("${vellum.poc.fixture.password:}") String password) {
+                              @Value("${vellum.poc.fixture.password:}") String password,
+                              @Value("${vellum.poc.fixture.role:USER}") IdentityRole role) {
         this.identities = identities;
         this.ids = ids;
         this.passwords = passwords;
         this.login = login;
         this.password = password;
+        this.role = role;
     }
 
     @Override
@@ -38,7 +41,7 @@ public class PocIdentityFixture implements ApplicationRunner {
         }
         String normalized = login.strip().toLowerCase(Locale.ROOT);
         if (identities.findByLogin(normalized).isEmpty()) {
-            identities.createIfAbsent(ids.next(), normalized, passwords.encode(password));
+            identities.createIfAbsent(ids.next(), normalized, passwords.encode(password), role);
         }
     }
 }

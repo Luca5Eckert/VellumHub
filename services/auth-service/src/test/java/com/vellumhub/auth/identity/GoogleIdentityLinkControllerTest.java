@@ -30,7 +30,7 @@ class GoogleIdentityLinkControllerTest {
 
     private MockHttpServletRequest challengedRequest() {
         when(identities.findById(id)).thenReturn(java.util.Optional.of(
-                new IdentityRepository.Identity(id, "ada@example.org", "{bcrypt}hash", true)));
+                new IdentityRepository.Identity(id, "ada@example.org", "{bcrypt}hash", IdentityRole.USER, true)));
         when(passwords.matches("correct-password", "{bcrypt}hash")).thenReturn(true);
         var request = new MockHttpServletRequest();
         controller.challenge(new GoogleIdentityLinkController.PasswordProof("correct-password"),
@@ -83,7 +83,7 @@ class GoogleIdentityLinkControllerTest {
     @Test
     void incorrectPasswordCannotMintChallenge() {
         when(identities.findById(id)).thenReturn(java.util.Optional.of(
-                new IdentityRepository.Identity(id, "ada@example.org", "{bcrypt}hash", true)));
+                new IdentityRepository.Identity(id, "ada@example.org", "{bcrypt}hash", IdentityRole.USER, true)));
         var request = new MockHttpServletRequest();
         assertThatThrownBy(() -> controller.challenge(
                 new GoogleIdentityLinkController.PasswordProof("wrong"), authentication(), request))

@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.vellumhub.auth.identity.IdentityRepository;
+import com.vellumhub.auth.identity.IdentityRole;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.servlet.FilterChain;
 import java.time.*;
@@ -26,7 +27,7 @@ class AuthenticationPolicyTest {
     @Test void disabledAccountLosesExistingBrowserSession() throws Exception {
         var identities = mock(IdentityRepository.class);
         UUID id = UUID.randomUUID();
-        when(identities.findById(id)).thenReturn(Optional.of(new IdentityRepository.Identity(id, "local", "hash", false)));
+        when(identities.findById(id)).thenReturn(Optional.of(new IdentityRepository.Identity(id, "local", "hash", IdentityRole.USER, false)));
         var request = new MockHttpServletRequest();
         var session = (MockHttpSession) request.getSession();
         SecurityContextHolder.getContext().setAuthentication(
@@ -44,7 +45,7 @@ class AuthenticationPolicyTest {
         UUID id = UUID.randomUUID();
         when(context.getTokenType()).thenReturn(OAuth2TokenType.ACCESS_TOKEN);
         when(context.getPrincipal()).thenReturn(UsernamePasswordAuthenticationToken.authenticated(id.toString(), null, List.of()));
-        when(identities.findById(id)).thenReturn(Optional.of(new IdentityRepository.Identity(id, "local", "hash", false)));
+        when(identities.findById(id)).thenReturn(Optional.of(new IdentityRepository.Identity(id, "local", "hash", IdentityRole.USER, false)));
         assertThatThrownBy(() -> new AuthorizationServerConfig().accessTokenClaims(identities, "api://vellumhub").customize(context))
                 .isInstanceOf(OAuth2AuthenticationException.class);
     }
