@@ -38,7 +38,7 @@ services:
       CATALOG_SERVICE_URL: http://catalog-service:8080
       ENGAGEMENT_SERVICE_URL: http://engagement-service:8080
       RECOMMENDATION_SERVICE_URL: http://recommendation-service:8080
-      JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
+      JWT_JWKS_URI: http://auth-service:9000/oauth2/jwks
       JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-api://vellumhub}
       JWT_CLOCK_SKEW_SECONDS: ${JWT_CLOCK_SKEW_SECONDS:-30}
@@ -140,6 +140,24 @@ services:
       - vellum-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_USER:?POSTGRES_USER_USER required} -d user_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-postgres:
+    image: postgres:16-alpine
+    container_name: auth-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vellum_auth
+      POSTGRES_USER: ${POSTGRES_AUTH_USER:?POSTGRES_AUTH_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_AUTH_PASSWORD:?POSTGRES_AUTH_PASSWORD required}
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - vellum-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d vellum_auth"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -345,7 +363,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_CATALOG_USER:?POSTGRES_CATALOG_USER required}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_CATALOG_PASSWORD:?POSTGRES_CATALOG_PASSWORD required}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
+      JWT_JWKS_URI: http://auth-service:9000/oauth2/jwks
       JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-api://vellumhub}
       JWT_CLOCK_SKEW_SECONDS: ${JWT_CLOCK_SKEW_SECONDS:-30}
@@ -384,7 +402,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_ENGAGEMENT_USER:?POSTGRES_ENGAGEMENT_USER required}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ENGAGEMENT_PASSWORD:?POSTGRES_ENGAGEMENT_PASSWORD required}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
+      JWT_JWKS_URI: http://auth-service:9000/oauth2/jwks
       JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-api://vellumhub}
       JWT_CLOCK_SKEW_SECONDS: ${JWT_CLOCK_SKEW_SECONDS:-30}
@@ -406,6 +424,53 @@ services:
       retries: 5
       start_period: 60s
 
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    container_name: auth-service
+    restart: on-failure
+    ports:
+      - "9000:9000"
+    env_file: .env
+    environment:
+      <<: *otel-java-env
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 9000
+      OTEL_SERVICE_NAME: auth-service
+      VELLUM_AUTH_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
+      VELLUM_AUTH_API_AUDIENCE: ${JWT_AUDIENCE:-api://vellumhub}
+      VELLUM_AUTH_DB_URL: jdbc:postgresql://auth-postgres:5432/vellum_auth
+      VELLUM_AUTH_DB_USERNAME: ${POSTGRES_AUTH_USER:?POSTGRES_AUTH_USER required}
+      VELLUM_AUTH_DB_PASSWORD: ${POSTGRES_AUTH_PASSWORD:?POSTGRES_AUTH_PASSWORD required}
+      VELLUM_AUTH_PRIVATE_KEY_PATH: /run/keys/signing-private.pem
+      VELLUM_AUTH_PUBLIC_KEY_PATH: /run/keys/signing-public.pem
+      VELLUM_AUTH_ACTIVE_KID: ${VELLUM_AUTH_ACTIVE_KID:-local-auth-key-1}
+      VELLUM_AUTH_ALLOWED_ORIGIN: ${VELLUM_AUTH_ALLOWED_ORIGIN:-http://127.0.0.1:9100}
+      VELLUM_AUTH_ARGON2_MEMORY_KIB: ${VELLUM_AUTH_ARGON2_MEMORY_KIB:-19456}
+      VELLUM_AUTH_ARGON2_ITERATIONS: ${VELLUM_AUTH_ARGON2_ITERATIONS:-2}
+      VELLUM_AUTH_ARGON2_PARALLELISM: ${VELLUM_AUTH_ARGON2_PARALLELISM:-1}
+      VELLUM_IDENTITY_REGISTRATION_ENABLED: "true"
+      VELLUM_IDENTITY_USER_URL: http://user-service:8080
+      VELLUM_INTERNAL_PROVISION_KEY: ${VELLUM_INTERNAL_PROVISION_KEY:?VELLUM_INTERNAL_PROVISION_KEY required}
+      VELLUM_AUTH_MANAGEMENT_PORT: 9001
+      SERVER_SERVLET_SESSION_COOKIE_SECURE: ${VELLUM_AUTH_COOKIE_SECURE:-false}
+    volumes:
+      - ${VELLUM_AUTH_KEY_DIR:?VELLUM_AUTH_KEY_DIR required}:/run/keys:ro
+    networks:
+      - vellum-network
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${VELLUM_AUTH_MANAGEMENT_PORT:-9001}/actuator/health/liveness || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
   user-service:
     build:
       context: .
@@ -423,25 +488,16 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_USER:?POSTGRES_USER_USER required}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_USER_PASSWORD:?POSTGRES_USER_PASSWORD required}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
+      JWT_JWKS_URI: http://auth-service:9000/oauth2/jwks
       JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-api://vellumhub}
       JWT_CLOCK_SKEW_SECONDS: ${JWT_CLOCK_SKEW_SECONDS:-30}
-      JWT_PUBLIC_KEY_LOCATION: file:/run/keys/public.pem
-      JWT_PRIVATE_KEY_LOCATION: file:/run/keys/private.pem
-      JWT_ACTIVE_KID: ${JWT_ACTIVE_KID:-local-key-1}
-      JWT_EXTRA_PUBLIC_KEYS: ${JWT_EXTRA_PUBLIC_KEYS:-}
-      JWT_CLIENT_ID: ${JWT_CLIENT_ID:-vellumhub-web}
-      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       VELLUM_ENVIRONMENT: local
       VELLUM_DOCS_ENABLED: "true"
+      VELLUM_IDENTITY_PROVISIONING_ENABLED: "true"
+      VELLUM_INTERNAL_PROVISION_KEY: ${VELLUM_INTERNAL_PROVISION_KEY:?VELLUM_INTERNAL_PROVISION_KEY required}
 
-    volumes:
-      - ${JWT_PUBLIC_KEY_PATH:?JWT_PUBLIC_KEY_PATH must be set}:/run/keys/public.pem:ro
-      - ${JWT_PRIVATE_KEY_PATH:?JWT_PRIVATE_KEY_PATH must be set}:/run/keys/private.pem:ro
-      - ./.local/jwks-public:/run/jwks-public:ro
     networks:
       - vellum-network
     depends_on:
@@ -474,7 +530,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_RECOMMENDATION_USER:?POSTGRES_RECOMMENDATION_USER required}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_RECOMMENDATION_PASSWORD:?POSTGRES_RECOMMENDATION_PASSWORD required}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JWT_JWKS_URI: http://user-service:8080/.well-known/jwks.json
+      JWT_JWKS_URI: http://auth-service:9000/oauth2/jwks
       JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER required}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-api://vellumhub}
       JWT_CLOCK_SKEW_SECONDS: ${JWT_CLOCK_SKEW_SECONDS:-30}
@@ -497,6 +553,7 @@ services:
       start_period: 60s
 
 volumes:
+  postgres_auth_data:
   postgres_catalog_data:
   postgres_engagement_data:
   postgres_user_data:

@@ -1,18 +1,18 @@
-# Explicit opt-in integration overlay. Base Compose alone remains legacy.
-# docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml --profile oidc-lote2 up --build
-# Never deploy this loopback HTTP setup on a public host.
+# Regression overlay for the local PKCE/OIDC harness. Base Compose already uses auth-service as the canonical issuer.
+# docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml up --build
+# Never deploy this loopback HTTP test setup on a public host.
 services:
   auth-postgres:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: vellum_auth
-      POSTGRES_USER: vellum_auth
-      POSTGRES_PASSWORD: ${VELLUM_AUTH_DB_PASSWORD:?Required}
+      POSTGRES_USER: ${POSTGRES_AUTH_USER:?Required}
+      POSTGRES_PASSWORD: ${POSTGRES_AUTH_PASSWORD:?Required}
     volumes:
       - oidc-auth-data:/var/lib/postgresql/data
     networks: [vellum-network]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vellum_auth -d vellum_auth"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d vellum_auth"]
       interval: 5s
       timeout: 3s
       retries: 15
@@ -27,10 +27,11 @@ services:
     networks: [vellum-network]
     environment:
       SPRING_PROFILES_ACTIVE: local-poc
+      VELLUM_AUTH_MANAGEMENT_PORT: 9000
       VELLUM_AUTH_ISSUER: http://127.0.0.1:9000
       VELLUM_AUTH_DB_URL: jdbc:postgresql://auth-postgres:5432/vellum_auth
-      VELLUM_AUTH_DB_USERNAME: vellum_auth
-      VELLUM_AUTH_DB_PASSWORD: ${VELLUM_AUTH_DB_PASSWORD:?Required}
+      VELLUM_AUTH_DB_USERNAME: ${POSTGRES_AUTH_USER:?Required}
+      VELLUM_AUTH_DB_PASSWORD: ${POSTGRES_AUTH_PASSWORD:?Required}
       VELLUM_AUTH_PRIVATE_KEY_PATH: /run/keys/signing-private.pem
       VELLUM_AUTH_PUBLIC_KEY_PATH: /run/keys/signing-public.pem
       VELLUM_AUTH_ACTIVE_KID: ${VELLUM_AUTH_ACTIVE_KID:-local-oidc-key}
