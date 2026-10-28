@@ -49,7 +49,7 @@ import java.util.Objects;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("${JWT_JWKS_URI:http://user-service:8080/.well-known/jwks.json}")
+    @Value("${JWT_JWKS_URI:http://auth-service:9000/oauth2/jwks}")
     private String jwksUri;
 
     @Value("${JWT_ISSUER:https://auth.vellumhub.local}")
