@@ -157,7 +157,7 @@ services:
     networks:
       - vellum-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d vellum_auth"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_AUTH_USER:?POSTGRES_AUTH_USER required} -d vellum_auth"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -431,7 +431,7 @@ services:
     container_name: auth-service
     restart: on-failure
     ports:
-      - "9000:9000"
+      - "127.0.0.1:9000:9000"
     env_file: .env
     environment:
       <<: *otel-java-env
@@ -465,7 +465,7 @@ services:
       user-service:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${VELLUM_AUTH_MANAGEMENT_PORT:-9001}/actuator/health/liveness || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9001/actuator/health/liveness || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5

@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -166,6 +167,23 @@ public class GlobalExceptionHandler {
                 .error("Missing Parameter")
                 .message(ex.getMessage())
                 .details(List.of("The required parameter '" + ex.getParameterName() + "' is missing"))
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build());
+    }
+
+    // Spring MVC routes missing handlers to the resource fallback. Preserve 404 semantics
+    // instead of treating removed legacy authentication endpoints as server failures.
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponseError> handleNoResourceFoundException(
+            NoResourceFoundException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value())
+                .error("Not Found")
+                .message("No resource found for the requested path")
+                .details(List.of("The requested endpoint does not exist"))
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());

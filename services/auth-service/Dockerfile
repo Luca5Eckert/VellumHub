@@ -15,5 +15,5 @@ COPY --from=build --chown=vellumhub:vellumhub /workspace/services/auth-service/t
 USER vellumhub
 EXPOSE 9000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=45s --retries=3 \
-  CMD wget -q -O /dev/null http://127.0.0.1:9000/actuator/health || exit 1
+  CMD wget -q -O /dev/null "http://127.0.0.1:${VELLUM_AUTH_MANAGEMENT_PORT:-9001}/actuator/health/liveness" || exit 1
 ENTRYPOINT ["java", "-jar", "app.jar"]

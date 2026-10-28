@@ -12,7 +12,7 @@ services:
       - oidc-auth-data:/var/lib/postgresql/data
     networks: [vellum-network]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d vellum_auth"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_AUTH_USER:?Required} -d vellum_auth"]
       interval: 5s
       timeout: 3s
       retries: 15
@@ -21,10 +21,11 @@ services:
       context: .
       dockerfile: services/auth-service/Dockerfile
     user: ${VELLUM_POC_RUN_AS:?UID:GID of 0600 PEM owner required}
-    ports: ["127.0.0.1:9000:9000"]
     volumes:
       - ./.local/auth-poc:/run/keys:ro
     networks: [vellum-network]
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9000/actuator/health/liveness || exit 1"]
     environment:
       SPRING_PROFILES_ACTIVE: local-poc
       VELLUM_AUTH_MANAGEMENT_PORT: 9000
