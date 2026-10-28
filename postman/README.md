@@ -34,21 +34,27 @@ operation cannot describe orchestration between multiple requests.
    - `postman/VellumHub.local.postman_environment.json`
 
 3. Select **VellumHub Local (template)**.
-4. Set `email` and `password` locally. Do not commit an exported environment containing
-   those values.
-5. Run **Cross-service workflows**.
+4. Obtain a real Auth-issued access token via OAuth2 Authorization Code with PKCE,
+   using a registered local test client on the canonical Auth issuer (normally
+   `http://127.0.0.1:9000` for the local harness). Set the secret `token` variable
+   locally in the Postman environment; do not commit tokens or credentials. The
+   Auth service owns registration and login: the removed User login API is not used.
+5. Run **Cross-service workflows**. The first request validates that token through
+   the Gateway and User profile endpoint.
 
 The default runner sequence is intentionally read-only and repeatable:
 
 ```text
-User Service login
+Auth-issued token (OAuth2 Authorization Code + PKCE)
+  -> Gateway + User profile/token validation
   -> Catalog Service list books
   -> Engagement Service current-user ratings
   -> Recommendation Service recommendations
 ```
 
-The login request stores the returned JWT in `token`, so protected requests do not
-require repeated manual token edits. The catalog request also captures the first
+An Auth access token must be provided before running the sequence. Postman does
+not use the removed `/api/v1/auth/login` endpoint, and OIDC ID Tokens must not
+be used as API Bearer tokens. The catalog request also captures the first
 available `bookId` for optional examples.
 
 `05 - Optional: rate captured book` is not part of the automatic runner sequence
@@ -107,8 +113,10 @@ For every OpenAPI operation, the generator:
 - explicitly disables authentication for operations whose OpenAPI security is empty;
 - derives path-variable placeholders and collection variables deterministically.
 
-This keeps endpoint additions, removals, request schemas, and authentication metadata
-driven by the contracts rather than by a manually duplicated route list.
+Private `/internal/**` service-to-service operations are intentionally excluded:
+there is no public Gateway route for them and they must not be presented as
+client APIs. Other operations, schemas, and authentication metadata are driven
+by the live contracts rather than a duplicated route list.
 
 ## Manual workflow policy
 
@@ -157,6 +165,11 @@ remember to regenerate manually.
 Postman is an exploration and workflow tool here. It does not replace service tests,
 distributed integration tests, or the service-owned OpenAPI contracts.
 
-## Google linking requests (SEC-02)
+## Canonical identity ownership (SEC-16)
 
-Authentication now includes `POST /auth/google/link` (Bearer token + current password + a fresh Google ID token) and `DELETE /auth/google/link` (Bearer token + current password). In both generated Postman requests replace `externalToken` and `currentPassword` placeholders locally before sending. Never save a real provider ID token, local password or bearer token into the committed collection. Unlinked legacy accounts are **not** recovered by matching email.
+Registration and Google federation belong to `auth-service`, not the User
+Service. User's internal profile-provisioning operation is not callable through
+the public Gateway and is deliberately absent from this generated collection.
+Use the Auth OAuth/OIDC discovery endpoints and the local PKCE integration harness
+for authentication testing; the Postman workflow exercises authenticated
+resource-server behavior, not a second login implementation.

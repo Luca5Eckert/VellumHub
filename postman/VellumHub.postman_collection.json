@@ -489,53 +489,6 @@
               "response": []
             }
           ]
-        },
-        {
-          "name": "profile-provisioning-controller",
-          "item": [
-            {
-              "name": "create",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json",
-                    "type": "text"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/internal/identity/profiles",
-                  "host": [
-                    "{{gatewayUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "internal",
-                    "identity",
-                    "profiles"
-                  ]
-                },
-                "description": "Generated from `/docs/user/v3/api-docs`. Operation ID: `create`.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"name\": \"string\",\n  \"email\": \"{{email}}\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": []
-            }
-          ]
         }
       ]
     },
