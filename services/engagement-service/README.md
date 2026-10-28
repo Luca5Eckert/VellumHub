@@ -1,9 +1,6 @@
 # Engagement Service
 
-## Security migration status — 27 October 2026
-
-This service can validate Auth-issued RFC 9068 JWTs in the OIDC integration path. The default runtime still points JWT/JWKS validation at the User Service until #317 completes the backend cutover. No frontend migration is required for this service.
-
+**SEC-16 (#317, PR #336):** The default backend runtime in this branch validates Auth-issued access tokens, replacing the earlier opt-in OIDC integration path. Production rollout and full integration checks are not yet confirmed; no frontend migration is required for this service.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x-green)](https://spring.io/projects/spring-boot)
@@ -192,9 +189,9 @@ The API remains JWT bearer-based; issue #163 migrates the signature to RS256 wit
 
 ## RS256 public-key validation (issue #163)
 
-This service loads `JWT_PUBLIC_KEY_LOCATION` as a Spring Resource pointing to an X.509 PEM public key. The decoder explicitly accepts only RS256; invalid, altered, expired, wrong-key, and legacy HS256 bearer JWTs are rejected. It does not hold `JWT_PRIVATE_KEY_LOCATION` and does not contact the User Service for every request. The existing `roles` mapping, resource ownership checks, and HTTP contracts are unchanged. The signing key remains in the User Service only. [Provisioning and coordinated cutover](../../docs/SECURITY_RS256.md).
+This service validates RS256 access tokens through the configured Auth JWKS URI. The decoder explicitly accepts only RS256; invalid, altered, expired, wrong-key, and legacy HS256 bearer JWTs are rejected. It does not hold `JWT_PRIVATE_KEY_LOCATION` and does not contact the User Service for every request. The existing `roles` mapping, resource ownership checks, and HTTP contracts are unchanged. The signing key is owned only by `auth-service`. [Provisioning and coordinated cutover](../../docs/SECURITY_RS256.md).
 
 
 ### Security JWT/JWKS transition (#304, #305)
 
-PR #321 (merged) introduced JWT verifiers fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. The User Service alone signs tokens with `JWT_ACTIVE_KID` and externally provisioned private PEMs. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
+PR #321 (merged) introduced JWT verifiers that fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. Only `auth-service` signs access tokens and exposes the trusted JWKS; this service is a Resource Server only. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.

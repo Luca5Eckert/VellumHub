@@ -38,18 +38,6 @@ spring:
                     redis-rate-limiter.replenishRate: 5
                     redis-rate-limiter.burstCapacity: 10
 
-            - id: auth
-              uri: ${USER_SERVICE_URL:http://user-service:8080}
-              predicates:
-                - Path=/api/v1/auth/**
-              filters:
-                - StripPrefix=2
-                - name: RequestRateLimiter
-                  args:
-                    key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: 5
-                    redis-rate-limiter.burstCapacity: 10
-
             - id: catalogs
               uri: ${CATALOG_SERVICE_URL:http://catalog-service:8080}
               predicates:
@@ -119,9 +107,6 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
       connect-timeout: 2s
-
-jwt:
-  public-key-location: ${JWT_PUBLIC_KEY_LOCATION:}
 
 springdoc:
   api-docs:

@@ -1,9 +1,7 @@
 package com.vellumhub.user_service.service;
 
-import com.vellumhub.user_service.module.user.application.dto.CreateUserRequest;
 import com.vellumhub.user_service.module.user.application.dto.UpdateUserRequest;
 import com.vellumhub.user_service.module.user.application.dto.UserGetResponse;
-import com.vellumhub.user_service.module.user.domain.RoleUser;
 import com.vellumhub.user_service.module.user.domain.UserEntity;
 import com.vellumhub.user_service.module.user.domain.handler.*;
 import com.vellumhub.user_service.module.user.domain.mapper.UserMapper;
@@ -36,9 +34,6 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
 
     @Mock
-    private CreateUserHandler createUserHandler;
-
-    @Mock
     private DeleteUserHandler deleteUserHandler;
 
     @Mock
@@ -55,58 +50,6 @@ class UserServiceTest {
 
     @InjectMocks
     private UserService userService;
-
-    @Nested
-    @DisplayName("create() method tests")
-    class CreateTests {
-
-        @Test
-        @DisplayName("whenValidRequest_shouldCreateUser")
-        void whenValidRequest_shouldCreateUser() {
-            // Arrange
-            CreateUserRequest request = new CreateUserRequest(
-                    "John Doe",
-                    "john.doe@example.com",
-                    "SecurePassword123!",
-                    RoleUser.USER
-            );
-
-            // Act
-            userService.create(request);
-
-            // Assert
-            ArgumentCaptor<UserEntity> userCaptor = ArgumentCaptor.forClass(UserEntity.class);
-            verify(createUserHandler, times(1)).execute(userCaptor.capture());
-
-            UserEntity capturedUser = userCaptor.getValue();
-            assertThat(capturedUser.getName()).isEqualTo("John Doe");
-            assertThat(capturedUser.getEmail()).isEqualTo("john.doe@example.com");
-            assertThat(capturedUser.getPassword()).isEqualTo("SecurePassword123!");
-            assertThat(capturedUser.getRole()).isEqualTo(RoleUser.USER);
-        }
-
-        @Test
-        @DisplayName("whenAdminRole_shouldCreateAdminUser")
-        void whenAdminRole_shouldCreateAdminUser() {
-            // Arrange
-            CreateUserRequest request = new CreateUserRequest(
-                    "Admin User",
-                    "admin@example.com",
-                    "AdminPassword123!",
-                    RoleUser.ADMIN
-            );
-
-            // Act
-            userService.create(request);
-
-            // Assert
-            ArgumentCaptor<UserEntity> userCaptor = ArgumentCaptor.forClass(UserEntity.class);
-            verify(createUserHandler, times(1)).execute(userCaptor.capture());
-
-            UserEntity capturedUser = userCaptor.getValue();
-            assertThat(capturedUser.getRole()).isEqualTo(RoleUser.ADMIN);
-        }
-    }
 
     @Nested
     @DisplayName("delete() method tests")

@@ -70,38 +70,21 @@
   "item": [
     {
       "name": "Cross-service workflows",
-      "description": "Manually maintained sequences for behavior that isolated OpenAPI operations do not express. Run this folder with the local environment selected. The default flow authenticates, captures a catalog book, reads the current user's ratings, and requests recommendations.",
+      "description": "Manually maintained cross-service checks. Obtain an Auth-issued access token using OAuth2 Authorization Code with PKCE, set the Postman `token` variable, then run the read-only sequence. The Auth service owns login and credentials; the User service owns profiles.",
       "item": [
         {
-          "name": "01 - Login and capture token",
+          "name": "01 - Validate Auth access token",
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
+            "method": "GET",
             "header": [
               {
                 "key": "Accept",
-                "value": "text/plain",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
                 "value": "application/json",
                 "type": "text"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": "{{gatewayUrl}}/api/v1/auth/login",
-            "description": "Authenticates with the User Service through the gateway and stores the returned JWT in `token`."
+            "url": "{{gatewayUrl}}/api/v1/users/me",
+            "description": "Requires a canonical Auth-issued OAuth2 access token in the `token` variable. Obtain it with Authorization Code + PKCE (Auth issuer http://127.0.0.1:9000 in the local harness); do not invoke the removed User Service login endpoint."
           },
           "event": [
             {
@@ -109,22 +92,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Login succeeded\", function () { pm.response.to.have.status(200); });",
-                  "if (pm.response.code === 200) {",
-                  "  const raw = pm.response.text().trim();",
-                  "  let token = raw;",
-                  "  try {",
-                  "    const parsed = pm.response.json();",
-                  "    if (typeof parsed === \"string\") token = parsed;",
-                  "    else if (parsed && parsed.token) token = parsed.token;",
-                  "    else if (parsed && parsed.accessToken) token = parsed.accessToken;",
-                  "  } catch (e) {}",
-                  "  token = String(token).replace(/^\"|\"$/g, \"\").trim();",
-                  "  pm.expect(token, \"JWT token\").to.not.be.empty;",
-                  "  pm.environment.set(\"token\", token);",
-                  "  pm.collectionVariables.set(\"token\", token);",
-                  "  pm.execution.setNextRequest(\"02 - List books and capture bookId\");",
-                  "}"
+                  "pm.test(\"Auth access token is configured\", function () { pm.expect(pm.variables.get(\"token\"), \"Auth-issued bearer token\").to.be.a(\"string\").and.not.be.empty; });",
+                  "pm.test(\"Canonical Auth token accepted by User\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) pm.execution.setNextRequest(\"02 - List books and capture bookId\");"
                 ]
               }
             }
@@ -354,218 +324,6 @@
       "description": "Generated from `/docs/user/v3/api-docs`.",
       "item": [
         {
-          "name": "Authentication",
-          "item": [
-            {
-              "name": "login_1",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json",
-                    "type": "text"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/auth/google",
-                  "host": [
-                    "{{gatewayUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "auth",
-                    "google"
-                  ]
-                },
-                "description": "Generated from `/docs/user/v3/api-docs`. Operation ID: `login_1`.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"externalToken\": \"string\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Link a verified Google identity to the current password account",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json",
-                    "type": "text"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/auth/google/link",
-                  "host": [
-                    "{{gatewayUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "auth",
-                    "google",
-                    "link"
-                  ]
-                },
-                "description": "Link a verified Google identity to the current password account\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `linkGoogle`.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"externalToken\": \"string\",\n  \"currentPassword\": \"string\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Unlink Google from a local-password account",
-              "request": {
-                "method": "DELETE",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json",
-                    "type": "text"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/auth/google/link",
-                  "host": [
-                    "{{gatewayUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "auth",
-                    "google",
-                    "link"
-                  ]
-                },
-                "description": "Unlink Google from a local-password account\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `unlinkGoogle`.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"currentPassword\": \"string\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Authenticate user",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json",
-                    "type": "text"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/auth/login",
-                  "host": [
-                    "{{gatewayUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "auth",
-                    "login"
-                  ]
-                },
-                "description": "Authenticates a user with email and password, returning a JWT token for subsequent API requests\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `login`.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Register new user",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json",
-                    "type": "text"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/auth/register",
-                  "host": [
-                    "{{gatewayUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "auth",
-                    "register"
-                  ]
-                },
-                "description": "Creates a new user account in the system with the provided credentials\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `register`.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"string\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
           "name": "Users",
           "item": [
             {
@@ -605,46 +363,6 @@
                   ]
                 },
                 "description": "Returns a paginated list of all registered users\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `getAll`."
-              },
-              "response": []
-            },
-            {
-              "name": "Create a new user",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json",
-                    "type": "text"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/users",
-                  "host": [
-                    "{{gatewayUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "users"
-                  ]
-                },
-                "description": "Creates a new user in the system. Requires ADMIN role.\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `create`.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"string\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"role\": \"ADMIN\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
               },
               "response": []
             },

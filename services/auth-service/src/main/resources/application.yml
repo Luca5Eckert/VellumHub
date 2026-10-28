@@ -24,10 +24,16 @@ server:
         secure: true
         same-site: lax
 management:
+  server:
+    port: ${VELLUM_AUTH_MANAGEMENT_PORT:9001}
+  endpoint:
+    health:
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
 vellum:
   auth:
     issuer: ${VELLUM_AUTH_ISSUER:}
@@ -36,11 +42,18 @@ vellum:
       private-key-path: ${VELLUM_AUTH_PRIVATE_KEY_PATH:}
       public-key-path: ${VELLUM_AUTH_PUBLIC_KEY_PATH:}
       kid: ${VELLUM_AUTH_ACTIVE_KID:}
+    password:
+      argon2:
+        memory-kib: ${VELLUM_AUTH_ARGON2_MEMORY_KIB:19456}
+        iterations: ${VELLUM_AUTH_ARGON2_ITERATIONS:2}
+        parallelism: ${VELLUM_AUTH_ARGON2_PARALLELISM:1}
+    allowed-origin: ${VELLUM_AUTH_ALLOWED_ORIGIN:http://127.0.0.1:9100}
+  client:
+    enabled: ${VELLUM_AUTH_CLIENT_ENABLED:false}
+    id: ${VELLUM_AUTH_CLIENT_ID:vellumhub-spa-poc}
+    redirect-uri: ${VELLUM_AUTH_CLIENT_REDIRECT_URI:}
+    post-logout-uri: ${VELLUM_AUTH_CLIENT_POST_LOGOUT_URI:}
   poc:
-    origin: ${VELLUM_POC_SPA_ORIGIN:}
-    client-id: vellumhub-spa-poc
-    redirect-uri: ${VELLUM_POC_REDIRECT_URI:}
-    post-logout-uri: ${VELLUM_POC_LOGOUT_URI:}
     fixture:
       enabled: false
       login: ${VELLUM_POC_LOGIN:}

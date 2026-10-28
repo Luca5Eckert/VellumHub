@@ -12,10 +12,13 @@
     <artifactId>auth-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>auth-service</name>
-    <description>SEC-05 isolated Spring Security Authorization Server proof of concept</description>
+    <description>VellumHub canonical OAuth2/OIDC Authorization Server</description>
     <properties>
         <java.version>21</java.version>
+        <!-- Security patch: Tomcat 11.0.25 addresses critical CVEs in 11.0.24. -->
+        <tomcat.version>11.0.25</tomcat.version>
         <testcontainers.version>1.20.4</testcontainers.version>
+        <password4j.version>1.8.4</password4j.version>
     </properties>
     <dependencies>
         <dependency>
@@ -54,6 +57,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.password4j</groupId>
+            <artifactId>password4j</artifactId>
+            <version>${password4j.version}</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>

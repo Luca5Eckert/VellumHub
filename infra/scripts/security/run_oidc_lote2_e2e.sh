@@ -12,7 +12,9 @@ if [ ! -f .local/auth-poc/signing-private.pem ]; then
   sh infra/scripts/security/generate_auth_poc_keys.sh
 fi
 export VELLUM_POC_RUN_AS="$(id -u):$(id -g)"
-export VELLUM_AUTH_DB_PASSWORD=ci-auth-db-only
+export POSTGRES_AUTH_USER=ci_auth
+export POSTGRES_AUTH_PASSWORD=ci-auth-db-only
+export VELLUM_AUTH_KEY_DIR="$PWD/.local/auth-poc"
 export VELLUM_POC_LOGIN=ci-fixture@example.invalid
 export VELLUM_POC_PASSWORD=ci-only-password-not-for-production-1234
 export VELLUM_INTERNAL_PROVISION_KEY=ci-internal-key-not-production-at-least-32
@@ -45,9 +47,9 @@ cleanup() {
 }
 trap cleanup EXIT
 docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml config --quiet
-docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml up -d redis-gateway kafka postgres-user postgres-catalog auth-postgres
-docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml up -d --build --no-deps user-service auth-service catalog-service gateway-service
-for service in auth-service user-service catalog-service gateway-service; do
+docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml up -d redis-gateway kafka postgres-user postgres-catalog postgres-engagement postgres-recommendation auth-postgres
+docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml up -d --build --no-deps user-service auth-service catalog-service engagement-service recommendation-service gateway-service
+for service in auth-service user-service catalog-service engagement-service recommendation-service gateway-service; do
   ready=0
   for attempt in $(seq 1 75); do
     if [ "$service" = auth-service ]; then

@@ -8,6 +8,7 @@ import re
 import sys
 
 OWNERS = {
+    "auth": ("auth-postgres", "vellum_auth"),
     "catalog": ("postgres-catalog", "catalog_db"),
     "engagement": ("postgres-engagement", "engagement_db"),
     "user": ("postgres-user", "user_db"),
@@ -42,7 +43,8 @@ def check(compose: str) -> list[str]:
             errors.append(f"AFF-DATA-004: missing {owner} application or {host}")
             continue
         expected = f"jdbc:postgresql://{host}:5432/{database}"
-        pattern = r"(?m)^\s+SPRING_DATASOURCE_URL:\s*(\S+)\s*$"
+        url_setting = "VELLUM_AUTH_DB_URL" if owner == "auth" else "SPRING_DATASOURCE_URL"
+        pattern = rf"(?m)^\s+{url_setting}:\s*(\S+)\s*$"
         configured = re.findall(pattern, service)
         if configured != [expected]:
             errors.append(f"AFF-DATA-004: {owner}-service expected {expected}, got {configured}")
@@ -52,9 +54,11 @@ def check(compose: str) -> list[str]:
         # Application and database must reference the same domain-specific
         # credentials. Fail closed on shared credential interpolation keys.
         key = owner.upper()
+        app_username = "VELLUM_AUTH_DB_USERNAME" if owner == "auth" else "SPRING_DATASOURCE_USERNAME"
+        app_password = "VELLUM_AUTH_DB_PASSWORD" if owner == "auth" else "SPRING_DATASOURCE_PASSWORD"
         for setting, expected_var in (
-            ("SPRING_DATASOURCE_USERNAME", f"POSTGRES_{key}_USER"),
-            ("SPRING_DATASOURCE_PASSWORD", f"POSTGRES_{key}_PASSWORD"),
+            (app_username, f"POSTGRES_{key}_USER"),
+            (app_password, f"POSTGRES_{key}_PASSWORD"),
         ):
             match = re.search(rf"(?m)^\s+{setting}:\s*\$\{{([A-Z_]+):\?[^}}]+}}\s*$", service)
             if match is None or match.group(1) != expected_var:
@@ -78,7 +82,7 @@ def main() -> int:
     for error in errors:
         print(error, file=sys.stderr)
     if not errors:
-        print("AFF-DATA-004 (configuration): PASS — service database URLs match dedicated instances")
+        print("AFF-DATA-004 (configuration): PASS — deployable database URLs match dedicated instances")
     return 1 if errors else 0
 
 

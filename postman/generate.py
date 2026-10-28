@@ -338,6 +338,10 @@ def service_folder(
 ) -> tuple[dict[str, Any], set[str], int]:
     grouped: dict[str, list[tuple[str, str, dict[str, Any], dict[str, Any]]]] = defaultdict(list)
     for path in sorted(spec["paths"]):
+        # Internal service-to-service endpoints have no public Gateway route.
+        # Do not emit misleading (or privileged) client requests for them.
+        if path == "/internal" or path.startswith("/internal/"):
+            continue
         path_item = spec["paths"][path]
         if not isinstance(path_item, dict):
             continue

@@ -49,7 +49,7 @@ public class AuthorizationServerConfig {
     @Bean
     @Order(0)
     SecurityFilterChain browserPreflightChain(HttpSecurity http,
-            @Value("${vellum.poc.origin}") String origin) throws Exception {
+            @Value("${vellum.auth.allowed-origin}") String origin) throws Exception {
         http.securityMatcher(request -> "OPTIONS".equals(request.getMethod())
                 && ("/oauth2/token".equals(request.getServletPath())
                     || "/oauth2/jwks".equals(request.getServletPath())
@@ -66,7 +66,7 @@ public class AuthorizationServerConfig {
     @Order(1)
     SecurityFilterChain authorizationServerChain(HttpSecurity http,
             com.vellumhub.auth.identity.IdentityRepository identities,
-            @Value("${vellum.poc.origin}") String origin) throws Exception {
+            @Value("${vellum.auth.allowed-origin}") String origin) throws Exception {
         http.oauth2AuthorizationServer(as -> {
             http.securityMatcher(as.getEndpointsMatcher());
             as.oidc(Customizer.withDefaults());
@@ -112,7 +112,7 @@ public class AuthorizationServerConfig {
     SecurityFilterChain pocResourceServerChain(HttpSecurity http,
             @Value("${vellum.auth.issuer}") String issuer,
             @Value("${vellum.auth.api-audience:api://vellumhub}") String audience,
-            @Value("${vellum.poc.origin}") String origin) throws Exception {
+            @Value("${vellum.auth.allowed-origin}") String origin) throws Exception {
         var decoder = NimbusJwtDecoder.withJwkSetUri(issuer + "/oauth2/jwks")
                 .jwsAlgorithm(SignatureAlgorithm.RS256)
                 .build();
@@ -201,17 +201,16 @@ public class AuthorizationServerConfig {
             }
             String subject = context.getPrincipal().getName();
             UUID.fromString(subject); // Fail closed if username/email leaks into the principal.
-            if (identities.findById(UUID.fromString(subject))
-                    .filter(com.vellumhub.auth.identity.IdentityRepository.Identity::active).isEmpty()) {
-                throw new org.springframework.security.oauth2.core.OAuth2AuthenticationException("invalid_grant");
-            }
+            var identity = identities.findById(UUID.fromString(subject))
+                    .filter(com.vellumhub.auth.identity.IdentityRepository.Identity::active)
+                    .orElseThrow(() -> new org.springframework.security.oauth2.core.OAuth2AuthenticationException("invalid_grant"));
             context.getJwsHeader().type("at+jwt");
             context.getClaims()
                     .subject(subject)
                     .audience(new ArrayList<>(List.of(audience)))
                     .id(UUID.randomUUID().toString())
                     .claim("client_id", context.getRegisteredClient().getClientId())
-                    .claim("roles", new ArrayList<>(List.of("USER")));
+                    .claim("roles", new ArrayList<>(List.of(identity.role().name())));
         };
     }
 }

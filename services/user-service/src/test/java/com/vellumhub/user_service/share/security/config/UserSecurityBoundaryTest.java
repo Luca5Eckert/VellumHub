@@ -1,8 +1,8 @@
 package com.vellumhub.user_service.share.security.config;
 
-import com.vellumhub.user_service.module.auth.application.controller.AuthController;
-import com.vellumhub.user_service.module.auth.domain.service.AuthService;
-import com.vellumhub.user_service.module.user.domain.port.UserRepository;
+import com.vellumhub.user_service.module.user.application.controller.UserController;
+import com.vellumhub.user_service.module.user.domain.service.UserService;
+import com.vellumhub.user_service.share.service.AuthenticationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -12,19 +12,15 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import java.util.UUID;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(value = AuthController.class, properties = {
-        "jwt.public-key-location=classpath:security/test-public.pem",
+@WebMvcTest(value = UserController.class, properties = {
+        "JWT_JWKS_URI=http://127.0.0.1:1/oauth2/jwks",
         "VELLUM_DOCS_ENABLED=false"
 })
 @Import(SecurityConfig.class)
@@ -34,22 +30,38 @@ class UserSecurityBoundaryTest {
     MockMvc mockMvc;
 
     @MockitoBean
-    AuthService authService;
+    UserService userService;
 
     @MockitoBean
-    UserRepository userRepository;
+    AuthenticationService authenticationService;
 
     @MockitoBean
     JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
     @Test
-    void invalidBearerUsesTheJsonAuthenticationContract() throws Exception {
-        mockMvc.perform(get("/users").header("Authorization", "Bearer malformed-token"))
+    void protectedProfilesRequireAuthIssuedBearer() throws Exception {
+        mockMvc.perform(get("/users"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
-                        .string("WWW-Authenticate", "Bearer"))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().json("{\"code\":\"UNAUTHORIZED\",\"message\":\"Missing or invalid access token\"}"));
+    }
+
+    @Test
+    void legacyAuthenticationRoutesAreNotPublicOrImplemented() throws Exception {
+        mockMvc.perform(post("/auth/login").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"legacy@example.invalid\",\"password\":\"irrelevant\"}"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/auth/login").with(jwt()).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(post("/auth/google").with(jwt()).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -59,57 +71,4 @@ class UserSecurityBoundaryTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().json("{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permission\"}"));
     }
-
-    @Test
-    void googleLoginIsPublicWithoutOpeningTheEntireAuthPath() throws Exception {
-        when(authService.login(any(com.vellumhub.user_service.module.auth.application.dto.LoginExternalRequest.class)))
-                .thenReturn("test-jwt");
-        mockMvc.perform(post("/auth/google").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"externalToken\":\"provider-fixture\"}"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("test-jwt"));
-        mockMvc.perform(get("/auth/google")).andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/auth/not-public")).andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void existingLocalLoginRemainsPublic() throws Exception {
-        when(authService.login(any(com.vellumhub.user_service.module.auth.application.dto.LoginUserRequest.class)))
-                .thenReturn("test-jwt");
-        mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"test@example.com\",\"password\":\"secret\"}"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void protectedUsersRequireAuthentication() throws Exception {
-        mockMvc.perform(get("/users")).andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void bindingEndpointsRequireJwtAndForwardItsSubjectUserId() throws Exception {
-        UUID userId = UUID.randomUUID();
-        String linkPayload = """
-                {"externalToken":"verified-id-token","currentPassword":"password"}
-                """;
-        String unlinkPayload = """
-                {"currentPassword":"password"}
-                """;
-        mockMvc.perform(post("/auth/google/link").contentType(MediaType.APPLICATION_JSON)
-                .content(linkPayload)).andExpect(status().isUnauthorized());
-        mockMvc.perform(delete("/auth/google/link").contentType(MediaType.APPLICATION_JSON)
-                .content(unlinkPayload)).andExpect(status().isUnauthorized());
-
-        mockMvc.perform(post("/auth/google/link").with(jwt().jwt(token ->
-                    token.subject(userId.toString()).claim("user_id", userId.toString())))
-                .contentType(MediaType.APPLICATION_JSON).content(linkPayload))
-                .andExpect(status().isNoContent());
-        verify(authService).linkGoogle(userId, "verified-id-token", "password");
-        mockMvc.perform(delete("/auth/google/link").with(jwt().jwt(token ->
-                    token.subject(userId.toString()).claim("user_id", userId.toString())))
-                .contentType(MediaType.APPLICATION_JSON).content(unlinkPayload))
-                .andExpect(status().isNoContent());
-        verify(authService).unlinkGoogle(userId, "password");
-    }
-
 }

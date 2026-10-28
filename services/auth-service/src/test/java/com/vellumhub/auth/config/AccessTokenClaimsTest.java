@@ -40,7 +40,7 @@ class AccessTokenClaimsTest {
         when(context.getRegisteredClient()).thenReturn(client);
 
         when(identities.findById(UUID.fromString(subject))).thenReturn(java.util.Optional.of(
-                new com.vellumhub.auth.identity.IdentityRepository.Identity(UUID.fromString(subject), "local", "hash", true)));
+                new com.vellumhub.auth.identity.IdentityRepository.Identity(UUID.fromString(subject), "local", "hash", com.vellumhub.auth.identity.IdentityRole.ADMIN, true)));
         config.accessTokenClaims(identities, "api://vellumhub").customize(context);
 
         assertThat(header.build().getType()).isEqualTo("at+jwt");
@@ -48,6 +48,7 @@ class AccessTokenClaimsTest {
         assertThat(claims.build().getAudience()).containsExactly("api://vellumhub");
         assertThat(claims.build().getClaimAsString("client_id")).isEqualTo("vellumhub-spa-poc");
         assertThat(claims.build().getId()).isNotBlank();
+        assertThat(claims.build().getClaimAsStringList("roles")).containsExactly("ADMIN");
     }
 
     @Test

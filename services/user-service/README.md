@@ -1,9 +1,6 @@
 # User Service
 
-## Security migration status — 27 October 2026
-
-The Auth service and OIDC integration are merged and validated in the opt-in integration path. The default Compose/Kubernetes runtime still uses the User Service JWT/JWKS path until #317. There is no real frontend today and no production user data to migrate; #317 is the backend runtime cutover and legacy-auth removal.
-
+**SEC-16 migration context:** This branch makes User profile-only and moves authentication, credentials and JWT signing exclusively to Auth. The earlier merged OIDC work (#334 and prerequisites) verified an opt-in integration path before this backend cutover. PR #336 remains subject to validation and has not established production deployment; no real frontend or user-data migration is needed.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.x-green)](https://spring.io/projects/spring-boot)
@@ -172,15 +169,15 @@ Flyway `V2__external_identity_binding.sql` creates `external_identities` and `ex
 
 ### Security JWT/JWKS transition (#304, #305)
 
-PR #321 (merged) introduced JWT verifiers fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. The User Service alone signs tokens with `JWT_ACTIVE_KID` and externally provisioned private PEMs. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
+Gateway and every domain Resource Server validate only RS256 access tokens issued by `auth-service`, using `JWT_JWKS_URI=http://auth-service:9000/oauth2/jwks` inside the runtime network plus the configured issuer/audience. Unknown `kid`, invalid signature/type/issuer/audience and malformed identity claims fail closed. Only Auth owns signing material; User, Catalog, Engagement, Recommendation and Gateway hold no private JWT key and perform no per-request identity lookup. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
 
 ## SEC-06 — Auth-owned profile provisioning
 
-Opt-in `VELLUM_IDENTITY_PROVISIONING_ENABLED=true` enables `POST /internal/identity/profiles`; only the Auth workload with a 32+-character `VELLUM_INTERNAL_PROVISION_KEY` may invoke it on the **internal network**. Gateway does not proxy the route. The command accepts a UUIDv7 `userId`, name and email, returns 201 for creation, 204 for exact replay and 409 on collision. DB migration `V3__auth_owned_profile.sql` makes password nullable for accounts with credentials **owned only by Auth**, with no hash replicated. Legacy login remains for legacy users, but Auth-owned profiles cannot authenticate through that path. Configure and validate mTLS/workload identity before production.
+Opt-in `VELLUM_IDENTITY_PROVISIONING_ENABLED=true` enables `POST /internal/identity/profiles`; only the Auth workload with a 32+-character `VELLUM_INTERNAL_PROVISION_KEY` may invoke it on the **internal network**. Gateway does not proxy the route. The command accepts a UUIDv7 `userId`, name and email, returns 201 for creation, 204 for exact replay and 409 on collision. DB migration `V3__auth_owned_profile.sql` makes password nullable for accounts with credentials **owned only by Auth**, with no hash replicated. User is profile-only: legacy login/JWT/JWKS and credential ownership have been removed; authentication is exclusively owned by Auth. Configure and validate mTLS/workload identity before production.
 
 [Runbook](../../docs/SECURITY_OIDC_LOTE2.md) · [#307](https://github.com/Luca5Eckert/VellumHub/issues/307).
 
 
 ## Google identity ownership during Lote 3
 
-Base deployments preserve the legacy Google login/link/unlink handlers. The explicit `docker-compose.oidc-lote3.yml` overlay sets `VELLUM_LEGACY_GOOGLE_WRITES_ENABLED=false`: those three mutations return **410 Gone** before calling the legacy service. Local legacy login is unchanged. New federated bindings are owned only by Auth; User retains profile ownership and the existing private idempotent provisioning command. This is an opt-in environment boundary, not the real-client cutover (#317). See [Lote 3 runbook](../../docs/SECURITY_OIDC_LOTE3.md) for setup and rollback limits.
+Google federation and external-identity bindings are owned only by Auth. User retains profile ownership and the private idempotent provisioning command; the legacy Google login/link/unlink handlers are no longer part of the User runtime. The Lote 3 Compose file is retained only as a regression harness. See [Lote 3 runbook](../../docs/SECURITY_OIDC_LOTE3.md) for setup and rollback limits.

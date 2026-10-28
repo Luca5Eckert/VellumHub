@@ -1,44 +1,28 @@
 package com.vellumhub.user_service.share.security.config;
 
-import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.AuthenticationEntryPoint;
-import com.vellumhub.user_service.module.auth.infrastructure.security.user.UserDetailsServiceImpl;
-import com.vellumhub.user_service.module.user.domain.port.UserRepository;
+import com.vellumhub.security.jwt.JwtAccessToken;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.BadJwtException;
-import com.vellumhub.security.jwt.JwtAccessToken;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-
-import org.springframework.core.io.Resource;
-import org.springframework.security.converter.RsaKeyConverters;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Objects;
+import org.springframework.security.web.access.AccessDeniedHandler;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${JWT_JWKS_URI:http://user-service:8080/.well-known/jwks.json}")
+    @Value("${JWT_JWKS_URI:http://auth-service:9000/oauth2/jwks}")
     private String jwksUri;
 
     @Value("${JWT_ISSUER:https://auth.vellumhub.local}")
@@ -49,13 +33,6 @@ public class SecurityConfig {
 
     @Value("${JWT_CLOCK_SKEW_SECONDS:30}")
     private long clockSkewSeconds;
-
-
-    private final UserRepository userRepository;
-
-    public SecurityConfig(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     @Value("${VELLUM_DOCS_ENABLED:false}")
     private boolean documentationEnabled;
@@ -80,12 +57,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health/**", "/actuator/prometheus").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register", "/auth/google").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/.well-known/jwks.json").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html")
                         .access((authentication, context) -> new AuthorizationDecision(documentationEnabled))
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
@@ -94,12 +68,9 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler)
                         .jwt(jwt -> jwt
                                 .decoder(jwtDecoder())
-                                .jwtAuthenticationConverter(jwtAuthenticationConverter())
-                        )
-                )
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
     }
-
 
     private JwtAuthenticationConverter jwtAuthenticationConverter() {
         return JwtAccessToken.servletConverter();
@@ -112,7 +83,6 @@ public class SecurityConfig {
                 .validateType(false)
                 .build();
         decoder.setJwtValidator(JwtAccessToken.validator(issuer, audience, clockSkewSeconds));
-        // Treat JWKS retrieval errors as invalid authentication while retaining trusted cache.
         return token -> {
             try {
                 return decoder.decode(token);
@@ -121,18 +91,4 @@ public class SecurityConfig {
             }
         };
     }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager() {
-        var authProvider = new DaoAuthenticationProvider((new UserDetailsServiceImpl(userRepository)));
-        authProvider.setPasswordEncoder(passwordEncoder());
-
-        return new ProviderManager(authProvider);
-    }
-
 }

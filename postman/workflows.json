@@ -1,23 +1,20 @@
 {
   "name": "Cross-service workflows",
-  "description": "Manually maintained sequences for behavior that isolated OpenAPI operations do not express. Run this folder with the local environment selected. The default flow authenticates, captures a catalog book, reads the current user's ratings, and requests recommendations.",
+  "description": "Manually maintained cross-service checks. Obtain an Auth-issued access token using OAuth2 Authorization Code with PKCE, set the Postman `token` variable, then run the read-only sequence. The Auth service owns login and credentials; the User service owns profiles.",
   "item": [
     {
-      "name": "01 - Login and capture token",
+      "name": "01 - Validate Auth access token",
       "request": {
-        "auth": { "type": "noauth" },
-        "method": "POST",
+        "method": "GET",
         "header": [
-          { "key": "Accept", "value": "text/plain", "type": "text" },
-          { "key": "Content-Type", "value": "application/json", "type": "text" }
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
-          "options": { "raw": { "language": "json" } }
-        },
-        "url": "{{gatewayUrl}}/api/v1/auth/login",
-        "description": "Authenticates with the User Service through the gateway and stores the returned JWT in `token`."
+        "url": "{{gatewayUrl}}/api/v1/users/me",
+        "description": "Requires a canonical Auth-issued OAuth2 access token in the `token` variable. Obtain it with Authorization Code + PKCE (Auth issuer http://127.0.0.1:9000 in the local harness); do not invoke the removed User Service login endpoint."
       },
       "event": [
         {
@@ -25,22 +22,9 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test(\"Login succeeded\", function () { pm.response.to.have.status(200); });",
-              "if (pm.response.code === 200) {",
-              "  const raw = pm.response.text().trim();",
-              "  let token = raw;",
-              "  try {",
-              "    const parsed = pm.response.json();",
-              "    if (typeof parsed === \"string\") token = parsed;",
-              "    else if (parsed && parsed.token) token = parsed.token;",
-              "    else if (parsed && parsed.accessToken) token = parsed.accessToken;",
-              "  } catch (e) {}",
-              "  token = String(token).replace(/^\"|\"$/g, \"\").trim();",
-              "  pm.expect(token, \"JWT token\").to.not.be.empty;",
-              "  pm.environment.set(\"token\", token);",
-              "  pm.collectionVariables.set(\"token\", token);",
-              "  pm.execution.setNextRequest(\"02 - List books and capture bookId\");",
-              "}"
+              "pm.test(\"Auth access token is configured\", function () { pm.expect(pm.variables.get(\"token\"), \"Auth-issued bearer token\").to.be.a(\"string\").and.not.be.empty; });",
+              "pm.test(\"Canonical Auth token accepted by User\", function () { pm.response.to.have.status(200); });",
+              "if (pm.response.code === 200) pm.execution.setNextRequest(\"02 - List books and capture bookId\");"
             ]
           }
         }
@@ -52,7 +36,11 @@
       "request": {
         "method": "GET",
         "header": [
-          { "key": "Accept", "value": "application/json", "type": "text" }
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
         ],
         "url": "{{gatewayUrl}}/api/v1/catalog/books?pageNumber=0&pageSize=10",
         "description": "Loads the first catalog page and stores the first book identifier in `bookId` for optional examples."
@@ -85,7 +73,11 @@
       "request": {
         "method": "GET",
         "header": [
-          { "key": "Accept", "value": "application/json", "type": "text" }
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
         ],
         "url": "{{gatewayUrl}}/api/v1/engagement/rating/me?pageNumber=0&pageSize=10",
         "description": "Exercises the authenticated Engagement Service read path without mutating user state."
@@ -109,7 +101,11 @@
       "request": {
         "method": "GET",
         "header": [
-          { "key": "Accept", "value": "application/json", "type": "text" }
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
         ],
         "url": "{{gatewayUrl}}/api/v1/recommendations?limit=10&offset=0",
         "description": "Requests personalized recommendations after exercising authenticated user, catalog, and engagement paths."
@@ -133,13 +129,25 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Accept", "value": "text/plain", "type": "text" },
-          { "key": "Content-Type", "value": "application/json", "type": "text" }
+          {
+            "key": "Accept",
+            "value": "text/plain",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
         ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"stars\": {{stars}},\n  \"review\": \"{{review}}\"\n}",
-          "options": { "raw": { "language": "json" } }
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         },
         "url": "{{gatewayUrl}}/api/v1/engagement/rating",
         "description": "Optional state-changing example. Run manually after a `bookId` is captured. Re-running can conflict if the user already rated the same book."

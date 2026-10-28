@@ -1,6 +1,6 @@
 ## Post-merge status — 27 October 2026
 
-This document now describes the historical integration path that proved Auth-issued tokens across the backend. The default runtime is still legacy until #317 promotes Auth to the standard Compose/Kubernetes path and removes User-side authentication. There is no real frontend to migrate.
+This document preserves the historical SEC-06/09 integration and opt-in harness decisions. SEC-16 / #317 has since promoted auth-service to the standard Compose/Kubernetes runtime and removed User-side authentication; statements below about the *legacy default*, temporary dual topology or unimplemented later batches describe the historical stage, not the current branch. No real frontend or production-user migration exists.
 
 # SEC-06 + SEC-09 / #307 + #310 — Integration rollout and evidence
 

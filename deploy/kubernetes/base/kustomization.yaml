@@ -5,6 +5,7 @@ resources:
   - namespace.yaml
   - config/app-config.yaml
   - applications.yaml
+  - auth.yaml
   - user.yaml
   - catalog.yaml
   - remaining-services.yaml

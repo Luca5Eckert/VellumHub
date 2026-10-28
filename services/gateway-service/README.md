@@ -1,9 +1,6 @@
 # Gateway Service
 
-## Security migration status — 27 October 2026
-
-The Auth service and OIDC integration are merged and validated in the opt-in integration path. The default Compose/Kubernetes runtime still uses the User Service JWT/JWKS path until #317. There is no real frontend today and no production user data to migrate; #317 is the backend runtime cutover and legacy-auth removal.
-
+**SEC-16 migration context:** Merged OIDC integration work (#334 and its prerequisites) validated Auth-issued tokens on an opt-in path. PR #336 changes the default Gateway/Resource Server issuer to Auth and removes legacy User authentication routes. This is not yet evidence of a production rollout; there is no real frontend or production user data to migrate.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.x-green)](https://spring.io/projects/spring-boot)
@@ -176,15 +173,15 @@ For platform topology and cross-service flows, see the [root README](../../READM
 
 The API remains JWT bearer-based; issue #163 migrates the signature to RS256 with independent public-key validation on this branch (coordinated cutover required). Service security continues to validate tokens independently of the Gateway. Swagger/OpenAPI is opt-in through `VELLUM_DOCS_ENABLED=true` in local Compose; default deployment configuration denies documentation. Health and Prometheus remain unauthenticated at the service HTTP layer for **internal** probe/scrape traffic, so network and Ingress must keep these ports private. CORS uses explicit `CORS_ALLOWED_ORIGINS` and preserves credentialed browser requests for compatibility. JWT Bearer remains the authenticator; any future cookie-session authentication requires separate CSRF review. See [SEC-01 HTTP boundary contract](../../docs/SECURITY_HTTP_BOUNDARY.md) for policy matrix, tests and rollback.
 
-The Gateway permits only POST /api/v1/auth/login, /api/v1/auth/register and /api/v1/auth/google without a JWT. Client-supplied identity headers are removed before forwarding. `VELLUM_TRUSTED_PROXY_CIDRS` (comma-separated CIDRs; empty by default) must list only reverse proxies that append verified X-Forwarded-For hops. The Redis quota values are unchanged; the default without a trusted proxy uses the TCP peer address. The application logs Gateway at INFO rather than TRACE by default.
+The Gateway no longer exposes the legacy User `/api/v1/auth/*` routes. Client-supplied identity headers are removed before forwarding, and only a bearer already validated by Spring Security is relayed downstream. `VELLUM_TRUSTED_PROXY_CIDRS` (comma-separated CIDRs; empty by default) must list only reverse proxies that append verified X-Forwarded-For hops. The Redis quota values are unchanged; the default without a trusted proxy uses the TCP peer address. The application logs Gateway at INFO rather than TRACE by default.
 
 
 ### Security JWT/JWKS transition (#304, #305)
 
-PR #321 (merged) introduced JWT verifiers fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. The User Service alone signs tokens with `JWT_ACTIVE_KID` and externally provisioned private PEMs. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
+Gateway and every domain Resource Server validate only RS256 access tokens issued by `auth-service`, using `JWT_JWKS_URI=http://auth-service:9000/oauth2/jwks` inside the runtime network plus the configured issuer/audience. Unknown `kid`, invalid signature/type/issuer/audience and malformed identity claims fail closed. Only Auth owns signing material; User, Catalog, Engagement, Recommendation and Gateway hold no private JWT key and perform no per-request identity lookup. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
 
 ## SEC-09 — Verified bearer relay (opt-in issuer change)
 
 `VerifiedBearerRelayFilter` removes untrusted incoming Authorization headers and forwards only the access token from a validated `JwtAuthenticationToken`, never an ID Token or forwarded username. Public legacy login routes do not receive Authorization. SecurityChain verifies RS256 JWKS, issuer, audience and RFC 9068 type before Gateway filtering. Internal provisioning paths are denied and not routed.
 
-The Compose default **remains legacy**. The dedicated `docker-compose.oidc-lote2.yml` overlay changes **JWT_ISSUER/JWT_JWKS_URI** in Gateway, User, Catalog, Engagement and Recommendation together; there is NO silent dual issuer fallback. User Auth and Google legacy remain until #317/#308. Read [SEC-06/09 runbook](../../docs/SECURITY_OIDC_LOTE2.md) before enabling overlay.
+The default Compose runtime uses `auth-service` as the single issuer/JWKS source. `docker-compose.oidc-lote2.yml` is retained only as a local regression harness for the PKCE/OIDC flow; it is no longer the activation mechanism and there is no legacy or dual-issuer fallback.
