@@ -50,8 +50,8 @@ public class ProfileProvisioningController {
         // Unique ID AND case-folded email index. In case of conflict, compare actual
         // persisted values instead of treating any conflict as a successful retry.
         int inserted = jdbc.update("""
-                INSERT INTO tb_users (id, name, email, password, role, active, version, created_at, updated_at)
-                VALUES (?, ?, ?, NULL, 'USER', true, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                INSERT INTO tb_users (id, name, email, active, version, created_at, updated_at)
+                VALUES (?, ?, ?, true, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 ON CONFLICT DO NOTHING
                 """, profile.userId(), profile.name().strip(), profile.email());
         if (inserted == 1) {

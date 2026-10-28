@@ -2,7 +2,6 @@ package com.vellumhub.user_service.handler.user;
 
 import com.vellumhub.user_service.module.user.application.dto.UpdateUserRequest;
 import com.vellumhub.user_service.module.user.application.exception.UserNotFoundException;
-import com.vellumhub.user_service.module.user.domain.RoleUser;
 import com.vellumhub.user_service.module.user.domain.UserEntity;
 import com.vellumhub.user_service.module.user.domain.handler.UpdateUserHandler;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
@@ -38,7 +37,7 @@ class UpdateUserHandlerTest {
                 .id(userId)
                 .name("Old Name")
                 .email("old@example.com")
-                .role(RoleUser.USER)
+                
                 .active(true)
                 .version(1L)
                 .build();

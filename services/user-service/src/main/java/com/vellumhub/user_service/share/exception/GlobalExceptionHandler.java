@@ -1,8 +1,5 @@
 package com.vellumhub.user_service.share.exception;
 
-import com.vellumhub.user_service.module.auth.domain.exception.AuthDomainException;
-import com.vellumhub.user_service.module.auth.domain.exception.ExternalIdentityConflictException;
-import com.vellumhub.user_service.module.auth.domain.exception.ExternalIdentityProofException;
 import com.vellumhub.user_service.module.user.application.exception.UserApplicationException;
 import com.vellumhub.user_service.module.user.domain.exception.UserDomainException;
 import com.vellumhub.user_service.module.user_preference.domain.exception.UserPreferenceDomainException;
@@ -13,7 +10,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -30,28 +26,6 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-
-    @ExceptionHandler(ExternalIdentityConflictException.class)
-    public ResponseEntity<ApiResponseError> handleExternalIdentityConflict(
-            ExternalIdentityConflictException ex, HttpServletRequest request) {
-        return externalIdentityError(HttpStatus.CONFLICT, "External Identity Conflict",
-                ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(ExternalIdentityProofException.class)
-    public ResponseEntity<ApiResponseError> handleExternalIdentityProof(
-            ExternalIdentityProofException ex, HttpServletRequest request) {
-        return externalIdentityError(HttpStatus.FORBIDDEN, "Account Verification Required",
-                ex.getMessage(), request);
-    }
-
-    private ResponseEntity<ApiResponseError> externalIdentityError(
-            HttpStatus status, String error, String message, HttpServletRequest request) {
-        return ResponseEntity.status(status).body(ApiResponseError.builder()
-                .status(status.value()).error(error).message(message)
-                .details(List.of("External identity operation denied"))
-                .path(request.getRequestURI()).timestamp(Instant.now()).build());
-    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponseError> handleMethodArgumentNotValidException(
@@ -88,22 +62,6 @@ public class GlobalExceptionHandler {
                 .timestamp(Instant.now())
                 .build());
     }
-
-    @ExceptionHandler({AuthDomainException.class, BadCredentialsException.class})
-    public ResponseEntity<ApiResponseError> handleAuthDomainException(
-            RuntimeException ex, HttpServletRequest request) {
-
-        HttpStatus status = HttpStatus.BAD_REQUEST;
-        return ResponseEntity.status(status).body(ApiResponseError.builder()
-                .status(status.value())
-                .error("Auth Domain Error")
-                .message(ex.getMessage())
-                .details(List.of("Business rule violation in user domain"))
-                .path(request.getRequestURI())
-                .timestamp(Instant.now())
-                .build());
-    }
-
 
     @ExceptionHandler(UserApplicationException.class)
     public ResponseEntity<ApiResponseError> handleUserApplicationException(

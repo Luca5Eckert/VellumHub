@@ -92,7 +92,7 @@ class JwtSignatureVerificationTest {
     }
 
     private JwtDecoder decoder(String jwksUri) {
-        SecurityConfig config = new SecurityConfig(org.mockito.Mockito.mock(com.vellumhub.user_service.module.user.domain.port.UserRepository.class));
+        SecurityConfig config = new SecurityConfig();
         ReflectionTestUtils.setField(config, "jwksUri", jwksUri);
         ReflectionTestUtils.setField(config, "issuer", ISSUER);
         ReflectionTestUtils.setField(config, "audience", "api://vellumhub");
@@ -145,7 +145,7 @@ class JwtSignatureVerificationTest {
         TestJwks(Map<String, KeyPair> keys) throws Exception {
             server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
             publish(keys);
-            server.createContext("/.well-known/jwks.json", exchange -> {
+            server.createContext("/oauth2/jwks", exchange -> {
                 byte[] response = contents.getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 exchange.getResponseHeaders().set("Cache-Control", "public, max-age=60");
@@ -158,7 +158,7 @@ class JwtSignatureVerificationTest {
         }
 
         String uri() {
-            return "http://127.0.0.1:" + server.getAddress().getPort() + "/.well-known/jwks.json";
+            return "http://127.0.0.1:" + server.getAddress().getPort() + "/oauth2/jwks";
         }
 
         void publish(Map<String, KeyPair> keys) {
