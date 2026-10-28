@@ -17,7 +17,7 @@ class BoundariesTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        services = ("catalog", "engagement", "user", "recommendation", "gateway")
+        services = ("auth", "catalog", "engagement", "user", "recommendation", "gateway")
         modules = "".join(f"<module>services/{s}-service</module>" for s in services)
         (self.root / "pom.xml").write_text(
             f'<project xmlns="http://maven.apache.org/POM/4.0.0"><modules>{modules}</modules></project>'
