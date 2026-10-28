@@ -460,7 +460,7 @@ See [Google identity linkage runbook](docs/SECURITY_GOOGLE_IDENTITY.md) for rout
 
 ### JWKS distribution and RFC 9068 access tokens (security issues #304/#305)
 
-The security upgrade in draft PR #321 moves from a fixed public-key verifier to a trusted JWKS endpoint inside the User Service and changes JWT subject to an immutable user UUID. A shared `lib/jwt-security` module validates issuer, audience, type, algorithms and claims in all services; only User Service holds signing material. This is **not** an implemented OAuth/OIDC Authorization Server or evidence of production deployment. Deployment, rotation, emergency handling and bounded coexistence of `user_id` are documented in [JWKS/RFC 9068 runbook](docs/SECURITY_JWKS_RFC9068.md). The original [RS256 cutover runbook](docs/SECURITY_RS256.md) describes the completed cryptographic prerequisite (#163).
+The runtime uses `auth-service` as the single OAuth/OIDC Authorization Server and JWKS source. A shared `lib/jwt-security` module validates issuer, audience, type, algorithms and claims in Gateway and domain Resource Servers; only Auth holds signing material. This repository evidence proves the application/runtime topology and tests, not a production deployment. Deployment, rotation, emergency handling and bounded coexistence of `user_id` are documented in [JWKS/RFC 9068 runbook](docs/SECURITY_JWKS_RFC9068.md). The original [RS256 cutover runbook](docs/SECURITY_RS256.md) describes the completed cryptographic prerequisite (#163).
 
 ## Architecture fitness and regression gates
 
@@ -491,26 +491,32 @@ New developers should read [the architecture fitness guide](docs/ARCHITECTURE_FI
 
 The [Architecture Fitness Functions guide](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md) now links implemented service boundaries and distributed Kafka guarantees to a reproducible per-commit evidence catalog (`tools/architecture/fitness-catalog.json`). Run `python3 tools/architecture/generate_evidence.py --help` for report options. The Recommendation [distributed benchmark](services/recommendation-service/benchmark/README.md) verifies local-projection read autonomy with HTTP attempt detection and separate projection/freshness metrics. CI publishes JSON/Markdown artifacts scoped to each workflow and SHA; unexecuted tests are never reported as passing. No benchmark figure is a production SLA.
 
+## SEC-16 — Canonical Auth runtime
+
+Auth is the only authentication/identity authority and access-token issuer. New local credentials are hashed with Argon2id; Auth persists the minimum USER/ADMIN authority model and emits roles from persisted identity state. User is profile-only and receives idempotent profile provisioning with the Auth-generated UUIDv7; it does not store passwords, external identities, signing keys or an authorization role.
+
+The default Maven reactor, Compose runtime and Kubernetes manifests include Auth. Gateway, User, Catalog, Engagement and Recommendation validate Auth-issued RFC 9068 access tokens from the Auth JWKS and never receive the private signing key. Prometheus scrapes Auth on its management port and Alloy collects its logs. The Lote 2/3 Compose files are retained as regression harnesses rather than runtime activation switches.
+
 ## SEC-06/SEC-09 — Opt-in OIDC integration (PR #331)
 
 The Spring Authorization Server protocol PoC was merged in PR #330. PR #331 adds a **separate opt-in** integration path: Auth generates one UUIDv7 and owns credential hashes; User receives an idempotent private profile command with that same UUID, without a password. The account remains PENDING_PROFILE and cannot log in until profile confirmation.
 
-The Gateway forwards only Spring Security-validated JWTs; it strips externally supplied identity headers and never emits its own bearer. The default Compose configuration continues using the legacy issuer. Enabling docker-compose.oidc-lote2.yml is an **explicit** issuer/JWKS switch for local integration only, not a dual-issuer downgrade or production cutover.
+The Gateway forwards only Spring Security-validated JWTs; it strips externally supplied identity headers and never emits its own bearer. The default Compose runtime now includes `auth-service` and `auth-postgres`; Auth is the single issuer/JWKS source for Gateway and all Resource Servers. `docker-compose.oidc-lote2.yml` remains only as a local regression harness for the PKCE/OIDC integration.
 
 Registration at /v1/identity/register is disabled by default and only enabled via VELLUM_IDENTITY_REGISTRATION_ENABLED. Internal provisioning at /internal/identity/profiles is private to Auth -> User and requires a unique 32+ character VELLUM_INTERNAL_PROVISION_KEY and private networking. Workload identity/mTLS and rate limiting must be reviewed before deployment. The demo SPA is not a fully validated production OIDC client.
 
-Run Maven verification with: mvn -B -ntp -Pauth-poc -pl services/auth-service,services/user-service,services/gateway-service -am verify.
+Run Maven verification with: `mvn -B -ntp -pl services/auth-service,services/user-service,services/gateway-service -am verify`.
 Run distributed integration using: bash infra/scripts/security/run_oidc_lote2_e2e.sh (Docker and a disposable environment required).
 See docs/SECURITY_OIDC_LOTE2.md for test gates and rollback. **PR #331 is merged; this does not establish a production rollout.**
 
 
 ## SEC-07/SEC-08 — Google OIDC federation and session lifecycle (PR #334 draft)
 
-The opt-in Auth integration adds Google as an upstream OIDC provider while keeping the VellumHub issuer and UUIDv7 `sub` stable. External identities are keyed by verified `(issuer, subject)`, never automatically linked by email. Auth stores disabled `PENDING_PROFILE` identities and provisions User idempotently before allowing login. Google-only accounts have no password login. The base Compose legacy `/auth/google` remains available until an explicit #317 cutover; the Lote 3 opt-in overlay alone returns 410 for User's legacy Google login/link mutations to prevent competing external-identity writers.
+The canonical Auth runtime supports Google as an upstream OIDC provider while keeping the VellumHub issuer and UUIDv7 `sub` stable. External identities are keyed by verified `(issuer, subject)`, never automatically linked by email. Auth stores disabled `PENDING_PROFILE` identities and provisions User idempotently before allowing login. Google-only accounts have no password login. The legacy User `/auth/google` and related identity mutations are removed by the #317 cutover; external identities are owned only by Auth. The Lote 3 overlay remains as a regression harness.
 
 Spring Session JDBC persists the Auth browser session, with 30-minute idle timeout and a 12-hour absolute limit. The Authorization Server uses a Spring Session-backed `SessionRegistry` for its OIDC logout endpoint; a local `POST /logout` remains CSRF protected. Already issued API JWTs remain valid up to `exp`; public SPA refresh tokens remain disabled. Concurrent per-device sessions are permitted; logout invalidates the current session.
 
-Enable explicitly with `docker-compose.oidc-lote3.yml` on top of the base and Lote 2 overlay, with external Google client ID/secret and the exact OAuth callback `/login/oauth2/code/google`. See [Lote 3 runbook](docs/SECURITY_OIDC_LOTE3.md). **PR #334 is draft, not merged or deployed; Google-provider E2E and authenticated live browser verification of manual linking for existing local accounts remains an acceptance gate.**
+For the Google regression harness, compose `docker-compose.oidc-lote3.yml` on top of the base and Lote 2 test overlay with external Google client ID/secret and the exact OAuth callback `/login/oauth2/code/google`. See [Lote 3 runbook](docs/SECURITY_OIDC_LOTE3.md). **PR #334 is draft, not merged or deployed; Google-provider E2E and authenticated live browser verification of manual linking for existing local accounts remains an acceptance gate.**
 
 
 PR #334 review hardening adds atomic PostgreSQL consumption of manual-link challenges, a narrow Jackson 3 policy for federated principals, the Spring Security 7 authentication factor used by OIDC `auth_time`, explicit session-filter ordering and active-identity checks before AS reuse/issuance. Controlled-provider integration tests exercise code exchange, callback rejection, local-login regression, logout, expiry and concurrent first login. A shared attempt budget and private opt-in Prometheus target/alerts are documented in the runbook. These changes remain on the draft PR; they do not establish a real-client or production cutover.
