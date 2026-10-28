@@ -1,5 +1,7 @@
 # Gateway Service
 
+**SEC-16 migration context:** Merged OIDC integration work (#334 and its prerequisites) validated Auth-issued tokens on an opt-in path. PR #336 changes the default Gateway/Resource Server issuer to Auth and removes legacy User authentication routes. This is not yet evidence of a production rollout; there is no real frontend or production user data to migrate.
+
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.x-green)](https://spring.io/projects/spring-boot)
 [![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud-Gateway-blue)](https://spring.io/projects/spring-cloud-gateway)

@@ -1,5 +1,7 @@
 # User Service
 
+**SEC-16 migration context:** This branch makes User profile-only and moves authentication, credentials and JWT signing exclusively to Auth. The earlier merged OIDC work (#334 and prerequisites) verified an opt-in integration path before this backend cutover. PR #336 remains subject to validation and has not established production deployment; no real frontend or user-data migration is needed.
+
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.x-green)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
