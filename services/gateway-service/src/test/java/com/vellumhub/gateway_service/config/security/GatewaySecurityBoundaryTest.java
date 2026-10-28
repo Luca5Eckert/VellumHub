@@ -10,7 +10,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-        "JWT_PUBLIC_KEY_LOCATION=classpath:security/test-public.pem",
         "VELLUM_DOCS_ENABLED=false"
 })
 class GatewaySecurityBoundaryTest {
@@ -73,7 +72,6 @@ class GatewaySecurityBoundaryTest {
     @Test
     void corsUsesOnlyExplicitOriginsAndPreservesExistingCredentialsMode() {
         var config = new GatewaySecurityConfig(
-                new org.springframework.core.io.ClassPathResource("security/test-public.pem"),
                 false, "https://frontend.example");
         var request = org.springframework.mock.http.server.reactive.MockServerHttpRequest
                 .options("/api/v1/auth/login")
