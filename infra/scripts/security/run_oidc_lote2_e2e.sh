@@ -12,7 +12,9 @@ if [ ! -f .local/auth-poc/signing-private.pem ]; then
   sh infra/scripts/security/generate_auth_poc_keys.sh
 fi
 export VELLUM_POC_RUN_AS="$(id -u):$(id -g)"
-export VELLUM_AUTH_DB_PASSWORD=ci-auth-db-only
+export POSTGRES_AUTH_USER=ci_auth
+export POSTGRES_AUTH_PASSWORD=ci-auth-db-only
+export VELLUM_AUTH_KEY_DIR="$PWD/.local/auth-poc"
 export VELLUM_POC_LOGIN=ci-fixture@example.invalid
 export VELLUM_POC_PASSWORD=ci-only-password-not-for-production-1234
 export VELLUM_INTERNAL_PROVISION_KEY=ci-internal-key-not-production-at-least-32
