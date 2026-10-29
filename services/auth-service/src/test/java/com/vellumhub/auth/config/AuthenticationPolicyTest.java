@@ -44,10 +44,13 @@ class AuthenticationPolicyTest {
         var context = mock(JwtEncodingContext.class);
         UUID id = UUID.randomUUID();
         when(context.getTokenType()).thenReturn(OAuth2TokenType.ACCESS_TOKEN);
+        when(context.getAuthorizationGrantType()).thenReturn(org.springframework.security.oauth2.core.AuthorizationGrantType.AUTHORIZATION_CODE);
         when(context.getPrincipal()).thenReturn(UsernamePasswordAuthenticationToken.authenticated(id.toString(), null, List.of()));
         when(identities.findById(id)).thenReturn(Optional.of(new IdentityRepository.Identity(id, "local", "hash", IdentityRole.USER, false)));
         assertThatThrownBy(() -> new AuthorizationServerConfig().accessTokenClaims(identities, "api://vellumhub").customize(context))
-                .isInstanceOf(OAuth2AuthenticationException.class);
+                .isInstanceOfSatisfying(OAuth2AuthenticationException.class, error ->
+                        assertThat(error.getError().getErrorCode()).isEqualTo("invalid_grant"));
+        verify(identities).findById(id);
     }
 
     @Test void sharedAttemptLimitRejectsOidcStartsAndCountsWithoutIdentityLabels() throws Exception {

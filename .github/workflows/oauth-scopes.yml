@@ -29,7 +29,7 @@ jobs:
       - name: Verify route matrix, OpenAPI, converter and signed JWT regression
         run: >-
           mvn -B -ntp -pl services/auth-service,services/user-service,services/catalog-service,services/engagement-service,services/recommendation-service
-          -am -Dtest=OAuthScopeBoundaryTest,HumanApiAccessTest,AccessTokenClaimsTest,ClientScopePolicyTest,JwtAccessTokenTest,JwtSignatureVerificationTest,UserSecurityBoundaryTest,UserControllerTest,BookControllerTest
+          -am -Dtest=OAuthScopeBoundaryTest,HumanApiAccessTest,AccessTokenClaimsTest,ClientScopePolicyTest,AuthenticationPolicyTest,JwtAccessTokenTest,JwtSignatureVerificationTest,UserSecurityBoundaryTest,UserControllerTest,BookControllerTest
           -Dsurefire.failIfNoSpecifiedTests=false test
       - name: Upload test evidence
         if: always()
