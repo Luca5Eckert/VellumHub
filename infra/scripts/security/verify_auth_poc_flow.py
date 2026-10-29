@@ -62,7 +62,8 @@ def random_token():
     return encoded(secrets.token_bytes(32))
 
 
-def create_authorization_code(verifier=None, method="S256", login_first=False):
+def create_authorization_code(verifier=None, method="S256", login_first=False,
+                              scopes="openid profile user:read catalog:read engagement:read recommendation:read"):
     verifier = verifier or random_token()
     challenge = encoded(hashlib.sha256(verifier.encode("ascii")).digest()) if method == "S256" else verifier
     state, nonce = random_token(), random_token()
@@ -70,7 +71,7 @@ def create_authorization_code(verifier=None, method="S256", login_first=False):
         "response_type": "code",
         "client_id": CLIENT,
         "redirect_uri": REDIRECT,
-        "scope": "openid profile",
+        "scope": scopes,
         "state": state,
         "nonce": nonce,
         "code_challenge": challenge,

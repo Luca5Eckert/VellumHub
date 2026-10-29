@@ -53,11 +53,11 @@ public class BookProgressController {
     }
 
     @PostMapping("/{bookId}/status")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     @Operation(
             summary = "Set book status",
             description = "Sets the reading status for a book (WANT_TO_READ, READING, COMPLETED)"
     )
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Book status defined successfully",
                     content = @Content),
@@ -78,11 +78,11 @@ public class BookProgressController {
     }
 
     @PutMapping("/{bookId}/progress")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     @Operation(
             summary = "Update reading progress",
             description = "Updates the current page number for a book being read"
     )
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Reading progress updated successfully",
                     content = @Content),
@@ -103,11 +103,11 @@ public class BookProgressController {
     }
 
     @DeleteMapping("/{bookId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     @Operation(
             summary = "Remove book progress",
             description = "Removes a book from the user's reading list and deletes progress tracking"
     )
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Book progress deleted successfully",
                     content = @Content),
@@ -125,11 +125,11 @@ public class BookProgressController {
     }
 
     @GetMapping("/reading-list")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:read"})
     @Operation(
             summary = "Get reading list",
             description = "Retrieves the authenticated user's complete reading list with progress information"
     )
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Reading list retrieved successfully",
                     content = @Content(schema = @Schema(implementation = BookProgressResponse.class))),

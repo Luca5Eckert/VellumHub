@@ -49,6 +49,7 @@ vellum:
         parallelism: ${VELLUM_AUTH_ARGON2_PARALLELISM:1}
     allowed-origin: ${VELLUM_AUTH_ALLOWED_ORIGIN:http://127.0.0.1:9100}
   client:
+    scopes: ${VELLUM_AUTH_CLIENT_SCOPES:user:read,catalog:read,catalog:personal:read,catalog:personal:write,catalog:requests:write,engagement:read,engagement:write,recommendation:read}
     enabled: ${VELLUM_AUTH_CLIENT_ENABLED:false}
     id: ${VELLUM_AUTH_CLIENT_ID:vellumhub-spa-poc}
     redirect-uri: ${VELLUM_AUTH_CLIENT_REDIRECT_URI:}

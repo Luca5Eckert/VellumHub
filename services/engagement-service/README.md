@@ -195,3 +195,12 @@ This service validates RS256 access tokens through the configured Auth JWKS URI.
 ### Security JWT/JWKS transition (#304, #305)
 
 PR #321 (merged) introduced JWT verifiers that fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. Only `auth-service` signs access tokens and exposes the trusted JWKS; this service is a Resource Server only. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
+
+## SEC-10 — explicit OAuth capabilities
+
+Domain HTTP operations require an Auth-issued human access token with an explicit
+scope and the required USER/ADMIN role. ADMIN never implies scopes, and machine
+grants cannot impersonate a human. See [the endpoint matrix, configuration and
+rollback guide](../../docs/SECURITY_SCOPES_RBAC.md). OpenAPI documents each scope.
+Fresh tokens must request the relevant capabilities; `openid profile` alone is
+insufficient. Ownership rules remain separate.

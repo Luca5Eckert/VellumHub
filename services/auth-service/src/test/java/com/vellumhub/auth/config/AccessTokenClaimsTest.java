@@ -34,6 +34,7 @@ class AccessTokenClaimsTest {
         var header = JwsHeader.with(SignatureAlgorithm.RS256);
         var claims = JwtClaimsSet.builder();
         when(context.getTokenType()).thenReturn(OAuth2TokenType.ACCESS_TOKEN);
+        when(context.getAuthorizationGrantType()).thenReturn(AuthorizationGrantType.AUTHORIZATION_CODE);
         when(context.getJwsHeader()).thenReturn(header);
         when(context.getClaims()).thenReturn(claims);
         when(context.getPrincipal()).thenReturn(new UsernamePasswordAuthenticationToken(subject, "irrelevant"));
@@ -43,6 +44,7 @@ class AccessTokenClaimsTest {
                 new com.vellumhub.auth.identity.IdentityRepository.Identity(UUID.fromString(subject), "local", "hash", com.vellumhub.auth.identity.IdentityRole.ADMIN, true)));
         config.accessTokenClaims(identities, "api://vellumhub").customize(context);
 
+        assertThat(claims.build().getClaimAsString("grant_type")).isEqualTo("authorization_code");
         assertThat(header.build().getType()).isEqualTo("at+jwt");
         assertThat(claims.build().getSubject()).isEqualTo(subject);
         assertThat(claims.build().getAudience()).containsExactly("api://vellumhub");
@@ -62,5 +64,15 @@ class AccessTokenClaimsTest {
         config.accessTokenClaims(identities, "api://vellumhub").customize(context);
         assertThat(header.build().getType()).isNotEqualTo("at+jwt");
         assertThat(claims.build().getAudience()).isNullOrEmpty();
+    }
+    @Test
+    void refusesMachineGrantBeforeResolvingAHumanIdentity() {
+        var context = mock(JwtEncodingContext.class);
+        when(context.getTokenType()).thenReturn(OAuth2TokenType.ACCESS_TOKEN);
+        when(context.getAuthorizationGrantType()).thenReturn(AuthorizationGrantType.CLIENT_CREDENTIALS);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                config.accessTokenClaims(identities, "api://vellumhub").customize(context))
+                .isInstanceOf(org.springframework.security.oauth2.core.OAuth2AuthenticationException.class);
+        org.mockito.Mockito.verifyNoInteractions(identities);
     }
 }

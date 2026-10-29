@@ -1,7 +1,9 @@
 package com.vellumhub.user_service.share.security.config;
 
 import com.vellumhub.security.jwt.JwtAccessToken;
+import com.vellumhub.security.jwt.HumanApiAccess;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authorization.AuthorizationDecision;
@@ -20,6 +22,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 
 @Configuration
 @EnableWebSecurity
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class SecurityConfig {
 
     @Value("${JWT_JWKS_URI:http://auth-service:9000/oauth2/jwks}")
@@ -56,10 +59,19 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health/**", "/actuator/prometheus").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html")
                         .access((authentication, context) -> new AuthorizationDecision(documentationEnabled))
-                        .anyRequest().authenticated())
+                        .requestMatchers(HttpMethod.GET, "/users", "/users/*")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "user:read", false)))
+                        .requestMatchers(HttpMethod.PUT, "/users/*")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "user:write", true)))
+                        .requestMatchers(HttpMethod.DELETE, "/users/*")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "user:write", true)))
+                        .anyRequest().denyAll())
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))

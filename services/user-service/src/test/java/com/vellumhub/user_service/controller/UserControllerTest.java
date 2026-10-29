@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -34,6 +34,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(UserController.class)
 class UserControllerTest {
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor human(String role, String scope) {
+        return org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt()
+                .jwt(jwt -> jwt.claim("grant_type", "authorization_code"))
+                .authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role),
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_" + scope));
+    }
+
 
     @Autowired
     private MockMvc mockMvc;
@@ -51,7 +58,6 @@ class UserControllerTest {
     class GetUserByIdTests {
 
         @Test
-        @WithMockUser
         @DisplayName("whenValidId_shouldReturnUser")
         void whenValidId_shouldReturnUser() throws Exception {
             // Arrange
@@ -65,7 +71,7 @@ class UserControllerTest {
             when(userService.get(userId)).thenReturn(expectedResponse);
 
             // Act & Assert
-            mockMvc.perform(get("/users/{id}", userId))
+            mockMvc.perform(get("/users/{id}", userId).with(human("USER", "user:read")))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.id").value(userId.toString()))
@@ -76,7 +82,6 @@ class UserControllerTest {
         }
 
         @Test
-        @WithMockUser
         @DisplayName("whenUserNotFound_shouldReturnBadRequest")
         void whenUserNotFound_shouldReturnBadRequest() throws Exception {
             // Arrange
@@ -84,18 +89,17 @@ class UserControllerTest {
             when(userService.get(userId)).thenThrow(new UserNotFoundException());
 
             // Act & Assert
-            mockMvc.perform(get("/users/{id}", userId))
+            mockMvc.perform(get("/users/{id}", userId).with(human("USER", "user:read")))
                     .andExpect(status().isBadRequest());
 
             verify(userService, times(1)).get(userId);
         }
 
         @Test
-        @WithMockUser
         @DisplayName("whenInvalidUuidFormat_shouldReturnBadRequest")
         void whenInvalidUuidFormat_shouldReturnBadRequest() throws Exception {
             // Act & Assert
-            mockMvc.perform(get("/users/{id}", "invalid-uuid"))
+            mockMvc.perform(get("/users/{id}", "invalid-uuid").with(human("USER", "user:read")))
                     .andExpect(status().isBadRequest());
 
             verify(userService, never()).get(any(UUID.class));
@@ -107,7 +111,6 @@ class UserControllerTest {
     class GetAllUsersTests {
 
         @Test
-        @WithMockUser
         @DisplayName("whenValidRequest_shouldReturnUserList")
         void whenValidRequest_shouldReturnUserList() throws Exception {
             // Arrange
@@ -119,7 +122,7 @@ class UserControllerTest {
             when(userService.getAll(0, 10)).thenReturn(users);
 
             // Act & Assert
-            mockMvc.perform(get("/users")
+            mockMvc.perform(get("/users").with(human("USER", "user:read"))
                             .param("page", "0")
                             .param("size", "10"))
                     .andExpect(status().isOk())
@@ -132,28 +135,26 @@ class UserControllerTest {
         }
 
         @Test
-        @WithMockUser
         @DisplayName("whenDefaultPagination_shouldUseDefaults")
         void whenDefaultPagination_shouldUseDefaults() throws Exception {
             // Arrange
             when(userService.getAll(0, 10)).thenReturn(List.of());
 
             // Act & Assert - use default pagination values
-            mockMvc.perform(get("/users"))
+            mockMvc.perform(get("/users").with(human("USER", "user:read")))
                     .andExpect(status().isOk());
 
             verify(userService, times(1)).getAll(0, 10);
         }
 
         @Test
-        @WithMockUser
         @DisplayName("whenEmptyList_shouldReturnEmptyArray")
         void whenEmptyList_shouldReturnEmptyArray() throws Exception {
             // Arrange
             when(userService.getAll(0, 10)).thenReturn(List.of());
 
             // Act & Assert
-            mockMvc.perform(get("/users"))
+            mockMvc.perform(get("/users").with(human("USER", "user:read")))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.length()").value(0));
@@ -165,7 +166,6 @@ class UserControllerTest {
     class UpdateUserTests {
 
         @Test
-        @WithMockUser(roles = "ADMIN")
         @DisplayName("whenValidRequest_shouldReturnNoContent")
         void whenValidRequest_shouldReturnNoContent() throws Exception {
             // Arrange
@@ -175,7 +175,7 @@ class UserControllerTest {
             doNothing().when(userService).update(eq(userId), any(UpdateUserRequest.class));
 
             // Act & Assert
-            mockMvc.perform(put("/users/{id}", userId)
+            mockMvc.perform(put("/users/{id}", userId).with(human("ADMIN", "user:write"))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -185,7 +185,6 @@ class UserControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "ADMIN")
         @DisplayName("whenUserNotFound_shouldReturnBadRequest")
         void whenUserNotFound_shouldReturnBadRequest() throws Exception {
             // Arrange
@@ -195,7 +194,7 @@ class UserControllerTest {
             doThrow(new UserNotFoundException()).when(userService).update(eq(userId), any(UpdateUserRequest.class));
 
             // Act & Assert
-            mockMvc.perform(put("/users/{id}", userId)
+            mockMvc.perform(put("/users/{id}", userId).with(human("ADMIN", "user:write"))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -208,7 +207,6 @@ class UserControllerTest {
     class DeleteUserTests {
 
         @Test
-        @WithMockUser(roles = "ADMIN")
         @DisplayName("whenValidId_shouldReturnNoContent")
         void whenValidId_shouldReturnNoContent() throws Exception {
             // Arrange
@@ -216,7 +214,7 @@ class UserControllerTest {
             doNothing().when(userService).delete(userId);
 
             // Act & Assert
-            mockMvc.perform(delete("/users/{id}", userId)
+            mockMvc.perform(delete("/users/{id}", userId).with(human("ADMIN", "user:write"))
                             .with(csrf()))
                     .andExpect(status().isNoContent());
 
@@ -224,7 +222,6 @@ class UserControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "ADMIN")
         @DisplayName("whenUserNotFound_shouldReturnBadRequest")
         void whenUserNotFound_shouldReturnBadRequest() throws Exception {
             // Arrange
@@ -232,7 +229,7 @@ class UserControllerTest {
             doThrow(new UserNotFoundException()).when(userService).delete(userId);
 
             // Act & Assert
-            mockMvc.perform(delete("/users/{id}", userId)
+            mockMvc.perform(delete("/users/{id}", userId).with(human("ADMIN", "user:write"))
                             .with(csrf()))
                     .andExpect(status().isBadRequest());
         }

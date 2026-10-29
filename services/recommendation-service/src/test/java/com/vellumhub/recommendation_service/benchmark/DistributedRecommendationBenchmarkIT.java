@@ -377,7 +377,11 @@ class DistributedRecommendationBenchmarkIT extends DistributedIntegrationTestSup
                             .with(jwt().jwt(token -> token
                                     .subject(userId.toString())
                                     .claim("user_id", userId.toString())
-                                    .claim("roles", List.of("USER")))))
+                                    .claim("roles", List.of("USER"))
+                                    .claim("grant_type", "authorization_code")
+                                    .claim("scope", "recommendation:read"))
+                                    .authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER"),
+                                            new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_recommendation:read"))))
                     .andReturn();
 
             double latencyMillis = nanosToMillis(System.nanoTime() - started);

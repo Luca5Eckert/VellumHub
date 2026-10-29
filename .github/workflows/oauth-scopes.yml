@@ -1,0 +1,42 @@
+name: SEC-10 OAuth scope and RBAC contracts
+
+on:
+  pull_request:
+    paths:
+      - 'services/**'
+      - 'lib/jwt-security/**'
+      - '.github/workflows/oauth-scopes.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'services/**'
+      - 'lib/jwt-security/**'
+
+permissions:
+  contents: read
+
+jobs:
+  oauth-scopes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Verify route matrix, OpenAPI, converter and signed JWT regression
+        run: >-
+          mvn -B -ntp -pl services/auth-service,services/user-service,services/catalog-service,services/engagement-service,services/recommendation-service
+          -am -Dtest=OAuthScopeBoundaryTest,HumanApiAccessTest,AccessTokenClaimsTest,ClientScopePolicyTest,JwtAccessTokenTest,JwtSignatureVerificationTest,UserSecurityBoundaryTest,UserControllerTest,BookControllerTest
+          -Dsurefire.failIfNoSpecifiedTests=false test
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sec-10-surefire
+          path: |
+            lib/jwt-security/target/surefire-reports/
+            services/*/target/surefire-reports/
+          retention-days: 14

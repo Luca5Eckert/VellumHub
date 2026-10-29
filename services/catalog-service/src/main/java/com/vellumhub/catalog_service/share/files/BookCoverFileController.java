@@ -30,6 +30,7 @@ public class BookCoverFileController {
     }
 
     @GetMapping("/{filename}")
+    @io.swagger.v3.oas.annotations.security.SecurityRequirements()
     @Operation(summary = "Serve book cover image", description = "Returns the cover image for a book by filename")
     public ResponseEntity<Resource> serveFile(
             @Parameter(description = "Image filename") @PathVariable String filename

@@ -15,18 +15,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.BadJwtException;
 import com.vellumhub.security.jwt.JwtAccessToken;
+import com.vellumhub.security.jwt.HumanApiAccess;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-import org.springframework.core.io.Resource;
-import org.springframework.security.converter.RsaKeyConverters;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Objects;
 
 /**
  * Configuração central de segurança para o microserviço.
@@ -40,7 +34,7 @@ import java.util.Objects;
  * <ul>
  * <li>Desabilitar CSRF e gerenciamento de sessão (Stateless).</li>
  * <li>Exigir autenticação para endpoints protegidos.</li>
- * <li>Configurar o decodificador JWT (com chave publica RSA).</li>
+ * <li>Configurar o decodificador JWT (RS256/JWKS do Auth).</li>
  * <li>Converter claims do JWT para {@code GrantedAuthority}.</li>
  * </ul>
  */
@@ -91,11 +85,44 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health/**", "/actuator/prometheus").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html")
                         .access((authentication, context) -> new AuthorizationDecision(documentationEnabled))
-                        .requestMatchers("/files/books/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.GET, "/files/books/*").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/books/bulk", "/books/covers/bulk")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "catalog:read", false)))
+                        .requestMatchers(HttpMethod.GET, "/books", "/books/*", "/books/*/cover")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "catalog:read", false)))
+                        .requestMatchers(HttpMethod.POST, "/books", "/books/isbn", "/books/*/cover", "/book-requests/*/approve")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "catalog:write", true)))
+                        .requestMatchers(HttpMethod.PUT, "/books/*")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "catalog:write", true)))
+                        .requestMatchers(HttpMethod.DELETE, "/books/*")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "catalog:write", true)))
+                        .requestMatchers(HttpMethod.GET, "/book-requests")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "catalog:requests:read", true)))
+                        .requestMatchers(HttpMethod.POST, "/book-requests")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "catalog:requests:write", false)))
+                        .requestMatchers(HttpMethod.GET, "/book-progress/reading-list", "/book-list", "/book-list/*", "/book-list/membership", "/book-list/membership/*")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "catalog:personal:read", false)))
+                        .requestMatchers(HttpMethod.POST, "/book-progress/*/status", "/book-list", "/book-list/*/books/*", "/book-list/membership/*")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "catalog:personal:write", false)))
+                        .requestMatchers(HttpMethod.PUT, "/book-progress/*/progress", "/book-list/*", "/book-list/membership/*/role")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "catalog:personal:write", false)))
+                        .requestMatchers(HttpMethod.DELETE, "/book-progress/*", "/book-list/*", "/book-list/*/books/*", "/book-list/membership/*/*")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "catalog:personal:write", false)))
+                        .anyRequest().denyAll()
                 )
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint(authenticationEntryPoint)

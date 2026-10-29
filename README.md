@@ -522,3 +522,11 @@ For the Google regression harness, compose `docker-compose.oidc-lote3.yml` on to
 
 
 PR #334 review hardening adds atomic PostgreSQL consumption of manual-link challenges, a narrow Jackson 3 policy for federated principals, the Spring Security 7 authentication factor used by OIDC `auth_time`, explicit session-filter ordering and active-identity checks before AS reuse/issuance. Controlled-provider integration tests exercise code exchange, callback rejection, local-login regression, logout, expiry and concurrent first login. A shared attempt budget and private opt-in Prometheus target/alerts are documented in the runbook. These changes remain on the draft PR; they do not establish a real-client or production cutover.
+
+### SEC-10 — OAuth scopes and RBAC
+
+User, Catalog, Engagement and Recommendation enforce explicit capability scopes
+and human roles independently, with unmapped operations denied by default. Auth
+registers an explicit client allowlist and emits grant provenance; Gateway retains
+verified Token Relay. See [the endpoint matrix and execution/validation plan](docs/SECURITY_SCOPES_RBAC.md)
+for setup, compatibility, tests and rollback. These changes do not complete #312/#313 ownership.

@@ -53,7 +53,9 @@ public class AuthorizationPersistenceConfig {
             @Value("${vellum.client.enabled:false}") boolean clientEnabled,
             @Value("${vellum.client.id:vellumhub-spa-poc}") String clientId,
             @Value("${vellum.client.redirect-uri:}") String redirectUri,
-            @Value("${vellum.client.post-logout-uri:}") String postLogoutUri) {
+            @Value("${vellum.client.post-logout-uri:}") String postLogoutUri,
+            @Value("${vellum.client.scopes:" + com.vellumhub.security.jwt.OAuthScopes.DEFAULT_CLIENT_SCOPES + "}")
+            java.util.Set<String> apiScopes) {
         var repository = new JdbcRegisteredClientRepository(jdbc);
         if (!clientEnabled) {
             return repository;
@@ -61,6 +63,12 @@ public class AuthorizationPersistenceConfig {
         if (redirectUri.isBlank() || postLogoutUri.isBlank()) {
             throw new IllegalStateException("Enabled OAuth client requires redirect and post-logout URIs");
         }
+        if (!com.vellumhub.security.jwt.OAuthScopes.API.containsAll(apiScopes)) {
+            throw new IllegalArgumentException("Unknown API scope in client registration");
+        }
+        var allowedScopes = new java.util.HashSet<>(apiScopes);
+        allowedScopes.add(OidcScopes.OPENID);
+        allowedScopes.add(OidcScopes.PROFILE);
         RegisteredClient existing = repository.findByClientId(clientId);
         if (existing == null) {
             RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString())
@@ -72,6 +80,7 @@ public class AuthorizationPersistenceConfig {
                     .postLogoutRedirectUri(postLogoutUri)
                     .scope(OidcScopes.OPENID)
                     .scope(OidcScopes.PROFILE)
+                    .scopes(scopes -> scopes.addAll(apiScopes))
                     .clientSettings(ClientSettings.builder()
                             .requireProofKey(true)
                             .requireAuthorizationConsent(false)
@@ -85,7 +94,8 @@ public class AuthorizationPersistenceConfig {
                 || !existing.getPostLogoutRedirectUris().equals(java.util.Set.of(postLogoutUri))
                 || !existing.getClientAuthenticationMethods().equals(java.util.Set.of(ClientAuthenticationMethod.NONE))
                 || !existing.getAuthorizationGrantTypes().equals(java.util.Set.of(AuthorizationGrantType.AUTHORIZATION_CODE))
-                || !existing.getClientSettings().isRequireProofKey()) {
+                || !existing.getClientSettings().isRequireProofKey()
+                || !existing.getScopes().equals(allowedScopes)) {
             throw new IllegalStateException("Existing SPA registration differs from the required public PKCE policy");
         }
         return repository;

@@ -199,6 +199,10 @@ public class AuthorizationServerConfig {
             if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
                 return; // OIDC ID tokens keep their own typ/aud semantics.
             }
+            if (!org.springframework.security.oauth2.core.AuthorizationGrantType.AUTHORIZATION_CODE
+                    .equals(context.getAuthorizationGrantType())) {
+                throw new org.springframework.security.oauth2.core.OAuth2AuthenticationException("unauthorized_client");
+            }
             String subject = context.getPrincipal().getName();
             UUID.fromString(subject); // Fail closed if username/email leaks into the principal.
             var identity = identities.findById(UUID.fromString(subject))
@@ -210,6 +214,7 @@ public class AuthorizationServerConfig {
                     .audience(new ArrayList<>(List.of(audience)))
                     .id(UUID.randomUUID().toString())
                     .claim("client_id", context.getRegisteredClient().getClientId())
+                    .claim("grant_type", "authorization_code")
                     .claim("roles", new ArrayList<>(List.of(identity.role().name())));
         };
     }

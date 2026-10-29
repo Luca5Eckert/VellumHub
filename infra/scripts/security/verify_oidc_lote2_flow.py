@@ -51,6 +51,20 @@ profile = get("/api/v1/users/me", access)
 assert profile.status == 200, f"Gateway->User did not accept token HTTP {profile.status}"
 assert json.load(profile)["id"] == canonical_id
 
+# A reduced grant must stay reduced across Auth -> Gateway -> independent APIs.
+reduced_code, reduced_verifier, _ = oauth.create_authorization_code(scopes="openid user:read")
+reduced_response = oauth.exchange(reduced_code, reduced_verifier)
+assert reduced_response.status == 200
+reduced = json.load(reduced_response)["access_token"]
+_, reduced_claims = oauth.jwt_parts(reduced)
+granted = reduced_claims["scope"]
+assert set(granted.split() if isinstance(granted, str) else granted) == {"openid", "user:read"}
+assert reduced_claims["grant_type"] == "authorization_code"
+assert get("/api/v1/users/me", reduced).status == 200
+assert get("/api/v1/catalog/books", reduced).status == 403
+assert get("/api/v1/engagement/rating/me", reduced).status == 403
+assert get("/api/v1/recommendations?limit=10&offset=0", reduced).status == 403
+
 # A protected read must succeed and a USER cannot mutate ADMIN-only Catalog content.
 books = get("/api/v1/catalog/books", access)
 assert books.status == 200, f"Gateway->Catalog JWT validation failed HTTP {books.status}"

@@ -48,8 +48,8 @@ public class RecommendationController {
      * @return List of user recommendations
      */
     @GetMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"recommendation:read"})
     @Operation(summary = "Get book recommendations", description = "Returns personalized book recommendations for the authenticated user based on their rating history and reading preferences")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Recommendations successfully retrieved",
                     content = @Content(schema = @Schema(implementation = RecommendationResponse.class))),
