@@ -7,6 +7,7 @@ import json
 import os
 import secrets
 import subprocess
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -42,8 +43,19 @@ header, claims = oauth.jwt_parts(access)
 assert claims["sub"] == canonical_id
 assert header["typ"] == "at+jwt"
 
+# Bearer API traffic must not share the AS browser CookieJar. Cookies are scoped
+# by host/path, not port, so loopback Gateway sessions can replace AS cookies.
+api_client = urllib.request.build_opener()
+
+def api_fetch(path, data=None, headers=None):
+    request = urllib.request.Request(gateway + path, data=data, headers=headers or {})
+    try:
+        return api_client.open(request, timeout=15)
+    except urllib.error.HTTPError as error:
+        return error
+
 def get(path, bearer):
-    return oauth.fetch(gateway + path, headers={"Authorization": "Bearer " + bearer,
+    return api_fetch(path, headers={"Authorization": "Bearer " + bearer,
                                                "Accept":"application/json"})
 
 # Identity must traverse Gateway and be loaded from User's autonomous database.
@@ -52,7 +64,7 @@ assert profile.status == 200, f"Gateway->User did not accept token HTTP {profile
 assert json.load(profile)["id"] == canonical_id
 
 # A reduced grant must stay reduced across Auth -> Gateway -> independent APIs.
-reduced_code, reduced_verifier, _ = oauth.create_authorization_code(scopes="openid user:read")
+reduced_code, reduced_verifier, _ = oauth.create_authorization_code(login_first=True, scopes="openid user:read")
 reduced_response = oauth.exchange(reduced_code, reduced_verifier)
 assert reduced_response.status == 200
 reduced = json.load(reduced_response)["access_token"]
@@ -89,7 +101,7 @@ valid_book = json.dumps({
     "publisher": "VellumHub CI",
     "genres": ["FICTION"]
 }).encode()
-denied = oauth.fetch(gateway + "/api/v1/catalog/books", data=valid_book,
+denied = api_fetch("/api/v1/catalog/books", data=valid_book,
         headers={"Authorization": "Bearer " + access, "Content-Type": "application/json"})
 assert denied.status == 403, (
     f"Valid Catalog ADMIN-only request returned HTTP {denied.status}, expected 403"
