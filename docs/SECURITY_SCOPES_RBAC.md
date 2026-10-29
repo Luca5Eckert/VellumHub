@@ -83,10 +83,13 @@ means either human role, with the exact listed scope. Ownership remains #312/#31
 | engagement | GET | `/reactions` | `engagement:read` | USER/ADMIN |
 | recommendation | GET | `/recommendations` | `recommendation:read` | USER/ADMIN |
 
-Anonymous exceptions remain GET `/files/books/{filename}` in Catalog and health/
+At the Resource Server boundary, anonymous exceptions remain GET `/files/books/{filename}` in Catalog and health/
 Prometheus operational routes. Swagger/OpenAPI remains controlled by
 `VELLUM_DOCS_ENABLED`. These exceptions do not turn domain reads public.
 Private provisioning is protected by its higher-priority filter chain and controller.
+Gateway retains its bearer requirement for routed cover files, so their OpenAPI/
+Postman operation inherits the bearer scheme without a capability scope. A direct
+Catalog exception does not imply anonymous access through Gateway.
 
 Bulk book/cover POST operations are reads and require `catalog:read`, not write.
 Catalog progress/list/membership capabilities are grouped as personal read/write;
