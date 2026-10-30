@@ -18,6 +18,20 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class OpenApiConfig {
+    @org.springframework.beans.factory.annotation.Value("${JWT_ISSUER:https://auth.vellumhub.local}")
+    private String issuer;
+
+    private SecurityScheme oauthScheme() {
+        var scopes = new io.swagger.v3.oas.models.security.Scopes();
+        com.vellumhub.security.jwt.OAuthScopes.API.stream().sorted()
+                .forEach(scope -> scopes.addString(scope, "Explicit API capability: " + scope));
+        return new SecurityScheme().type(SecurityScheme.Type.OAUTH2)
+                .flows(new io.swagger.v3.oas.models.security.OAuthFlows().authorizationCode(
+                        new io.swagger.v3.oas.models.security.OAuthFlow()
+                                .authorizationUrl(issuer + "/oauth2/authorize")
+                                .tokenUrl(issuer + "/oauth2/token").scopes(scopes)));
+    }
+
 
     @Bean
     public OpenAPI userServiceOpenAPI() {
@@ -25,18 +39,18 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("VellumHub User Service API")
                         .description("""
-                                RESTful API for user management and authentication in the VellumHub platform.
+                                RESTful profile API. Authentication and credentials belong exclusively to Auth.
                                 
                                 ## Overview
                                 This service handles all user-related operations including:
-                                - **User Registration**: Create new user accounts with email verification
-                                - **Authentication**: Secure JWT-based authentication system
+                                - **Provisioning**: Private idempotent profile creation by Auth
+                                - **Authorization**: Auth-issued access tokens, explicit scopes and USER/ADMIN roles
                                 - **User Management**: CRUD operations for user profiles
                                 - **Role-Based Access Control**: USER and ADMIN role management
                                 
                                 ## Authentication
                                 All protected endpoints require a valid JWT token in the Authorization header.
-                                Obtain a token via the `/auth/login` endpoint after registration.
+                                Obtain tokens from Auth using Authorization Code + PKCE S256; see each operation for required scopes.
                                 
                                 ## Rate Limiting
                                 API requests are subject to rate limiting. Please refer to response headers for current limits.
@@ -55,8 +69,9 @@ public class OpenApiConfig {
                 .addServersItem(new Server()
                         .url("http://localhost:8084")
                         .description("Development Server"))
-                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+                .addSecurityItem(new SecurityRequirement().addList("oauth2"))
                 .components(new Components()
+                        .addSecuritySchemes("oauth2", oauthScheme())
                         .addSecuritySchemes("bearerAuth",
                                 new SecurityScheme()
                                         .type(SecurityScheme.Type.HTTP)

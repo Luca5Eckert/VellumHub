@@ -36,8 +36,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @SecurityRequirement(name = "oauth2", scopes = {"user:read"})
     @Operation(summary = "Find user by ID", description = "Returns details of a specific user")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found successfully",
                     content = @Content(schema = @Schema(implementation = UserGetResponse.class))),
@@ -50,8 +50,8 @@ public class UserController {
     }
 
     @GetMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"user:read"})
     @Operation(summary = "List all users", description = "Returns a paginated list of all registered users")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User list retrieved successfully",
                     content = @Content(schema = @Schema(implementation = UserGetResponse.class))),
@@ -65,9 +65,9 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @SecurityRequirement(name = "oauth2", scopes = {"user:write"})
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update user", description = "Updates an existing user's data. Requires ADMIN role.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "User updated successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid data provided", content = @Content),
@@ -83,9 +83,9 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @SecurityRequirement(name = "oauth2", scopes = {"user:write"})
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete user", description = "Removes a user from the system. Requires ADMIN role.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "User deleted successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
@@ -98,8 +98,8 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @SecurityRequirement(name = "oauth2", scopes = {"user:read"})
     @Operation(summary = "Get authenticated user profile", description = "Returns the profile details of the currently authenticated user")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found successfully",
                     content = @Content(schema = @Schema(implementation = UserGetResponse.class))

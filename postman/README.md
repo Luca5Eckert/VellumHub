@@ -173,3 +173,11 @@ the public Gateway and is deliberately absent from this generated collection.
 Use the Auth OAuth/OIDC discovery endpoints and the local PKCE integration harness
 for authentication testing; the Postman workflow exercises authenticated
 resource-server behavior, not a second login implementation.
+
+## Required OAuth scopes (SEC-10)
+
+For the default read workflow, request `openid user:read catalog:read engagement:read
+recommendation:read` using the enabled PKCE client. The client registration must
+allow those scopes. `openid profile` alone has no domain API privileges. Admin
+mutations need both an explicitly granted admin capability and a human ADMIN role.
+See [the endpoint matrix](../docs/SECURITY_SCOPES_RBAC.md).

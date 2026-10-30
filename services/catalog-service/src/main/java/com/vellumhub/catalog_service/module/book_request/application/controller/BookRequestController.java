@@ -31,8 +31,8 @@ public class BookRequestController {
     }
 
     @PostMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:requests:write"})
     @Operation(summary = "Submit book request", description = "Submits a new book for admin review and approval. Once approved, the book will be added to the catalog.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Book request submitted successfully",
                     content = @Content(schema = @Schema(implementation = BookRequestResponse.class))),
@@ -47,9 +47,9 @@ public class BookRequestController {
     }
 
     @PostMapping("{requestId}/approve")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:write"})
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Approve book request", description = "Approves a pending book request and adds the book to the catalog. Requires ADMIN role.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Book request approved successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
@@ -64,9 +64,9 @@ public class BookRequestController {
     }
 
     @GetMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:requests:read"})
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get all book requests", description = "Retrieves a list of all book submission requests. Requires ADMIN role.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List of book requests retrieved successfully",
                     content = @Content(schema = @Schema(implementation = BookRequestResponse.class)))

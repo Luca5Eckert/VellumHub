@@ -1,5 +1,6 @@
 package com.vellumhub.catalog_service.module.book_list.presentation.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.vellumhub.catalog_service.module.book_list.application.command.member.AddMemberInBookListCommand;
 import com.vellumhub.catalog_service.module.book_list.application.command.member.DeleteMemberInBookListCommand;
 import com.vellumhub.catalog_service.module.book_list.application.command.member.UpdateMemberRoleCommand;
@@ -51,6 +52,7 @@ public class BookListMembershipController {
     }
 
     @PostMapping("/{bookListId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     @Operation(summary = "Add a new member to the book list")
     public ResponseEntity<Void> addMember(
             @PathVariable UUID bookListId,
@@ -71,6 +73,7 @@ public class BookListMembershipController {
     }
 
     @DeleteMapping("/{bookListId}/{memberId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     @Operation(summary = "Remove a member from the book list")
     public ResponseEntity<Void> removeMember(
             @PathVariable UUID bookListId,
@@ -90,6 +93,7 @@ public class BookListMembershipController {
     }
 
     @PutMapping("/{memberId}/role")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     @Operation(summary = "Update the role of a member in the book list")
     public ResponseEntity<Void> updateRole(
             @PathVariable UUID memberId,
@@ -109,6 +113,7 @@ public class BookListMembershipController {
     }
 
     @GetMapping("/{memberId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:read"})
     @Operation(summary = "Get the membership of the authenticated user in the book list")
     public ResponseEntity<GetMembershipResponse> getMembership(
             @PathVariable UUID memberId
@@ -122,6 +127,7 @@ public class BookListMembershipController {
     }
 
     @GetMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:read"})
     @Operation(
             summary = "Get all memberships of the authenticated user in the book list"
     )

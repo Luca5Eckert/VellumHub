@@ -1,5 +1,6 @@
 package com.vellumhub.engagement_service.module.reaction.presentation.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.vellumhub.engagement_service.module.reaction.application.command.CreateReactionCommand;
 import com.vellumhub.engagement_service.module.reaction.application.command.UpdateReactionCommand;
 import com.vellumhub.engagement_service.module.reaction.application.query.GetAllReactionByUserQuery;
@@ -51,6 +52,7 @@ public class ReactionController {
             description = "Creates an authenticated user's reaction and durably records the transition in the Engagement outbox. Recommendation converges asynchronously."
     )
     @PostMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"engagement:write"})
     public ResponseEntity<Void> create(
             @RequestBody @Valid CreateReactionRequest request
     ) {
@@ -67,6 +69,7 @@ public class ReactionController {
             description = "Updates the authenticated user's reaction and records ReactionChangedEvent only when its type changes. Recommendation converges asynchronously."
     )
     @PutMapping("/{id}")
+    @SecurityRequirement(name = "oauth2", scopes = {"engagement:write"})
     public ResponseEntity<Void> update(
             @PathVariable Long id,
             @RequestBody @Valid UpdateReactionRequest request
@@ -84,6 +87,7 @@ public class ReactionController {
             description = "Retrieves details of a specific reaction."
     )
     @GetMapping("/{id}")
+    @SecurityRequirement(name = "oauth2", scopes = {"engagement:read"})
     public ResponseEntity<ReactionResponse> getById(
             @PathVariable Long id
     ) {
@@ -101,6 +105,7 @@ public class ReactionController {
             description = "Retrieves all reactions belonging to the authenticated user."
     )
     @GetMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"engagement:read"})
     public ResponseEntity<List<ReactionResponse>> getAllByUser() {
         var userId = authenticationService.getAuthenticatedUserId();
 

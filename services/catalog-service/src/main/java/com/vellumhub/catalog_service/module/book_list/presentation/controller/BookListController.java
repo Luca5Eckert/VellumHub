@@ -1,5 +1,6 @@
 package com.vellumhub.catalog_service.module.book_list.presentation.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book_list.application.command.list.AddBookInListCommand;
 import com.vellumhub.catalog_service.module.book_list.application.command.list.CreateBookListCommand;
@@ -56,6 +57,7 @@ public class BookListController {
 
     @Operation(summary = "Create a new book list")
     @PostMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     public ResponseEntity<BookListResponse> create(
             @RequestBody @Valid CreatedBookListRequest request
     ) {
@@ -76,6 +78,7 @@ public class BookListController {
     }
 
     @PutMapping("/{bookListId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     @Operation(
             summary = "Update a book list",
             description = "Update the details of an existing book list. Only the owner of the book list can perform this operation."
@@ -99,6 +102,7 @@ public class BookListController {
     }
 
     @DeleteMapping("/{bookListId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     @Operation(
             summary = "Delete a book list",
             description = "Delete an existing book list. Only the owner of the book list can perform this operation."
@@ -115,6 +119,7 @@ public class BookListController {
     }
 
     @GetMapping("/{bookListId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:read"})
     @Operation(
             summary = "Retrieve a specific book list",
             description = "Fetches the details of a book list using the unique identifier provided by the user."
@@ -132,6 +137,7 @@ public class BookListController {
     }
 
     @GetMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:read"})
     @Operation(
             summary = "Get all books by filters",
             description = "Get the existing book lists who matched with filters"
@@ -172,6 +178,7 @@ public class BookListController {
     }
 
     @PostMapping("/{bookListId}/books/{bookId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     @Operation(
             summary = "Add a book to a book list",
             description = "Add a book to an existing book list."
@@ -189,6 +196,7 @@ public class BookListController {
     }
 
     @DeleteMapping("/{bookListId}/books/{bookId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     @Operation(
             summary = "Remove a book from a book list",
             description = "Remove a book from an existing book list."

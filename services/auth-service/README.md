@@ -95,3 +95,12 @@ bash infra/scripts/security/run_oidc_lote2_e2e.sh
 The full pull-request gate also runs the reactor, architecture fitness functions, Postman/OpenAPI contract checks, CodeQL, image validation and the federated/session suites.
 
 Do not infer production rollout from CI. Live Google credentials, HTTPS/proxy/cookie behavior and any real-client deployment remain environment-specific evidence.
+
+## SEC-10 — explicit OAuth capabilities
+
+Domain HTTP operations require an Auth-issued human access token with an explicit
+scope and the required USER/ADMIN role. ADMIN never implies scopes, and machine
+grants cannot impersonate a human. See [the endpoint matrix, configuration and
+rollback guide](../../docs/SECURITY_SCOPES_RBAC.md). OpenAPI documents each scope.
+Fresh tokens must request the relevant capabilities; `openid profile` alone is
+insufficient. Ownership rules remain separate.

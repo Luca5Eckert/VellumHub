@@ -47,11 +47,17 @@ class BookControllerTest {
     private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
     private static RequestPostProcessor adminJwt() {
-        return jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        return jwt().jwt(token -> token.claim("grant_type", "authorization_code"))
+                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"),
+                        new SimpleGrantedAuthority("SCOPE_catalog:read"),
+                        new SimpleGrantedAuthority("SCOPE_catalog:write"));
     }
 
     private static RequestPostProcessor userJwt() {
-        return jwt().authorities(new SimpleGrantedAuthority("ROLE_USER"));
+        return jwt().jwt(token -> token.claim("grant_type", "authorization_code"))
+                .authorities(new SimpleGrantedAuthority("ROLE_USER"),
+                        new SimpleGrantedAuthority("SCOPE_catalog:read"),
+                        new SimpleGrantedAuthority("SCOPE_catalog:write"));
     }
 
     @Nested

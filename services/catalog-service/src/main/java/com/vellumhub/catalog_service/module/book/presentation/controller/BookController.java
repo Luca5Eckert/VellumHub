@@ -43,9 +43,9 @@ public class BookController {
     }
 
     @PostMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:write"})
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create new book", description = "Persists a canonical Book and its durable change notification atomically. Other services update their local projections asynchronously. Requires ADMIN role.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Book created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid data", content = @Content),
@@ -59,9 +59,9 @@ public class BookController {
     }
 
     @PostMapping("/isbn")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:write"})
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create book by ISBN", description = "Imports by ISBN, saving the canonical Book and durable creation fact in the same database transaction; downstream projections converge asynchronously. Requires ADMIN role.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Book created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid ISBN or data", content = @Content),
@@ -77,9 +77,9 @@ public class BookController {
     }
 
     @DeleteMapping("/{id}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:write"})
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete book", description = "Soft-deletes the Book while preserving referenced reading history, and persists an ordered deletion tombstone for downstream projections. Requires ADMIN role.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Book deleted successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
@@ -93,8 +93,8 @@ public class BookController {
     }
 
     @GetMapping("/{id}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:read"})
     @Operation(summary = "Find book by ID", description = "Returns the details of a specific book")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Book found",
                     content = @Content(schema = @Schema(implementation = GetBookResponse.class))),
@@ -108,8 +108,8 @@ public class BookController {
     }
 
     @GetMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:read"})
     @Operation(summary = "List all books", description = "Returns a paginated list of all books in the catalog")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List of books returned successfully",
                     content = @Content(schema = @Schema(implementation = GetBookResponse.class))),
@@ -125,9 +125,9 @@ public class BookController {
     }
 
     @PutMapping("/{id}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:write"})
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update book", description = "Updates canonical Book metadata with optimistic concurrency control. Changed state is propagated through the transactional outbox; consumers update asynchronously. Requires ADMIN role.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Book updated successfully"),
             @ApiResponse(responseCode = "409", description = "Optimistic locking conflict; reload the current book before retrying", content = @Content),
@@ -146,6 +146,7 @@ public class BookController {
     }
 
     @PostMapping("/bulk")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:read"})
     @Operation(summary = "Get multiple books by IDs", description = "Retrieves book details for multiple books in a single request. Used internally by the Recommendation Service for enrichment.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Books retrieved successfully",
@@ -159,9 +160,9 @@ public class BookController {
     }
 
     @PostMapping(value = "/{id}/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:write"})
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Upload book cover", description = "Stores a cover image, updates the Book cover URL, and atomically enqueues the metadata change in the Catalog database. File storage is external to the database transaction. Requires ADMIN role.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Cover uploaded successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid file", content = @Content),
@@ -178,8 +179,8 @@ public class BookController {
     }
 
     @GetMapping(value = "/{id}/cover")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:read"})
     @Operation(summary = "Get book cover image", description = "Retrieves the cover image for the specified book by its ID")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Cover image retrieved successfully"),
             @ApiResponse(responseCode = "400", description = "Book has no cover image", content = @Content),
@@ -201,8 +202,8 @@ public class BookController {
     }
 
     @PostMapping("/covers/bulk")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:read"})
     @Operation(summary = "Get multiple book covers", description = "Retrieves cover images for multiple books in a single request. Returns Base64 encoded image data. Solves N+1 problem when fetching covers for recommendations.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Covers retrieved successfully",
                     content = @Content(schema = @Schema(implementation = BookCoverResponse.class))),

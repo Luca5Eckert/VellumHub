@@ -181,3 +181,12 @@ Opt-in `VELLUM_IDENTITY_PROVISIONING_ENABLED=true` enables `POST /internal/ident
 ## Google identity ownership during Lote 3
 
 Google federation and external-identity bindings are owned only by Auth. User retains profile ownership and the private idempotent provisioning command; the legacy Google login/link/unlink handlers are no longer part of the User runtime. The Lote 3 Compose file is retained only as a regression harness. See [Lote 3 runbook](../../docs/SECURITY_OIDC_LOTE3.md) for setup and rollback limits.
+
+## SEC-10 — explicit OAuth capabilities
+
+Domain HTTP operations require an Auth-issued human access token with an explicit
+scope and the required USER/ADMIN role. ADMIN never implies scopes, and machine
+grants cannot impersonate a human. See [the endpoint matrix, configuration and
+rollback guide](../../docs/SECURITY_SCOPES_RBAC.md). OpenAPI documents each scope.
+Fresh tokens must request the relevant capabilities; `openid profile` alone is
+insufficient. Ownership rules remain separate.

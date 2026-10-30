@@ -49,8 +49,8 @@ public class RatingController {
     }
 
     @PostMapping
+    @SecurityRequirement(name = "oauth2", scopes = {"engagement:write"})
     @Operation(summary = "Submit book rating", description = "Records a rating (0-5 stars) in Engagement and durably enqueues RatingCreatedEvent in the same transaction. Recommendation converges asynchronously.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Rating registered successfully",
                     content = @Content(schema = @Schema(implementation = String.class))),
@@ -66,8 +66,8 @@ public class RatingController {
     }
 
     @GetMapping("/{userId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"engagement:read"})
     @Operation(summary = "Get user ratings", description = "Returns all ratings from a specific user with optional filters")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List of ratings retrieved successfully",
                     content = @Content(schema = @Schema(implementation = RatingGetResponse.class))),
@@ -89,8 +89,8 @@ public class RatingController {
     }
 
     @GetMapping("/me")
+    @SecurityRequirement(name = "oauth2", scopes = {"engagement:read"})
     @Operation(summary = "Get authenticated user's ratings", description = "Returns all ratings from the currently authenticated user with optional filters")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List of ratings retrieved successfully",
                     content = @Content(schema = @Schema(implementation = RatingGetResponse.class))),
@@ -114,8 +114,8 @@ public class RatingController {
     }
 
     @PutMapping("/{ratingId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"engagement:write"})
     @Operation(summary = "Update rating", description = "Updates the authenticated user's rating and atomically records RatingUpdatedEvent when state changes. Recommendation converges asynchronously.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
@@ -134,8 +134,8 @@ public class RatingController {
     }
 
     @DeleteMapping("/{ratingId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"engagement:write"})
     @Operation(summary = "Delete rating", description = "Deletes the authenticated user's rating and durably records RatingDeletedEvent with the previous score. Recommendation converges asynchronously.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Rating deleted successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
@@ -153,8 +153,8 @@ public class RatingController {
     }
 
     @GetMapping("/{bookId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"engagement:read"})
     @Operation(summary = "Get book ratings", description = "Returns all ratings for a specific book")
-    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<List<RatingGetResponse>> getAll(
             @PathVariable(value = "bookId") UUID bookId,
             @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,

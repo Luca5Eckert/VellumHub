@@ -15,18 +15,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.BadJwtException;
 import com.vellumhub.security.jwt.JwtAccessToken;
+import com.vellumhub.security.jwt.HumanApiAccess;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-import org.springframework.core.io.Resource;
-import org.springframework.security.converter.RsaKeyConverters;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Objects;
 
 /**
  * Configuração central de segurança para o microserviço.
@@ -40,7 +34,7 @@ import java.util.Objects;
  * <ul>
  * <li>Desabilitar CSRF e gerenciamento de sessão (Stateless).</li>
  * <li>Exigir autenticação para endpoints protegidos.</li>
- * <li>Configurar o decodificador JWT (com chave publica RSA).</li>
+ * <li>Configurar o decodificador JWT (RS256/JWKS do Auth).</li>
  * <li>Converter claims do JWT para {@code GrantedAuthority}.</li>
  * </ul>
  */
@@ -91,10 +85,13 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health/**", "/actuator/prometheus").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html")
                         .access((authentication, context) -> new AuthorizationDecision(documentationEnabled))
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.GET, "/recommendations")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "recommendation:read", false)))
+                        .anyRequest().denyAll()
                 )
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint(authenticationEntryPoint)
