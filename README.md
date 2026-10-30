@@ -1,7 +1,5 @@
 # VellumHub
 
-> **SEC-16 auth cutover (PR #336, not yet merged):** This branch promotes `auth-service` as the sole access-token issuer and JWKS source in the default Maven, Compose and Kubernetes topology, and removes legacy authentication from User. Previously, merged PRs #320, #321, #330, #331 and #334 implemented and validated Auth/OIDC through the opt-in integration path while the default runtime still used User. The cutover here remains subject to CI and runtime validation; it is **not** evidence of production deployment. There is no real frontend or production user data to migrate.
-
 > A social reading and recommendation platform used to explore when independent services, asynchronous state, and stronger delivery guarantees justify their operational cost.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
