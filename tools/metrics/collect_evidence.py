@@ -12,6 +12,23 @@ import pathlib
 import sys
 import xml.etree.ElementTree as ET
 
+FAILURE_MATRIX = {
+    "rollback": ("failedBookProjectionRollsBackBothCheckpointAndProcessedEvent",
+                 "checkpointWriteFailureRollsBackRatingProfileAndCanBeRetried",
+                 "failedRatingDeltaDoesNotCommitIdentityOrRevisionAndCanBeRetried"),
+    "redelivery": ("bookRedeliveryDoesNotRebuildVectorAndPersistsEventIdentity",
+                   "readingProgressRedeliveryCannotIncreaseUserProfileTwice",
+                   "ratingRedeliveryThroughRealKafkaIsAcknowledgedWithoutAnotherProfileDelta",
+                   "reactionRedeliveryPreservesProfileAndSingleCheckpoint"),
+    "concurrency": ("concurrentBookRedeliverySerializesOnCheckpoint",),
+    "revision_gap": ("bookRevisionGapDoesNotAdvancePostgresCheckpoint",
+                     "readingProgressRevisionGapDoesNotChangeProfileOrCheckpoint",
+                     "ratingRevisionGapDoesNotChangeProfileCheckpointOrProcessedIdentity",
+                     "reactionRevisionGapDoesNotPersistIdentityOrAdvanceOffset"),
+    "identity_collision": ("engagementIdentityCollisionDoesNotAcknowledgeSecondAggregate",
+                           "reusingBookEventIdForAnotherAggregateRollsBackTheSecondProjection")
+}
+
 SUITES = {
     "M08": ("ConsumerIdempotencyDistributedTest",),
     "M09": ("OAuthScopeBoundaryTest", "HumanApiAccessTest",
@@ -45,6 +62,7 @@ def suite_evidence(root, names, sha):
     paths = sorted(path for path in root.glob("**/target/surefire-reports/TEST-*.xml")
                    if path.stat().st_mtime >= started)
     results = []
+    case_outcomes = {}
     for path in paths:
         try:
             suite = ET.parse(path).getroot()
@@ -57,17 +75,30 @@ def suite_evidence(root, names, sha):
             cases = element.findall("testcase")
             failures = sum(bool(case.findall("failure") or case.findall("error")) for case in cases)
             skipped = sum(bool(case.findall("skipped")) for case in cases)
+            for case in cases:
+                if case.findall("skipped"):
+                    status = "skipped"
+                elif case.findall("failure") or case.findall("error"):
+                    status = "failed"
+                else:
+                    status = "passed"
+                case_outcomes[case.get("name", "")] = status
             results.append({
                 "suite": name, "source": str(path.relative_to(root)),
                 "executed": len(cases) - skipped, "passed": len(cases) - skipped - failures,
                 "failed": failures, "skipped": skipped
             })
+    passed = sum(s["passed"] for s in results)
+    failed = sum(s["failed"] for s in results)
+    executed = sum(s["executed"] for s in results)
     return {
-        "status": "OBSERVED" if results else "MISSING",
+        "status": ("PASSED" if executed > 0 and failed == 0 else
+                   "FAILED" if failed else "MISSING"),
         "suites": results,
-        "executed": sum(s["executed"] for s in results),
-        "passed": sum(s["passed"] for s in results),
-        "failed": sum(s["failed"] for s in results),
+        "case_outcomes": case_outcomes,
+        "executed": executed,
+        "passed": passed,
+        "failed": failed,
         "skipped": sum(s["skipped"] for s in results),
         "limitation": "JUnit counts do not independently establish Kafka fault coverage or number of E2E APIs."
     }
@@ -121,12 +152,26 @@ def summarize(root, sha, profile):
             "sources": [str(quality / "run-metadata.json"), str(quality / "raw-results.json")],
             "limitation": "Synthetic offline quality; latency/freshness belongs to M07, not the same experiment."
         }
+    m08 = suite_evidence(root, SUITES["M08"], sha)
+    if m08["status"] in ("PASSED", "FAILED"):
+        m08["failure_matrix"] = {
+            category: {
+                "expected_methods": list(methods),
+                "passed_methods": [method for method in methods
+                                  if m08["case_outcomes"].get(method) == "passed"],
+                "missing_or_failed_methods": [method for method in methods
+                                              if m08["case_outcomes"].get(method) != "passed"]
+            }
+            for category, methods in FAILURE_MATRIX.items()
+        }
+        m08.pop("case_outcomes", None)
+    m09 = suite_evidence(root, SUITES["M09"], sha)
+    m09.pop("case_outcomes", None)
     return {
         "schema_version": 1, "project": "VellumHub", "commit_sha": sha,
         "captured_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "environment": "local/CI (see original run metadata)",
-        "M07": m07, "M08": suite_evidence(root, SUITES["M08"], sha),
-        "M09": suite_evidence(root, SUITES["M09"], sha), "M10": m10,
+        "M07": m07, "M08": m08, "M09": m09, "M10": m10,
         "M18": {"status": "NOT_RUN",
                 "limitation": "Kubernetes requires deploy/kubernetes/scripts/measure-kubernetes.ps1 executed against kind."}
     }
