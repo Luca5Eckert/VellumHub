@@ -2,6 +2,7 @@ package com.vellumhub.engagement_service.module.reaction.application.use_case;
 
 import com.vellumhub.engagement_service.module.reaction.application.command.UpdateReactionCommand;
 import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
+import com.vellumhub.engagement_service.module.reaction.domain.exception.ReactionNotFoundException;
 import com.vellumhub.engagement_service.module.reaction.domain.model.ReactionUpdateResult;
 import com.vellumhub.engagement_service.module.reaction.domain.model.TypeReaction;
 import com.vellumhub.engagement_service.module.reaction.application.event.ReactionEventRecorder;
@@ -35,11 +36,10 @@ public class UpdateReactionUseCase {
     @Transactional
     public ReactionUpdateResult execute(UpdateReactionCommand command) {
         Reaction reaction = reactionRepository.findByIdForUpdate(command.interactionId())
-                .orElseThrow(() -> new RuntimeException("Reaction not found"));
+                .orElseThrow(ReactionNotFoundException::new);
 
         if(!reaction.getUserId().equals(command.userId())) {
-            throw new com.vellumhub.engagement_service.module.reaction.domain.exception.ReactionException(
-                    "User cannot update reaction of another user");
+            throw new ReactionNotFoundException();
         }
         if(reaction.getTypeReaction()==command.typeReaction()) {
             return new ReactionUpdateResult(reaction,reaction.getTypeReaction());

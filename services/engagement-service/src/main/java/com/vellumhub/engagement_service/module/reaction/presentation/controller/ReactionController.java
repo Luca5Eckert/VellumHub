@@ -84,14 +84,15 @@ public class ReactionController {
 
     @Operation(
             summary = "Get Reaction by ID",
-            description = "Retrieves details of a specific reaction."
+            description = "Returns a reaction only when it belongs to the authenticated user."
     )
     @GetMapping("/{id}")
     @SecurityRequirement(name = "oauth2", scopes = {"engagement:read"})
     public ResponseEntity<ReactionResponse> getById(
             @PathVariable Long id
     ) {
-        var query = GetReactionQuery.of(id);
+        var requesterId = authenticationService.getAuthenticatedUserId();
+        var query = GetReactionQuery.of(id, requesterId);
 
         var reaction = getReactionUseCase.execute(query);
 
@@ -109,7 +110,7 @@ public class ReactionController {
     public ResponseEntity<List<ReactionResponse>> getAllByUser() {
         var userId = authenticationService.getAuthenticatedUserId();
 
-        var query = GetAllReactionByUserQuery.of(userId);
+        var query = GetAllReactionByUserQuery.of(userId, userId);
 
         var reactions = getAllReactionByUserUseCase.execute(query);
         var response = reactions.stream()
