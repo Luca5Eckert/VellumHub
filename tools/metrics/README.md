@@ -19,13 +19,24 @@ performance harness and not a claim that a CI check or production deployment pas
    ```sh
    python3 tools/metrics/collect_evidence.py --sha "$(git rev-parse HEAD)" --profile reference
    ```
-6. For M18, provision an **ephemeral kind** cluster according to
-   `deploy/kubernetes/README.md`, then:
-   ```powershell
-   ./deploy/kubernetes/scripts/measure-kubernetes.ps1
-   ```
-   This records readiness and gateway smoke only. No rollout time or rollback
-   claim follows from observing an already-running deployment.
+6. M18 now has **two distinct measurement scopes**:
+   - `.github/workflows/kubernetes-m18.yml` provisions an ephemeral
+     kind cluster and runs `python3 deploy/kubernetes/scripts/benchmark-kind.py
+     --sha "$(git rev-parse HEAD)"`. It server-validates the REAL
+     6-deployment local Kustomize overlay without launching their Java images,
+     then measures deployment/readiness, HTTP smoke, rolling update,
+     deliberately invalid-image rollout, rollback and Pod replacement using
+     a small **Nginx controller fixture**. Original JSON in
+     `target/metrics/kubernetes.json`, with git SHA; artifacts retained.
+     **Fixture timings must never be attributed to the six VellumHub apps.**
+   - `deploy/kubernetes/scripts/measure-kubernetes.ps1` remains a separate
+     manual observation of actual application deployments **only in a cluster
+     where all real images, credentials and dependencies are already available**.
+     It does not measure actual rollout/rollback duration.
+   - Full-stack M18 (six Java deployments, backing services, authentication and
+     user-facing smoke on current images) remains UNMEASURED until those exact
+     images and a working full-stack environment exist. Do not infer readiness
+     or end-to-end availability from the controller fixture.
 
 ## Controls
 
