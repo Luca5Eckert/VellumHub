@@ -59,6 +59,7 @@ public class BookListMembership {
 
     public void updateRole(MembershipRole newRole) {
         if(this.role == MembershipRole.OWNER) throw new MembershipBookListDomainException("Cannot change the role of the owner");
+        if(newRole == MembershipRole.OWNER) throw new MembershipBookListDomainException("Cannot assign the owner role");
 
         this.role = newRole;
     }

@@ -1,6 +1,8 @@
 package com.vellumhub.catalog_service.module.book_list.application.use_case.list;
 
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListResourceNotFoundException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListPermissionDeniedException;
 import com.vellumhub.catalog_service.module.book_list.application.command.list.AddBookInListCommand;
 import com.vellumhub.catalog_service.module.book_list.domain.port.BookListRepository;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,12 @@ public class AddBookInListUseCase {
     @Transactional
     public void execute(AddBookInListCommand command){
         var bookList = bookListRepository.findById(command.listId())
-                .orElseThrow(() -> new RuntimeException("Book list not found"));
+                .orElseThrow(BookListResourceNotFoundException::new);
+
+        // Check list access before looking up the related book to avoid resource probing.
+        if (!bookList.canUpdateList(command.userId())) {
+            throw new BookListPermissionDeniedException();
+        }
 
         var book = bookRepository.findById(command.bookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));

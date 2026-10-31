@@ -1,10 +1,11 @@
 package com.vellumhub.catalog_service.module.book_list.application.use_case.member;
 
 import com.vellumhub.catalog_service.module.book_list.application.query.member.GetAllMembershipOfBookListQuery;
-import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListResourceNotFoundException;
 import com.vellumhub.catalog_service.module.book_list.domain.model.BookListMembership;
 import com.vellumhub.catalog_service.module.book_list.domain.port.BookListRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,15 +25,19 @@ public class GetAllMembershipsOfBookListUseCase {
      * @return a list of memberships of the book list
      * @throws BookListDomainException if the book list is not found or if the user doesn't have permission to read the book list
      */
+    @Transactional(readOnly = true)
     public List<BookListMembership> execute(GetAllMembershipOfBookListQuery query) {
         var bookList = bookListRepository.findById(query.bookListId())
-                .orElseThrow(() -> new BookListDomainException("Book list not found"));
+                .orElseThrow(BookListResourceNotFoundException::new);
 
-        if(!bookList.canRead(query.userAuthenticatedId())) {
-            throw new BookListDomainException("User doesn't have permission to read this book list");
+        if (query.userAuthenticatedId() == null
+                || (!bookList.getUserOwner().equals(query.userAuthenticatedId())
+                && !bookList.isMember(query.userAuthenticatedId()))) {
+            // A public list does not make its membership directory public.
+            throw new BookListResourceNotFoundException();
         }
 
-        return bookList.getMemberships();
+        return List.copyOf(bookList.getMemberships()); // Load within the read-only transaction.
     }
 
 }

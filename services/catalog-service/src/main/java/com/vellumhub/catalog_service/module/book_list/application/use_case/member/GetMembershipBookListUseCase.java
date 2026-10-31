@@ -1,10 +1,11 @@
 package com.vellumhub.catalog_service.module.book_list.application.use_case.member;
 
 import com.vellumhub.catalog_service.module.book_list.application.query.member.GetMembershipQuery;
-import com.vellumhub.catalog_service.module.book_list.domain.exception.MembershipBookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListResourceNotFoundException;
 import com.vellumhub.catalog_service.module.book_list.domain.model.BookListMembership;
 import com.vellumhub.catalog_service.module.book_list.domain.port.MembershipBookListRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class GetMembershipBookListUseCase {
@@ -21,9 +22,20 @@ public class GetMembershipBookListUseCase {
      * @param query the query with the membership id
      * @return the membership
      */
+    @Transactional(readOnly = true)
     public BookListMembership execute(GetMembershipQuery query){
-        return membershipBookListRepository.findById(query.membershipId())
-                .orElseThrow(() -> new MembershipBookListDomainException("Membership not found"));
+        var membership = membershipBookListRepository.findById(query.membershipId())
+                .orElseThrow(BookListResourceNotFoundException::new);
+        var bookList = membership.getBookList();
+        if (query.userAuthenticatedId() == null || bookList == null) {
+            throw new BookListResourceNotFoundException();
+        }
+        if (!query.userAuthenticatedId().equals(membership.getUserId())
+                && !query.userAuthenticatedId().equals(bookList.getUserOwner())
+                && !bookList.isAdmin(query.userAuthenticatedId())) {
+            throw new BookListResourceNotFoundException();
+        }
+        return membership;
     }
 
 }

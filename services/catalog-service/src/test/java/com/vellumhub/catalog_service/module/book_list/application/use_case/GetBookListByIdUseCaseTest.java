@@ -2,7 +2,7 @@ package com.vellumhub.catalog_service.module.book_list.application.use_case;
 
 import com.vellumhub.catalog_service.module.book_list.application.query.list.GetBookListByIdQuery;
 import com.vellumhub.catalog_service.module.book_list.application.use_case.list.GetBookListByIdUseCase;
-import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListResourceNotFoundException;
 import com.vellumhub.catalog_service.module.book_list.domain.model.BookList;
 import com.vellumhub.catalog_service.module.book_list.domain.model.TypeBookList;
 import com.vellumhub.catalog_service.module.book_list.domain.port.BookListRepository;
@@ -64,8 +64,8 @@ class GetBookListByIdUseCaseTest {
 
         // Act & Assert
         assertThatThrownBy(() -> getBookListByIdUseCase.execute(query))
-                .isInstanceOf(BookListDomainException.class)
-                .hasMessage("Book list not found");
+                .isInstanceOf(BookListResourceNotFoundException.class)
+                .hasMessage("Book list resource not found");
 
         verify(bookListRepository).findByIdFull(bookListId);
     }
@@ -85,9 +85,17 @@ class GetBookListByIdUseCaseTest {
 
         // Act & Assert
         assertThatThrownBy(() -> getBookListByIdUseCase.execute(query))
-                .isInstanceOf(BookListDomainException.class)
-                .hasMessage("User don't have permission to read this book list");
+                .isInstanceOf(BookListResourceNotFoundException.class)
+                .hasMessage("Book list resource not found");
 
         verify(bookListRepository).findByIdFull(bookListId);
     }
+    @Test
+    void publicListRemainsAccessibleToOtherAuthenticatedUsers() {
+        UUID owner = UUID.randomUUID(), visitor = UUID.randomUUID(), listId = UUID.randomUUID();
+        var list = BookList.create("Public", "Discoverable", TypeBookList.PUBLIC, owner, new ArrayList<>());
+        given(bookListRepository.findByIdFull(listId)).willReturn(Optional.of(list));
+        assertThat(getBookListByIdUseCase.execute(GetBookListByIdQuery.of(visitor, listId))).isSameAs(list);
+    }
+
 }

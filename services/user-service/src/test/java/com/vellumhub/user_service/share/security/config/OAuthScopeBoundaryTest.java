@@ -48,7 +48,7 @@ class OAuthScopeBoundaryTest {
 
     @ParameterizedTest
     @CsvSource({
-            "GET,/users,user:read,false",
+            "GET,/users,user:read,true",
             "GET,/users/me,user:read,false",
             "GET,/users/123,user:read,false",
             "PUT,/users/123,user:write,true",

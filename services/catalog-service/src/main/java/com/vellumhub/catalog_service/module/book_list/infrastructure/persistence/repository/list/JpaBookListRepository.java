@@ -12,9 +12,8 @@ import java.util.UUID;
 public interface JpaBookListRepository extends JpaRepository<BookList, UUID>, JpaSpecificationExecutor<BookList> {
 
     @Query("""
-           SELECT bl FROM BookList bl 
-           LEFT JOIN FETCH bl.memberships 
-           LEFT JOIN FETCH bl.books 
+           SELECT DISTINCT bl FROM BookList bl
+           LEFT JOIN FETCH bl.memberships
            WHERE bl.id = :id
            """)
     Optional<BookList> findByIdFull(@Param("id") UUID id);

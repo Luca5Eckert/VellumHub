@@ -120,7 +120,7 @@ public class BookListMembershipController {
     ) {
         var requesterId = authenticationService.getAuthenticatedUserId();
 
-        var command = GetMembershipQuery.of(memberId);
+        var command = GetMembershipQuery.of(memberId, requesterId);
         var membership = getMembershipBookListUseCase.execute(command);
 
         return ResponseEntity.ok(memberMapper.toMembershipResponse(membership));

@@ -62,7 +62,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html")
                         .access((authentication, context) -> new AuthorizationDecision(documentationEnabled))
-                        .requestMatchers(HttpMethod.GET, "/users", "/users/*")
+                        .requestMatchers(HttpMethod.GET, "/users")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "user:read", true)))
+                        .requestMatchers(HttpMethod.GET, "/users/*")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "user:read", false)))
                         .requestMatchers(HttpMethod.PUT, "/users/*")

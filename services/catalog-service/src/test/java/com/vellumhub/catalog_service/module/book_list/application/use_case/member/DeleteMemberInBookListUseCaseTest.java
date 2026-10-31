@@ -2,6 +2,7 @@ package com.vellumhub.catalog_service.module.book_list.application.use_case.memb
 
 import com.vellumhub.catalog_service.module.book_list.application.command.member.DeleteMemberInBookListCommand;
 import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListPermissionDeniedException;
 import com.vellumhub.catalog_service.module.book_list.domain.model.BookList;
 import com.vellumhub.catalog_service.module.book_list.domain.model.MembershipRole;
 import com.vellumhub.catalog_service.module.book_list.domain.model.TypeBookList;
@@ -77,7 +78,7 @@ class DeleteMemberInBookListUseCaseTest {
         when(bookListRepository.findById(any())).thenReturn(Optional.of(bookList));
 
         assertThatThrownBy(() -> useCase.execute(command))
-                .isInstanceOf(BookListDomainException.class)
-                .hasMessage("User doesn't have permission to delete a member from this book list");
+                .isInstanceOf(BookListPermissionDeniedException.class)
+                .hasMessage("Insufficient book list permission");
     }
 }

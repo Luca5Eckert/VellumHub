@@ -71,4 +71,16 @@ class UserSecurityBoundaryTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().json("{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permission\"}"));
     }
+    @Test
+    void humanUserCannotEnumerateAllProfiles() throws Exception {
+        var user = jwt().jwt(token -> token.claim("grant_type", "authorization_code"))
+                .authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER"),
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_user:read"));
+        var admin = jwt().jwt(token -> token.claim("grant_type", "authorization_code"))
+                .authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"),
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_user:read"));
+        mockMvc.perform(get("/users").with(user)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/users").with(admin)).andExpect(status().isOk());
+    }
+
 }

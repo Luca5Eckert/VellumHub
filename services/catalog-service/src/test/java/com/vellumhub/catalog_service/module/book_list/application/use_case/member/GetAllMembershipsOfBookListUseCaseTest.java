@@ -1,7 +1,7 @@
 package com.vellumhub.catalog_service.module.book_list.application.use_case.member;
 
 import com.vellumhub.catalog_service.module.book_list.application.query.member.GetAllMembershipOfBookListQuery;
-import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListResourceNotFoundException;
 import com.vellumhub.catalog_service.module.book_list.domain.model.BookList;
 import com.vellumhub.catalog_service.module.book_list.domain.model.TypeBookList;
 import com.vellumhub.catalog_service.module.book_list.domain.port.BookListRepository;
@@ -56,7 +56,18 @@ class GetAllMembershipsOfBookListUseCaseTest {
         when(bookListRepository.findById(any())).thenReturn(Optional.of(bookList));
 
         assertThatThrownBy(() -> useCase.execute(query))
-                .isInstanceOf(BookListDomainException.class)
-                .hasMessage("User doesn't have permission to read this book list");
+                .isInstanceOf(BookListResourceNotFoundException.class)
+                .hasMessage("Book list resource not found");
     }
+    @Test
+    void publicListCanBeSeenButDoesNotPublishMembershipDirectory() {
+        var owner = UUID.randomUUID();
+        var outsider = UUID.randomUUID();
+        var list = BookList.create("Public", "Discoverable", TypeBookList.PUBLIC, owner, List.of());
+        when(bookListRepository.findById(any())).thenReturn(Optional.of(list));
+        assertThat(list.canRead(outsider)).isTrue();
+        assertThatThrownBy(() -> useCase.execute(new GetAllMembershipOfBookListQuery(list.getId(), outsider)))
+                .isInstanceOf(BookListResourceNotFoundException.class);
+    }
+
 }
