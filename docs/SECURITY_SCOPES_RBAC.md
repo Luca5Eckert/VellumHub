@@ -75,7 +75,8 @@ means either human role, with the exact listed scope. Ownership remains #312/#31
 | engagement | POST | `/rating` | `engagement:write` | USER/ADMIN |
 | engagement | PUT | `/rating/{id}` | `engagement:write` | USER/ADMIN |
 | engagement | DELETE | `/rating/{id}` | `engagement:write` | USER/ADMIN |
-| engagement | GET | `/rating/{id}` | `engagement:read` | USER/ADMIN |
+| engagement | GET | `/rating/{userId}` (private subject only) | `engagement:read` | USER/ADMIN |
+| engagement | GET | `/rating/books/{bookId}` (public book reviews) | `engagement:read` | USER/ADMIN |
 | engagement | GET | `/rating/me` | `engagement:read` | USER/ADMIN |
 | engagement | POST | `/reactions` | `engagement:write` | USER/ADMIN |
 | engagement | PUT | `/reactions/{id}` | `engagement:write` | USER/ADMIN |

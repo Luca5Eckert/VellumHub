@@ -1692,6 +1692,49 @@
               "response": []
             },
             {
+              "name": "Get book ratings",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/engagement/rating/books/{{bookId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "engagement",
+                    "rating",
+                    "books",
+                    "{{bookId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "pageNumber",
+                      "value": "0",
+                      "disabled": true,
+                      "description": "Page number"
+                    },
+                    {
+                      "key": "pageSize",
+                      "value": "10",
+                      "disabled": true,
+                      "description": "Page size"
+                    }
+                  ]
+                },
+                "description": "Returns all ratings for a specific book\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `getAll`."
+              },
+              "response": []
+            },
+            {
               "name": "Get authenticated user's ratings",
               "request": {
                 "method": "GET",
@@ -1754,48 +1797,6 @@
                   ]
                 },
                 "description": "Returns all ratings from the currently authenticated user with optional filters\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `findAllOfUserAuthenticated`."
-              },
-              "response": []
-            },
-            {
-              "name": "Get book ratings",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/engagement/rating/{{bookId}}",
-                  "host": [
-                    "{{gatewayUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "engagement",
-                    "rating",
-                    "{{bookId}}"
-                  ],
-                  "query": [
-                    {
-                      "key": "pageNumber",
-                      "value": "0",
-                      "disabled": true,
-                      "description": "Page number"
-                    },
-                    {
-                      "key": "pageSize",
-                      "value": "10",
-                      "disabled": true,
-                      "description": "Page size"
-                    }
-                  ]
-                },
-                "description": "Returns all ratings for a specific book\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `getAll`."
               },
               "response": []
             },
@@ -1931,7 +1932,7 @@
                     }
                   ]
                 },
-                "description": "Returns all ratings from a specific user with optional filters\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `findAllOfUser`."
+                "description": "Returns ratings only when the requested user matches the authenticated user, with optional filters\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `findAllOfUser`."
               },
               "response": []
             }
@@ -2032,7 +2033,7 @@
                     "{{id}}"
                   ]
                 },
-                "description": "Retrieves details of a specific reaction.\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `getById`."
+                "description": "Returns a reaction only when it belongs to the authenticated user.\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `getById`."
               },
               "response": []
             },
