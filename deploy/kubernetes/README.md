@@ -72,6 +72,48 @@ stack and testing authenticated routes remains a **separate unverified task**.
 Do not put the fixture seconds into a resume bullet as production backend
 rollout performance.
 
+## Full-stack M18: six real Java deployments (CI; separate from controller fixture)
+
+The [full-stack CI workflow](../../.github/workflows/kubernetes-m18-full-stack.yml)
+**builds all six application Dockerfiles at the current commit** on six
+parallel GitHub runners, uploads immutable SHA-tagged OCI image archives (1-day
+retention), then loads them into an isolated Kind v1.31.2 cluster. No GHCR push,
+cloud account, reusable credentials, or production cluster is involved.
+
+The workflow provisions in-cluster Postgres (User, Auth, Catalog, Engagement,
+Recommendation/pgvector), Kafka KRaft and Redis via the **real**
+`overlays/local` Kustomize configuration, creates ephemeral passwords, an RSA
+signing key and JWT public-key ConfigMap, and waits for all **7 backing
+StatefulSets + 6 Java Deployments** to reach Ready. The measured protocol is
+`deploy/kubernetes/scripts/benchmark-full-stack.py`:
+
+- Admission-check exactly the manifests that are about to be applied and
+  require actual Ready replicas before counting the rollout.
+- Record cold-start readiness by deployment from the apply timestamp.
+- Request both **liveness and readiness HTTP endpoints 5 times per service**,
+  via Kubernetes Service port-forward (10 successes × 6 services).
+- Perform an actual **rolling update of gateway-service's Java Pod** by
+  changing a Pod-template env var and measure until a new Ready replica and
+  successful HTTP smoke.
+- Intentionally try an **invalid gateway image**, verify the healthy old Pod
+  survives with `maxUnavailable=0`, then run `kubectl rollout undo` and
+  confirm the same original image, Pod readiness and HTTP responses.
+- Delete a real gateway Java Pod and measure replacement time plus HTTP smoke.
+
+All success/failure evidence is captured as SHA-bound JSON at
+`target/metrics/kubernetes-full-stack.json` with the rendered overlay and
+CI job/artifact link. A failure is kept as **FAILED**, not reinterpreted
+as partial success. The **older Nginx fixture** remains independently valuable
+for Kubernetes-controller timings, but its values must never be represented
+as measurements of these Java services.
+
+**Interpretation boundary:** one replica per application on one disposable
+CI machine, not high availability, cloud cluster performance, real user
+business API success, end-to-end OIDC, Argo CD reconciliation, soak testing,
+secrets management or SLO proof. The runner used for app builds is **not**
+the runner used for Kubernetes startup. Do not merge build duration and Pod
+readiness into a single timing.
+
 ## Production and GitOps
 
 Create the `vellumhub-secrets` Secret through External Secrets/your managed secret system; Kubernetes Secrets are an interface, not a production secret manager. Configure the production ConfigMap patch with external RDS/MSK/ElastiCache endpoints. Do not apply local stateful resources in production.
