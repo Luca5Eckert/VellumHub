@@ -37,8 +37,13 @@ def report(root, rel, sha, key="commitSha"):
     return {"status": "OBSERVED", "source": str(rel), "data": data}
 
 
-def suite_evidence(root, names):
-    paths = sorted(root.glob("**/target/surefire-reports/TEST-*.xml"))
+def suite_evidence(root, names, sha):
+    marker = read_json(root / "target/metrics/contract-test-run.json")
+    if not marker or marker.get("commit_sha") != sha or marker.get("exit_code") != 0:
+        return {"status": "UNBOUND", "limitation": "No successful SHA-bound test-run marker. Existing JUnit files cannot be attributed to this checkout."}
+    started = marker["started_epoch"]
+    paths = sorted(path for path in root.glob("**/target/surefire-reports/TEST-*.xml")
+                   if path.stat().st_mtime >= started)
     results = []
     for path in paths:
         try:
@@ -120,8 +125,8 @@ def summarize(root, sha, profile):
         "schema_version": 1, "project": "VellumHub", "commit_sha": sha,
         "captured_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "environment": "local/CI (see original run metadata)",
-        "M07": m07, "M08": suite_evidence(root, SUITES["M08"]),
-        "M09": suite_evidence(root, SUITES["M09"]), "M10": m10,
+        "M07": m07, "M08": suite_evidence(root, SUITES["M08"], sha),
+        "M09": suite_evidence(root, SUITES["M09"], sha), "M10": m10,
         "M18": {"status": "NOT_RUN",
                 "limitation": "Kubernetes requires deploy/kubernetes/scripts/measure-kubernetes.ps1 executed against kind."}
     }
