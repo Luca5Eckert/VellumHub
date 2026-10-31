@@ -171,17 +171,51 @@ def summarize(root, sha, profile):
     m18 = {"status": kube["status"], "source": kube["source"]}
     if kube["status"] == "OBSERVED":
         measured = kube["data"]
-        deployments = measured.get("deployment_results", [])
-        ready = sum(1 for item in deployments if item.get("ready_replicas", 0) > 0)
-        m18 = {
-            "status": "PASSED" if measured.get("passed") and
-                      ready == measured.get("expected_deployments") else "FAILED",
-            "ready_deployments": ready,
-            "expected_deployments": measured.get("expected_deployments"),
-            "deployment_results": deployments,
-            "source": kube["source"],
-            "limitation": measured.get("limitations")
-        }
+        # New kind controller test is NOT a deployment of actual Java services.
+        if measured.get("schema_version") == 2:
+            checks = ("initial_deploy", "rolling_update",
+                      "failed_update_rollback", "pod_recovery")
+            manifest = measured.get("manifest_validation") or {}
+            is_valid = (measured.get("status") == "PASSED" and
+                        measured.get("application_deployed") is False and
+                        measured.get("workload_type", "").startswith("isolated nginx fixture") and
+                        manifest.get("application_deployments_checked") == 6 and
+                        manifest.get("deployments_started") == 0 and
+                        all(isinstance(measured.get(key), dict) for key in checks) and
+                        all(measured[key].get("duration_ms", 0) > 0
+                            for key in ("initial_deploy", "rolling_update", "pod_recovery")) and
+                        measured["failed_update_rollback"].get("rollback_duration_ms", 0) > 0 and
+                        all(measured[key].get("http_successful" if key != "failed_update_rollback"
+                            else "http_successful_after_rollback") == 5
+                            for key in ("initial_deploy", "rolling_update",
+                                        "failed_update_rollback")) and
+                        measured["pod_recovery"].get("http_successful_after_recovery") == 5)
+            m18 = {
+                "status": "PASSED" if is_valid else "FAILED",
+                "scope": "kind Kubernetes controller fixture + real VellumHub overlay dry-run",
+                "real_application_deployed": False,
+                "manifest_validation": manifest,
+                "initial_deploy": measured.get("initial_deploy"),
+                "rolling_update": measured.get("rolling_update"),
+                "failed_update_rollback": measured.get("failed_update_rollback"),
+                "pod_recovery": measured.get("pod_recovery"),
+                "source": kube["source"],
+                "limitations": measured.get("limitations")
+            }
+        else:
+            deployments = measured.get("deployment_results", [])
+            ready = sum(1 for item in deployments
+                        if item.get("ready_replicas", 0) > 0)
+            m18 = {
+                "status": "PASSED" if measured.get("passed") and
+                          ready == measured.get("expected_deployments") else "FAILED",
+                "scope": "existing deployment readiness/smoke observation; no rollout/rollback benchmark",
+                "ready_deployments": ready,
+                "expected_deployments": measured.get("expected_deployments"),
+                "deployment_results": deployments,
+                "source": kube["source"],
+                "limitation": measured.get("limitations")
+            }
     return {
         "schema_version": 1, "project": "VellumHub", "commit_sha": sha,
         "captured_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
