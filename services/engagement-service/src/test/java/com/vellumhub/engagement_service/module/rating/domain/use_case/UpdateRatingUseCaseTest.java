@@ -101,7 +101,7 @@ class UpdateRatingUseCaseTest {
 
         assertThatThrownBy(() -> updateRatingUseCase.execute(command, UUID.randomUUID()))
                 .isInstanceOf(RatingDomainException.class)
-                .hasMessageContaining("Rating not found");
+                .hasMessage("Rating resource not found");
 
         verify(ratingRepository, never()).save(any());
     }
@@ -120,5 +120,17 @@ class UpdateRatingUseCaseTest {
                 .review(review)
                 .build();
     }
+    @Test
+    void cannotUpdateAnotherUsersRatingOrEmitAnUpdate() {
+        Rating owned = rating(44L, 4, "Private review");
+        when(ratingRepository.findByIdForUpdate(44L)).thenReturn(Optional.of(owned));
+        var update = new UpdateRatingCommand(44L, 1, "Tampered");
+        assertThatThrownBy(() -> updateRatingUseCase.execute(update, UUID.randomUUID()))
+                .isInstanceOf(com.vellumhub.engagement_service.module.rating.domain.exception.RatingNotFoundException.class)
+                .hasMessage("Rating resource not found");
+        verify(ratingRepository, never()).save(any());
+        assertThat(owned.getStars()).isEqualTo(4);
+    }
+
 }
 
