@@ -167,55 +167,100 @@ def summarize(root, sha, profile):
         m08.pop("case_outcomes", None)
     m09 = suite_evidence(root, SUITES["M09"], sha)
     m09.pop("case_outcomes", None)
-    kube = report(root, pathlib.Path("target/metrics/kubernetes.json"), sha, key="commit_sha")
-    m18 = {"status": kube["status"], "source": kube["source"]}
-    if kube["status"] == "OBSERVED":
-        measured = kube["data"]
-        # New kind controller test is NOT a deployment of actual Java services.
-        if measured.get("schema_version") == 2:
-            checks = ("initial_deploy", "rolling_update",
-                      "failed_update_rollback", "pod_recovery")
-            manifest = measured.get("manifest_validation") or {}
-            is_valid = (measured.get("status") == "PASSED" and
-                        measured.get("application_deployed") is False and
-                        measured.get("workload_type", "").startswith("isolated nginx fixture") and
-                        manifest.get("application_deployments_checked") == 6 and
-                        manifest.get("deployments_started") == 0 and
-                        all(isinstance(measured.get(key), dict) for key in checks) and
-                        all(measured[key].get("duration_ms", 0) > 0
-                            for key in ("initial_deploy", "rolling_update", "pod_recovery")) and
-                        measured["failed_update_rollback"].get("rollback_duration_ms", 0) > 0 and
-                        all(measured[key].get("http_successful" if key != "failed_update_rollback"
-                            else "http_successful_after_rollback") == 5
-                            for key in ("initial_deploy", "rolling_update",
-                                        "failed_update_rollback")) and
-                        measured["pod_recovery"].get("http_successful_after_recovery") == 5)
-            m18 = {
-                "status": "PASSED" if is_valid else "FAILED",
-                "scope": "kind Kubernetes controller fixture + real VellumHub overlay dry-run",
-                "real_application_deployed": False,
-                "manifest_validation": manifest,
-                "initial_deploy": measured.get("initial_deploy"),
-                "rolling_update": measured.get("rolling_update"),
-                "failed_update_rollback": measured.get("failed_update_rollback"),
-                "pod_recovery": measured.get("pod_recovery"),
-                "source": kube["source"],
-                "limitations": measured.get("limitations")
-            }
-        else:
-            deployments = measured.get("deployment_results", [])
-            ready = sum(1 for item in deployments
-                        if item.get("ready_replicas", 0) > 0)
-            m18 = {
-                "status": "PASSED" if measured.get("passed") and
-                          ready == measured.get("expected_deployments") else "FAILED",
-                "scope": "existing deployment readiness/smoke observation; no rollout/rollback benchmark",
-                "ready_deployments": ready,
-                "expected_deployments": measured.get("expected_deployments"),
-                "deployment_results": deployments,
-                "source": kube["source"],
-                "limitation": measured.get("limitations")
-            }
+    # Only a COMPLETE executed six-Java-service run supersedes the fixture.
+    real = report(root, pathlib.Path("target/metrics/kubernetes-full-stack.json"),
+                  sha, key="commit_sha")
+    if real["status"] == "OBSERVED":
+        observed = real["data"]
+        states = observed.get("deployments", {})
+        deps = observed.get("dependencies", {})
+        probes = observed.get("probes", {})
+        rollout = observed.get("rolling_update", {})
+        rollback = observed.get("rollback", {})
+        recovery = observed.get("pod_recovery", {})
+        names = ("auth-service", "gateway-service", "user-service",
+                 "catalog-service", "engagement-service", "recommendation-service")
+        infra = ("redis", "kafka", "user-postgres", "catalog-postgres",
+                 "engagement-postgres", "recommendation-postgres", "auth-postgres")
+        complete = (
+            observed.get("status") == "PASSED" and
+            observed.get("schema_version") == 3 and
+            observed.get("application_deployed") is True and
+            all(states.get(n, {}).get("ready") == 1 for n in names) and
+            all(deps.get(n, {}).get("ready") == 1 for n in infra) and
+            all(probes.get(n, {}).get("successful") is True and
+                probes.get(n, {}).get("responses") == 10 for n in names) and
+            rollout.get("http_successes") == 6 and
+            rollback.get("http_successes") == 6 and
+            recovery.get("http_successes") == 6 and
+            all(x.get("duration_ms", 0) > 0 for x in (rollout, rollback, recovery))
+        )
+        m18 = {
+            "status": "PASSED" if complete else "FAILED",
+            "scope": "six real Java services + seven local dependencies in Kind",
+            "real_application_deployed": True,
+            "ready_java_deployments": sum(states.get(n, {}).get("ready") == 1
+                                          for n in names),
+            "ready_statefulsets": sum(deps.get(n, {}).get("ready") == 1
+                                      for n in infra),
+            "http_probe_successes": sum(probes.get(n, {}).get("responses", 0)
+                                         for n in names),
+            "cold_start_total_ms": observed.get("cold_start_total_ms"),
+            "rolling_update": rollout, "rollback": rollback,
+            "pod_recovery": recovery,
+            "source": real["source"],
+            "limitations": observed.get("limitations")
+        }
+    else:
+        kube = report(root, pathlib.Path("target/metrics/kubernetes.json"), sha, key="commit_sha")
+        m18 = {"status": kube["status"], "source": kube["source"]}
+        if kube["status"] == "OBSERVED":
+            measured = kube["data"]
+            # New kind controller test is NOT a deployment of actual Java services.
+            if measured.get("schema_version") == 2:
+                checks = ("initial_deploy", "rolling_update",
+                          "failed_update_rollback", "pod_recovery")
+                manifest = measured.get("manifest_validation") or {}
+                is_valid = (measured.get("status") == "PASSED" and
+                            measured.get("application_deployed") is False and
+                            measured.get("workload_type", "").startswith("isolated nginx fixture") and
+                            manifest.get("application_deployments_checked") == 6 and
+                            manifest.get("deployments_started") == 0 and
+                            all(isinstance(measured.get(key), dict) for key in checks) and
+                            all(measured[key].get("duration_ms", 0) > 0
+                                for key in ("initial_deploy", "rolling_update", "pod_recovery")) and
+                            measured["failed_update_rollback"].get("rollback_duration_ms", 0) > 0 and
+                            all(measured[key].get("http_successful" if key != "failed_update_rollback"
+                                else "http_successful_after_rollback") == 5
+                                for key in ("initial_deploy", "rolling_update",
+                                            "failed_update_rollback")) and
+                            measured["pod_recovery"].get("http_successful_after_recovery") == 5)
+                m18 = {
+                    "status": "PASSED" if is_valid else "FAILED",
+                    "scope": "kind Kubernetes controller fixture + real VellumHub overlay dry-run",
+                    "real_application_deployed": False,
+                    "manifest_validation": manifest,
+                    "initial_deploy": measured.get("initial_deploy"),
+                    "rolling_update": measured.get("rolling_update"),
+                    "failed_update_rollback": measured.get("failed_update_rollback"),
+                    "pod_recovery": measured.get("pod_recovery"),
+                    "source": kube["source"],
+                    "limitations": measured.get("limitations")
+                }
+            else:
+                deployments = measured.get("deployment_results", [])
+                ready = sum(1 for item in deployments
+                            if item.get("ready_replicas", 0) > 0)
+                m18 = {
+                    "status": "PASSED" if measured.get("passed") and
+                              ready == measured.get("expected_deployments") else "FAILED",
+                    "scope": "existing deployment readiness/smoke observation; no rollout/rollback benchmark",
+                    "ready_deployments": ready,
+                    "expected_deployments": measured.get("expected_deployments"),
+                    "deployment_results": deployments,
+                    "source": kube["source"],
+                    "limitation": measured.get("limitations")
+                }
     return {
         "schema_version": 1, "project": "VellumHub", "commit_sha": sha,
         "captured_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
