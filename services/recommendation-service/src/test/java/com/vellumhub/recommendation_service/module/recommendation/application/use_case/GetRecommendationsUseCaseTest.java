@@ -5,6 +5,9 @@ import com.vellumhub.recommendation_service.module.recommendation.application.co
 import com.vellumhub.recommendation_service.module.recommendation.domain.model.Recommendation;
 import com.vellumhub.recommendation_service.module.recommendation.domain.port.RecommendationRepository;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
+import com.vellumhub.recommendation_service.share.provider.UserAuthenticationProvider;
+import org.springframework.security.access.AccessDeniedException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +32,9 @@ class GetRecommendationsUseCaseTest {
     @Mock
     private RecommendationRepository recommendationRepository;
 
+    @Mock
+    private UserAuthenticationProvider requester;
+
     private GetRecommendationsUseCase getRecommendationsUseCase;
 
     private SimpleMeterRegistry meterRegistry;
@@ -39,7 +45,8 @@ class GetRecommendationsUseCaseTest {
         getRecommendationsUseCase = new GetRecommendationsUseCase(
                 bookFeatureRepository,
                 recommendationRepository,
-                new VellumHubMetrics(meterRegistry)
+                new VellumHubMetrics(meterRegistry),
+                requester
         );
     }
 
@@ -48,6 +55,7 @@ class GetRecommendationsUseCaseTest {
     void shouldReturnRecommendationsForUser() {
         // Arrange
         UUID userId = UUID.randomUUID();
+        when(requester.getUserId()).thenReturn(userId);
         GetRecommendationsCommand command = new GetRecommendationsCommand(userId, 10, 0);
         List<UUID> userBookIds = List.of(UUID.randomUUID(), UUID.randomUUID());
         Recommendation recommendation = createRecommendation("User Discovery");
@@ -74,6 +82,7 @@ class GetRecommendationsUseCaseTest {
     void shouldFallbackToPopularBooksWhenNoUserInteractions() {
         // Arrange
         UUID userId = UUID.randomUUID();
+        when(requester.getUserId()).thenReturn(userId);
         GetRecommendationsCommand command = new GetRecommendationsCommand(userId, 5, 0);
         List<UUID> popularBookIds = List.of(UUID.randomUUID());
         Recommendation popularRec = createRecommendation("Popular Choice");
@@ -97,6 +106,7 @@ class GetRecommendationsUseCaseTest {
     void shouldFallbackToPopularBooksWhenUserInteractionsNull() {
         // Arrange
         UUID userId = UUID.randomUUID();
+        when(requester.getUserId()).thenReturn(userId);
         GetRecommendationsCommand command = new GetRecommendationsCommand(userId, 5, 0);
         List<UUID> popularBookIds = List.of(UUID.randomUUID());
 
@@ -149,4 +159,13 @@ class GetRecommendationsUseCaseTest {
                 .timer()
                 .count();
     }
+    @Test
+    void privateRecommendationReadCannotSwitchToAnotherUser() {
+        UUID subject = UUID.randomUUID(), target = UUID.randomUUID();
+        when(requester.getUserId()).thenReturn(subject);
+        assertThatThrownBy(() -> getRecommendationsUseCase.execute(new GetRecommendationsCommand(target, 10, 0)))
+                .isInstanceOf(AccessDeniedException.class);
+        verifyNoInteractions(bookFeatureRepository, recommendationRepository);
+    }
+
 }
