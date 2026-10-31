@@ -40,6 +40,7 @@ jobs:
             -Dsurefire.failIfNoSpecifiedTests=false \
             -Dgroups=distributed-benchmark \
             -Dbenchmark.profile=reference \
+            -Dbenchmark.outputDir="${GITHUB_WORKSPACE}/services/recommendation-service/target/distributed-benchmark/reference" \
             -Dbenchmark.commitSha="${SOURCE_SHA}" test
 
       - name: M07 - Recommendation freshness (separate Maven process)
@@ -49,6 +50,7 @@ jobs:
             -Dsurefire.failIfNoSpecifiedTests=false \
             -Dgroups=distributed-benchmark \
             -Dbenchmark.profile=reference \
+            -Dbenchmark.outputDir="${GITHUB_WORKSPACE}/services/recommendation-service/target/distributed-benchmark/reference" \
             -Dbenchmark.commitSha="${SOURCE_SHA}" test
 
       - name: M10 - Ranking quality on production embedding pipeline
@@ -57,6 +59,7 @@ jobs:
             -Dtest=RecommendationQualityEvaluationIT \
             -Dsurefire.failIfNoSpecifiedTests=false \
             -Dgroups=evaluation \
+            -Devaluation.outputDir="${GITHUB_WORKSPACE}/services/recommendation-service/target/evaluation-results/reference" \
             -Devaluation.commitSha="${SOURCE_SHA}" test
 
       - name: M08/M09 - Distributed idempotency and authorization suites
