@@ -167,13 +167,27 @@ def summarize(root, sha, profile):
         m08.pop("case_outcomes", None)
     m09 = suite_evidence(root, SUITES["M09"], sha)
     m09.pop("case_outcomes", None)
+    kube = report(root, pathlib.Path("target/metrics/kubernetes.json"), sha, key="commit_sha")
+    m18 = {"status": kube["status"], "source": kube["source"]}
+    if kube["status"] == "OBSERVED":
+        measured = kube["data"]
+        deployments = measured.get("deployment_results", [])
+        ready = sum(1 for item in deployments if item.get("ready_replicas", 0) > 0)
+        m18 = {
+            "status": "PASSED" if measured.get("passed") and
+                      ready == measured.get("expected_deployments") else "FAILED",
+            "ready_deployments": ready,
+            "expected_deployments": measured.get("expected_deployments"),
+            "deployment_results": deployments,
+            "source": kube["source"],
+            "limitation": measured.get("limitations")
+        }
     return {
         "schema_version": 1, "project": "VellumHub", "commit_sha": sha,
         "captured_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "environment": "local/CI (see original run metadata)",
         "M07": m07, "M08": m08, "M09": m09, "M10": m10,
-        "M18": {"status": "NOT_RUN",
-                "limitation": "Kubernetes requires deploy/kubernetes/scripts/measure-kubernetes.ps1 executed against kind."}
+        "M18": m18
     }
 
 
@@ -191,7 +205,7 @@ def main():
     print(f"Evidence summary: {output}")
     print(" ".join(f"{metric}={result[metric]['status']}" for metric in
                    ("M07", "M08", "M09", "M10", "M18")))
-    # Missing evidence is an explicit gap, not a passing claim. --strict controls gates.
+    # Missing evidence is an explicit gap, not a passing claim.
     return 0
 
 
