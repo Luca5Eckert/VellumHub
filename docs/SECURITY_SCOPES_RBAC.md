@@ -38,7 +38,7 @@ means either human role, with the exact listed scope. Ownership remains #312/#31
 
 | Service | Method | Path | Required scope | Human role |
 | --- | --- | --- | --- | --- |
-| user | GET | `/users` | `user:read` | USER/ADMIN |
+| user | GET | `/users` | `user:read` | ADMIN |
 | user | GET | `/users/me` | `user:read` | USER/ADMIN |
 | user | GET | `/users/{id}` | `user:read` | USER/ADMIN |
 | user | PUT | `/users/{id}` | `user:write` | ADMIN |

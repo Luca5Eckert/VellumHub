@@ -2,6 +2,8 @@ package com.vellumhub.catalog_service.module.book_list.application.use_case.memb
 
 import com.vellumhub.catalog_service.module.book_list.application.command.member.AddMemberInBookListCommand;
 import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListPermissionDeniedException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListResourceNotFoundException;
 import com.vellumhub.catalog_service.module.book_list.domain.model.BookList;
 import com.vellumhub.catalog_service.module.book_list.domain.model.MembershipRole;
 import com.vellumhub.catalog_service.module.book_list.domain.model.TypeBookList;
@@ -57,8 +59,8 @@ class AddMemberInBookListUseCaseTest {
         when(bookListRepository.findById(any())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(command))
-                .isInstanceOf(BookListDomainException.class)
-                .hasMessage("Book list not found");
+                .isInstanceOf(BookListResourceNotFoundException.class)
+                .hasMessage("Book list resource not found");
     }
 
     @Test
@@ -72,7 +74,20 @@ class AddMemberInBookListUseCaseTest {
         when(bookListRepository.findById(any())).thenReturn(Optional.of(bookList));
 
         assertThatThrownBy(() -> useCase.execute(command))
-                .isInstanceOf(BookListDomainException.class)
-                .hasMessage("User doesn't have permission to add a member to this book list");
+                .isInstanceOf(BookListPermissionDeniedException.class)
+                .hasMessage("Insufficient book list permission");
     }
+    @Test
+    void assigningAnAdditionalOwnerIsForbidden() {
+        var owner = UUID.randomUUID();
+        var listId = UUID.randomUUID();
+        var list = BookList.create("List", "Description", TypeBookList.PUBLIC, owner, List.of());
+        when(bookListRepository.findById(listId)).thenReturn(Optional.of(list));
+        var cmd = new AddMemberInBookListCommand(listId, owner, UUID.randomUUID(), MembershipRole.OWNER);
+        assertThatThrownBy(() -> useCase.execute(cmd))
+                .isInstanceOf(BookListDomainException.class)
+                .hasMessage("Owner membership cannot be assigned");
+        org.mockito.Mockito.verify(bookListRepository, org.mockito.Mockito.never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
 }

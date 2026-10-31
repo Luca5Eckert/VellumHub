@@ -2,6 +2,7 @@ package com.vellumhub.catalog_service.module.book_list.application.use_case.memb
 
 import com.vellumhub.catalog_service.module.book_list.application.command.member.UpdateMemberRoleCommand;
 import com.vellumhub.catalog_service.module.book_list.domain.exception.MembershipBookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListResourceNotFoundException;
 import com.vellumhub.catalog_service.module.book_list.domain.model.BookList;
 import com.vellumhub.catalog_service.module.book_list.domain.model.BookListMembership;
 import com.vellumhub.catalog_service.module.book_list.domain.model.MembershipRole;
@@ -62,8 +63,8 @@ class UpdateMemberRoleUseCaseTest {
 
         // Act & Assert
         assertThatThrownBy(() -> useCase.execute(command))
-                .isInstanceOf(MembershipBookListDomainException.class)
-                .hasMessage("Membership not found");
+                .isInstanceOf(BookListResourceNotFoundException.class)
+                .hasMessage("Book list resource not found");
     }
 
     @Test
@@ -82,4 +83,16 @@ class UpdateMemberRoleUseCaseTest {
                 .isInstanceOf(MembershipBookListDomainException.class)
                 .hasMessage("Cannot change the role of the owner");
     }
+    @Test
+    void assigningOwnerRoleToAnExistingMemberIsForbidden() {
+        var owner = UUID.randomUUID();
+        var list = BookList.create("List", "Description", TypeBookList.PUBLIC, owner, List.of());
+        var member = BookListMembership.create(list, UUID.randomUUID(), MembershipRole.VIEWER);
+        when(membershipRepository.findById(any())).thenReturn(Optional.of(member));
+        assertThatThrownBy(() -> useCase.execute(new UpdateMemberRoleCommand(MembershipRole.OWNER, owner, UUID.randomUUID())))
+                .isInstanceOf(MembershipBookListDomainException.class)
+                .hasMessage("Cannot assign the owner role");
+        org.mockito.Mockito.verify(membershipRepository, org.mockito.Mockito.never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
 }

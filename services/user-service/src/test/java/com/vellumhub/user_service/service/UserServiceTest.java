@@ -222,4 +222,18 @@ class UserServiceTest {
             assertThat(capturedPage.pageNumber()).isEqualTo(pageNumber);
         }
     }
+    @Test
+    @DisplayName("Only the requested profile owner can read private data by ID")
+    void ownProfileOnly() {
+        UUID owner = UUID.randomUUID(), attacker = UUID.randomUUID();
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> userService.getOwned(owner, attacker))
+                .isInstanceOf(com.vellumhub.user_service.module.user.application.exception.UserNotFoundException.class);
+        verifyNoInteractions(getUserHandler);
+        UserEntity user = UserEntity.builder().id(owner).name("Owner").email("owner@example.invalid").build();
+        UserGetResponse response = new UserGetResponse(owner, "Owner", "owner@example.invalid");
+        when(getUserHandler.execute(owner)).thenReturn(user);
+        when(userMapper.toGetResponse(user)).thenReturn(response);
+        assertThat(userService.getOwned(owner, owner)).isEqualTo(response);
+    }
+
 }

@@ -37,7 +37,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @SecurityRequirement(name = "oauth2", scopes = {"user:read"})
-    @Operation(summary = "Find user by ID", description = "Returns details of a specific user")
+    @Operation(summary = "Find own profile by ID", description = "Returns private profile data only when the requested ID matches the authenticated subject")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found successfully",
                     content = @Content(schema = @Schema(implementation = UserGetResponse.class))),
@@ -45,13 +45,14 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
     })
     public ResponseEntity<UserGetResponse> getById(@Parameter(description = "User unique ID") @PathVariable UUID id) {
-        UserGetResponse user = userService.get(id);
+        UserGetResponse user = userService.getOwned(id, authenticationService.getAuthenticatedUserId());
         return ResponseEntity.ok(user);
     }
 
     @GetMapping
     @SecurityRequirement(name = "oauth2", scopes = {"user:read"})
-    @Operation(summary = "List all users", description = "Returns a paginated list of all registered users")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "List all users", description = "ADMIN only: returns a paginated list of registered users")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User list retrieved successfully",
                     content = @Content(schema = @Schema(implementation = UserGetResponse.class))),

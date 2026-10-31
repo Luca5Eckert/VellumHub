@@ -1,6 +1,10 @@
 package com.vellumhub.catalog_service.share.exception;
 
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.MembershipBookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListResourceNotFoundException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListPermissionDeniedException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotExistException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressConflictException;
@@ -107,6 +111,33 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
+    }
+
+    @ExceptionHandler(BookListPermissionDeniedException.class)
+    public ResponseEntity<ApiResponseError> handleListForbidden(BookListPermissionDeniedException ex, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.FORBIDDEN;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value()).error("Forbidden").message("Insufficient permission")
+                .details(List.of("List operation denied"))
+                .path(request.getRequestURI()).timestamp(Instant.now()).build());
+    }
+
+    @ExceptionHandler(BookListResourceNotFoundException.class)
+    public ResponseEntity<ApiResponseError> handleHiddenList(BookListResourceNotFoundException ex, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value()).error("Not Found").message("Book list resource not found")
+                .details(List.of("Resource unavailable"))
+                .path(request.getRequestURI()).timestamp(Instant.now()).build());
+    }
+
+    @ExceptionHandler({BookListDomainException.class, MembershipBookListDomainException.class})
+    public ResponseEntity<ApiResponseError> handleListValidation(RuntimeException ex, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value()).error("Book List Error").message(ex.getMessage())
+                .details(List.of("Book list business rule violation"))
+                .path(request.getRequestURI()).timestamp(Instant.now()).build());
     }
 
     @ExceptionHandler(BookDomainException.class)

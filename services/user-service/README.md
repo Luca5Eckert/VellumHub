@@ -190,3 +190,8 @@ grants cannot impersonate a human. See [the endpoint matrix, configuration and
 rollback guide](../../docs/SECURITY_SCOPES_RBAC.md). OpenAPI documents each scope.
 Fresh tokens must request the relevant capabilities; `openid profile` alone is
 insufficient. Ownership rules remain separate.
+
+
+### SEC-11 profile ownership
+
+`GET /users/me` resolves the JWT subject. `GET /users/{id}` exposes private profile data only to that subject; other IDs return a generic 404. `GET /users` requires ADMIN and `user:read`. See [SEC-11](../../docs/SECURITY_OWNERSHIP_SEC11.md).

@@ -1,6 +1,7 @@
 package com.vellumhub.user_service.share.exception;
 
 import com.vellumhub.user_service.module.user.application.exception.UserApplicationException;
+import com.vellumhub.user_service.module.user.application.exception.UserNotFoundException;
 import com.vellumhub.user_service.module.user.domain.exception.UserDomainException;
 import com.vellumhub.user_service.module.user_preference.domain.exception.UserPreferenceDomainException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -62,6 +63,15 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiResponseError> handleUserNotFound(UserNotFoundException ex, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value()).error("Not Found")
+                .message("User not found").details(List.of("Resource unavailable"))
+                .path(request.getRequestURI()).timestamp(Instant.now()).build());
     }
 
     @ExceptionHandler(UserApplicationException.class)

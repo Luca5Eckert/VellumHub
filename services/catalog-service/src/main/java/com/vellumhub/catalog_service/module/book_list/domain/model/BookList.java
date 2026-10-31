@@ -2,6 +2,7 @@ package com.vellumhub.catalog_service.module.book_list.domain.model;
 
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListPermissionDeniedException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -174,7 +175,7 @@ public class BookList {
      * @throws BookListDomainException if the book already exists in the book list.
      */
     public void addBook(Book book, UUID userId) {
-        if(!this.canUpdateList(userId)) throw new BookListDomainException("Only admins can add books to the book list");
+        if(!this.canUpdateList(userId)) throw new BookListPermissionDeniedException();
         if(this.containsBook(book)) throw new BookListDomainException("Book already exists in the book list");
 
         this.books.add(book);
@@ -191,7 +192,7 @@ public class BookList {
     }
 
     public void removeBook(Book book, UUID userId) {
-        if(!this.canUpdateList(userId)) throw new BookListDomainException("Only admins can remove books from the book list");
+        if(!this.canUpdateList(userId)) throw new BookListPermissionDeniedException();
         if(!this.containsBook(book)) throw new BookListDomainException("Book not found in the book list");
 
         this.books.removeIf(b -> b.getId().equals(book.getId()));

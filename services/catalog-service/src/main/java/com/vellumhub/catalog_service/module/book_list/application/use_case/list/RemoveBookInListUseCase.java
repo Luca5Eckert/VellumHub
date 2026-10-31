@@ -1,9 +1,12 @@
 package com.vellumhub.catalog_service.module.book_list.application.use_case.list;
 
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListResourceNotFoundException;
+import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListPermissionDeniedException;
 import com.vellumhub.catalog_service.module.book_list.application.command.member.RemoveBookInListCommand;
 import com.vellumhub.catalog_service.module.book_list.domain.port.BookListRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RemoveBookInListUseCase {
@@ -16,9 +19,15 @@ public class RemoveBookInListUseCase {
         this.bookRepository = bookRepository;
     }
 
+    @Transactional
     public void execute(RemoveBookInListCommand command){
         var bookList = bookListRepository.findById(command.listId())
-                .orElseThrow(() -> new RuntimeException("Book list not found"));
+                .orElseThrow(BookListResourceNotFoundException::new);
+
+        // Check list access before looking up the related book to avoid resource probing.
+        if (!bookList.canUpdateList(command.userId())) {
+            throw new BookListPermissionDeniedException();
+        }
 
         var book = bookRepository.findById(command.bookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));

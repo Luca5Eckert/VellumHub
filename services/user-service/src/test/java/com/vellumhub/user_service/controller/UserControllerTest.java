@@ -68,41 +68,43 @@ class UserControllerTest {
                     "john.doe@example.com"
             );
 
-            when(userService.get(userId)).thenReturn(expectedResponse);
+            when(authenticationService.getAuthenticatedUserId()).thenReturn(userId);
+            when(userService.getOwned(userId, userId)).thenReturn(expectedResponse);
 
             // Act & Assert
-            mockMvc.perform(get("/users/{id}", userId).with(human("USER", "user:read")))
+            mockMvc.perform(get("/users/{id}", userId).with(human("ADMIN", "user:read")))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.id").value(userId.toString()))
                     .andExpect(jsonPath("$.name").value("John Doe"))
                     .andExpect(jsonPath("$.email").value("john.doe@example.com"));
 
-            verify(userService, times(1)).get(userId);
+            verify(userService, times(1)).getOwned(userId, userId);
         }
 
         @Test
         @DisplayName("whenUserNotFound_shouldReturnBadRequest")
-        void whenUserNotFound_shouldReturnBadRequest() throws Exception {
+        void whenUserNotFound_shouldReturnNotFound() throws Exception {
             // Arrange
             UUID userId = UUID.randomUUID();
-            when(userService.get(userId)).thenThrow(new UserNotFoundException());
+            when(authenticationService.getAuthenticatedUserId()).thenReturn(userId);
+            when(userService.getOwned(userId, userId)).thenThrow(new UserNotFoundException());
 
             // Act & Assert
-            mockMvc.perform(get("/users/{id}", userId).with(human("USER", "user:read")))
-                    .andExpect(status().isBadRequest());
+            mockMvc.perform(get("/users/{id}", userId).with(human("ADMIN", "user:read")))
+                    .andExpect(status().isNotFound());
 
-            verify(userService, times(1)).get(userId);
+            verify(userService, times(1)).getOwned(userId, userId);
         }
 
         @Test
         @DisplayName("whenInvalidUuidFormat_shouldReturnBadRequest")
         void whenInvalidUuidFormat_shouldReturnBadRequest() throws Exception {
             // Act & Assert
-            mockMvc.perform(get("/users/{id}", "invalid-uuid").with(human("USER", "user:read")))
+            mockMvc.perform(get("/users/{id}", "invalid-uuid").with(human("ADMIN", "user:read")))
                     .andExpect(status().isBadRequest());
 
-            verify(userService, never()).get(any(UUID.class));
+            verify(userService, never()).getOwned(any(UUID.class), any(UUID.class));
         }
     }
 
@@ -122,7 +124,7 @@ class UserControllerTest {
             when(userService.getAll(0, 10)).thenReturn(users);
 
             // Act & Assert
-            mockMvc.perform(get("/users").with(human("USER", "user:read"))
+            mockMvc.perform(get("/users").with(human("ADMIN", "user:read"))
                             .param("page", "0")
                             .param("size", "10"))
                     .andExpect(status().isOk())
@@ -141,7 +143,7 @@ class UserControllerTest {
             when(userService.getAll(0, 10)).thenReturn(List.of());
 
             // Act & Assert - use default pagination values
-            mockMvc.perform(get("/users").with(human("USER", "user:read")))
+            mockMvc.perform(get("/users").with(human("ADMIN", "user:read")))
                     .andExpect(status().isOk());
 
             verify(userService, times(1)).getAll(0, 10);
@@ -154,7 +156,7 @@ class UserControllerTest {
             when(userService.getAll(0, 10)).thenReturn(List.of());
 
             // Act & Assert
-            mockMvc.perform(get("/users").with(human("USER", "user:read")))
+            mockMvc.perform(get("/users").with(human("ADMIN", "user:read")))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.length()").value(0));
@@ -198,7 +200,7 @@ class UserControllerTest {
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isNotFound());
         }
     }
 
@@ -231,7 +233,7 @@ class UserControllerTest {
             // Act & Assert
             mockMvc.perform(delete("/users/{id}", userId).with(human("ADMIN", "user:write"))
                             .with(csrf()))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isNotFound());
         }
     }
 }

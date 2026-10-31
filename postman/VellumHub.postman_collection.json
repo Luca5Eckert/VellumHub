@@ -362,7 +362,7 @@
                     }
                   ]
                 },
-                "description": "Returns a paginated list of all registered users\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `getAll`."
+                "description": "ADMIN only: returns a paginated list of registered users\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `getAll`."
               },
               "response": []
             },
@@ -394,7 +394,7 @@
               "response": []
             },
             {
-              "name": "Find user by ID",
+              "name": "Find own profile by ID",
               "request": {
                 "method": "GET",
                 "header": [
@@ -416,7 +416,7 @@
                     "{{id}}"
                   ]
                 },
-                "description": "Returns details of a specific user\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `getById`."
+                "description": "Returns private profile data only when the requested ID matches the authenticated subject\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `getById`."
               },
               "response": []
             },

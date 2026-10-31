@@ -1,6 +1,7 @@
 package com.vellumhub.user_service.module.user.domain.service;
 
 import com.vellumhub.user_service.module.user.domain.UserEntity;
+import com.vellumhub.user_service.module.user.application.exception.UserNotFoundException;
 import com.vellumhub.user_service.module.user.domain.handler.*;
 import com.vellumhub.user_service.module.user.domain.mapper.UserMapper;
 import com.vellumhub.user_service.module.user.domain.page.PageUser;
@@ -36,6 +37,14 @@ public class UserService {
 
     public void update(UUID userId, UpdateUserRequest updateUserRequest){
         updateUserHandler.execute(userId, updateUserRequest);
+    }
+
+    /** Only the canonical JWT subject may retrieve a private profile by ID. */
+    public UserGetResponse getOwned(UUID userId, UUID requesterId) {
+        if (requesterId == null || !userId.equals(requesterId)) {
+            throw new UserNotFoundException(); // Do not disclose the target profile's existence.
+        }
+        return get(userId);
     }
 
     public UserGetResponse get(UUID userId){
