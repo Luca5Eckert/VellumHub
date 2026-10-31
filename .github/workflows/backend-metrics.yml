@@ -1,7 +1,9 @@
-name: Backend metrics reference (manual)
+name: Backend metrics reference
 
 on:
   workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -13,9 +15,13 @@ concurrency:
 jobs:
   metrics:
     runs-on: ubuntu-latest
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -34,7 +40,7 @@ jobs:
             -Dsurefire.failIfNoSpecifiedTests=false \
             -Dgroups=distributed-benchmark \
             -Dbenchmark.profile=reference \
-            -Dbenchmark.commitSha="${GITHUB_SHA}" test
+            -Dbenchmark.commitSha="${SOURCE_SHA}" test
 
       - name: M07 - Recommendation freshness (separate Maven process)
         run: |
@@ -43,7 +49,7 @@ jobs:
             -Dsurefire.failIfNoSpecifiedTests=false \
             -Dgroups=distributed-benchmark \
             -Dbenchmark.profile=reference \
-            -Dbenchmark.commitSha="${GITHUB_SHA}" test
+            -Dbenchmark.commitSha="${SOURCE_SHA}" test
 
       - name: M10 - Ranking quality on production embedding pipeline
         run: |
@@ -51,20 +57,20 @@ jobs:
             -Dtest=RecommendationQualityEvaluationIT \
             -Dsurefire.failIfNoSpecifiedTests=false \
             -Dgroups=evaluation \
-            -Devaluation.commitSha="${GITHUB_SHA}" test
+            -Devaluation.commitSha="${SOURCE_SHA}" test
 
       - name: M08/M09 - Distributed idempotency and authorization suites
         run: bash tools/metrics/run-contract-suites.sh
 
       - name: Summarize SHA-bound evidence
         if: always()
-        run: python3 tools/metrics/collect_evidence.py --sha "${GITHUB_SHA}" --profile reference
+        run: python3 tools/metrics/collect_evidence.py --sha "${SOURCE_SHA}" --profile reference
 
       - name: Upload original reports and metrics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: vellumhub-backend-metrics-${{ github.sha }}
+          name: vellumhub-backend-metrics-${{ env.SOURCE_SHA }}
           path: |
             services/recommendation-service/target/distributed-benchmark/reference/
             services/recommendation-service/target/evaluation-results/reference/
