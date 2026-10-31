@@ -2,6 +2,8 @@ package com.vellumhub.engagement_service.module.reaction.application.use_case;
 
 import com.vellumhub.engagement_service.module.reaction.application.query.GetAllReactionByUserQuery;
 import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
+import com.vellumhub.engagement_service.module.reaction.domain.exception.ReactionNotFoundException;
+import java.util.Objects;
 import com.vellumhub.engagement_service.module.reaction.domain.port.ReactionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,9 @@ public class GetAllReactionByUserUseCase {
 
     @Transactional(readOnly = true)
     public List<Reaction> execute(GetAllReactionByUserQuery query){
+        if (query.requesterId() == null || !Objects.equals(query.userId(), query.requesterId())) {
+            throw new ReactionNotFoundException();
+        }
         return reactionRepository.findAllByUserId(query.userId());
     }
 

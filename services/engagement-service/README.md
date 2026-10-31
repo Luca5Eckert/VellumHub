@@ -204,3 +204,13 @@ grants cannot impersonate a human. See [the endpoint matrix, configuration and
 rollback guide](../../docs/SECURITY_SCOPES_RBAC.md). OpenAPI documents each scope.
 Fresh tokens must request the relevant capabilities; `openid profile` alone is
 insufficient. Ownership rules remain separate.
+
+
+### SEC-12: interactions and ownership
+
+Rating and reaction writes are always attributed to the verified JWT subject.
+Private rating/user and reaction-by-ID reads require the same subject, with
+non-enumerating 404 for hidden resources. Reviews by book are available at
+`GET /rating/books/{bookId}` (the old UUID book path was ambiguous with user
+ratings); this endpoint remains explicitly visible with `engagement:read`.
+See [SEC-12 ownership matrix](../../docs/SECURITY_OWNERSHIP_SEC12.md).

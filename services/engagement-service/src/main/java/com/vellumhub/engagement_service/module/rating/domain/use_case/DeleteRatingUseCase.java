@@ -27,7 +27,7 @@ public class DeleteRatingUseCase {
                 .orElseThrow(() -> new RatingNotFoundException("Rating not found with id: " + command.ratingId()));
 
         if(!Objects.equals(rating.getUserId(),command.userId())){
-            throw new RatingDomainException("User not authorized to delete this rating");
+            throw new RatingNotFoundException("Rating resource not found");
         }
 
         ratingRepository.deleteById(command.ratingId());

@@ -2,6 +2,8 @@ package com.vellumhub.engagement_service.share.exception;
 
 import com.vellumhub.engagement_service.module.rating.application.exception.EngagementApplicationException;
 import com.vellumhub.engagement_service.module.rating.domain.exception.RatingDomainException;
+import com.vellumhub.engagement_service.module.rating.domain.exception.RatingNotFoundException;
+import com.vellumhub.engagement_service.module.reaction.domain.exception.ReactionNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,17 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
+    }
+
+    @ExceptionHandler({RatingNotFoundException.class, ReactionNotFoundException.class})
+    public ResponseEntity<ApiResponseError> handlePrivateResourceHidden(RuntimeException ex, HttpServletRequest request) {
+        String resource = ex instanceof RatingNotFoundException ? "rating" : "reaction";
+        logger.info("authorization_decision resource={} decision=not_visible", resource);
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value()).error("Not Found").message("Resource not found")
+                .details(List.of("Resource unavailable"))
+                .path(request.getRequestURI()).timestamp(Instant.now()).build());
     }
 
     @ExceptionHandler(RatingDomainException.class)

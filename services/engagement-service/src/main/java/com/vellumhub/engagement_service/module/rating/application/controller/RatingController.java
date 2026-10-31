@@ -67,7 +67,7 @@ public class RatingController {
 
     @GetMapping("/{userId}")
     @SecurityRequirement(name = "oauth2", scopes = {"engagement:read"})
-    @Operation(summary = "Get user ratings", description = "Returns all ratings from a specific user with optional filters")
+    @Operation(summary = "Get user ratings", description = "Returns ratings only when the requested user matches the authenticated user, with optional filters")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List of ratings retrieved successfully",
                     content = @Content(schema = @Schema(implementation = RatingGetResponse.class))),
@@ -82,8 +82,9 @@ public class RatingController {
             @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize
     ) {
+        var requesterId = authenticationService.getAuthenticatedUserId();
         List<RatingGetResponse> response = getUserRatingHandler.handle(
-                userId, minStars, maxStars, from, to, pageNumber, pageSize
+                userId, requesterId, minStars, maxStars, from, to, pageNumber, pageSize
         );
         return ResponseEntity.ok(response);
     }
@@ -107,7 +108,7 @@ public class RatingController {
       var userId = authenticationService.getAuthenticatedUserId();
 
         List<RatingGetResponse> response = getUserRatingHandler.handle(
-                userId, minStars, maxStars, from, to, pageNumber, pageSize
+                userId, userId, minStars, maxStars, from, to, pageNumber, pageSize
         );
 
         return ResponseEntity.ok(response);
@@ -152,7 +153,7 @@ public class RatingController {
                 .build();
     }
 
-    @GetMapping("/{bookId}")
+    @GetMapping("/books/{bookId}")
     @SecurityRequirement(name = "oauth2", scopes = {"engagement:read"})
     @Operation(summary = "Get book ratings", description = "Returns all ratings for a specific book")
     public ResponseEntity<List<RatingGetResponse>> getAll(

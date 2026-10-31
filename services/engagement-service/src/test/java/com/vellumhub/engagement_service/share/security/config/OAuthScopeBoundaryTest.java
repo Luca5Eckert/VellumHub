@@ -52,6 +52,7 @@ class OAuthScopeBoundaryTest {
             "PUT,/rating/123,engagement:write,false",
             "DELETE,/rating/123,engagement:write,false",
             "GET,/rating/123,engagement:read,false",
+            "GET,/rating/books/123,engagement:read,false",
             "GET,/rating/me,engagement:read,false",
             "POST,/reactions,engagement:write,false",
             "PUT,/reactions/123,engagement:write,false",

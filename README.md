@@ -479,3 +479,12 @@ The base Kubernetes ingress exposes Gateway API routes. Auth browser endpoints r
 | Metrics, logs, traces and incident response | [Observability](docs/OBSERVABILITY.md), [Runbooks](docs/OBSERVABILITY_RUNBOOKS.md) |
 | Deployment and operations | [CI/CD](docs/CI_CD.md), [Operations](docs/OPERATIONS.md), [Kubernetes](deploy/kubernetes/README.md) |
 | API exploration and request workflows | [OpenAPI](docs/api-documentation.md), [Postman](postman/README.md) |
+
+
+### SEC-12: per-user Engagement and Recommendation authorization
+
+Engagement now hides non-owned ratings and reactions and disambiguates public
+book-rating reads as `GET /rating/books/{bookId}`. Recommendation checks that
+its query identity matches the authenticated subject without adding cross-service
+fan-out. The full contract, HTTP decisions and rollback steps are documented
+in [SEC-12](docs/SECURITY_OWNERSHIP_SEC12.md).

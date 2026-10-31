@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record GetUserRatingCommand(
         UUID userId,
+        UUID requesterId,
         Integer minStars,
         Integer maxStars,
         OffsetDateTime from,

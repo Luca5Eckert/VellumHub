@@ -1,6 +1,8 @@
 package com.vellumhub.engagement_service.module.rating.domain.use_case;
 
 import com.vellumhub.engagement_service.module.rating.domain.filter.RatingFilter;
+import com.vellumhub.engagement_service.module.rating.domain.exception.RatingNotFoundException;
+import java.util.Objects;
 import com.vellumhub.engagement_service.module.rating.domain.command.GetUserRatingCommand;
 import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
 import com.vellumhub.engagement_service.module.rating.domain.port.RatingRepository;
@@ -20,6 +22,10 @@ public class GetUserRatingUseCase {
     public Page<Rating> execute(
             GetUserRatingCommand command
     ){
+
+        if (command.requesterId() == null || !Objects.equals(command.userId(), command.requesterId())) {
+            throw new RatingNotFoundException("Rating resource not found");
+        }
 
         RatingFilter filter = RatingFilter.builder()
                 .minStars(command.minStars())

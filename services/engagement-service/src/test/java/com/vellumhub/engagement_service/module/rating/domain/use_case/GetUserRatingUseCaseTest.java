@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -36,7 +37,7 @@ class GetUserRatingUseCaseTest {
     void shouldReturnPageOfRatings() {
         // Arrange
         UUID userId = UUID.randomUUID();
-        GetUserRatingCommand command = new GetUserRatingCommand(userId, 3, 5, null, null, 0, 10);
+        GetUserRatingCommand command = new GetUserRatingCommand(userId, userId, 3, 5, null, null, 0, 10);
 
         Rating rating = new Rating(userId, UUID.randomUUID(), 4, "Good!", null);
         Page<Rating> expectedPage = new PageImpl<>(List.of(rating));
@@ -59,7 +60,7 @@ class GetUserRatingUseCaseTest {
     void shouldReturnEmptyPageWhenNoRatingsExist() {
         // Arrange
         UUID userId = UUID.randomUUID();
-        GetUserRatingCommand command = new GetUserRatingCommand(userId, null, null, null, null, 0, 10);
+        GetUserRatingCommand command = new GetUserRatingCommand(userId, userId, null, null, null, null, 0, 10);
 
         when(ratingRepository.findAll(eq(userId), any(RatingFilter.class), any(PageRequest.class)))
                 .thenReturn(Page.empty());
@@ -71,4 +72,13 @@ class GetUserRatingUseCaseTest {
         assertThat(result).isNotNull();
         assertThat(result.getContent()).isEmpty();
     }
+    @Test
+    void crossUserReadIsDeniedBeforePersistenceQuery() {
+        UUID owner = UUID.randomUUID(), attacker = UUID.randomUUID();
+        var request = new GetUserRatingCommand(owner, attacker, null, null, null, null, 0, 10);
+        assertThatThrownBy(() -> getUserRatingUseCase.execute(request))
+                .isInstanceOf(com.vellumhub.engagement_service.module.rating.domain.exception.RatingNotFoundException.class);
+        verifyNoInteractions(ratingRepository);
+    }
+
 }

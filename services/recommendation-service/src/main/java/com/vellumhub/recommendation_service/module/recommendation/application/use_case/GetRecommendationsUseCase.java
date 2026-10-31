@@ -5,6 +5,8 @@ import com.vellumhub.recommendation_service.module.recommendation.application.co
 import com.vellumhub.recommendation_service.module.recommendation.domain.model.Recommendation;
 import com.vellumhub.recommendation_service.module.recommendation.domain.port.RecommendationRepository;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
+import com.vellumhub.recommendation_service.share.provider.UserAuthenticationProvider;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,14 +18,20 @@ public class GetRecommendationsUseCase {
     private final BookFeatureRepository bookFeatureRepository;
     private final RecommendationRepository recommendationRepository;
     private final VellumHubMetrics metrics;
+    private final UserAuthenticationProvider authenticatedUser;
 
-    public GetRecommendationsUseCase(BookFeatureRepository bookFeatureRepository, RecommendationRepository recommendationRepository, VellumHubMetrics metrics) {
+    public GetRecommendationsUseCase(BookFeatureRepository bookFeatureRepository, RecommendationRepository recommendationRepository, VellumHubMetrics metrics, UserAuthenticationProvider authenticatedUser) {
         this.bookFeatureRepository = bookFeatureRepository;
         this.recommendationRepository = recommendationRepository;
         this.metrics = metrics;
+        this.authenticatedUser = authenticatedUser;
     }
 
     public List<Recommendation> execute(GetRecommendationsCommand command) {
+        // The requested user must be the verified token subject, even for a direct use-case call.
+        if (command.userId() == null || !command.userId().equals(authenticatedUser.getUserId())) {
+            throw new AccessDeniedException("Insufficient recommendation permission");
+        }
         var sample = metrics.startBusinessTimer();
 
         try {

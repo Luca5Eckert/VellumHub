@@ -1,6 +1,7 @@
 package com.vellumhub.recommendation_service.share.exception;
 
 import com.vellumhub.recommendation_service.module.book_feature.domain.exception.BookFeatureDomainException;
+import org.springframework.security.access.AccessDeniedException;
 import com.vellumhub.recommendation_service.module.book_feature.domain.exception.BookFeatureNotFoundException;
 import com.vellumhub.recommendation_service.module.user_profile.domain.exception.UserProfileDomainException;
 import com.vellumhub.recommendation_service.module.user_profile.domain.exception.UserProfileNotFoundException;
@@ -46,6 +47,16 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
                 .build());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponseError> handleDeniedRecommendation(AccessDeniedException ex, HttpServletRequest request) {
+        logger.info("authorization_decision resource=recommendation decision=denied");
+        HttpStatus status = HttpStatus.FORBIDDEN;
+        return ResponseEntity.status(status).body(ApiResponseError.builder()
+                .status(status.value()).error("Forbidden").message("Insufficient permission")
+                .details(List.of("Resource access denied"))
+                .path(request.getRequestURI()).timestamp(Instant.now()).build());
     }
 
     @ExceptionHandler(UserProfileNotFoundException.class)

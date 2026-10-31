@@ -1,7 +1,7 @@
 package com.vellumhub.engagement_service.module.rating.domain.use_case;
 
 import com.vellumhub.engagement_service.module.rating.domain.command.UpdateRatingCommand;
-import com.vellumhub.engagement_service.module.rating.domain.exception.RatingDomainException;
+import com.vellumhub.engagement_service.module.rating.domain.exception.RatingNotFoundException;
 import com.vellumhub.engagement_service.module.rating.domain.model.Rating;
 import com.vellumhub.engagement_service.module.rating.domain.model.RatingUpdateResult;
 import com.vellumhub.engagement_service.module.rating.domain.port.RatingRepository;
@@ -23,10 +23,10 @@ public class UpdateRatingUseCase {
     @Transactional
     public RatingUpdateResult execute(UpdateRatingCommand command, UUID authenticatedUserId) {
         Rating rating = ratingRepository.findByIdForUpdate(command.ratingId())
-                .orElseThrow(() -> new RatingDomainException("Rating not found"));
+                .orElseThrow(() -> new RatingNotFoundException("Rating resource not found"));
 
         if(!Objects.equals(rating.getUserId(),authenticatedUserId)) {
-            throw new RatingDomainException("User not authorized to update this rating");
+            throw new RatingNotFoundException("Rating resource not found");
         }
 
         int oldStars = rating.getStars();

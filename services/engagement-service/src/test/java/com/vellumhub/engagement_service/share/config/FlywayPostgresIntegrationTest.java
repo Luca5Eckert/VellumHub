@@ -265,4 +265,55 @@ class FlywayPostgresIntegrationTest {
                 column
         ));
     }
+    @Test
+    @Order(5)
+    void subjectOwnershipIsEnforcedAgainstRealPostgres(
+            @Autowired JdbcTemplate jdbc,
+            @Autowired com.vellumhub.engagement_service.module.reaction.application.use_case.GetReactionUseCase getReaction,
+            @Autowired com.vellumhub.engagement_service.module.reaction.application.use_case.UpdateReactionUseCase updateReaction,
+            @Autowired com.vellumhub.engagement_service.module.rating.domain.use_case.GetUserRatingUseCase getRatings,
+            @Autowired com.vellumhub.engagement_service.module.rating.domain.use_case.UpdateRatingUseCase updateRating
+    ) {
+        UUID owner = UUID.randomUUID(), intruder = UUID.randomUUID(), book = UUID.randomUUID();
+        long reactionId = -313131L;
+        jdbc.update("INSERT INTO reactions(id,user_id,type_reaction,created_at,updated_at) "
+                + "VALUES (?,?, 'POSITIVE', now(), now())", reactionId, owner);
+        long ratingId = jdbc.queryForObject("INSERT INTO rating(user_id,book_id,stars,review,timestamp) "
+                + "VALUES (?,?,4,'Original review',now()) RETURNING id", Long.class, owner, book);
+        try {
+            assertThatThrownBy(() -> getReaction.execute(
+                    com.vellumhub.engagement_service.module.reaction.application.query.GetReactionQuery.of(reactionId, intruder)))
+                    .isInstanceOf(com.vellumhub.engagement_service.module.reaction.domain.exception.ReactionNotFoundException.class);
+            assertThat(getReaction.execute(
+                    com.vellumhub.engagement_service.module.reaction.application.query.GetReactionQuery.of(reactionId, owner))
+                    .getUserId()).isEqualTo(owner);
+
+            assertThatThrownBy(() -> updateReaction.execute(
+                    com.vellumhub.engagement_service.module.reaction.application.command.UpdateReactionCommand.of(
+                            intruder, reactionId, TypeReaction.NEGATIVE)))
+                    .isInstanceOf(com.vellumhub.engagement_service.module.reaction.domain.exception.ReactionNotFoundException.class);
+            assertThat(jdbc.queryForObject("SELECT type_reaction FROM reactions WHERE id=?", String.class, reactionId))
+                    .isEqualTo("POSITIVE");
+
+            assertThatThrownBy(() -> getRatings.execute(
+                    new com.vellumhub.engagement_service.module.rating.domain.command.GetUserRatingCommand(
+                            owner, intruder, null, null, null, null, 0, 10)))
+                    .isInstanceOf(com.vellumhub.engagement_service.module.rating.domain.exception.RatingNotFoundException.class);
+            assertThat(getRatings.execute(
+                    new com.vellumhub.engagement_service.module.rating.domain.command.GetUserRatingCommand(
+                            owner, owner, null, null, null, null, 0, 10)).getContent())
+                    .anyMatch(r -> r.getId().equals(ratingId));
+
+            assertThatThrownBy(() -> updateRating.execute(
+                    new com.vellumhub.engagement_service.module.rating.domain.command.UpdateRatingCommand(
+                            ratingId, 1, "Tampered"), intruder))
+                    .isInstanceOf(com.vellumhub.engagement_service.module.rating.domain.exception.RatingNotFoundException.class);
+            assertThat(jdbc.queryForObject("SELECT review FROM rating WHERE id=?", String.class, ratingId))
+                    .isEqualTo("Original review");
+        } finally {
+            jdbc.update("DELETE FROM rating WHERE id=?", ratingId);
+            jdbc.update("DELETE FROM reactions WHERE id=?", reactionId);
+        }
+    }
+
 }

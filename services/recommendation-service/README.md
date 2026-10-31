@@ -214,3 +214,11 @@ grants cannot impersonate a human. See [the endpoint matrix, configuration and
 rollback guide](../../docs/SECURITY_SCOPES_RBAC.md). OpenAPI documents each scope.
 Fresh tokens must request the relevant capabilities; `openid profile` alone is
 insufficient. Ownership rules remain separate.
+
+
+### SEC-12: recommendation ownership
+
+`GET /recommendations` derives the user exclusively from the verified JWT
+subject. The use case revalidates this context before local read-model/vector
+queries; no per-request User/Catalog/Engagement call is introduced. See
+[SEC-12 ownership matrix](../../docs/SECURITY_OWNERSHIP_SEC12.md).
