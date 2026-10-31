@@ -6,31 +6,32 @@ performance harness and not a claim that a CI check or production deployment pas
 ## Run
 
 1. Check out the exact SHA to measure; use Docker and the documented test environment.
-2. Run both \`DistributedRecommendationBenchmarkIT\` and
-   \`RecommendationFreshnessBenchmarkIT\` in separate Maven processes, with
-   \`-Dbenchmark.profile=reference\` and \`-Dbenchmark.commitSha=$(git rev-parse HEAD)\`.
-   Follow \`services/recommendation-service/benchmark/README.md\`.
-3. Run \`RecommendationQualityEvaluationIT\`, passing
-   \`-Devaluation.commitSha=$(git rev-parse HEAD)\`; follow the evaluation README.
-4. Run the relevant security and Kafka distributed test suites. JUnit XML must be
-   present under \`target/surefire-reports\`; absent/skipped tests are not successes.
+2. Run both `DistributedRecommendationBenchmarkIT` and
+   `RecommendationFreshnessBenchmarkIT` in separate Maven processes, with
+   `-Dbenchmark.profile=reference` and `-Dbenchmark.commitSha=$(git rev-parse HEAD)`.
+   Follow `services/recommendation-service/benchmark/README.md`.
+3. Run `RecommendationQualityEvaluationIT`, passing
+   `-Devaluation.commitSha=$(git rev-parse HEAD)`; follow the evaluation README.
+4. Run `bash tools/metrics/run-contract-suites.sh` for M08/M09. The runner
+   writes a SHA/time-bound marker only when Maven succeeds. JUnit XML must be
+   from that execution; absent/skipped tests are not successes.
 5. Collect:
-   \`\`\`sh
+   ```sh
    python3 tools/metrics/collect_evidence.py --sha "$(git rev-parse HEAD)" --profile reference
-   \`\`\`
+   ```
 6. For M18, provision an **ephemeral kind** cluster according to
-   \`deploy/kubernetes/README.md\`, then:
-   \`\`\`powershell
+   `deploy/kubernetes/README.md`, then:
+   ```powershell
    ./deploy/kubernetes/scripts/measure-kubernetes.ps1
-   \`\`\`
+   ```
    This records readiness and gateway smoke only. No rollout time or rollback
    claim follows from observing an already-running deployment.
 
 ## Controls
 
-- Output is local in \`target/metrics\`. Do not commit raw benchmark identifiers,
+- Output is local in `target/metrics`. Do not commit raw benchmark identifiers,
   tokens, user fields, AWS credentials, or environment-specific paths.
-- A missing/mismatched SHA remains \`MISSING\` / \`SHA_MISMATCH\`, never zero.
+- A missing/mismatched SHA remains `MISSING` / `SHA_MISMATCH`, never zero.
 - M07 projection, freshness and read p95 are separate measurements. The
   freshness p95 for a 90-event burst must not be mislabeled as all-event p95.
 - M08 counts only actual JUnit executions of the idempotency suite; **coverage
