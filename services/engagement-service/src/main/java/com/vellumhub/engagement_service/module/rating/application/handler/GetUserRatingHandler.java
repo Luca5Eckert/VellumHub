@@ -27,6 +27,7 @@ public class GetUserRatingHandler {
     @Transactional(readOnly = true)
     public List<RatingGetResponse> handle(
             UUID userId,
+            UUID requesterId,
             Integer minStars,
             Integer maxStars,
             OffsetDateTime from,
@@ -37,6 +38,7 @@ public class GetUserRatingHandler {
 
         GetUserRatingCommand getUserRatingCommand = new GetUserRatingCommand(
                 userId,
+                requesterId,
                 minStars,
                 maxStars,
                 from,

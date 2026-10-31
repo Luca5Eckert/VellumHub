@@ -47,7 +47,7 @@ class GetUserRatingHandlerTest {
         when(ratingMapper.toGetResponse(rating)).thenReturn(response);
 
         // Act
-        List<RatingGetResponse> result = getUserRatingHandler.handle(userId, null, null, null, null, 0, 10);
+        List<RatingGetResponse> result = getUserRatingHandler.handle(userId, userId, null, null, null, null, 0, 10);
 
         // Assert
         assertThat(result).hasSize(1);
@@ -66,7 +66,7 @@ class GetUserRatingHandlerTest {
                 .thenReturn(new PageImpl<>(List.of()));
 
         // Act
-        List<RatingGetResponse> result = getUserRatingHandler.handle(userId, null, null, null, null, 0, 10);
+        List<RatingGetResponse> result = getUserRatingHandler.handle(userId, userId, null, null, null, null, 0, 10);
 
         // Assert
         assertThat(result).isEmpty();
