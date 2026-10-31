@@ -27,11 +27,13 @@ try {
   $record = [ordered]@{
     schema_version = 1
     metric_id = "M18"
+    commit_sha = (git rev-parse HEAD 2>$null)
     timestamp_utc = (Get-Date).ToUniversalTime().ToString("o")
     environment = "user-supplied Kubernetes context"
     context = (kubectl config current-context 2>$null)
     namespace = $Namespace
     deployment_results = $results
+    expected_deployments = $services.Count
     passed = $passed
     limitations = "Observation of existing rollout readiness and smoke, not deployment duration, rollback or production uptime"
   }
