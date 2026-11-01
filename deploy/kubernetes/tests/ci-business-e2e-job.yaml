@@ -20,7 +20,7 @@ spec:
         - name: e2e
           image: python:3.12-alpine
           imagePullPolicy: IfNotPresent
-          command: [python3, -u, /ci/verify_oidc_lote2_flow.py]
+          command: [python3, -u, /ci/verify_kind_business_flows.py]
           env:
             - {name: VELLUM_AUTH_ISSUER, value: "http://auth-service:9000"}
             - {name: VELLUM_GATEWAY_URL, value: "http://gateway-service:8080"}
