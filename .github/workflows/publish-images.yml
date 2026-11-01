@@ -127,3 +127,29 @@ jobs:
             target/ci-images/${{ matrix.image }}.cdx.json
           retention-days: 30
           if-no-files-found: error
+
+  release-set:
+    name: Assemble verified six-image release manifest
+    needs: [verify, kind-functional-gate, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-image-reference-*
+          path: target/release-set/artifacts
+      - name: Reject incomplete or mixed-SHA release sets
+        run: |
+          set -euo pipefail
+          python3 tools/ci/release_manifest.py \
+            --artifacts target/release-set/artifacts \
+            --sha "$GITHUB_SHA" \
+            --output target/release-set/release-manifest.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vellumhub-release-manifest-${{ github.sha }}
+          path: target/release-set/release-manifest.json
+          retention-days: 90
+          if-no-files-found: error
