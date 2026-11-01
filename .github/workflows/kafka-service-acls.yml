@@ -1,0 +1,78 @@
+name: Kafka broker identities and ACLs (SEC-14)
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/kafka-service-acls.yml"
+      - "infra/kafka/**"
+      - "infra/scripts/kafka/**"
+      - "docker-compose.kafka-secure.yml"
+      - "docker-compose.yml"
+      - "services/**/src/main/resources/application.properties"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  broker-acls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static policy assertions
+        run: python3 -m unittest discover -s infra/scripts/kafka -p 'test_*.py' -v
+      - name: Generate disposable identities (not GitHub secrets)
+        run: |
+          python3 - <<'PY'
+          import os, secrets
+          passwords = ["KAFKA_ADMIN_PASSWORD", "KAFKA_CATALOG_PASSWORD",
+                       "KAFKA_USER_PASSWORD", "KAFKA_ENGAGEMENT_PASSWORD",
+                       "KAFKA_RECOMMENDATION_PASSWORD"]
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as out:
+              for key in passwords:
+                  value = secrets.token_urlsafe(36)
+                  print("::add-mask::" + value)
+                  out.write(key + "=" + value + "\n")
+          names = ["POSTGRES_CATALOG_USER", "POSTGRES_CATALOG_PASSWORD",
+                   "POSTGRES_ENGAGEMENT_USER", "POSTGRES_ENGAGEMENT_PASSWORD",
+                   "POSTGRES_USER_USER", "POSTGRES_USER_PASSWORD",
+                   "POSTGRES_AUTH_USER", "POSTGRES_AUTH_PASSWORD",
+                   "POSTGRES_RECOMMENDATION_USER", "POSTGRES_RECOMMENDATION_PASSWORD",
+                   "VELLUM_INTERNAL_PROVISION_KEY"]
+          with open(".env", "w", encoding="utf-8") as out:
+              for key in names:
+                  out.write(key + "=" + secrets.token_hex(20) + "\n")
+              out.write("JWT_ISSUER=https://auth.vellumhub.local\n")
+              out.write("VELLUM_AUTH_KEY_DIR=./.local/keys\n")
+              out.write("CORS_ALLOWED_ORIGINS=http://localhost:3000\n")
+          PY
+      - name: Write broker and client JAAS into ignored files
+        run: |
+          python3 infra/scripts/kafka/generate-local-secrets.py
+          # Confluent cp-kafka runs with UID 1000; host runner uses a different UID.
+          # Keep secrets mode 0600 and make ONLY the disposable container user owner.
+          sudo chown -R 1000:1000 .secrets/kafka
+      - name: Run authenticated broker with deny-by-default ACLs
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml up -d --wait zookeeper kafka
+          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml run --rm --no-deps kafka-acl-init
+      - name: Verify authorized and forbidden read/write, DLT and retry
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml run --rm --no-deps \
+            --entrypoint python3 kafka-acl-init /opt/kafka/verify-acls.py
+      - name: Diagnose failed broker startup without exposing credentials
+        if: failure()
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml ps kafka zookeeper || true
+          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml logs --no-color --tail=180 kafka \
+            | sed -E 's/(password|sasl.jaas.config)=([^ ;]+)/\\1=[REDACTED]/Ig' \
+            | grep -E -i 'ERROR|Exception|FATAL|WARN|Invalid|Caused by|Failed|Started|configuration error|jaas|security' \
+            | tail -n 85 || true
+          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml logs --no-color --tail=75 zookeeper \
+            | grep -E -i 'ERROR|WARN|closed|refused|auth|expired|session|quorum' \
+            | tail -n 35 || true
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml down -v --remove-orphans || true
