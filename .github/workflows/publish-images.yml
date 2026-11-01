@@ -19,6 +19,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
     strategy:
       fail-fast: false
       matrix:
@@ -76,7 +78,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify CycloneDX SBOM exists before releasing
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "target/ci-images/${{ matrix.image }}.cdx.json"
+          python3 -c 'import json,sys; p=json.load(open(sys.argv[1])); assert p.get("bomFormat") == "CycloneDX"' "target/ci-images/${{ matrix.image }}.cdx.json"
       - name: Push immutable SHA image and record registry manifest digest
+        id: push
         shell: bash
         run: |
           set -euo pipefail
@@ -86,15 +95,30 @@ jobs:
           test -n "$digest" || { echo "Registry did not return a manifest digest"; exit 1; }
           docker buildx imagetools inspect "$IMAGE@$digest" >/dev/null
           printf '%s@%s\n' "$IMAGE" "$digest" > target/release/image-reference.txt
+          printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT"
           docker tag "$IMAGE:$GITHUB_SHA" "$IMAGE:main"
           docker push "$IMAGE:main"
           # Registry manifest digest and local config digest are distinct.
           rm -f target/release/push.log
+      - name: Attest released digest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+      - name: Attest exact-image CycloneDX SBOM
+        uses: actions/attest-sbom@v2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          sbom-path: target/ci-images/${{ matrix.image }}.cdx.json
+          push-to-registry: true
       - uses: actions/upload-artifact@v4
         with:
           name: release-image-reference-${{ matrix.image }}
           path: |
             target/release/image-reference.txt
             target/ci-images/${{ matrix.image }}.json
+            target/ci-images/${{ matrix.image }}.cdx.json
           retention-days: 30
           if-no-files-found: error
