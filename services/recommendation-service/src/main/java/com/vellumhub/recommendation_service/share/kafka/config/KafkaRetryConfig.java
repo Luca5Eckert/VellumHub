@@ -7,6 +7,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.messaging.handler.annotation.Header;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -47,7 +48,7 @@ public class KafkaRetryConfig {
      */
     @Bean
     public RetryTopicConfiguration defaultRetryConfig(
-            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
+            KafkaProperties kafkaProperties,
             @Value("${app.kafka.retry.backoff-ms:3000}") long retryBackoffMs
     ) {
         return RetryTopicConfigurationBuilder
@@ -67,7 +68,7 @@ public class KafkaRetryConfig {
                         KafkaTopics.UPDATED_READING_PROGRESS,
                         KafkaTopics.USER_REACTION_CHANGED
                 ))
-                .create(retryTopicKafkaTemplate(bootstrapServers));
+                .create(retryTopicKafkaTemplate(kafkaProperties));
     }
 
     /**
@@ -115,8 +116,9 @@ public class KafkaRetryConfig {
         return payload == null ? 0 : payload.length;
     }
 
-    private KafkaTemplate<String, Object> retryTopicKafkaTemplate(String bootstrapServers) {
-        Map<String, Object> properties = Map.of(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    private KafkaTemplate<String, Object> retryTopicKafkaTemplate(KafkaProperties kafkaProperties) {
+        // The special retry producer must inherit authentication and TLS as well.
+        Map<String, Object> properties = kafkaProperties.buildProducerProperties();
 
         Map<Class<?>, org.apache.kafka.common.serialization.Serializer<?>> delegates = new LinkedHashMap<>();
         delegates.put(byte[].class, new ByteArraySerializer());
