@@ -3,6 +3,15 @@
 # Start with: docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml up -d
 services:
   kafka:
+    # In Confluent 7.5, the Docker 'ensure' preflight uses a standalone
+    # ZooKeeper client which can fail when the broker JAAS is active.
+    # This disposable ACL fixture starts the actual broker directly after
+    # configuration; the inherited healthcheck and allow/deny smoke are
+    # mandatory and cannot pass unless Kafka really starts.
+    entrypoint:
+      - /bin/bash
+      - -ec
+      - test -r /run/secrets/kafka/broker.jaas.conf && /etc/confluent/docker/configure && exec /etc/confluent/docker/launch
     environment:
       KAFKA_LISTENERS: SASL_PLAINTEXT://0.0.0.0:29092
       KAFKA_ADVERTISED_LISTENERS: SASL_PLAINTEXT://kafka:29092
