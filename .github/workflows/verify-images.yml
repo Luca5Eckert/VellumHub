@@ -120,19 +120,43 @@ jobs:
           file: ${{ matrix.dockerfile }}
           load: true
           push: false
-          tags: local/${{ matrix.image }}:${{ github.sha }}
+          tags: ghcr.io/luca5eckert/${{ matrix.image }}:${{ github.sha }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.title=${{ matrix.service }}
-      - name: Scan image for fixable critical vulnerabilities
+      - name: Scan the EXACT image that may be published
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: local/${{ matrix.image }}:${{ github.sha }}
+          image-ref: ghcr.io/luca5eckert/${{ matrix.image }}:${{ github.sha }}
           format: table
           exit-code: '1'
           ignore-unfixed: true
           severity: CRITICAL
+      # GitHub Actions reusable-workflow artifacts are available to downstream
+      # jobs in the same caller run. Never build the release image a second time.
+      - name: Preserve tested image bytes and image config digest
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p target/ci-images
+          image="ghcr.io/luca5eckert/${{ matrix.image }}:${GITHUB_SHA}"
+          docker save "$image" | zstd -T2 -1 -o "target/ci-images/${{ matrix.image }}.tar.zst"
+          python3 tools/ci/image_artifact.py record \
+            --sha "$GITHUB_SHA" --image "$image" \
+            --archive "target/ci-images/${{ matrix.image }}.tar.zst" \
+            --metadata "target/ci-images/${{ matrix.image }}.json"
+      - name: Transfer scanned image without rebuilding
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-image-${{ matrix.image }}
+          path: |
+            target/ci-images/${{ matrix.image }}.tar.zst
+            target/ci-images/${{ matrix.image }}.json
+          retention-days: 2
+          if-no-files-found: error
 
   training-export:
     name: Training exporter + PostgreSQL
