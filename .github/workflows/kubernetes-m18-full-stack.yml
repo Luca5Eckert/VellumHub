@@ -99,7 +99,8 @@ jobs:
           set -euo pipefail
           kubectl -n vellumhub create configmap vellumhub-ci-business-scripts \
             --from-file=verify_auth_poc_flow.py=infra/scripts/security/verify_auth_poc_flow.py \
-            --from-file=verify_oidc_lote2_flow.py=infra/scripts/security/verify_oidc_lote2_flow.py
+            --from-file=verify_oidc_lote2_flow.py=infra/scripts/security/verify_oidc_lote2_flow.py \
+            --from-file=verify_kind_business_flows.py=infra/scripts/security/verify_kind_business_flows.py
 
       - name: M18 - Real apps, startup, HTTP probes, rollout, rollback, restart
         run: python3 deploy/kubernetes/scripts/benchmark-full-stack.py --sha "$SOURCE_SHA"
