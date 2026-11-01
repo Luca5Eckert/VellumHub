@@ -155,13 +155,14 @@ def real_business_e2e(expect_gateway_failure=False):
             if expect_gateway_failure:
                 raise RuntimeError("Deliberately broken Gateway unexpectedly passed business E2E")
             output = k("logs", f"job/{job}", timeout=20).stdout
-            marker = "Real Auth UUIDv7 -> User profile -> Gateway -> User/Catalog/Engagement/Recommendation and negative JWT checks: OK"
+            marker = "Kind 3 distinct business journeys: OAuth and cross-domain reads; catalog persist/read/delete; insufficient-scope mutation denied: OK"
             if marker not in output:
                 raise RuntimeError("Business E2E succeeded without required functional assertions")
             return {
                 "status": "PASSED", "real_oauth_pkce": True,
                 "real_auth_to_user_provisioning": True,
                 "real_gateway_domains_checked": ["user", "catalog", "engagement", "recommendation"],
+                "business_scenarios": ["authenticated cross-domain reads", "catalog persistence roundtrip", "insufficient-scope mutation denied"],
                 "negative": ["reduced scope denied", "ID token denied", "malformed JWT denied",
                              "ADMIN mutation denied"],
                 "ci_fixture": "ephemeral accounts, not Google live or production"
