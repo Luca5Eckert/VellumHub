@@ -195,3 +195,11 @@ insufficient. Ownership rules remain separate.
 ### SEC-11 profile ownership
 
 `GET /users/me` resolves the JWT subject. `GET /users/{id}` exposes private profile data only to that subject; other IDs return a generic 404. `GET /users` requires ADMIN and `user:read`. See [SEC-11](../../docs/SECURITY_OWNERSHIP_SEC11.md).
+
+
+### SEC-14 Kafka producer identity
+
+User publishes `created-user-preference` using the dedicated `user_service`
+broker identity. Its manually configured `ProducerFactory` inherits the
+Spring Kafka SASL/TLS properties, not just `bootstrap.servers`.
+See [SEC-14](../../docs/KAFKA_SERVICE_IDENTITIES_SEC14.md).

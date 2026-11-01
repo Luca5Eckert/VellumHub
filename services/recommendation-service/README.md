@@ -222,3 +222,12 @@ insufficient. Ownership rules remain separate.
 subject. The use case revalidates this context before local read-model/vector
 queries; no per-request User/Catalog/Engagement call is introduced. See
 [SEC-12 ownership matrix](../../docs/SECURITY_OWNERSHIP_SEC12.md).
+
+
+### SEC-14 Kafka principal and read-model isolation
+
+Recommendation authenticates to Kafka as `recommendation_service`; it can
+consume approved Book, Progress, ratings and reactions streams. Only its own
+retry/DLT producers have scoped write grants. Kafka authorization does not
+add HTTP calls or change the local materialized recommendation read model.
+See [SEC-14](../../docs/KAFKA_SERVICE_IDENTITIES_SEC14.md).

@@ -488,3 +488,12 @@ book-rating reads as `GET /rating/books/{bookId}`. Recommendation checks that
 its query identity matches the authenticated subject without adding cross-service
 fan-out. The full contract, HTTP decisions and rollback steps are documented
 in [SEC-12](docs/SECURITY_OWNERSHIP_SEC12.md).
+
+
+### Kafka service identities (SEC-14)
+
+Kafka clients use separate service principals with broker ACLs for exact
+streams, retry/DLT and consumer groups; they do **not** forward HTTP bearer
+credentials. The production Kubernetes overlay requires SASL_SSL and managed
+secrets. The authenticated local Compose overlay and CI negative ACL tests are
+in [SEC-14](docs/KAFKA_SERVICE_IDENTITIES_SEC14.md).

@@ -214,3 +214,12 @@ non-enumerating 404 for hidden resources. Reviews by book are available at
 `GET /rating/books/{bookId}` (the old UUID book path was ambiguous with user
 ratings); this endpoint remains explicitly visible with `engagement:read`.
 See [SEC-12 ownership matrix](../../docs/SECURITY_OWNERSHIP_SEC12.md).
+
+
+### SEC-14 Kafka principal and recovery
+
+Engagement authenticates to Kafka as `engagement_service`: reads approved
+Book/Progress topics and publishes only its ratings/reactions plus its scoped
+legacy retry and ordered DLT transport. Special-purpose retry/recovery producers
+now inherit Kafka SASL/TLS; no bearer tokens are forwarded.
+See [SEC-14](../../docs/KAFKA_SERVICE_IDENTITIES_SEC14.md).
