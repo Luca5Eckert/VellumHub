@@ -108,6 +108,21 @@ jobs:
           done
           docker image ls --format '{{.Repository}}:{{.Tag}}' |
             grep 'ghcr.io/luca5eckert/vellumhub-'
+      - name: Build digest-distinct Gateway candidate from approved Java image
+        shell: bash
+        run: |
+          set -euo pipefail
+          original="ghcr.io/luca5eckert/vellumhub-gateway:$SOURCE_SHA"
+          candidate="${original}-m18-candidate"
+          # Digest-distinct image metadata; unchanged Java JAR.
+          printf 'FROM %s\nLABEL ci.vellumhub.m18.candidate="true"\n' "$original" |
+            docker build --pull=false --network=none -t "$candidate" -f - .
+          old_id="$(docker image inspect --format '{{.Id}}' "$original")"
+          new_id="$(docker image inspect --format '{{.Id}}' "$candidate")"
+          test "$old_id" != "$new_id" || { echo "Candidate image must differ"; exit 1; }
+          kind load docker-image "$candidate" --name vellumhub-m18-full
+          mkdir -p target/metrics
+          printf 'base=%s\ncandidate=%s\n' "$old_id" "$new_id" > target/metrics/m18-gateway-image-ids.txt
       - name: Ephemeral secrets, signing material and namespace
         shell: bash
         run: |
@@ -159,6 +174,7 @@ jobs:
           path: |
             target/metrics/kubernetes-full-stack.json
             target/metrics/kubernetes-full-stack-rendered.yaml
+            target/metrics/m18-gateway-image-ids.txt
           if-no-files-found: warn
           retention-days: 30
       - name: Destroy disposable cluster
