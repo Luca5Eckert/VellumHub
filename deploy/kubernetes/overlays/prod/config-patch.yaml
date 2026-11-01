@@ -6,4 +6,6 @@ data:
   CORS_ALLOWED_ORIGINS: https://api.example.com
   # Production supplies these endpoints via an environment-specific overlay.
   SPRING_DATA_REDIS_HOST: redis.example.internal
-  KAFKA_BOOTSTRAP_SERVERS: kafka.example.internal:9092
+  KAFKA_BOOTSTRAP_SERVERS: kafka.example.internal:9093
+  KAFKA_SECURITY_PROTOCOL: SASL_SSL
+  KAFKA_SASL_MECHANISM: PLAIN
