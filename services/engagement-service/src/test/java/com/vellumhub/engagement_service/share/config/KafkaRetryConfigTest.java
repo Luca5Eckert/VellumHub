@@ -3,6 +3,7 @@ package com.vellumhub.engagement_service.share.config;
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
@@ -68,7 +69,7 @@ class KafkaRetryConfigTest {
     void retryTopicDltHandlersAreNotAutoStarted() {
         KafkaRetryConfig config = new KafkaRetryConfig(new VellumHubMetrics(new SimpleMeterRegistry()));
 
-        var retryConfig = config.defaultRetryConfig("localhost:9092");
+        var retryConfig = config.defaultRetryConfig(new KafkaProperties());
 
         assertThat(retryConfig.getDestinationTopicProperties())
                 .filteredOn(properties -> properties.isDltTopic())

@@ -15,6 +15,9 @@ data:
   SPRING_DATA_REDIS_HOST: redis
   SPRING_DATA_REDIS_PORT: "6379"
   KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  # Development-only local broker; production overlay must switch to SASL_SSL.
+  KAFKA_SECURITY_PROTOCOL: PLAINTEXT
+  KAFKA_SASL_MECHANISM: PLAIN
   AUTH_DATASOURCE_URL: jdbc:postgresql://auth-postgres:5432/vellum_auth
   USER_DATASOURCE_URL: jdbc:postgresql://user-postgres:5432/user_db
   CATALOG_DATASOURCE_URL: jdbc:postgresql://catalog-postgres:5432/catalog_db

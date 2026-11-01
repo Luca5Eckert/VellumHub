@@ -19,6 +19,9 @@ spec:
             - {name: SERVER_PORT, value: "8080"}
             - {name: SPRING_DATASOURCE_URL, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: ENGAGEMENT_DATASOURCE_URL}}}
             - {name: KAFKA_BOOTSTRAP_SERVERS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_BOOTSTRAP_SERVERS}}}
+            - {name: KAFKA_SECURITY_PROTOCOL, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_SECURITY_PROTOCOL}}}
+            - {name: KAFKA_SASL_MECHANISM, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_SASL_MECHANISM}}}
+            - {name: KAFKA_SASL_JAAS_CONFIG, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: KAFKA_ENGAGEMENT_JAAS}}}
             - {name: VELLUM_ENVIRONMENT, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_ENVIRONMENT}}}
             - {name: VELLUM_DOCS_ENABLED, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_DOCS_ENABLED}}}
             - {name: CORS_ALLOWED_ORIGINS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CORS_ALLOWED_ORIGINS}}}
@@ -57,6 +60,9 @@ spec:
             - {name: SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING, value: "true"}
             - {name: SPRING_DATASOURCE_URL, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: RECOMMENDATION_DATASOURCE_URL}}}
             - {name: KAFKA_BOOTSTRAP_SERVERS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_BOOTSTRAP_SERVERS}}}
+            - {name: KAFKA_SECURITY_PROTOCOL, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_SECURITY_PROTOCOL}}}
+            - {name: KAFKA_SASL_MECHANISM, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_SASL_MECHANISM}}}
+            - {name: KAFKA_SASL_JAAS_CONFIG, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: KAFKA_RECOMMENDATION_JAAS}}}
             - {name: VELLUM_ENVIRONMENT, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_ENVIRONMENT}}}
             - {name: VELLUM_DOCS_ENABLED, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: VELLUM_DOCS_ENABLED}}}
             - {name: CORS_ALLOWED_ORIGINS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CORS_ALLOWED_ORIGINS}}}

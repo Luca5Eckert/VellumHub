@@ -82,12 +82,18 @@ jobs:
           db_password="$(openssl rand -hex 20)"
           auth_password="$(openssl rand -hex 20)"
           provision_key="$(openssl rand -hex 32)"
+          # Local KRaft is PLAINTEXT. Keep required Secret keys present but EMPTY;
+          # SASL credentials are only supplied by the protected prod overlay.
           kubectl -n vellumhub create secret generic vellumhub-secrets \
             --from-literal=POSTGRES_USER=vellumhub \
             --from-literal=POSTGRES_PASSWORD="$db_password" \
             --from-literal=POSTGRES_AUTH_USER=auth_owner \
             --from-literal=POSTGRES_AUTH_PASSWORD="$auth_password" \
-            --from-literal=VELLUM_INTERNAL_PROVISION_KEY="$provision_key"
+            --from-literal=VELLUM_INTERNAL_PROVISION_KEY="$provision_key" \
+            --from-literal=KAFKA_CATALOG_JAAS= \
+            --from-literal=KAFKA_USER_JAAS= \
+            --from-literal=KAFKA_ENGAGEMENT_JAAS= \
+            --from-literal=KAFKA_RECOMMENDATION_JAAS=
           kubectl -n vellumhub create secret generic vellumhub-jwt-private \
             --from-file=private.pem=target/ephemeral-keys/private.pem
           kubectl -n vellumhub create configmap vellumhub-jwt-public \

@@ -150,3 +150,15 @@ quarantine state as a means of unblocking a service.
 Related: [Consumer Idempotency](CONSUMER_IDEMPOTENCY.md),
 [Distributed Testing](DISTRIBUTED_TESTING.md),
 [Observability Runbooks](OBSERVABILITY_RUNBOOKS.md).
+
+
+## SEC-14: authenticated recovery identities
+
+The service-specific retry/ordered DLT producers inherit their owner's Kafka
+SASL/TLS configuration and ACLs. Quarantine/resume continues to use the
+original consumer group and offset; forbidden broker ACLs must not be masked
+by resetting offsets, skipping records, or granting wildcards.
+The optional independent `replay-dlt` CLI requires a **separate, operator-approved**
+client principal able to read only the intended DLT and publish the intended
+source; its broker credentials are not an HTTP JWT. Follow the provisioning,
+rotation and negative broker checks in [SEC-14](KAFKA_SERVICE_IDENTITIES_SEC14.md).

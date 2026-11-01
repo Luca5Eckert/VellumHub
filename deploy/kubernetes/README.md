@@ -135,3 +135,14 @@ The resource baseline is intentionally modest: gateway/user 512Mi request, catal
 ### Security JWT/JWKS transition (#304, #305)
 
 In draft PR #321, JWT verifiers fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. Only `auth-service` signs access tokens and exposes the trusted JWKS; Gateway and domain services are Resource Servers. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [JWKS runbook](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
+
+
+### SEC-14 Kafka authorization
+
+The production overlay requires `SASL_SSL`, four **separate** broker client
+identities and their `KAFKA_*_JAAS` keys from a Secret manager. Broker-side
+ACLs are provisioned separately, not from app pods. The local single-node Kafka
+is intentionally insecure and not a production template; use a managed or
+externally secured Kafka broker in production.
+See [SEC-14](../../docs/KAFKA_SERVICE_IDENTITIES_SEC14.md) for TLS, provisioning,
+rotation, rollback and tests.

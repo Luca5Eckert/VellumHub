@@ -23,3 +23,6 @@ __pycache__/
 
 # SEC-05 Authorization Server PoC signing material
 /.local/auth-poc/
+
+# SEC-14: local broker JAAS and per-service Kafka principals
+/.secrets/

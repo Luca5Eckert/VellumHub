@@ -1,0 +1,89 @@
+# Optional SEC-14 local integration profile, not a substitute for production TLS.
+# Prerequisite: python3 infra/scripts/kafka/generate-local-secrets.py
+# Start with: docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml up -d
+services:
+  kafka:
+    # In Confluent 7.5, the Docker 'ensure' preflight uses a standalone
+    # ZooKeeper client which can fail when the broker JAAS is active.
+    # This disposable ACL fixture starts the actual broker directly after
+    # configuration; the inherited healthcheck and allow/deny smoke are
+    # mandatory and cannot pass unless Kafka really starts.
+    entrypoint:
+      - /bin/bash
+      - -ec
+      - test -r /run/secrets/kafka/broker.jaas.conf && /etc/confluent/docker/configure && exec /etc/confluent/docker/launch
+    environment:
+      KAFKA_LISTENERS: SASL_PLAINTEXT://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: SASL_PLAINTEXT://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SASL_PLAINTEXT:SASL_PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: SASL_PLAINTEXT
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
+      KAFKA_SUPER_USERS: User:kafka_admin
+      # ZooKeeper in the local profile has no SASL Client JAAS section.
+      KAFKA_OPTS: -Djava.security.auth.login.config=/run/secrets/kafka/broker.jaas.conf -Dzookeeper.sasl.client=false
+    volumes:
+      - ./.secrets/kafka/broker.jaas.conf:/run/secrets/kafka/broker.jaas.conf:ro
+
+  # Never expose an unauthenticated Kafka UI against a protected broker.
+  kafka-ui:
+    profiles: [insecure-console]
+
+  kafka-acl-init:
+    image: confluentinc/cp-kafka:7.5.0
+    restart: "no"
+    entrypoint: ["python3", "/opt/kafka/provision-acls.py"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_ADMIN_CONFIG: /run/secrets/kafka/admin.properties
+      KAFKA_ACL_POLICY: /opt/kafka/acl-policy.json
+      KAFKA_PROVISION_TOPICS: "true"
+      KAFKA_DEPLOYMENT_TIER: local
+    volumes:
+      - ./infra/scripts/kafka/provision-acls.py:/opt/kafka/provision-acls.py:ro
+      - ./infra/scripts/kafka/verify-acls.py:/opt/kafka/verify-acls.py:ro
+      - ./infra/kafka/acl-policy.json:/opt/kafka/acl-policy.json:ro
+      - ./.secrets/kafka:/run/secrets/kafka:ro
+    networks:
+      - vellum-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  catalog-service:
+    environment:
+      SPRING_CONFIG_IMPORT: file:/run/secrets/kafka.properties
+    volumes:
+      - ./.secrets/kafka/catalog_service.properties:/run/secrets/kafka.properties:ro
+    depends_on:
+      kafka-acl-init:
+        condition: service_completed_successfully
+
+  user-service:
+    environment:
+      SPRING_CONFIG_IMPORT: file:/run/secrets/kafka.properties
+    volumes:
+      - ./.secrets/kafka/user_service.properties:/run/secrets/kafka.properties:ro
+    depends_on:
+      kafka-acl-init:
+        condition: service_completed_successfully
+
+  engagement-service:
+    environment:
+      SPRING_CONFIG_IMPORT: file:/run/secrets/kafka.properties
+    volumes:
+      - ./.secrets/kafka/engagement_service.properties:/run/secrets/kafka.properties:ro
+    depends_on:
+      kafka-acl-init:
+        condition: service_completed_successfully
+
+  recommendation-service:
+    environment:
+      SPRING_CONFIG_IMPORT: file:/run/secrets/kafka.properties
+    volumes:
+      - ./.secrets/kafka/recommendation_service.properties:/run/secrets/kafka.properties:ro
+    depends_on:
+      kafka-acl-init:
+        condition: service_completed_successfully

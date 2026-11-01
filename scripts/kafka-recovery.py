@@ -93,6 +93,28 @@ def header(headers, name):
     return next((v for k, v in (headers or []) if k == name), None)
 
 
+def recovery_broker_config():
+    """Require a distinct, least-privilege operator identity for Kafka DLT replay."""
+    protocol = os.getenv("KAFKA_RECOVERY_SECURITY_PROTOCOL", "")
+    if protocol not in {"SASL_SSL", "SASL_PLAINTEXT"}:
+        raise RuntimeError("Set KAFKA_RECOVERY_SECURITY_PROTOCOL explicitly")
+    if protocol == "SASL_PLAINTEXT" and os.getenv("KAFKA_RECOVERY_ALLOW_LOCAL_INSECURE") != "true":
+        raise RuntimeError("SASL_PLAINTEXT replay requires disposable-local opt-in")
+    username = os.getenv("KAFKA_RECOVERY_USERNAME", "")
+    password = os.getenv("KAFKA_RECOVERY_PASSWORD", "")
+    if not username or not password:
+        raise RuntimeError("Operator Kafka replay credentials are required")
+    if username in {"kafka_admin", "catalog_service", "user_service",
+                    "engagement_service", "recommendation_service"}:
+        raise RuntimeError("Kafka replay must use a dedicated operator principal")
+    config = {"security.protocol": protocol, "sasl.mechanisms": "PLAIN",
+              "sasl.username": username, "sasl.password": password}
+    ca = os.getenv("KAFKA_RECOVERY_SSL_CA_LOCATION")
+    if ca and protocol == "SASL_SSL":
+        config["ssl.ca.location"] = ca
+    return config
+
+
 def replay_dlt(args):
     """Limited to identity-bearing, non-ordered records. No blind legacy replay."""
     if not args.reason or len(args.reason) > 500:
@@ -109,10 +131,11 @@ def replay_dlt(args):
     bootstrap = os.environ.get("KAFKA_BOOTSTRAP_SERVERS")
     if not bootstrap:
         raise RuntimeError("Set KAFKA_BOOTSTRAP_SERVERS")
+    operator_security = recovery_broker_config()
     consumer = Consumer({"bootstrap.servers": bootstrap,
                          "group.id": "vellum-recovery-inspect",
                          "enable.auto.commit": False,
-                         "auto.offset.reset": "none"})
+                         "auto.offset.reset": "none", **operator_security})
     try:
         consumer.assign([TopicPartition(topic, args.partition, args.offset)])
         msg = consumer.poll(10)
@@ -152,7 +175,7 @@ def replay_dlt(args):
                     VALUES('DLT_REPLAY',%s,%s,%s,%s,%s,%s,'ATTEMPTED')
                 """, (group, source, part, offset, operator, args.reason))
         producer = Producer({"bootstrap.servers": bootstrap, "acks": "all",
-                             "enable.idempotence": True})
+                             "enable.idempotence": True, **operator_security})
         result = []
         producer.produce(source, key=msg.key(), value=msg.value(), headers=forwarded,
                          on_delivery=lambda error, message: result.append(error))

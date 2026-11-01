@@ -1,0 +1,98 @@
+{
+  "catalog_service": {
+    "publish": [
+      "book-events",
+      "created-book",
+      "updated-book",
+      "deleted-book",
+      "reading-progress-events",
+      "created-reading-progress",
+      "updated-reading-progress"
+    ],
+    "subscribe": [],
+    "legacy_retry": [],
+    "ordered_dlt": [],
+    "groups": []
+  },
+  "user_service": {
+    "publish": [
+      "created-user-preference"
+    ],
+    "subscribe": [],
+    "legacy_retry": [],
+    "ordered_dlt": [],
+    "groups": []
+  },
+  "engagement_service": {
+    "publish": [
+      "engagement.ratings.v1",
+      "engagement.reactions.v1",
+      "created-rating",
+      "updated-rating",
+      "user-reaction-changed"
+    ],
+    "subscribe": [
+      "book-events",
+      "reading-progress-events",
+      "created-book",
+      "deleted-book",
+      "created-reading-progress",
+      "updated-reading-progress"
+    ],
+    "legacy_retry": [
+      "created-book",
+      "deleted-book",
+      "created-reading-progress",
+      "updated-reading-progress"
+    ],
+    "ordered_dlt": [
+      "book-events",
+      "reading-progress-events"
+    ],
+    "groups": [
+      "engagement-service",
+      "engagement-service-dlt-group"
+    ]
+  },
+  "recommendation_service": {
+    "publish": [],
+    "subscribe": [
+      "book-events",
+      "reading-progress-events",
+      "engagement.ratings.v1",
+      "engagement.reactions.v1",
+      "created-book",
+      "updated-book",
+      "deleted-book",
+      "created-rating",
+      "updated-rating",
+      "created-user-preference",
+      "created-reading-progress",
+      "updated-reading-progress",
+      "user-reaction-changed"
+    ],
+    "legacy_retry": [
+      "created-book",
+      "deleted-book",
+      "updated-book",
+      "created-rating",
+      "updated-rating",
+      "created-user-preference",
+      "created-reading-progress",
+      "updated-reading-progress",
+      "user-reaction-changed"
+    ],
+    "ordered_dlt": [
+      "book-events",
+      "reading-progress-events",
+      "engagement.ratings.v1",
+      "engagement.reactions.v1"
+    ],
+    "groups": [
+      "recommendation-service",
+      "recommendation-service-dlt-group",
+      "recommendation_service_group",
+      "recommendation-group"
+    ]
+  }
+}

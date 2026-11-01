@@ -206,3 +206,11 @@ insufficient. Ownership rules remain separate.
 ### SEC-11 list ownership
 
 PUBLIC lists remain discoverable, but membership directories are only readable by owner or member and individual memberships only by that member, list owner or list ADMIN. PRIVATE lists use 404 when hidden; membership OWNER cannot be assigned. Progress remains scoped to JWT `sub`. See [SEC-11](../../docs/SECURITY_OWNERSHIP_SEC11.md).
+
+
+### SEC-14 Kafka producer identity
+
+Catalog uses `catalog_service` for Book and Reading Progress outbox/legacy
+publications; it has no subscribe or consumer-group permission. SASL/TLS is
+configured through shared Spring Kafka properties and external secrets.
+See [SEC-14](../../docs/KAFKA_SERVICE_IDENTITIES_SEC14.md).
