@@ -39,23 +39,24 @@ spec:
     spec:
       containers:
         - name: kafka
-          image: bitnami/kafka:3.9
+          image: apache/kafka:3.9.1
           ports: [{name: kafka, containerPort: 9092}]
           env:
-            - {name: KAFKA_CFG_NODE_ID, value: "1"}
-            - {name: KAFKA_CFG_PROCESS_ROLES, value: broker,controller}
-            - {name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS, value: 1@kafka-0.kafka:9093}
-            - {name: KAFKA_CFG_LISTENERS, value: PLAINTEXT://:9092,CONTROLLER://:9093}
-            - {name: KAFKA_CFG_ADVERTISED_LISTENERS, value: PLAINTEXT://kafka:9092}
-            - {name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP, value: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT}
-            - {name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES, value: CONTROLLER}
-            - {name: KAFKA_CFG_INTER_BROKER_LISTENER_NAME, value: PLAINTEXT}
-            - {name: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR, value: "1"}
-            - {name: KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR, value: "1"}
-            - {name: KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR, value: "1"}
-            - {name: ALLOW_PLAINTEXT_LISTENER, value: "yes"}
+            - {name: KAFKA_NODE_ID, value: "1"}
+            - {name: KAFKA_PROCESS_ROLES, value: "broker,controller"}
+            - {name: KAFKA_CONTROLLER_QUORUM_VOTERS, value: 1@kafka:9093}
+            - {name: KAFKA_LISTENERS, value: "PLAINTEXT://:9092,CONTROLLER://:9093"}
+            - {name: KAFKA_ADVERTISED_LISTENERS, value: PLAINTEXT://kafka:9092}
+            - {name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP, value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"}
+            - {name: KAFKA_CONTROLLER_LISTENER_NAMES, value: CONTROLLER}
+            - {name: KAFKA_INTER_BROKER_LISTENER_NAME, value: PLAINTEXT}
+            - {name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR, value: "1"}
+            - {name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR, value: "1"}
+            - {name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR, value: "1"}
+            - {name: CLUSTER_ID, value: "4L6g3nShT-eMCtK--X86sw"}
+            - {name: KAFKA_LOG_DIRS, value: /var/lib/kafka/data}
           resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
-          volumeMounts: [{name: data, mountPath: /bitnami/kafka}]
+          volumeMounts: [{name: data, mountPath: /var/lib/kafka/data}]
   volumeClaimTemplates: [{metadata: {name: data}, spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}}]
 ---
 apiVersion: v1

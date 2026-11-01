@@ -1,0 +1,65 @@
+name: Kubernetes M18 reference (kind)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kind-m18-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  kubernetes-m18:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact measured commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+
+      - name: Install kind and check kubectl/Docker
+        run: |
+          set -euo pipefail
+          docker info >/dev/null
+          kubectl version --client
+          curl -fsSL -o kind https://kind.sigs.k8s.io/dl/v0.24.0/kind-linux-amd64
+          chmod +x kind
+          sudo mv kind /usr/local/bin/kind
+          kind version
+
+      - name: Provision ephemeral Kubernetes cluster
+        run: |
+          set -euo pipefail
+          kind create cluster --name vellumhub-m18 --image kindest/node:v1.31.2 --wait 120s
+          kubectl cluster-info
+
+      - name: M18 - Kustomize server validation, HTTP, rollout, rollback, pod recovery
+        run: python3 deploy/kubernetes/scripts/benchmark-kind.py --sha "$SOURCE_SHA"
+
+      - name: Cluster diagnostics on failure
+        if: failure()
+        run: |
+          kubectl -n vellumhub-m18 get pods,deployments,replicasets,events -o wide || true
+          kubectl -n vellumhub-m18 describe deployment controller-fixture || true
+          kubectl -n vellumhub get deployments,statefulsets -o wide || true
+
+      - name: Retain source-bound measurement and rendered manifests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vellumhub-kind-m18-${{ env.SOURCE_SHA }}
+          path: |
+            target/metrics/kubernetes.json
+            target/metrics/vellumhub-local-rendered.yaml
+            target/metrics/kubernetes-controller-fixture.yaml
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Tear down ephemeral cluster
+        if: always()
+        run: kind delete cluster --name vellumhub-m18 || true

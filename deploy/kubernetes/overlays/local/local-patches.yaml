@@ -1,32 +1,86 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata: {name: gateway-service}
-spec: {replicas: 1}
+spec:
+  replicas: 1
+  template:
+    spec:
+      volumes:
+        - {name: java-tmp, emptyDir: {sizeLimit: 256Mi}}
+      containers:
+        - name: gateway-service
+          volumeMounts:
+            - {name: java-tmp, mountPath: /tmp}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata: {name: auth-service}
-spec: {replicas: 1}
+spec:
+  replicas: 1
+  template:
+    spec:
+      volumes:
+        - {name: java-tmp, emptyDir: {sizeLimit: 256Mi}}
+      containers:
+        - name: auth-service
+          volumeMounts:
+            - {name: java-tmp, mountPath: /tmp}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata: {name: user-service}
-spec: {replicas: 1}
+spec:
+  replicas: 1
+  template:
+    spec:
+      volumes:
+        - {name: java-tmp, emptyDir: {sizeLimit: 256Mi}}
+      containers:
+        - name: user-service
+          volumeMounts:
+            - {name: java-tmp, mountPath: /tmp}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata: {name: catalog-service}
-spec: {replicas: 1}
+spec:
+  replicas: 1
+  template:
+    spec:
+      volumes:
+        - {name: java-tmp, emptyDir: {sizeLimit: 256Mi}}
+      containers:
+        - name: catalog-service
+          volumeMounts:
+            - {name: java-tmp, mountPath: /tmp}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata: {name: engagement-service}
-spec: {replicas: 1}
+spec:
+  replicas: 1
+  template:
+    spec:
+      volumes:
+        - {name: java-tmp, emptyDir: {sizeLimit: 256Mi}}
+      containers:
+        - name: engagement-service
+          volumeMounts:
+            - {name: java-tmp, mountPath: /tmp}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata: {name: recommendation-service}
-spec: {replicas: 1}
+spec:
+  replicas: 1
+  template:
+    spec:
+      volumes:
+        - {name: java-tmp, emptyDir: {sizeLimit: 256Mi}}
+      containers:
+        - name: recommendation-service
+          volumeMounts:
+            - {name: java-tmp, mountPath: /tmp}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
