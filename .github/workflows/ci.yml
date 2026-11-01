@@ -14,3 +14,8 @@ permissions:
 jobs:
   verify:
     uses: ./.github/workflows/verify-images.yml
+
+  kind-functional-gate:
+    name: Kind functional release gate
+    needs: verify
+    uses: ./.github/workflows/kubernetes-m18-full-stack.yml
