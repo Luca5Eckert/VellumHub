@@ -16,6 +16,8 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+      - name: Verify CI integrity contracts (fail-closed)
+        run: python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
       - name: Confirm Docker for Testcontainers
         run: docker info
       - name: Verify reactor and non-distributed integration tests
