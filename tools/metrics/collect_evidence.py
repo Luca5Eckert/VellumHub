@@ -186,6 +186,7 @@ def summarize(root, sha, profile):
             observed.get("status") == "PASSED" and
             observed.get("schema_version") == 3 and
             observed.get("application_deployed") is True and
+            observed.get("business_e2e", {}).get("status") == "PASSED" and
             all(states.get(n, {}).get("ready") == 1 for n in names) and
             all(deps.get(n, {}).get("ready") == 1 for n in infra) and
             all(probes.get(n, {}).get("successful") is True and
@@ -203,6 +204,7 @@ def summarize(root, sha, profile):
                                           for n in names),
             "ready_statefulsets": sum(deps.get(n, {}).get("ready") == 1
                                       for n in infra),
+            "business_e2e": observed.get("business_e2e", {}),
             "http_probe_successes": sum(probes.get(n, {}).get("responses", 0)
                                          for n in names),
             "cold_start_total_ms": observed.get("cold_start_total_ms"),
