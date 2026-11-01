@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: auth-service
+          env:
+            - {name: VELLUM_AUTH_CLIENT_ENABLED, value: "true"}
+            - {name: VELLUM_AUTH_CLIENT_ID, value: vellumhub-spa-poc}
+            - {name: VELLUM_AUTH_CLIENT_REDIRECT_URI, value: "http://127.0.0.1:9100/index.html"}
+            - {name: VELLUM_AUTH_CLIENT_POST_LOGOUT_URI, value: "http://127.0.0.1:9100/index.html"}
+            - {name: SERVER_SERVLET_SESSION_COOKIE_SECURE, value: "false"}
