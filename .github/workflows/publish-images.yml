@@ -118,13 +118,18 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           sbom-path: target/ci-images/${{ matrix.image }}.cdx.json
           push-to-registry: true
+      - name: Stage one normalized proof directory per published image
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -d target/release-evidence
+          cp target/release/image-reference.txt target/release-evidence/image-reference.txt
+          cp "target/ci-images/${{ matrix.image }}.json" target/release-evidence/
+          cp "target/ci-images/${{ matrix.image }}.cdx.json" target/release-evidence/
       - uses: actions/upload-artifact@v4
         with:
           name: release-image-reference-${{ matrix.image }}
-          path: |
-            target/release/image-reference.txt
-            target/ci-images/${{ matrix.image }}.json
-            target/ci-images/${{ matrix.image }}.cdx.json
+          path: target/release-evidence/
           retention-days: 30
           if-no-files-found: error
 
