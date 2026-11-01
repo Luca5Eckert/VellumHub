@@ -56,6 +56,12 @@ The unauthenticated Kafka UI is not started in the secure overlay.
 2. Run `python3 infra/scripts/kafka/generate-local-secrets.py`. This creates
    `.secrets/kafka/` (untracked, mode 0700) containing broker JAAS, client
    property files (0600), and a scoped superuser administration config.
+   **UID requirement for Linux bind mounts:** broker/admin/CLI files must be
+   readable by the Confluent container UID 1000, while each Java service's
+   `<service>_service.properties` must be owned by the Java image UID 10001
+   (all stay mode 0600). The SEC-14 CI sets ownership explicitly. For a
+   local Docker environment with the same UIDs, apply the matching `chown`
+   through a privileged local setup. Never relax secrets to world-readable.
 3. Start isolated infrastructure:
    `docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml up -d --wait zookeeper kafka`.
 4. Run ACL provisioning:
@@ -136,6 +142,9 @@ must keep the original record pending and trigger operational alerting.
 - Static policy tests: `python3 -m unittest discover -s infra/scripts/kafka -p 'test_*.py' -v`.
 - CI workflow: `.github/workflows/kafka-service-acls.yml` runs a **real**
   ephemeral SASL/PLAIN broker and tests allowed/forbidden topic/group ACLs.
+- The local Kind workflow creates **empty** Kafka JAAS Secret keys because
+  its in-cluster broker uses PLAINTEXT. Production injects nonempty, distinct
+  JAAS values through an approved secret manager; empty production values are invalid.
 - Existing Maven distributed/outbox/ordering tests remain the regression gates
   for at-least-once delivery, checkpoint semantics and sanitized DLT headers.
 - SEC-14 does **not** change event contracts, introduce OAuth token exchange,

@@ -9,6 +9,11 @@ on:
       - "docker-compose.kafka-secure.yml"
       - "docker-compose.yml"
       - "services/**/src/main/resources/application.properties"
+      - "services/**/src/main/java/**/*Kafka*.java"
+      - "services/**/src/main/java/**/kafka/**"
+      - "services/**/src/main/java/**/OrderedRecoveryPublisherConfig.java"
+      - "deploy/kubernetes/**"
+      - "scripts/kafka-recovery.py"
   workflow_dispatch:
 
 permissions:
@@ -53,6 +58,13 @@ jobs:
           # Confluent cp-kafka runs with UID 1000; host runner uses a different UID.
           # Keep secrets mode 0600 and make ONLY the disposable container user owner.
           sudo chown -R 1000:1000 .secrets/kafka
+          # Java images run as UID 10001. Bind-mounted properties must be
+          # owned by their reader; keep mode 0600 on EVERY credential.
+          for service in catalog user engagement recommendation; do
+            sudo chown 10001:10001 ".secrets/kafka/${service}_service.properties"
+            test "$(stat -c %a ".secrets/kafka/${service}_service.properties")" = 600
+            test "$(stat -c %u ".secrets/kafka/${service}_service.properties")" = 10001
+          done
       - name: Run authenticated broker with deny-by-default ACLs
         run: |
           docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml config --quiet

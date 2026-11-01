@@ -37,9 +37,20 @@ def publish(name, topic, permitted):
            "--producer-property", "request.timeout.ms=4000",
            "--producer-property", "delivery.timeout.ms=9000"]
     result = run(cmd, MARKER + "\n")
-    if (result.returncode == 0) != permitted:
-        raise AssertionError("Publish ACL mismatch: principal=" + name +
-                             " topic=" + topic + " expected=" + str(permitted))
+    if permitted:
+        if result.returncode != 0:
+            raise AssertionError("Authorized publish failed: principal=" + name +
+                                 " topic=" + topic)
+    else:
+        # A nonzero exit can also mean DNS/timeout/broker downtime. Require
+        # explicit authorization denial; infrastructure failures are NOT proof.
+        failure = (result.stderr + result.stdout).lower()
+        if result.returncode == 0 or not any(term in failure for term in
+                ("topicauthorizationexception", "clusterauthorizationexception",
+                 "authorizationexception", "authorization failed",
+                 "not authorized", "topic authorization")):
+            raise AssertionError("Negative publish test did not prove ACL denial: principal="
+                                 + name + " topic=" + topic)
 
 
 def consume(name, topic, group, permitted):
@@ -64,10 +75,16 @@ def consume(name, topic, group, permitted):
 
 def main():
     publish("catalog_service", "book-events", True)
+    publish("user_service", "created-user-preference", True)
+    consume("recommendation_service", "created-user-preference", "recommendation-service", True)
+    publish("engagement_service", "engagement.ratings.v1", True)
+    consume("recommendation_service", "engagement.ratings.v1", "recommendation-service", True)
     consume("engagement_service", "book-events", "engagement-service", True)
     publish("user_service", "book-events", False)
     publish("catalog_service", "engagement.ratings.v1", False)
     consume("user_service", "book-events", "engagement-service", False)
+    consume("recommendation_service", "book-events", "engagement-service", False)
+    publish("recommendation_service", "created-book", False)
 
     # DLT publication and reading must remain permitted to the correct service.
     dlt = "book-events.engagement-service-dlt"
