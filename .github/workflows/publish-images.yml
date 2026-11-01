@@ -12,9 +12,14 @@ jobs:
   verify:
     uses: ./.github/workflows/verify-images.yml
 
+  kind-functional-gate:
+    name: Kind full-stack before publication
+    needs: verify
+    uses: ./.github/workflows/kubernetes-m18-full-stack.yml
+
   publish:
     name: Publish ${{ matrix.service }}
-    needs: verify
+    needs: [verify, kind-functional-gate]
     runs-on: ubuntu-latest
     permissions:
       contents: read
