@@ -4,9 +4,18 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: pr-verify-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   verify:
     uses: ./.github/workflows/verify-images.yml
+
+  kind-functional-gate:
+    name: Kind functional release gate
+    needs: verify
+    uses: ./.github/workflows/kubernetes-m18-full-stack.yml
