@@ -2,7 +2,13 @@
 import unittest
 from unittest.mock import patch
 from subprocess import CompletedProcess
-import verify_acls
+import importlib.util
+from pathlib import Path
+
+SPEC = importlib.util.spec_from_file_location("sec14_verify_acls",
+                                               Path(__file__).with_name("verify-acls.py"))
+verify_acls = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(verify_acls)
 
 
 class KafkaSmokeAssertionsTest(unittest.TestCase):
