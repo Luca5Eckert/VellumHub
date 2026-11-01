@@ -9,6 +9,20 @@ on:
       - 'deploy/kubernetes/overlays/local/**'
       - 'deploy/kubernetes/base/**'
       - 'services/**/Dockerfile'
+      - 'services/**/src/**'
+      - 'services/**/pom.xml'
+      - 'lib/**/src/**'
+      - 'lib/**/pom.xml'
+      - 'integration-tests/**'
+      - 'pom.xml'
+      - 'infra/scripts/security/verify_auth_poc_flow.py'
+      - 'infra/scripts/security/verify_oidc_lote2_flow.py'
+      - 'deploy/kubernetes/overlays/ci/**'
+      - 'deploy/kubernetes/tests/**'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/verify-images.yml'
+      - '.github/workflows/publish-images.yml'
+      - 'tools/ci/**'
 
 permissions:
   contents: read
@@ -119,12 +133,21 @@ jobs:
             --from-file=public.pem=target/ephemeral-keys/public.pem
           rm -rf target/ephemeral-keys
 
+      - name: Stage real OAuth integration harness for in-cluster execution
+        run: |
+          set -euo pipefail
+          kubectl -n vellumhub create configmap vellumhub-ci-business-scripts \
+            --from-file=verify_auth_poc_flow.py=infra/scripts/security/verify_auth_poc_flow.py \
+            --from-file=verify_oidc_lote2_flow.py=infra/scripts/security/verify_oidc_lote2_flow.py
+
       - name: M18 - Real apps, startup, HTTP probes, rollout, rollback, restart
         run: python3 deploy/kubernetes/scripts/benchmark-full-stack.py --sha "$SOURCE_SHA"
       - name: Safe Pod / event / deployment diagnostics
         if: failure()
         run: |
           kubectl -n vellumhub get deploy,sts,pod,pvc -o wide || true
+          kubectl -n vellumhub get jobs -o wide || true
+          kubectl -n vellumhub logs job/vellumhub-business-e2e --tail=60 || true
           kubectl -n vellumhub get events --sort-by=.lastTimestamp | tail -65 || true
           kubectl -n vellumhub get pods -o json |
             python3 -c 'import json,sys; p=json.load(sys.stdin); print("\n".join(x["metadata"]["name"]+" | "+x["status"].get("phase","?")+" | "+",".join(c["name"]+":"+str(c.get("ready"))+":"+str(c.get("restartCount")) for c in x["status"].get("containerStatuses",[])) for x in p["items"]))' || true
