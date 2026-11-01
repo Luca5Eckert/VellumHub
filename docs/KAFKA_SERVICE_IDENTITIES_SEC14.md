@@ -137,6 +137,27 @@ wildcard. Preserve outbox rows, ordered checkpoints and blocked/quarantined
 offsets; do not reset offsets to work around ACL errors. A rejected DLT write
 must keep the original record pending and trigger operational alerting.
 
+### Independent DLT replay: dedicated operator
+
+The optional `scripts/kafka-recovery.py replay-dlt --execute` now
+requires explicit `KAFKA_RECOVERY_SECURITY_PROTOCOL=SASL_SSL`,
+`KAFKA_RECOVERY_USERNAME`, and `KAFKA_RECOVERY_PASSWORD` provided by a
+separate operational secret; configure `KAFKA_RECOVERY_SSL_CA_LOCATION`
+for private-CA brokers. A local-only `SASL_PLAINTEXT` replay requires the
+additional `KAFKA_RECOVERY_ALLOW_LOCAL_INSECURE=true` opt-in.
+The CLI **refuses** to use a domain-service identity, broker admin identity,
+or an unauthenticated fallback.
+
+The operator principal must be provisioned independently with read/describe
+on specifically approved independent DLT topics, write/describe on the
+corresponding allowed source topics, read on group
+`vellum-recovery-inspect`, and Kafka `IdempotentWrite` if the broker
+requires it. These are **not yet automatically provisioned** by the
+four-service policy and require security review before replay is enabled.
+Do not grant topic or group wildcards. Ordered sources still use
+quarantine-based `resume` and must never be blindly republished.
+Broker-backed operator replay is a separate acceptance gate.
+
 ## Evidence, limits and non-goals
 
 - Static policy tests: `python3 -m unittest discover -s infra/scripts/kafka -p 'test_*.py' -v`.
