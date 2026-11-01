@@ -19,7 +19,7 @@ jobs:
       - name: Verify CI integrity contracts (fail-closed)
         run: python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
       - name: Compile Kubernetes benchmark and CI test harness sources
-        run: python3 -m py_compile deploy/kubernetes/scripts/benchmark-full-stack.py tools/ci/image_artifact.py
+        run: python3 -m py_compile deploy/kubernetes/scripts/benchmark-full-stack.py deploy/kubernetes/scripts/kind_gate_contract.py tools/ci/image_artifact.py tools/ci/release_manifest.py infra/scripts/security/verify_kind_business_flows.py
       - name: Confirm Docker for Testcontainers
         run: docker info
       - name: Verify reactor and non-distributed integration tests
