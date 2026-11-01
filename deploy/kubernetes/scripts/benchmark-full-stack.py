@@ -16,6 +16,8 @@ import time
 import urllib.error
 import urllib.request
 
+from kind_gate_contract import inspect_business_job
+
 SERVICES = ("auth-service", "gateway-service", "user-service",
             "catalog-service", "engagement-service", "recommendation-service")
 INFRA = ("redis", "kafka", "user-postgres", "catalog-postgres",
@@ -151,29 +153,12 @@ def real_business_e2e(expect_gateway_failure=False):
     deadline = time.monotonic() + 310
     while time.monotonic() < deadline:
         status = get("job", job).get("status", {})
-        if status.get("succeeded", 0) == 1:
-            if expect_gateway_failure:
-                raise RuntimeError("Deliberately broken Gateway unexpectedly passed business E2E")
-            output = k("logs", f"job/{job}", timeout=20).stdout
-            marker = "Kind 3 distinct business journeys: OAuth and cross-domain reads; catalog persist/read/delete; insufficient-scope mutation denied: OK"
-            if marker not in output:
-                raise RuntimeError("Business E2E succeeded without required functional assertions")
-            return {
-                "status": "PASSED", "real_oauth_pkce": True,
-                "real_auth_to_user_provisioning": True,
-                "real_gateway_domains_checked": ["user", "catalog", "engagement", "recommendation"],
-                "business_scenarios": ["authenticated cross-domain reads", "catalog persistence roundtrip", "insufficient-scope mutation denied"],
-                "negative": ["reduced scope denied", "ID token denied", "malformed JWT denied",
-                             "ADMIN mutation denied"],
-                "ci_fixture": "ephemeral accounts, not Google live or production"
-            }
-        if status.get("failed", 0):
-            output = k("logs", f"job/{job}", check=False, timeout=20).stdout
-            if expect_gateway_failure and "Gateway->User did not accept token HTTP" in output:
-                return {"status": "EXPECTED_REGRESSION_DETECTED",
-                        "failed_assertion": "authenticated Gateway->User profile HTTP",
-                        "health_check_alone_would_be_insufficient": True}
-            raise RuntimeError(f"Real business E2E failed unexpectedly (tail): {output[-850:]}")
+        if status.get("succeeded", 0) or status.get("failed", 0):
+            logs = k("logs", f"job/{job}", check=False, timeout=20).stdout
+            outcome = inspect_business_job(
+                status, logs, expect_gateway_failure=expect_gateway_failure)
+            if outcome is not None:
+                return outcome
         time.sleep(3)
     raise RuntimeError("Business E2E exceeded 310s deadline")
 
