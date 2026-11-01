@@ -16,6 +16,17 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+      - name: Lint PR and main release workflow syntax before Maven
+        run: |
+          docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:1.7.12 \
+            .github/workflows/ci.yml \
+            .github/workflows/verify-images.yml \
+            .github/workflows/kubernetes-m18-full-stack.yml \
+            .github/workflows/publish-images.yml
+      - name: Verify CI integrity contracts (fail-closed)
+        run: python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
+      - name: Compile Kubernetes benchmark and CI test harness sources
+        run: python3 -m py_compile deploy/kubernetes/scripts/benchmark-full-stack.py deploy/kubernetes/scripts/kind_gate_contract.py tools/ci/image_artifact.py tools/ci/release_manifest.py infra/scripts/security/verify_kind_business_flows.py
       - name: Confirm Docker for Testcontainers
         run: docker info
       - name: Verify reactor and non-distributed integration tests
@@ -120,19 +131,51 @@ jobs:
           file: ${{ matrix.dockerfile }}
           load: true
           push: false
-          tags: local/${{ matrix.image }}:${{ github.sha }}
+          tags: ghcr.io/luca5eckert/${{ matrix.image }}:${{ github.sha }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.title=${{ matrix.service }}
-      - name: Scan image for fixable critical vulnerabilities
+      - name: Scan the EXACT image that may be published
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: local/${{ matrix.image }}:${{ github.sha }}
+          image-ref: ghcr.io/luca5eckert/${{ matrix.image }}:${{ github.sha }}
           format: table
           exit-code: '1'
           ignore-unfixed: true
           severity: CRITICAL
+      - name: Prepare verified-image evidence directory
+        run: mkdir -p target/ci-images
+      - name: Generate CycloneDX SBOM for the scanned image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/luca5eckert/${{ matrix.image }}:${{ github.sha }}
+          format: cyclonedx
+          output: target/ci-images/${{ matrix.image }}.cdx.json
+          exit-code: '0'
+      # GitHub Actions reusable-workflow artifacts are available to downstream
+      # jobs in the same caller run. Never build the release image a second time.
+      - name: Preserve tested image bytes and image config digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p target/ci-images
+          image="ghcr.io/luca5eckert/${{ matrix.image }}:${GITHUB_SHA}"
+          docker save "$image" | zstd -T2 -1 -o "target/ci-images/${{ matrix.image }}.tar.zst"
+          python3 tools/ci/image_artifact.py record \
+            --sha "$GITHUB_SHA" --image "$image" \
+            --archive "target/ci-images/${{ matrix.image }}.tar.zst" \
+            --metadata "target/ci-images/${{ matrix.image }}.json"
+      - name: Transfer scanned image without rebuilding
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-image-${{ matrix.image }}
+          path: |
+            target/ci-images/${{ matrix.image }}.tar.zst
+            target/ci-images/${{ matrix.image }}.json
+            target/ci-images/${{ matrix.image }}.cdx.json
+          retention-days: 2
+          if-no-files-found: error
 
   training-export:
     name: Training exporter + PostgreSQL
