@@ -1,14 +1,7 @@
 name: Kubernetes M18 full-stack Java (kind)
 
 on:
-  workflow_dispatch:
-  pull_request:
-    paths:
-      - '.github/workflows/kubernetes-m18-full-stack.yml'
-      - 'deploy/kubernetes/scripts/benchmark-full-stack.py'
-      - 'deploy/kubernetes/overlays/local/**'
-      - 'deploy/kubernetes/base/**'
-      - 'services/**/Dockerfile'
+  workflow_call:
 
 permissions:
   contents: read
@@ -18,60 +11,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build actual ${{ matrix.app }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
-    strategy:
-      fail-fast: false
-      matrix:
-        app: [gateway, auth, user, catalog, engagement, recommendation]
-    env:
-      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ env.SOURCE_SHA }}
-      - uses: docker/setup-buildx-action@v3
-      - name: Build app image from this SHA
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: services/${{ matrix.app }}-service/Dockerfile
-          push: false
-          load: true
-          tags: ghcr.io/luca5eckert/vellumhub-${{ matrix.app }}:${{ env.SOURCE_SHA }}
-          cache-from: type=gha,scope=m18-${{ matrix.app }}
-          cache-to: type=gha,mode=max,scope=m18-${{ matrix.app }}
-      - name: Archive exact immutable app image
-        run: |
-          set -euo pipefail
-          mkdir -p target/m18-images
-          docker save "ghcr.io/luca5eckert/vellumhub-${{ matrix.app }}:$SOURCE_SHA" |
-            zstd -T2 -1 -o "target/m18-images/${{ matrix.app }}.tar.zst"
-          zstd -t "target/m18-images/${{ matrix.app }}.tar.zst"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: m18-image-${{ matrix.app }}
-          path: target/m18-images/${{ matrix.app }}.tar.zst
-          retention-days: 1
-          if-no-files-found: error
-
   kind-full-stack:
     name: Six real Java apps + dependencies + lifecycle
-    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      SOURCE_SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.SOURCE_SHA }}
       - uses: actions/download-artifact@v4
         with:
-          pattern: m18-image-*
-          path: target/m18-images
+          pattern: verified-image-*
+          path: target/ci-images
           merge-multiple: true
       - name: Install kind / verify Docker
         run: |
@@ -84,16 +37,38 @@ jobs:
       - name: Create isolated Kubernetes cluster
         run: |
           kind create cluster --name vellumhub-m18-full --image kindest/node:v1.31.2 --wait 120s
-      - name: Import 6 actual Docker images, without GHCR publish
+      - name: Verify and import EXACT six scanned images into Kind
+        shell: bash
         run: |
           set -euo pipefail
           for name in gateway auth user catalog engagement recommendation; do
-            zstd -dc "target/m18-images/$name.tar.zst" | docker load
-            kind load docker-image "ghcr.io/luca5eckert/vellumhub-$name:$SOURCE_SHA" \
-              --name vellumhub-m18-full
+            image="ghcr.io/luca5eckert/vellumhub-$name:$SOURCE_SHA"
+            archive="target/ci-images/vellumhub-$name.tar.zst"
+            meta="target/ci-images/vellumhub-$name.json"
+            python3 tools/ci/image_artifact.py verify \
+              --sha "$SOURCE_SHA" --image "$image" --archive "$archive" --metadata "$meta"
+            zstd -dc "$archive" | docker load
+            python3 tools/ci/image_artifact.py loaded \
+              --sha "$SOURCE_SHA" --image "$image" --archive "$archive" --metadata "$meta"
+            kind load docker-image "$image" --name vellumhub-m18-full
           done
           docker image ls --format '{{.Repository}}:{{.Tag}}' |
             grep 'ghcr.io/luca5eckert/vellumhub-'
+      - name: Build digest-distinct Gateway candidate from approved Java image
+        shell: bash
+        run: |
+          set -euo pipefail
+          original="ghcr.io/luca5eckert/vellumhub-gateway:$SOURCE_SHA"
+          candidate="${original}-m18-candidate"
+          # Digest-distinct image metadata; unchanged Java JAR.
+          printf 'FROM %s\nLABEL ci.vellumhub.m18.candidate="true"\n' "$original" |
+            docker build --pull=false --network=none -t "$candidate" -f - .
+          old_id="$(docker image inspect --format '{{.Id}}' "$original")"
+          new_id="$(docker image inspect --format '{{.Id}}' "$candidate")"
+          test "$old_id" != "$new_id" || { echo "Candidate image must differ"; exit 1; }
+          kind load docker-image "$candidate" --name vellumhub-m18-full
+          mkdir -p target/metrics
+          printf 'base=%s\ncandidate=%s\n' "$old_id" "$new_id" > target/metrics/m18-gateway-image-ids.txt
       - name: Ephemeral secrets, signing material and namespace
         shell: bash
         run: |
@@ -119,12 +94,22 @@ jobs:
             --from-file=public.pem=target/ephemeral-keys/public.pem
           rm -rf target/ephemeral-keys
 
+      - name: Stage real OAuth integration harness for in-cluster execution
+        run: |
+          set -euo pipefail
+          kubectl -n vellumhub create configmap vellumhub-ci-business-scripts \
+            --from-file=verify_auth_poc_flow.py=infra/scripts/security/verify_auth_poc_flow.py \
+            --from-file=verify_oidc_lote2_flow.py=infra/scripts/security/verify_oidc_lote2_flow.py \
+            --from-file=verify_kind_business_flows.py=infra/scripts/security/verify_kind_business_flows.py
+
       - name: M18 - Real apps, startup, HTTP probes, rollout, rollback, restart
         run: python3 deploy/kubernetes/scripts/benchmark-full-stack.py --sha "$SOURCE_SHA"
       - name: Safe Pod / event / deployment diagnostics
         if: failure()
         run: |
           kubectl -n vellumhub get deploy,sts,pod,pvc -o wide || true
+          kubectl -n vellumhub get jobs -o wide || true
+          kubectl -n vellumhub logs job/vellumhub-business-e2e --tail=60 || true
           kubectl -n vellumhub get events --sort-by=.lastTimestamp | tail -65 || true
           kubectl -n vellumhub get pods -o json |
             python3 -c 'import json,sys; p=json.load(sys.stdin); print("\n".join(x["metadata"]["name"]+" | "+x["status"].get("phase","?")+" | "+",".join(c["name"]+":"+str(c.get("ready"))+":"+str(c.get("restartCount")) for c in x["status"].get("containerStatuses",[])) for x in p["items"]))' || true
@@ -136,6 +121,7 @@ jobs:
           path: |
             target/metrics/kubernetes-full-stack.json
             target/metrics/kubernetes-full-stack-rendered.yaml
+            target/metrics/m18-gateway-image-ids.txt
           if-no-files-found: warn
           retention-days: 30
       - name: Destroy disposable cluster

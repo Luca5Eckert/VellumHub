@@ -186,6 +186,14 @@ def summarize(root, sha, profile):
             observed.get("status") == "PASSED" and
             observed.get("schema_version") == 3 and
             observed.get("application_deployed") is True and
+            observed.get("business_e2e", {}).get("status") == "PASSED" and
+            rollout.get("business_e2e", {}).get("status") == "PASSED" and
+            observed.get("functional_regression", {}).get("status") == "EXPECTED_REGRESSION_DETECTED" and
+            observed.get("functional_regression", {}).get("ready_when_business_failed") == 1 and
+            rollback.get("business_e2e_after_rollback", {}).get("status") == "PASSED" and
+            rollout.get("distinct_image_tags") is True and
+            rollout.get("image_a") != rollout.get("image_b") and
+            rollout.get("image_a") == rollback.get("restored_image_a") and
             all(states.get(n, {}).get("ready") == 1 for n in names) and
             all(deps.get(n, {}).get("ready") == 1 for n in infra) and
             all(probes.get(n, {}).get("successful") is True and
@@ -203,6 +211,8 @@ def summarize(root, sha, profile):
                                           for n in names),
             "ready_statefulsets": sum(deps.get(n, {}).get("ready") == 1
                                       for n in infra),
+            "business_e2e": observed.get("business_e2e", {}),
+            "functional_regression": observed.get("functional_regression", {}),
             "http_probe_successes": sum(probes.get(n, {}).get("responses", 0)
                                          for n in names),
             "cold_start_total_ms": observed.get("cold_start_total_ms"),
