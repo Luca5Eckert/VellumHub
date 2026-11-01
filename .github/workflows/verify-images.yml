@@ -18,6 +18,8 @@ jobs:
           cache: maven
       - name: Verify CI integrity contracts (fail-closed)
         run: python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
+      - name: Compile Kubernetes benchmark and CI test harness sources
+        run: python3 -m py_compile deploy/kubernetes/scripts/benchmark-full-stack.py tools/ci/image_artifact.py
       - name: Confirm Docker for Testcontainers
         run: docker info
       - name: Verify reactor and non-distributed integration tests
