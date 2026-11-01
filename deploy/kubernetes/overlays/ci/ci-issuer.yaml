@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vellumhub-config
+data:
+  # Explicitly CI-only internal issuer. Never apply this overlay in production.
+  JWT_ISSUER: http://auth-service:9000
+  VELLUM_AUTH_ALLOWED_ORIGIN: http://127.0.0.1:9100

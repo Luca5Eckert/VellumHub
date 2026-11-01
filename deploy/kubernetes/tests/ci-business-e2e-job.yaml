@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vellumhub-business-e2e
+  namespace: vellumhub
+  labels:
+    app.kubernetes.io/name: vellumhub-business-e2e
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: e2e
+          image: python:3.12-alpine
+          imagePullPolicy: IfNotPresent
+          command: [python3, -u, /ci/verify_kind_business_flows.py]
+          env:
+            - {name: VELLUM_AUTH_ISSUER, value: "http://auth-service:9000"}
+            - {name: VELLUM_GATEWAY_URL, value: "http://gateway-service:8080"}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: ci-scripts, mountPath: /ci, readOnly: true}
+          resources:
+            requests: {cpu: 40m, memory: 48Mi}
+            limits: {cpu: 300m, memory: 192Mi}
+      volumes:
+        - name: ci-scripts
+          configMap:
+            name: vellumhub-ci-business-scripts
+            defaultMode: 0444
