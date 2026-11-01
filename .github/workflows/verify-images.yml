@@ -135,6 +135,17 @@ jobs:
           exit-code: '1'
           ignore-unfixed: true
           severity: CRITICAL
+      - name: Prepare verified-image evidence directory
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: mkdir -p target/ci-images
+      - name: Generate CycloneDX SBOM for the scanned image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/luca5eckert/${{ matrix.image }}:${{ github.sha }}
+          format: cyclonedx
+          output: target/ci-images/${{ matrix.image }}.cdx.json
+          exit-code: '0'
       # GitHub Actions reusable-workflow artifacts are available to downstream
       # jobs in the same caller run. Never build the release image a second time.
       - name: Preserve tested image bytes and image config digest
@@ -157,6 +168,7 @@ jobs:
           path: |
             target/ci-images/${{ matrix.image }}.tar.zst
             target/ci-images/${{ matrix.image }}.json
+            target/ci-images/${{ matrix.image }}.cdx.json
           retention-days: 2
           if-no-files-found: error
 
