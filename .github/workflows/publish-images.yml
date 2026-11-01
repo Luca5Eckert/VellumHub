@@ -96,18 +96,18 @@ jobs:
           docker buildx imagetools inspect "$IMAGE@$digest" >/dev/null
           printf '%s@%s\n' "$IMAGE" "$digest" > target/release/image-reference.txt
           printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT"
-          docker tag "$IMAGE:$GITHUB_SHA" "$IMAGE:main"
-          docker push "$IMAGE:main"
+          # Deliberately do not advance a mutable cross-service :main tag.
+          # Consumers must use the immutable registry digest published above.
           # Registry manifest digest and local config digest are distinct.
           rm -f target/release/push.log
       - name: Attest released digest build provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest@v4
         with:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
       - name: Attest exact-image CycloneDX SBOM
-        uses: actions/attest-sbom@v2
+        uses: actions/attest@v4
         with:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.push.outputs.digest }}
