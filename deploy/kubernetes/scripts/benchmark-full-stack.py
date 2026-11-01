@@ -16,6 +16,8 @@ import time
 import urllib.error
 import urllib.request
 
+from kind_gate_contract import inspect_business_job
+
 SERVICES = ("auth-service", "gateway-service", "user-service",
             "catalog-service", "engagement-service", "recommendation-service")
 INFRA = ("redis", "kafka", "user-postgres", "catalog-postgres",
@@ -135,9 +137,30 @@ def render(sha):
         raise RuntimeError("Unpinned/missing six-app image tags in local Kustomize overlay")
     overlay.write_text(source.replace("newTag: REPLACE_WITH_GIT_SHA",
                                      "newTag: " + sha), encoding="utf8")
-    raw = command("kubectl", "kustomize", str(overlay.parent), timeout=60).stdout
+    # CI overlay wraps the same six SHA-pinned Java images, but isolates
+    # short-lived OAuth test-client settings from the regular local/prod overlays.
+    raw = command("kubectl", "kustomize", str(WORK / "overlays/ci"), timeout=60).stdout
     RENDERED.write_text(raw, encoding="utf8")
     return raw
+
+
+
+def real_business_e2e(expect_gateway_failure=False):
+    """Exercise actual Auth/OAuth and domain HTTP with fresh CI-only users."""
+    job = "vellumhub-business-e2e"
+    k("delete", "job", job, "--ignore-not-found=true", "--wait=true", timeout=75)
+    k("apply", "-f", "deploy/kubernetes/tests/ci-business-e2e-job.yaml", timeout=45)
+    deadline = time.monotonic() + 310
+    while time.monotonic() < deadline:
+        status = get("job", job).get("status", {})
+        if status.get("succeeded", 0) or status.get("failed", 0):
+            logs = k("logs", f"job/{job}", check=False, timeout=20).stdout
+            outcome = inspect_business_job(
+                status, logs, expect_gateway_failure=expect_gateway_failure)
+            if outcome is not None:
+                return outcome
+        time.sleep(3)
+    raise RuntimeError("Business E2E exceeded 310s deadline")
 
 
 def measure(sha, budget):
@@ -149,8 +172,8 @@ def measure(sha, budget):
         "environment": "GitHub Actions ubuntu-latest 4-core / ephemeral kind v1.31.2",
         "application_deployed": True, "cloud_production": False,
         "limitations": ("One ephemeral runner/cluster, one replica of each Java app; "
-                        "real readiness/liveness HTTP but no authenticated business "
-                        "transactions, durability under node loss, production SLO, "
+                        "real readiness/liveness and authenticated business smoke; "
+                        "no node-loss recovery, production SLO, "
                         "traffic concurrency or Argo CD GitOps.")
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -175,42 +198,65 @@ def measure(sha, budget):
                                "successful": len(samples) == 10,
                                "latencies_ms": samples}
         report["probes"] = probes
+        report["business_e2e"] = real_business_e2e()
 
-        # Trigger a real rolling update on the gateway's actual Java image.
-        stable_image = get("deployment", "gateway-service")["spec"]["template"]["spec"]["containers"][0]["image"]
+        # B is a digest-distinct image of the same Java binary, generated
+        # within Kind CI. The regression is intentionally in runtime config.
+        stable_deployment = get("deployment", "gateway-service")
+        stable_template = stable_deployment["spec"]["template"]
+        stable_image = stable_template["spec"]["containers"][0]["image"]
+        candidate_image = stable_image + "-m18-candidate"
         started_rollout = time.monotonic()
-        k("set", "env", "deployment/gateway-service", "M18_REVISION=two")
+        k("set", "image", "deployment/gateway-service",
+          f"gateway-service={candidate_image}")
         k("rollout", "status", "deployment/gateway-service", "--timeout=240s", timeout=255)
-        expected, ready, _ = ready_counts("deployment", "gateway-service")
-        if expected != 1 or ready != 1:
-            raise RuntimeError(f"Gateway rollout readiness {ready}/{expected}")
-        report["rolling_update"] = {"duration_ms": elapsed_ms(started_rollout),
-                                    "ready": ready, "http_successes": assert_gateway()}
+        expected, ready, deployed_b = ready_counts("deployment", "gateway-service")
+        current_image = deployed_b["spec"]["template"]["spec"]["containers"][0]["image"]
+        if expected != 1 or ready != 1 or current_image != candidate_image:
+            raise RuntimeError("Gateway candidate B image was not Ready")
+        report["rolling_update"] = {
+            "duration_ms": elapsed_ms(started_rollout),
+            "ready": ready, "image_a": stable_image, "image_b": candidate_image,
+            "distinct_image_tags": stable_image != candidate_image,
+            "http_successes": assert_gateway(),
+            "business_e2e": real_business_e2e()
+        }
 
-        # Intentionally failed rollout. Since maxUnavailable=0, previous
-        # healthy Java Pod must remain serving. Undo back to original image.
-        bad_image = "ghcr.io/luca5eckert/vellumhub-gateway:m18-invalid-not-existing"
-        k("set", "image", "deployment/gateway-service", f"gateway-service={bad_image}")
-        timeout_result = k("rollout", "status", "deployment/gateway-service",
-                           "--timeout=24s", timeout=40, check=False)
-        if timeout_result.returncode == 0:
-            raise RuntimeError("Invalid gateway image unexpectedly deployed")
-        previous_desired, previous_ready, _ = ready_counts("deployment", "gateway-service")
-        if previous_ready < 1:
-            raise RuntimeError("Failed image update caused loss of last healthy gateway")
-        started_rollback = time.monotonic()
-        k("rollout", "undo", "deployment/gateway-service")
+        # Prove that readiness alone cannot catch a broken authenticated API:
+        # run B with a deliberately unreachable User upstream.
+        started_detection = time.monotonic()
+        k("set", "env", "deployment/gateway-service",
+          "USER_SERVICE_URL=http://unreachable-user.invalid:8080")
         k("rollout", "status", "deployment/gateway-service", "--timeout=240s", timeout=255)
-        _, after_rollback, deployment = ready_counts("deployment", "gateway-service")
-        actual_image = deployment["spec"]["template"]["spec"]["containers"][0]["image"]
-        if actual_image != stable_image or after_rollback != 1:
-            raise RuntimeError("Rollback failed to restore original Java image and readiness")
+        _, bad_ready, bad_template = ready_counts("deployment", "gateway-service")
+        if bad_ready != 1:
+            raise RuntimeError("Expected functional failure after Ready, got unready Gateway")
+        detected = real_business_e2e(expect_gateway_failure=True)
+        report["functional_regression"] = {
+            **detected, "detection_duration_ms": elapsed_ms(started_detection),
+            "ready_when_business_failed": bad_ready,
+            "failed_candidate": candidate_image
+        }
+
+        # Restore the exact previously-approved A template, including the
+        # ConfigMap-based URL; JSON merge patch replaces env arrays entirely.
+        started_rollback = time.monotonic()
+        k("patch", "deployment", "gateway-service", "--type=merge", "-p",
+          json.dumps({"spec": {"template": stable_template}}))
+        k("rollout", "status", "deployment/gateway-service", "--timeout=240s", timeout=255)
+        _, after_rollback, recovered = ready_counts("deployment", "gateway-service")
+        restored = recovered["spec"]["template"]["spec"]["containers"][0]
+        original = stable_template["spec"]["containers"][0]
+        if restored["image"] != stable_image or after_rollback != 1:
+            raise RuntimeError("Did not restore approved Gateway image A")
+        if next((x for x in restored["env"] if x["name"] == "USER_SERVICE_URL"), None) != \
+                next((x for x in original["env"] if x["name"] == "USER_SERVICE_URL"), None):
+            raise RuntimeError("Rollback did not restore original User URL")
         report["rollback"] = {
-            "failed_image_update_detected": True,
-            "healthy_replicas_while_failed_update": previous_ready,
+            "functional_failure_detected": True, "restored_image_a": stable_image,
             "duration_ms": elapsed_ms(started_rollback),
-            "restored_sha_image": actual_image,
-            "http_successes": assert_gateway()
+            "http_successes": assert_gateway(),
+            "business_e2e_after_rollback": real_business_e2e()
         }
 
         old = json.loads(k("get", "pod", "-l", "app.kubernetes.io/name=gateway-service",
