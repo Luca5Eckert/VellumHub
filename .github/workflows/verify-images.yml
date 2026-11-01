@@ -138,10 +138,8 @@ jobs:
           ignore-unfixed: true
           severity: CRITICAL
       - name: Prepare verified-image evidence directory
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: mkdir -p target/ci-images
       - name: Generate CycloneDX SBOM for the scanned image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ghcr.io/luca5eckert/${{ matrix.image }}:${{ github.sha }}
@@ -151,7 +149,6 @@ jobs:
       # GitHub Actions reusable-workflow artifacts are available to downstream
       # jobs in the same caller run. Never build the release image a second time.
       - name: Preserve tested image bytes and image config digest
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: bash
         run: |
           set -euo pipefail
@@ -163,7 +160,6 @@ jobs:
             --archive "target/ci-images/${{ matrix.image }}.tar.zst" \
             --metadata "target/ci-images/${{ matrix.image }}.json"
       - name: Transfer scanned image without rebuilding
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: verified-image-${{ matrix.image }}
