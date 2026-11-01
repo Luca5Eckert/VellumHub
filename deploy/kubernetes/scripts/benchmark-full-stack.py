@@ -135,10 +135,38 @@ def render(sha):
         raise RuntimeError("Unpinned/missing six-app image tags in local Kustomize overlay")
     overlay.write_text(source.replace("newTag: REPLACE_WITH_GIT_SHA",
                                      "newTag: " + sha), encoding="utf8")
-    raw = command("kubectl", "kustomize", str(overlay.parent), timeout=60).stdout
+    # CI overlay wraps the same six SHA-pinned Java images, but isolates
+    # short-lived OAuth test-client settings from the regular local/prod overlays.
+    raw = command("kubectl", "kustomize", str(WORK / "overlays/ci"), timeout=60).stdout
     RENDERED.write_text(raw, encoding="utf8")
     return raw
 
+
+
+def real_business_e2e():
+    """Execute Auth→JWT→Gateway→4 domains inside Kind, not a mocked API."""
+    job = "vellumhub-business-e2e"
+    k("apply", "-f", "deploy/kubernetes/tests/ci-business-e2e-job.yaml", timeout=45)
+    deadline = time.monotonic() + 310
+    while time.monotonic() < deadline:
+        status = get("job", job).get("status", {})
+        if status.get("succeeded", 0) == 1:
+            output = k("logs", f"job/{job}", timeout=20).stdout
+            marker = "Real Auth UUIDv7 -> User profile -> Gateway -> User/Catalog/Engagement/Recommendation and negative JWT checks: OK"
+            if marker not in output:
+                raise RuntimeError("Business E2E job succeeded without expected functional assertions")
+            return {
+                "status": "PASSED", "real_oauth_pkce": True,
+                "real_auth_to_user_provisioning": True,
+                "real_gateway_domains_checked": ["user", "catalog", "engagement", "recommendation"],
+                "negative": ["reduced scope denied", "ID token denied", "malformed JWT denied", "ADMIN mutation denied"],
+                "ci_fixture": "ephemeral new account, not live Google or production"
+            }
+        if status.get("failed", 0):
+            output = k("logs", f"job/{job}", check=False, timeout=20).stdout
+            raise RuntimeError(f"Real business E2E job failed (tail): {output[-900:]}")
+        time.sleep(3)
+    raise RuntimeError("Business E2E job exceeded 310s deadline; not considered passed")
 
 def measure(sha, budget):
     report = {
@@ -175,6 +203,7 @@ def measure(sha, budget):
                                "successful": len(samples) == 10,
                                "latencies_ms": samples}
         report["probes"] = probes
+        report["business_e2e"] = real_business_e2e()
 
         # Trigger a real rolling update on the gateway's actual Java image.
         stable_image = get("deployment", "gateway-service")["spec"]["template"]["spec"]["containers"][0]["image"]
