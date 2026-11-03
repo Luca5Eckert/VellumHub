@@ -2,6 +2,12 @@ name: Backend metrics reference (manual)
 
 on:
   workflow_dispatch:
+  # Run this heavy reference suite on PRs that change its evidence harness.
+  pull_request:
+    paths:
+      - 'tools/metrics/analyze_outcomes.py'
+      - 'tools/metrics/test_analyze_outcomes.py'
+      - '.github/workflows/backend-metrics.yml'
 
 permissions:
   contents: read
@@ -25,6 +31,9 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+      - name: Validate outcome analysis offline contracts
+        run: python3 -m unittest discover -s tools/metrics -p 'test_analyze_outcomes.py' -v
+
       - name: Docker prerequisites
         run: |
           docker info
@@ -66,6 +75,10 @@ jobs:
       - name: Summarize SHA-bound evidence
         if: always()
         run: python3 tools/metrics/collect_evidence.py --sha "${SOURCE_SHA}" --profile reference
+
+      - name: Analyze observed backend outcomes (no extrapolated capacity)
+        if: success()
+        run: python3 tools/metrics/analyze_outcomes.py --sha "${SOURCE_SHA}"
 
       - name: Upload original reports and metrics
         if: always()
