@@ -1,0 +1,131 @@
+{
+  "type": "record",
+  "name": "BookChangedEvent",
+  "namespace": "com.vellumhub.kafka.avro.book",
+  "doc": "Pilot transport contract. No production listeners or producers use this schema yet.",
+  "fields": [
+    {
+      "name": "eventId",
+      "type": "string",
+      "doc": "Stable UUID for retry and idempotency. Semantic UUID validation belongs to the adapter."
+    },
+    {
+      "name": "occurredAt",
+      "type": "string",
+      "doc": "UTC ISO-8601 Instant; validate at the application boundary."
+    },
+    {
+      "name": "bookId",
+      "type": "string",
+      "doc": "Book aggregate UUID and Kafka key."
+    },
+    {
+      "name": "revision",
+      "type": "long",
+      "doc": "Nonnegative aggregate revision, NOT schema version."
+    },
+    {
+      "name": "kind",
+      "type": {
+        "type": "enum",
+        "name": "BookChangeKind",
+        "symbols": [
+          "BASELINE",
+          "CREATED",
+          "UPDATED",
+          "DELETED"
+        ]
+      }
+    },
+    {
+      "name": "state",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "BookState",
+          "doc": "Public Book snapshot for local downstream projections; not a JPA entity.",
+          "fields": [
+            {
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "name": "description",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "releaseYear",
+              "type": "int"
+            },
+            {
+              "name": "coverUrl",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "author",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "isbn",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "pageCount",
+              "type": "int"
+            },
+            {
+              "name": "publisher",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "genres",
+              "type": {
+                "type": "array",
+                "items": "string"
+              }
+            }
+          ]
+        }
+      ],
+      "default": null,
+      "doc": "Null exactly for DELETED; active kinds require a snapshot (semantic validation)."
+    },
+    {
+      "name": "catalogSource",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "language",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    }
+  ]
+}
