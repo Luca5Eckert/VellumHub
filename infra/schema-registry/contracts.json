@@ -12,7 +12,7 @@
         },
         {
           "label": "v2",
-          "file": "integration-tests/schema-evolution-poc/src/main/avro/BookChangedEvent.avsc"
+          "file": "lib/kafka-avro-contracts/src/main/avro/BookChangedEvent.avsc"
         }
       ],
       "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/book-v3-compatible.avsc",

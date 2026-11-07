@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+ <modelVersion>4.0.0</modelVersion>
+ <parent><groupId>com.vellumhub</groupId><artifactId>vellumhub</artifactId><version>1.0-SNAPSHOT</version><relativePath>../../pom.xml</relativePath></parent>
+ <artifactId>kafka-avro-contracts</artifactId>
+ <properties><maven.compiler.release>21</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding><avro.version>1.12.1</avro.version></properties>
+ <dependencies>
+   <dependency><groupId>org.apache.avro</groupId><artifactId>avro</artifactId><version>1.12.1</version></dependency>
+   <dependency><groupId>com.vellumhub</groupId><artifactId>kafka-contracts</artifactId><version>1.0-SNAPSHOT</version></dependency>
+ </dependencies>
+ <build><plugins>
+   <plugin><groupId>org.apache.avro</groupId><artifactId>avro-maven-plugin</artifactId><version>1.12.1</version>
+    <executions><execution><phase>generate-sources</phase><goals><goal>schema</goal></goals><configuration>
+      <sourceDirectory>${project.basedir}/src/main/avro</sourceDirectory><stringType>String</stringType>
+    </configuration></execution></executions>
+   </plugin>
+ </plugins></build>
+</project>
