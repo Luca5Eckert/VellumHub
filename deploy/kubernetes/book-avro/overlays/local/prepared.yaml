@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: catalog-service}
+spec:
+  template:
+    spec:
+      containers:
+        - name: catalog-service
+          env:
+            - {name: BOOK_EVENTS_WIRE_FORMAT, value: json}
+            - {name: BOOK_AVRO_REGISTRY_URL, value: "http://schema-registry:8080/apis/ccompat/v7"}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: recommendation-service}
+spec:
+  template:
+    spec:
+      containers:
+        - name: recommendation-service
+          env:
+            - {name: BOOK_AVRO_CONSUMER_ENABLED, value: "false"}
+            - {name: BOOK_AVRO_REGISTRY_URL, value: "http://schema-registry:8080/apis/ccompat/v7"}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: engagement-service}
+spec:
+  template:
+    spec:
+      containers:
+        - name: engagement-service
+          env:
+            - {name: BOOK_AVRO_CONSUMER_ENABLED, value: "false"}
+            - {name: BOOK_AVRO_REGISTRY_URL, value: "http://schema-registry:8080/apis/ccompat/v7"}
