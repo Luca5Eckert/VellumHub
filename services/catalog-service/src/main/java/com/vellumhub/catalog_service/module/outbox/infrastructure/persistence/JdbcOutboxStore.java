@@ -36,11 +36,11 @@ public class JdbcOutboxStore implements OutboxStore {
                attempts=e.attempts+1, lease_until=now() + (? * interval '1 second')
             FROM candidate c WHERE e.event_id=c.event_id
             RETURNING e.event_id, e.claim_token, e.event_type, e.topic, e.message_key,
-                      e.payload::text AS payload_text, e.attempts
+                      e.payload::text AS payload_text, e.attempts, e.wire_format, e.payload_schema_version
             """, rs -> rs.next() ? Optional.of(new OutboxRecord(
                 rs.getObject("event_id", UUID.class), rs.getObject("claim_token", UUID.class),
                 rs.getString("event_type"), rs.getString("topic"), rs.getString("message_key"), rs.getString("payload_text"),
-                rs.getInt("attempts"))) : Optional.empty(),
+                rs.getInt("attempts"), rs.getString("wire_format"), rs.getInt("payload_schema_version"))) : Optional.empty(),
             token, Math.max(1L, lease.toSeconds()));
     }
     @Override @Transactional

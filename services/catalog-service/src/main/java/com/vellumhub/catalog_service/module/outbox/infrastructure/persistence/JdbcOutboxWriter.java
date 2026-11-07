@@ -23,10 +23,11 @@ public class JdbcOutboxWriter implements OutboxWriter {
         }
         jdbc.update("""
             INSERT INTO outbox_events(event_id, aggregate_type, aggregate_id, aggregate_version,
-                                      event_type, topic, message_key, payload)
-            VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb))
+                                      event_type, topic, message_key, payload, wire_format, payload_schema_version)
+            VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), ?, ?)
             """, message.eventId(), message.aggregateType(), message.aggregateId(),
-                message.revision(), message.eventType(), message.topic(), message.messageKey(), json);
+                message.revision(), message.eventType(), message.topic(), message.messageKey(), json,
+                message.wireFormat(), message.payloadSchemaVersion());
     }
 }
 
