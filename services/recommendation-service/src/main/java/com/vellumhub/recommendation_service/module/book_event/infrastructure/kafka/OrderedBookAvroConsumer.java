@@ -25,16 +25,27 @@ public class OrderedBookAvroConsumer {
     private final VellumHubMetrics metrics;
     private final KafkaAvroDeserializer decoder;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public OrderedBookAvroConsumer(ApplyBookEventUseCase projection, VellumHubMetrics metrics,
                                   @Value("${app.book.avro.registry-url:}") String registryUrl) {
-        if (registryUrl.isBlank()) throw new IllegalArgumentException("Missing Book Avro Registry URL");
+        this(projection, metrics, configure(registryUrl));
+    }
+
+    OrderedBookAvroConsumer(ApplyBookEventUseCase projection, VellumHubMetrics metrics,
+                            KafkaAvroDeserializer decoder) {
         this.projection = projection;
         this.metrics = metrics;
-        decoder = new KafkaAvroDeserializer();
+        this.decoder = decoder;
+    }
+
+    private static KafkaAvroDeserializer configure(String registryUrl) {
+        if (registryUrl.isBlank()) throw new IllegalArgumentException("Missing Book Avro Registry URL");
+        var reader = new KafkaAvroDeserializer();
         var config = new HashMap<String, Object>();
         config.put("schema.registry.url", registryUrl);
         config.put("specific.avro.reader", true);
-        decoder.configure(config, false);
+        reader.configure(config, false);
+        return reader;
     }
 
     @KafkaListener(topics=KafkaTopics.BOOK_EVENTS_AVRO,
