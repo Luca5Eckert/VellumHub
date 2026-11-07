@@ -1,0 +1,134 @@
+name: Registry persistence, contracts and Kubernetes smoke
+on:
+  pull_request:
+    paths:
+      - 'docker-compose.schema-registry.yml'
+      - 'deploy/kubernetes/schema-registry/**'
+      - 'infra/schema-registry/**'
+      - 'tools/schema_registry/**'
+      - 'integration-tests/schema-evolution-poc/**'
+      - '.github/workflows/schema-registry-governance.yml'
+      - '.github/workflows/schema-registry-publish.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docker-compose.schema-registry.yml'
+      - 'deploy/kubernetes/schema-registry/**'
+      - 'infra/schema-registry/**'
+      - 'tools/schema_registry/**'
+      - 'integration-tests/schema-evolution-poc/**'
+      - '.github/workflows/schema-registry-governance.yml'
+permissions: {contents: read}
+jobs:
+  registry-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21', cache: maven}
+      - uses: azure/setup-kubectl@v4
+        with: {version: v1.31.2}
+      - name: Parse manifests and reject historical schema modifications
+        run: |
+          python3 -m pip install 'PyYAML==6.0.2'
+          python3 -m unittest discover -s tools/schema_registry -p 'test_*.py' -v
+          if [ -n "$GITHUB_BASE_REF" ]; then
+            python3 tools/schema_registry/registry_gate.py check --base "origin/$GITHUB_BASE_REF"
+          else
+            python3 tools/schema_registry/registry_gate.py check
+          fi
+      - name: Static Compose and Kubernetes overlay validation
+        env:
+          REGISTRY_DB_PASSWORD: ci-fixture-no-real-secret
+        run: |
+          docker compose -f docker-compose.schema-registry.yml config --quiet
+          kubectl kustomize deploy/kubernetes/schema-registry/overlays/local > /tmp/registry-local.yaml
+          kubectl kustomize deploy/kubernetes/schema-registry/overlays/prod > /tmp/registry-prod.yaml
+          python3 tools/schema_registry/validate_manifests.py /tmp/registry-local.yaml /tmp/registry-prod.yaml
+      - name: Distributed Kafka + SQL-backed Registry integration tests
+        run: mvn -B -ntp -Pschema-poc -pl integration-tests/schema-evolution-poc -am clean test
+      - name: Generate disposable SQL credential
+        run: |
+          PASSWORD="$(openssl rand -hex 24)"
+          echo "::add-mask::$PASSWORD"
+          echo "REGISTRY_DB_PASSWORD=$PASSWORD" >> "$GITHUB_ENV"
+      - name: Run durable Registry with actual PostgreSQL
+        run: |
+          docker compose -f docker-compose.schema-registry.yml up -d --wait
+          python3 tools/schema_registry/wait_ready.py http://127.0.0.1:18081/apis/ccompat/v7/subjects
+          for p in /health/ready /health/live; do
+            status="$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:18081$p")"
+            echo "HEALTH_PROBE $p status=$status"
+            test "$status" = "200"
+          done
+      - name: Test subject compatibility, persistence and idempotence
+        run: |
+          python3 tools/schema_registry/registry_gate.py publish --ephemeral --state /tmp/schema-ids.json
+          python3 tools/schema_registry/registry_gate.py verify --state /tmp/schema-ids.json
+          python3 tools/schema_registry/registry_gate.py negative
+          docker compose -f docker-compose.schema-registry.yml restart schema-registry
+          python3 tools/schema_registry/wait_ready.py http://127.0.0.1:18081/apis/ccompat/v7/subjects
+          python3 tools/schema_registry/registry_gate.py verify --state /tmp/schema-ids.json
+          docker compose -f docker-compose.schema-registry.yml restart registry-postgres schema-registry
+          python3 tools/schema_registry/wait_ready.py http://127.0.0.1:18081/apis/ccompat/v7/subjects
+          python3 tools/schema_registry/registry_gate.py verify --state /tmp/schema-ids.json
+          python3 tools/schema_registry/registry_gate.py publish --ephemeral
+          python3 tools/schema_registry/registry_gate.py verify --state /tmp/schema-ids.json
+      - name: Metadata-only failure diagnostics
+        if: failure()
+        run: docker compose -f docker-compose.schema-registry.yml ps || true
+      - name: Clean disposable data
+        if: always()
+        run: docker compose -f docker-compose.schema-registry.yml down -v --remove-orphans || true
+      - name: Preserve Surefire reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-registry-test-reports
+          path: integration-tests/schema-evolution-poc/target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+  registry-kind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: helm/kind-action@v1.12.0
+        with: {version: v0.24.0, node_image: kindest/node:v1.31.2}
+      - name: Provision disposable namespace and credentials
+        run: |
+          kubectl apply -f deploy/kubernetes/base/namespace.yaml
+          PASSWORD="$(openssl rand -hex 24)"
+          echo "::add-mask::$PASSWORD"
+          kubectl -n vellumhub create secret generic schema-registry-db \
+            --from-literal=username=registry_user \
+            --from-literal=password="$PASSWORD" \
+            --from-literal=url=jdbc:postgresql://registry-postgres:5432/registrydb
+      - name: Deploy PostgreSQL and Registry to real Kind
+        run: |
+          kubectl apply -k deploy/kubernetes/schema-registry/overlays/local
+          kubectl -n vellumhub rollout status statefulset/registry-postgres --timeout=4m
+          kubectl -n vellumhub rollout status deployment/schema-registry --timeout=4m
+      - name: Exercise Registry API through real K8s Service
+        run: |
+          kubectl -n vellumhub port-forward service/schema-registry 18081:8080 >/tmp/registry-pf.log 2>&1 &
+          PF_PID=$!
+          trap 'kill "$PF_PID" || true' EXIT
+          python3 tools/schema_registry/wait_ready.py http://127.0.0.1:18081/apis/ccompat/v7/subjects
+          python3 tools/schema_registry/registry_gate.py publish --ephemeral --state /tmp/kind-schema-ids.json
+          python3 tools/schema_registry/registry_gate.py verify --state /tmp/kind-schema-ids.json
+      - name: Kubernetes metadata-only diagnostics on failure
+        if: failure()
+        run: |
+          kubectl -n vellumhub get pods,services,deployments,statefulsets,pvc -o wide || true
+          kubectl -n vellumhub describe pod registry-postgres-0 | tail -n 65 || true
+          kubectl -n vellumhub logs registry-postgres-0 --all-containers --previous --tail=80 || true
+          kubectl -n vellumhub logs registry-postgres-0 --all-containers --tail=80 || true
+          kubectl -n vellumhub logs deployment/schema-registry --all-containers --previous --tail=80 || true
+          kubectl -n vellumhub logs deployment/schema-registry --all-containers --tail=80 || true
+          kubectl -n vellumhub describe deployment/schema-registry | tail -n 45 || true
