@@ -2,7 +2,7 @@
   "type": "record",
   "name": "BookChangedEvent",
   "namespace": "com.vellumhub.kafka.avro.book",
-  "doc": "Canonical Book wire contract v2; governed by Registry gate.",
+  "doc": "Pilot transport contract. No production listeners or producers use this schema yet.",
   "fields": [
     {
       "name": "eventId",
