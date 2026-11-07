@@ -70,7 +70,12 @@ class BookAvroOutboxKafkaDistributedTest extends KafkaIntegrationTestSupport {
         String subject = URLEncoder.encode(KafkaTopics.BOOK_EVENTS_AVRO + "-" +
                 com.vellumhub.kafka.avro.book.BookChangedEvent.getClassSchema().getFullName(),
                 StandardCharsets.UTF_8);
-        String schema = com.vellumhub.kafka.avro.book.BookChangedEvent.getClassSchema().toString();
+        String schema;
+        try (var stream = com.vellumhub.kafka.avro.BookAvroMapper.class
+                .getResourceAsStream("/BookChangedEvent.avsc")) {
+            if (stream == null) throw new IllegalStateException("Canonical Book v2 schema missing");
+            schema = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+        }
         var http = HttpClient.newHttpClient();
         var api = registryUrl();
         var config = http.send(HttpRequest.newBuilder(URI.create(api + "/config/" + subject))

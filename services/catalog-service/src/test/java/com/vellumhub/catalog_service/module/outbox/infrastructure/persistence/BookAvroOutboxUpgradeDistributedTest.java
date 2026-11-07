@@ -47,7 +47,10 @@ class BookAvroOutboxUpgradeDistributedTest {
             assertThat(recovered.wireFormat()).isEqualTo("JSON");
             assertThat(recovered.payloadSchemaVersion()).isEqualTo(1);
             assertThat(recovered.topic()).isEqualTo(KafkaTopics.BOOK_EVENTS);
-            assertThat(recovered.payload()).contains(eventId.toString()).contains("\"revision\":7");
+            var persistedJson = JsonMapper.builder().findAndAddModules().build()
+                    .readTree(recovered.payload());
+            assertThat(persistedJson.path("eventId").asText()).isEqualTo(eventId.toString());
+            assertThat(persistedJson.path("revision").asLong()).isEqualTo(7L);
             store.published(recovered.eventId(), recovered.claimToken());
             assertThat(jdbc.queryForObject("SELECT status FROM outbox_events WHERE event_id=?",
                     String.class, eventId)).isEqualTo("PUBLISHED");

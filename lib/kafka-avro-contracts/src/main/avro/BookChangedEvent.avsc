@@ -2,7 +2,7 @@
   "type": "record",
   "name": "BookChangedEvent",
   "namespace": "com.vellumhub.kafka.avro.book",
-  "doc": "Book transport contract for Catalog, Recommendation and Engagement.",
+  "doc": "Pilot transport contract. No production listeners or producers use this schema yet.",
   "fields": [
     {
       "name": "eventId",
