@@ -13,7 +13,7 @@ import sys
 from datetime import datetime, timezone
 from uuid import UUID
 
-ORDERED = {"book-events", "reading-progress-events",
+ORDERED = {"book-events", "book-events.avro", "reading-progress-events",
            "engagement.ratings.v1", "engagement.reactions.v1"}
 IDENTITY = re.compile(r"^[a-zA-Z0-9_.-]{1,160}$")
 TYPE_ALIAS = re.compile(r"^[a-z][a-z0-9_]{1,80}$")

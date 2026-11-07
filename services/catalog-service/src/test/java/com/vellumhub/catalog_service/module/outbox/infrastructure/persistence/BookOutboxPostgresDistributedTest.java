@@ -124,5 +124,40 @@ class BookOutboxPostgresDistributedTest {
                 .isEqualTo(1);
     }
 
+    @Test void legacyJsonRowWithoutNewColumnsRemainsEligibleAfterFlyway() throws Exception {
+        UUID book = UUID.randomUUID();
+        var message = event(book, 0, BookChangedEvent.Kind.CREATED);
+        var json = com.fasterxml.jackson.databind.json.JsonMapper.builder().findAndAddModules()
+                .build().writeValueAsString(message.payload());
+        jdbc.update("""
+                INSERT INTO outbox_events(event_id, aggregate_type, aggregate_id,
+                     aggregate_version, event_type, topic, message_key, payload)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb))
+                """, message.eventId(), "BOOK", book, 0L, "BookChangedEvent",
+                "book-events", book.toString(), json);
+        var state = jdbc.queryForMap("SELECT wire_format, payload_schema_version, payload::text AS body FROM outbox_events WHERE event_id=?",
+                message.eventId());
+        assertThat(state.get("wire_format")).isEqualTo("JSON");
+        assertThat(state.get("payload_schema_version")).isEqualTo(1);
+        assertThat((String) state.get("body")).contains(message.eventId().toString());
+    }
+
+    @Test void newAvroBookOutboxRowRetainsJsonbAndImmutableDestination() {
+        UUID book = UUID.randomUUID();
+        var message = event(book, 0, BookChangedEvent.Kind.CREATED);
+        var avro = OutboxMessage.book((BookChangedEvent) message.payload(), true);
+        writer.append(avro);
+        var state = jdbc.queryForMap("""
+                SELECT topic, wire_format, payload_schema_version, aggregate_version,
+                       payload->>'eventId' AS stored_event_id
+                FROM outbox_events WHERE event_id=?
+                """, message.eventId());
+        assertThat(state.get("topic")).isEqualTo("book-events.avro");
+        assertThat(state.get("wire_format")).isEqualTo("AVRO");
+        assertThat(state.get("payload_schema_version")).isEqualTo(1);
+        assertThat(((Number) state.get("aggregate_version")).longValue()).isZero();
+        assertThat(state.get("stored_event_id")).isEqualTo(message.eventId().toString());
+    }
+
 }
 
