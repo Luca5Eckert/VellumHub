@@ -21,7 +21,7 @@ public class BookAvroPublisher {
     private final KafkaTemplate<String, Object> template;
 
     public BookAvroPublisher(ProducerFactory<String, Object> currentProducer,
-            @Value("${app.book.avro.registry-url}") String registryUrl) {
+            @Value("${app.book.avro.registry-url:http://127.0.0.1:18081/apis/ccompat/v7}") String registryUrl) {
         if (!registryUrl.startsWith("http://") && !registryUrl.startsWith("https://"))
             throw new IllegalArgumentException("Invalid Schema Registry URL");
         var options = new HashMap<>(currentProducer.getConfigurationProperties());

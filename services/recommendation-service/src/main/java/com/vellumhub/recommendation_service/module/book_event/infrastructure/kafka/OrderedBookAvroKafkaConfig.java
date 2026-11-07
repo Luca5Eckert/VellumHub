@@ -17,7 +17,7 @@ import java.util.HashMap;
 @Configuration(proxyBeanMethods = false)
 public class OrderedBookAvroKafkaConfig {
     @Bean
-    BookAvroDecoder bookAvroDecoder(@Value("${app.book.avro.registry-url}") String registryUrl) {
+    BookAvroDecoder bookAvroDecoder(@Value("${app.book.avro.registry-url:http://127.0.0.1:18081/apis/ccompat/v7}") String registryUrl) {
         return new BookAvroDecoder(registryUrl);
     }
 
