@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Service
+metadata: {name: schema-registry, labels: {app.kubernetes.io/name: schema-registry}}
+spec:
+  type: ClusterIP
+  selector: {app.kubernetes.io/name: schema-registry}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: schema-registry, labels: {app.kubernetes.io/name: schema-registry, app.kubernetes.io/part-of: vellumhub}}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app.kubernetes.io/name: schema-registry}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: schema-registry, app.kubernetes.io/part-of: vellumhub}}
+    spec:
+      securityContext: {seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: schema-registry
+          image: apicurio/apicurio-registry:3.1.7
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8080}, {name: management, containerPort: 9000}]
+          env:
+            - {name: QUARKUS_OIDC_TENANT_ENABLED, value: "true"}
+            - {name: APICURIO_AUTH_ROLE_BASED_AUTHORIZATION, value: "true"}
+            - {name: APICURIO_STORAGE_KIND, value: sql}
+            - {name: APICURIO_STORAGE_SQL_KIND, value: postgresql}
+            - name: APICURIO_DATASOURCE_URL
+              valueFrom: {secretKeyRef: {name: schema-registry-db, key: url}}
+            - name: APICURIO_DATASOURCE_USERNAME
+              valueFrom: {secretKeyRef: {name: schema-registry-db, key: username}}
+            - name: APICURIO_DATASOURCE_PASSWORD
+              valueFrom: {secretKeyRef: {name: schema-registry-db, key: password}}
+          resources: {requests: {cpu: 100m, memory: 384Mi}, limits: {cpu: "1", memory: 768Mi}}
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities: {drop: ["ALL"]}
+          startupProbe: {httpGet: {path: /health/ready, port: http}, periodSeconds: 5, failureThreshold: 48, timeoutSeconds: 3}
+          readinessProbe: {httpGet: {path: /health/ready, port: http}, periodSeconds: 10, failureThreshold: 3, timeoutSeconds: 3}
+          livenessProbe: {httpGet: {path: /health/live, port: http}, periodSeconds: 20, failureThreshold: 3, timeoutSeconds: 3}
