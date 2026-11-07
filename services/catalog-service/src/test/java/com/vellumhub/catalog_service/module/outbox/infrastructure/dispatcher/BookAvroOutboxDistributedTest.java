@@ -90,6 +90,13 @@ class BookAvroOutboxDistributedTest extends KafkaIntegrationTestSupport {
             try (var probe = KafkaProbe.subscribe(KAFKA.getBootstrapServers(),
                     KafkaTopics.BOOK_EVENTS_AVRO, "catalog-avro-probe")) {
                 dispatcher.dispatch();
+                await().atMost(Duration.ofSeconds(25)).untilAsserted(() -> {
+                    var stored = jdbc.queryForMap(
+                            "SELECT status, last_error FROM outbox_events WHERE event_id=?", id);
+                    assertThat(stored.get("status"))
+                            .as("Outbox relay failed: " + stored.get("last_error"))
+                            .isEqualTo("PUBLISHED");
+                });
                 var actual = probe.awaitRecord(KafkaTopics.BOOK_EVENTS_AVRO,
                         book.toString(), ASYNC_TIMEOUT, ASYNC_POLL_INTERVAL);
                 assertThat(actual.value()).hasSizeGreaterThan(5);
