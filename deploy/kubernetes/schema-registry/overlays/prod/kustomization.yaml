@@ -1,0 +1,7 @@
+# Opt-in, requires external DB and secured OIDC issuer.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vellumhub
+resources: [../../base]
+patches:
+  - path: secure-registry.yaml

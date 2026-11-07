@@ -1,0 +1,36 @@
+# Opt-in local stack. Unauthenticated: never expose outside loopback.
+name: vellum-hub
+services:
+  registry-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: registrydb
+      POSTGRES_USER: registry_user
+      POSTGRES_PASSWORD: ${REGISTRY_DB_PASSWORD:?export REGISTRY_DB_PASSWORD}
+    volumes: [registry_postgres_data:/var/lib/postgresql/data]
+    networks: [vellum-network]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U registry_user -d registrydb"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  schema-registry:
+    image: apicurio/apicurio-registry:3.1.7
+    restart: unless-stopped
+    environment:
+      APICURIO_STORAGE_KIND: sql
+      APICURIO_STORAGE_SQL_KIND: postgresql
+      APICURIO_DATASOURCE_URL: jdbc:postgresql://registry-postgres:5432/registrydb
+      APICURIO_DATASOURCE_USERNAME: registry_user
+      APICURIO_DATASOURCE_PASSWORD: ${REGISTRY_DB_PASSWORD:?export REGISTRY_DB_PASSWORD}
+      QUARKUS_OIDC_TENANT_ENABLED: "false"
+    ports: ["127.0.0.1:18081:8080"]
+    networks: [vellum-network]
+    depends_on:
+      registry-postgres: {condition: service_healthy}
+networks:
+  vellum-network:
+    name: vellum-hub_vellum-network
+volumes:
+  registry_postgres_data:

@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: schema-registry}
+spec:
+  strategy: {type: RollingUpdate, rollingUpdate: {maxUnavailable: 0, maxSurge: 1}}
+  template:
+    spec:
+      containers:
+        - name: schema-registry
+          env:
+            - {name: QUARKUS_OIDC_TENANT_ENABLED, value: "true"}
+            - {name: APICURIO_AUTH_ROLE_BASED_AUTHORIZATION, value: "true"}
+            - name: QUARKUS_OIDC_AUTH_SERVER_URL
+              valueFrom: {secretKeyRef: {name: schema-registry-auth, key: issuer}}
+            - name: QUARKUS_OIDC_CLIENT_ID
+              valueFrom: {secretKeyRef: {name: schema-registry-auth, key: client-id}}
