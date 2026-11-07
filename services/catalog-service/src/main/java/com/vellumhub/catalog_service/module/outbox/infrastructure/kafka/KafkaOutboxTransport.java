@@ -42,7 +42,7 @@ public class KafkaOutboxTransport {
         this(json, (KafkaTemplate<String, Object>) null);
     }
 
-    private KafkaOutboxTransport(KafkaTemplate<String, Object> json, KafkaTemplate<String, Object> avro) {
+    public KafkaOutboxTransport(KafkaTemplate<String, Object> json, KafkaTemplate<String, Object> avro) {
         this.json = json;
         this.avro = avro;
     }
