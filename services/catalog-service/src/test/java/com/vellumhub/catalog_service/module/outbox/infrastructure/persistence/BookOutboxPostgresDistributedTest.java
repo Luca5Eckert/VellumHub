@@ -159,5 +159,58 @@ class BookOutboxPostgresDistributedTest {
         assertThat(state.get("stored_event_id")).isEqualTo(message.eventId().toString());
     }
 
+    @Test void BookFreezeFenceRejectsMutationsAndSupportsSafeReopening() {
+        var gate = new com.vellumhub.catalog_service.module.book.infrastructure.persistence.JdbcBookWriteGate(jdbc);
+        var txn = new TransactionTemplate(new DataSourceTransactionManager(ds));
+        jdbc.update("UPDATE book_write_gate SET frozen=true, updated_at=now() WHERE id=1");
+        try {
+            assertThatThrownBy(() -> txn.executeWithoutResult(status -> gate.requireWritable()))
+                .isInstanceOf(com.vellumhub.catalog_service.module.book.domain.exception.BookWritesFrozenException.class);
+            assertThat(jdbc.queryForObject("SELECT frozen FROM book_write_gate WHERE id=1", Boolean.class))
+                .isTrue();
+        } finally {
+            jdbc.update("UPDATE book_write_gate SET frozen=false, updated_at=now() WHERE id=1");
+        }
+        assertThatCode(() -> txn.executeWithoutResult(status -> gate.requireWritable()))
+            .doesNotThrowAnyException();
+        assertThatThrownBy(gate::requireWritable)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("same database transaction");
+    }
+
+    @Test void FreezeWaitsForInFlightBookOutboxTransaction() throws Exception {
+        var gate = new com.vellumhub.catalog_service.module.book.infrastructure.persistence.JdbcBookWriteGate(jdbc);
+        var txn = new TransactionTemplate(new DataSourceTransactionManager(ds));
+        var acquired = new java.util.concurrent.CountDownLatch(1);
+        var release = new java.util.concurrent.CountDownLatch(1);
+        try (var workers = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var writer = workers.submit(() -> txn.executeWithoutResult(status -> {
+                gate.requireWritable();
+                acquired.countDown();
+                try {
+                    if (!release.await(10, java.util.concurrent.TimeUnit.SECONDS))
+                        throw new IllegalStateException("Timed out holding Book gate");
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(ex);
+                }
+            }));
+            assertThat(acquired.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            var freezer = workers.submit(() -> jdbc.update(
+                    "UPDATE book_write_gate SET frozen=true, updated_at=now() WHERE id=1"));
+            try {
+                assertThatThrownBy(() -> freezer.get(200, java.util.concurrent.TimeUnit.MILLISECONDS))
+                    .isInstanceOf(java.util.concurrent.TimeoutException.class);
+            } finally {
+                release.countDown();
+            }
+            writer.get(10, java.util.concurrent.TimeUnit.SECONDS);
+            assertThat(freezer.get(10, java.util.concurrent.TimeUnit.SECONDS)).isEqualTo(1);
+        } finally {
+            release.countDown();
+            jdbc.update("UPDATE book_write_gate SET frozen=false, updated_at=now() WHERE id=1");
+        }
+    }
+
 }
 
