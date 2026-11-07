@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: recommendation-service}
+spec:
+  template:
+    spec:
+      containers:
+        - name: recommendation-service
+          env:
+            - {name: BOOK_AVRO_CONSUMER_ENABLED, value: "false"}
+            - {name: BOOK_AVRO_REGISTRY_URL, value: "http://schema-registry:8080/apis/ccompat/v7"}

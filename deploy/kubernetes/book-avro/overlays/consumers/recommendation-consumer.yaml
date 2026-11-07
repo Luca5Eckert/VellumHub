@@ -5,11 +5,3 @@ spec:
   template:
     spec:
       containers: [{name: recommendation-service, env: [{name: BOOK_AVRO_CONSUMER_ENABLED, value: "true"}]}]
----
-apiVersion: apps/v1
-kind: Deployment
-metadata: {name: engagement-service}
-spec:
-  template:
-    spec:
-      containers: [{name: engagement-service, env: [{name: BOOK_AVRO_CONSUMER_ENABLED, value: "true"}]}]
