@@ -22,6 +22,7 @@
         <module>services/auth-service</module>
     </modules>
 
+    <repositories><repository><id>confluent</id><url>https://packages.confluent.io/maven/</url></repository></repositories>
     <profiles>
         <profile>
             <id>distributed-e2e</id>
