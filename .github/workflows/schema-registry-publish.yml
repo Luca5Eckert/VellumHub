@@ -1,0 +1,31 @@
+name: Controlled Schema Registry publication
+on:
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: schema-registry-release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Require protected environment and scoped access
+        env:
+          SCHEMA_REGISTRY_RELEASE_ENABLED: ${{ secrets.SCHEMA_REGISTRY_RELEASE_ENABLED }}
+          SCHEMA_REGISTRY_URL: ${{ secrets.SCHEMA_REGISTRY_URL }}
+          SCHEMA_REGISTRY_AUTH_TOKEN: ${{ secrets.SCHEMA_REGISTRY_AUTH_TOKEN }}
+        run: |
+          test "$SCHEMA_REGISTRY_RELEASE_ENABLED" = true
+          test -n "$SCHEMA_REGISTRY_AUTH_TOKEN"
+          case "$SCHEMA_REGISTRY_URL" in https://*) ;; *) echo "HTTPS required" >&2; exit 1;; esac
+          python3 tools/schema_registry/registry_gate.py check
+      - name: Publish approved allowlist and confirm IDs
+        env:
+          SCHEMA_REGISTRY_PUBLISH_APPROVED: "true"
+          SCHEMA_REGISTRY_URL: ${{ secrets.SCHEMA_REGISTRY_URL }}
+          SCHEMA_REGISTRY_AUTH_TOKEN: ${{ secrets.SCHEMA_REGISTRY_AUTH_TOKEN }}
+        run: |
+          python3 tools/schema_registry/registry_gate.py publish --approved --url "$SCHEMA_REGISTRY_URL" --state /tmp/registry-approved-ids.json
+          python3 tools/schema_registry/registry_gate.py verify --approved --url "$SCHEMA_REGISTRY_URL" --state /tmp/registry-approved-ids.json

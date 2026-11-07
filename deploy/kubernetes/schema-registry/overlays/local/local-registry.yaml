@@ -1,0 +1,12 @@
+# Only local Kind explicitly disables OIDC; never apply in production.
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: schema-registry}
+spec:
+  template:
+    spec:
+      containers:
+        - name: schema-registry
+          env:
+            - {name: QUARKUS_OIDC_TENANT_ENABLED, value: "false"}
+            - {name: APICURIO_AUTH_ROLE_BASED_AUTHORIZATION, value: "false"}

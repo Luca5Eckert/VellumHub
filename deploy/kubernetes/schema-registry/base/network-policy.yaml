@@ -1,0 +1,11 @@
+# Registry remains ClusterIP-only and accepts only same-namespace callers.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: schema-registry-internal-only}
+spec:
+  podSelector: {matchLabels: {app.kubernetes.io/name: schema-registry}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: vellumhub}}
+      ports: [{protocol: TCP, port: 8080}]
