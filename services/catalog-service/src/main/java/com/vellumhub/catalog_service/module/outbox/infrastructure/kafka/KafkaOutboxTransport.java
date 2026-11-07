@@ -15,6 +15,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import java.util.concurrent.CompletableFuture;
 
 /** Sends by the immutable persisted route, not by current writer feature flags. */
@@ -64,7 +67,10 @@ public class KafkaOutboxTransport {
                 if (!event.bookId().toString().equals(record.messageKey())
                         || !event.eventId().equals(record.eventId()))
                     throw new IllegalArgumentException("Outbox payload identity/key mismatch");
-                return avro.send(record.topic(), record.messageKey(), BookAvroMapper.encode(event));
+                var headers = new RecordHeaders();
+                headers.add("x-vellum-event-id", event.eventId().toString().getBytes(StandardCharsets.UTF_8));
+                return avro.send(new ProducerRecord<String, Object>(record.topic(), null,
+                        record.messageKey(), BookAvroMapper.encode(event), headers));
             }
             return json.send(record.topic(), record.messageKey(), decoded);
         } catch (JsonProcessingException ex) {

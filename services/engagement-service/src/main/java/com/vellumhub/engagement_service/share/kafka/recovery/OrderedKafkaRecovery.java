@@ -157,6 +157,18 @@ public class OrderedKafkaRecovery {
         String dltTopic = record.topic() + "." + service + "-dlt";
         String category = classify(error);
         UUID eventId = eventId(record.value());
+        if (eventId == null && "book-events.avro".equals(record.topic())) {
+            // Only the producer's bounded UUID header is allowed in raw-byte recovery.
+            Header provided = record.headers().lastHeader(EVENT_ID);
+            if (provided != null && provided.value() != null
+                    && provided.value().length == 36) {
+                try {
+                    eventId = UUID.fromString(new String(provided.value(), StandardCharsets.UTF_8));
+                } catch (IllegalArgumentException ignored) {
+                    // Malformed identity cannot be trusted as DLT provenance.
+                }
+            }
+        }
         try {
             // DLT publication is acknowledged BEFORE recording a recoverable block.
             // The original Kafka offset is not committed; duplicate DLT copies after

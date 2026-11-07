@@ -17,7 +17,7 @@ import org.springframework.kafka.core.ProducerFactory;
  * The Registry only looks up IDs; services may not auto-register contracts.
  */
 @Configuration
-@ConditionalOnProperty(name = "app.book.avro.registry-url", matchIfMissing = false)
+@ConditionalOnProperty(name = "app.book.avro.producer-enabled", havingValue = "true")
 public class BookAvroProducerConfig {
     @Bean
     @Primary
