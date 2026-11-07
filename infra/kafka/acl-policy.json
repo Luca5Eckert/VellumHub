@@ -2,6 +2,7 @@
   "catalog_service": {
     "publish": [
       "book-events",
+      "book-events.avro",
       "created-book",
       "updated-book",
       "deleted-book",
@@ -33,6 +34,7 @@
     ],
     "subscribe": [
       "book-events",
+      "book-events.avro",
       "reading-progress-events",
       "created-book",
       "deleted-book",
@@ -47,10 +49,12 @@
     ],
     "ordered_dlt": [
       "book-events",
+      "book-events.avro",
       "reading-progress-events"
     ],
     "groups": [
       "engagement-service",
+      "engagement-service-book-avro",
       "engagement-service-dlt-group"
     ]
   },
@@ -58,6 +62,7 @@
     "publish": [],
     "subscribe": [
       "book-events",
+      "book-events.avro",
       "reading-progress-events",
       "engagement.ratings.v1",
       "engagement.reactions.v1",
@@ -84,12 +89,14 @@
     ],
     "ordered_dlt": [
       "book-events",
+      "book-events.avro",
       "reading-progress-events",
       "engagement.ratings.v1",
       "engagement.reactions.v1"
     ],
     "groups": [
       "recommendation-service",
+      "recommendation-service-book-avro",
       "recommendation-service-dlt-group",
       "recommendation_service_group",
       "recommendation-group"
