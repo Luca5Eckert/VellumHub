@@ -44,6 +44,8 @@ jobs:
         run: |
           kubectl kustomize deploy/kubernetes/book-avro/overlays/local > /tmp/book-local.yaml
           kubectl kustomize deploy/kubernetes/book-avro/overlays/prod > /tmp/book-prod.yaml
+          kubectl kustomize deploy/kubernetes/schema-registry/overlays/local > /tmp/registry-local.yaml
+          kubectl kustomize deploy/kubernetes/schema-registry/overlays/prod > /tmp/registry-prod.yaml
           python3 tools/schema_registry/validate_book_avro_manifests.py /tmp/book-local.yaml /tmp/book-prod.yaml
 
   outbox-real-kafka:

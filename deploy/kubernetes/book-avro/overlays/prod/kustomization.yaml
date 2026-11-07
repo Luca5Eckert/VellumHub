@@ -1,7 +1,11 @@
-# Prod is deliberately opt-in. External Registry with OIDC and proper secrets required.
+# Registry is a separately managed opt-in deployment with an external database.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: vellumhub
 resources:
-  - ../../../overlays/prod
+  - ../../../base
+  - ../../../overlays/prod/pdb.yaml
+  - ../../../overlays/prod/network-allow.yaml
 patches:
+  - path: ../../../overlays/prod/config-patch.yaml
   - path: book-avro-patch.yaml

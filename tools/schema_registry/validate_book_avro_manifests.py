@@ -25,7 +25,8 @@ for resources, tier in ((local, "local"), (prod, "prod")):
         else:
             assert env["BOOK_AVRO_REGISTRY_URL"]["value"] == "http://schema-registry:8080"
     assert resources[("Deployment", "catalog-service")]["spec"]["template"]["spec"]["containers"][0]["env"]
-assert ("Deployment", "schema-registry") in local
-assert ("StatefulSet", "registry-postgres") in local
-assert ("StatefulSet", "registry-postgres") not in prod
+# Registry is deliberately installed via its own Kustomization rather than
+# being silently coupled to every application rollout.
+assert ("Deployment", "schema-registry") not in local
+assert ("Deployment", "schema-registry") not in prod
 print("Opt-in Book Avro: local and prod manifests fail closed with separate Registry client route")

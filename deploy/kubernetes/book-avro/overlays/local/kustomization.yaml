@@ -1,8 +1,12 @@
+# Apply Registry independently first: kubectl apply -k deploy/kubernetes/schema-registry/overlays/local
+# Build a flat application overlay to avoid nested patch-transformer behavior.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: vellumhub
 resources:
-  - ../../../overlays/local
-  - ../../../schema-registry/overlays/local
+  - ../../../base
+  - ../../../overlays/local/infrastructure.yaml
+  - ../../../overlays/local/databases.yaml
 patches:
+  - path: ../../../overlays/local/local-patches.yaml
   - path: book-avro-patch.yaml
