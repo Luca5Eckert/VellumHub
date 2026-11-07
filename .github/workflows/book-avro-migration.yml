@@ -1,0 +1,76 @@
+name: Book Avro runtime migration
+on:
+  pull_request:
+    paths:
+      - 'lib/kafka-avro-contracts/**'
+      - 'lib/kafka-contracts/**'
+      - 'services/catalog-service/**'
+      - 'services/recommendation-service/**'
+      - 'services/engagement-service/**'
+      - 'integration-tests/schema-evolution-poc/**'
+      - 'integration-tests/distributed-e2e/**'
+      - 'infra/kafka/**'
+      - 'infra/scripts/kafka/**'
+      - 'deploy/kubernetes/book-avro/**'
+      - 'docker-compose.book-avro.yml'
+      - '.github/workflows/book-avro-migration.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'lib/kafka-avro-contracts/**'
+      - 'services/catalog-service/**'
+      - 'services/recommendation-service/**'
+      - 'services/engagement-service/**'
+      - 'infra/kafka/**'
+      - 'deploy/kubernetes/book-avro/**'
+      - '.github/workflows/book-avro-migration.yml'
+permissions: {contents: read}
+jobs:
+  schema-and-manifests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21', cache: maven}
+      - uses: azure/setup-kubectl@v4
+        with: {version: v1.31.2}
+      - name: Contracts and ACL policy
+        run: |
+          python3 -m pip install 'PyYAML==6.0.2'
+          python3 -m unittest discover -s infra/scripts/kafka -p 'test_acl_policy.py' -v
+          mvn -B -ntp -pl lib/kafka-avro-contracts -am -DexcludedGroups=distributed test
+      - name: Render both Kubernetes overlays with cutover flags disabled
+        run: |
+          kubectl kustomize deploy/kubernetes/book-avro/overlays/local > /tmp/book-local.yaml
+          kubectl kustomize deploy/kubernetes/book-avro/overlays/prod > /tmp/book-prod.yaml
+          python3 tools/schema_registry/validate_book_avro_manifests.py /tmp/book-local.yaml /tmp/book-prod.yaml
+
+  outbox-real-kafka:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21', cache: maven}
+      - name: Docker available for real integration tests
+        run: docker info
+      - name: Pre-pull deterministic Kafka and Registry images
+        run: |
+          docker pull postgres:15-alpine
+          docker pull confluentinc/cp-kafka:7.5.0
+          docker pull apicurio/apicurio-registry:3.1.7
+      - name: Legacy pre-upgrade migration and real Catalog Outbox Avro transport
+        run: |
+          mvn -B -ntp -pl services/catalog-service -am \
+            -Dgroups=distributed \
+            -Dtest=BookAvroOutboxUpgradeDistributedTest,BookAvroOutboxKafkaDistributedTest \
+            -Dsurefire.failIfNoSpecifiedTests=false test
+      - name: Archive Surefire evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: book-avro-catalog-distributed
+          path: services/catalog-service/target/surefire-reports/
+          retention-days: 14
+          if-no-files-found: warn
