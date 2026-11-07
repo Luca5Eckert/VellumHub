@@ -1,7 +1,0 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata: {name: recommendation-service}
-spec:
-  template:
-    spec:
-      containers: [{name: recommendation-service, env: [{name: BOOK_AVRO_CONSUMER_ENABLED, value: "true"}]}]

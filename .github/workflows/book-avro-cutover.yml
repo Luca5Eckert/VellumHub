@@ -2,20 +2,18 @@ name: Book Avro staged Kubernetes and ACL gate
 on:
   pull_request:
     paths:
-      - 'deploy/kubernetes/book-avro/**'
+      - 'tools/book_avro_cutover/**'
       - 'lib/kafka-avro-contracts/**'
       - 'services/catalog-service/**'
       - 'services/recommendation-service/**'
       - 'services/engagement-service/**'
       - 'infra/kafka/acl-policy.json'
-      - 'tools/book_avro_cutover/**'
       - '.github/workflows/book-avro-cutover.yml'
   push:
     branches: [main]
     paths:
-      - 'deploy/kubernetes/book-avro/**'
-      - 'lib/kafka-avro-contracts/**'
       - 'tools/book_avro_cutover/**'
+      - 'lib/kafka-avro-contracts/**'
       - 'infra/kafka/acl-policy.json'
 permissions: {contents: read}
 jobs:
@@ -28,9 +26,9 @@ jobs:
       - uses: azure/setup-kubectl@v4
         with: {version: v1.31.2}
       - run: python3 -m pip install 'PyYAML==6.0.2'
-      - run: |
-          for phase in local consumers producer; do
-            kubectl kustomize "deploy/kubernetes/book-avro/overlays/$phase" > "/tmp/book-avro-$phase.yaml"
-          done
-          python3 tools/book_avro_cutover/check_topology.py /tmp/book-avro-local.yaml /tmp/book-avro-consumers.yaml /tmp/book-avro-producer.yaml
+      - name: Validate canonical Kind application and Registry overlays
+        run: |
+          kubectl kustomize deploy/kubernetes/overlays/local > /tmp/book-main.yaml
+          kubectl kustomize deploy/kubernetes/schema-registry/overlays/local > /tmp/book-registry.yaml
+          python3 tools/book_avro_cutover/check_topology.py /tmp/book-main.yaml /tmp/book-registry.yaml
           python3 tools/book_avro_cutover/check_acl.py
