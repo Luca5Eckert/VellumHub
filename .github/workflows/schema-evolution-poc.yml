@@ -1,0 +1,48 @@
+name: Book Avro schema evolution pilot
+
+on:
+  pull_request:
+    paths:
+      - 'pom.xml'
+      - 'integration-tests/schema-evolution-poc/**'
+      - '.github/workflows/schema-evolution-poc.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'pom.xml'
+      - 'integration-tests/schema-evolution-poc/**'
+      - '.github/workflows/schema-evolution-poc.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  schema-poc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Record baseline and tested Git tree for review
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          echo "BASE_TREE_SHA=$(git rev-parse FETCH_HEAD^{tree})"
+          echo "CHECKOUT_TREE_SHA=$(git rev-parse HEAD^{tree})"
+      - name: Confirm Docker for real Kafka and Apicurio
+        run: docker info
+      - name: Compile Avro and test compatibility plus live Kafka/Registry SerDes
+        run: mvn -B -ntp -Pschema-poc -pl integration-tests/schema-evolution-poc -am clean test
+      - name: Preserve Surefire reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-evolution-poc-reports
+          path: integration-tests/schema-evolution-poc/target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 14

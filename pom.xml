@@ -28,5 +28,11 @@
                 <module>integration-tests/distributed-e2e</module>
             </modules>
         </profile>
+        <profile>
+            <id>schema-poc</id>
+            <modules>
+                <module>integration-tests/schema-evolution-poc</module>
+            </modules>
+        </profile>
     </profiles>
 </project>
