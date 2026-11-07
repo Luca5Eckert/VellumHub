@@ -23,7 +23,7 @@ for resources, tier in ((local, "local"), (prod, "prod")):
         if tier == "prod":
             assert "secretKeyRef" in env["BOOK_AVRO_REGISTRY_URL"]["valueFrom"]
         else:
-            assert env["BOOK_AVRO_REGISTRY_URL"]["value"] == "http://schema-registry:8080"
+            assert env["BOOK_AVRO_REGISTRY_URL"]["value"] == "http://schema-registry:8080/apis/ccompat/v7"
     assert resources[("Deployment", "catalog-service")]["spec"]["template"]["spec"]["containers"][0]["env"]
 # Registry is deliberately installed via its own Kustomization rather than
 # being silently coupled to every application rollout.
