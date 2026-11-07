@@ -26,7 +26,7 @@ public class OrderedBookAvroConsumer {
     private final KafkaAvroDeserializer decoder;
 
     public OrderedBookAvroConsumer(ApplyBookEventUseCase projection, VellumHubMetrics metrics,
-                                  @Value("\${app.book.avro.registry-url:}") String registryUrl) {
+                                  @Value("${app.book.avro.registry-url:}") String registryUrl) {
         if (registryUrl.isBlank()) throw new IllegalArgumentException("Missing Book Avro Registry URL");
         this.projection = projection;
         this.metrics = metrics;

@@ -26,7 +26,7 @@ public class BookAvroProducerConfig {
     }
     @Bean("bookAvroKafkaTemplate")
     KafkaTemplate<String, Object> bookAvroKafkaTemplate(KafkaProperties kafkaProperties,
-           @Value("\${app.book.avro.registry-url}") String registryUrl) {
+           @Value("${app.book.avro.registry-url}") String registryUrl) {
         if (registryUrl.isBlank() || !registryUrl.startsWith("http"))
             throw new IllegalArgumentException("Configured Book Avro Registry URL must be HTTP(S)");
         var props = kafkaProperties.buildProducerProperties();
