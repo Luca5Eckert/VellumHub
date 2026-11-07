@@ -1,0 +1,16 @@
+# Optional overlay; use with docker-compose.yml and docker-compose.schema-registry.yml.
+name: vellum-hub
+services:
+  catalog-service:
+    environment:
+      BOOK_EVENTS_WIRE_FORMAT: ${BOOK_EVENTS_WIRE_FORMAT:-json}
+      BOOK_AVRO_PRODUCER_ENABLED: ${BOOK_AVRO_PRODUCER_ENABLED:-false}
+      BOOK_AVRO_REGISTRY_URL: ${BOOK_AVRO_REGISTRY_URL:-http://schema-registry:8080}
+  recommendation-service:
+    environment:
+      BOOK_AVRO_CONSUMER_ENABLED: ${BOOK_AVRO_RECOMMENDATION_CONSUMER_ENABLED:-false}
+      BOOK_AVRO_REGISTRY_URL: ${BOOK_AVRO_REGISTRY_URL:-http://schema-registry:8080}
+  engagement-service:
+    environment:
+      BOOK_AVRO_CONSUMER_ENABLED: ${BOOK_AVRO_ENGAGEMENT_CONSUMER_ENABLED:-false}
+      BOOK_AVRO_REGISTRY_URL: ${BOOK_AVRO_REGISTRY_URL:-http://schema-registry:8080}

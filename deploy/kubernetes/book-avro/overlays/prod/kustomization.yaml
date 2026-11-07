@@ -1,0 +1,7 @@
+# Prod is deliberately opt-in. External Registry with OIDC and proper secrets required.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../overlays/prod
+patches:
+  - path: book-avro-patch.yaml
