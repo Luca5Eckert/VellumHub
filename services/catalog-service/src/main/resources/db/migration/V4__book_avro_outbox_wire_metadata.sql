@@ -16,3 +16,13 @@ COMMENT ON COLUMN outbox_events.payload_schema_version IS
     'Version of persisted JSONB structure, not Book aggregate revision or Registry schema ID';
 COMMENT ON COLUMN outbox_events.wire_format IS
     'Immutable Kafka wire destination selected at enqueue time';
+
+-- A single database-owned cutover fence synchronizes all Catalog replicas.
+-- UPDATE book_write_gate SET frozen=true WHERE id=1 waits for transactions
+-- holding SELECT FOR SHARE; relays keep running while writes are frozen.
+CREATE TABLE book_write_gate (
+    id SMALLINT PRIMARY KEY CHECK (id=1),
+    frozen BOOLEAN NOT NULL DEFAULT FALSE,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+INSERT INTO book_write_gate(id, frozen) VALUES (1, FALSE);
