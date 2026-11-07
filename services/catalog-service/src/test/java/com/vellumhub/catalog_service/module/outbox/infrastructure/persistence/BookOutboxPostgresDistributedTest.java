@@ -175,7 +175,7 @@ class BookOutboxPostgresDistributedTest {
             .doesNotThrowAnyException();
         assertThatThrownBy(gate::requireWritable)
             .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("same database transaction");
+            .hasMessageContaining("share a database transaction");
     }
 
     @Test void FreezeWaitsForInFlightBookOutboxTransaction() throws Exception {
