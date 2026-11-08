@@ -4,6 +4,7 @@ WORKDIR /workspace
 
 # Shared Avro wire contract has a reactor parent even in independently built services.
 COPY pom.xml pom.xml
+RUN mvn -B -ntp -f pom.xml install -N -Dmaven.test.skip=true
 COPY lib/kafka-avro-contracts/pom.xml lib/kafka-avro-contracts/pom.xml
 COPY lib/kafka-avro-contracts/src lib/kafka-avro-contracts/src
 
