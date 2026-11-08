@@ -76,7 +76,8 @@ class BookAvroRecommendationDistributedTest extends DistributedIntegrationTestSu
                         topic, book.toString(), BookAvroFixture.encoded(event)))
                         .get(15, TimeUnit.SECONDS);
                 final long expected = revision;
-                await().atMost(Duration.ofSeconds(25)).untilAsserted(() -> {
+                await().ignoreException(org.springframework.dao.EmptyResultDataAccessException.class)
+                        .atMost(Duration.ofSeconds(25)).untilAsserted(() -> {
                     assertThat(jdbc.queryForObject("SELECT last_revision FROM book_event_offsets WHERE book_id=?",
                             Long.class, book)).isEqualTo(expected);
                     assertThat(jdbc.queryForObject("SELECT title FROM recommendations WHERE book_id=?",
@@ -95,7 +96,8 @@ class BookAvroRecommendationDistributedTest extends DistributedIntegrationTestSu
             var deleted = BookAvroFixture.event(book, 2L, BookChangedEvent.Kind.DELETED);
             producer.send(new org.apache.kafka.clients.producer.ProducerRecord<>(
                     topic, book.toString(), BookAvroFixture.encoded(deleted))).get(15, TimeUnit.SECONDS);
-            await().atMost(Duration.ofSeconds(25)).untilAsserted(() -> {
+            await().ignoreException(org.springframework.dao.EmptyResultDataAccessException.class)
+                        .atMost(Duration.ofSeconds(25)).untilAsserted(() -> {
                 assertThat(jdbc.queryForObject("SELECT last_revision FROM book_event_offsets WHERE book_id=?",
                         Long.class, book)).isEqualTo(2L);
                 assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM recommendations WHERE book_id=?",
