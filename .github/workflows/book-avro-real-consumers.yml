@@ -1,4 +1,4 @@
-name: Book Avro actual Recommendation and Engagement acceptance
+name: Book Avro real Catalog cutover and consumer acceptance
 on:
   pull_request:
     paths:
@@ -21,13 +21,13 @@ on:
 permissions: {contents: read}
 jobs:
   avro-book-read-model:
-    name: Real Avro to ${{ matrix.service }} projection and raw DLT
+    name: Actual Book Avro ${{ matrix.service }} integration
     runs-on: ubuntu-latest
     timeout-minutes: 18
     strategy:
       fail-fast: false
       matrix:
-        service: [recommendation-service, engagement-service]
+        service: [catalog-service, recommendation-service, engagement-service]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
