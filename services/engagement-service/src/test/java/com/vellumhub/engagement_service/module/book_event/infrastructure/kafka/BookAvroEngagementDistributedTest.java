@@ -47,6 +47,8 @@ class BookAvroEngagementDistributedTest extends KafkaIntegrationTestSupport {
     @DynamicPropertySource
     static void dependencies(DynamicPropertyRegistry props) {
         props.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        props.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+        props.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
         props.add("spring.datasource.username", POSTGRES::getUsername);
         props.add("spring.datasource.password", POSTGRES::getPassword);
         props.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
