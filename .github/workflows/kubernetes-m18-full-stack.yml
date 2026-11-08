@@ -110,6 +110,8 @@ jobs:
 
       - name: M18 - Real apps, startup, HTTP probes, rollout, rollback, restart
         run: python3 deploy/kubernetes/scripts/benchmark-full-stack.py --sha "$SOURCE_SHA"
+      - name: Book Avro real Kind freeze drain cutover and rollback
+        run: python3 tools/book_avro_cutover/kind_rehearsal.py
       - name: Safe Pod / event / deployment diagnostics
         if: failure()
         run: |
@@ -128,6 +130,8 @@ jobs:
             target/metrics/kubernetes-full-stack.json
             target/metrics/kubernetes-full-stack-rendered.yaml
             target/metrics/m18-gateway-image-ids.txt
+            target/metrics/book-avro-kind.json
+            target/metrics/book-kind-schema-ids.json
           if-no-files-found: warn
           retention-days: 30
       - name: Destroy disposable cluster

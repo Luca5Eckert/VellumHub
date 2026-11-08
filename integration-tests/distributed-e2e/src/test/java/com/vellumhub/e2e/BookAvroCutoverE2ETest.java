@@ -35,6 +35,8 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import com.vellumhub.testing.distributed.kafka.KafkaProbe;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -62,6 +64,7 @@ class BookAvroCutoverE2ETest extends RecommendationE2ETestSupport {
         props.add("app.book.avro.registry-url", () -> BookAvroFixture.registryUrl(REGISTRY));
     }
     @Autowired JdbcTemplate recommendation;
+    @Autowired KafkaListenerEndpointRegistry recommendationListeners;
     @MockitoBean EmbeddingBookProvider embeddings;
 
     @Test void drainsBothReadModelsBeforeCutoverAndRollbackWithoutChangingPendingAvroIdentity() throws Exception {
@@ -143,6 +146,58 @@ class BookAvroCutoverE2ETest extends RecommendationE2ETestSupport {
                     drained(admin, KafkaTopics.BOOK_EVENTS, KafkaConsumerGroups.RECOMMENDATION_SERVICE, KafkaConsumerGroups.ENGAGEMENT_SERVICE);
                     assertThat(recommendation.queryForObject("SELECT count(*) FROM processed_events WHERE event_id=?", Long.class, updated.eventId())).isEqualTo(1L);
                     assertThat(catalog.queryForObject("SELECT count(*) FROM outbox_events WHERE status='PUBLISHED'", Long.class)).isEqualTo(3L);
+
+                    // Gap must block both groups at its original Avro offset, also after a rebalance.
+                    try (var producer = BookAvroFixture.producer(broker,registry);
+                         var rdlt = KafkaProbe.subscribe(broker,KafkaTopics.BOOK_EVENTS_AVRO+".recommendation-service-dlt","e2e-r-dlt");
+                         var edlt = KafkaProbe.subscribe(broker,KafkaTopics.BOOK_EVENTS_AVRO+".engagement-service-dlt","e2e-e-dlt")) {
+                        var gap = BookAvroFixture.event(book,4,BookChangedEvent.Kind.UPDATED);
+                        var metadata = producer.send(new org.apache.kafka.clients.producer.ProducerRecord<>(
+                                KafkaTopics.BOOK_EVENTS_AVRO,book.toString(),BookAvroFixture.encoded(gap))).get(15,TimeUnit.SECONDS);
+                        for (var probe : List.of(rdlt,edlt)) {
+                            String suffix = probe == rdlt ? "recommendation-service" : "engagement-service";
+                            var dead = probe.awaitRecord(KafkaTopics.BOOK_EVENTS_AVRO+"."+suffix+"-dlt",book.toString(),Duration.ofSeconds(30),Duration.ofMillis(100));
+                            assertThat(dead.value()[0]).isZero();
+                            assertThat(KafkaProbe.utf8HeaderValues(dead,"x-vellum-source-offset")).containsExactly(Long.toString(metadata.offset()));
+                            assertThat(KafkaProbe.utf8HeaderValues(dead,"x-vellum-source-partition")).containsExactly(Integer.toString(metadata.partition()));
+                        }
+                        var engagementListeners = engagementApp.getBean(KafkaListenerEndpointRegistry.class);
+                        for (var listeners : List.of(recommendationListeners,engagementListeners)) {
+                            for (var listener : listeners.getListenerContainers()) {
+                                if (listener.getGroupId().endsWith("-book-avro")) { listener.stop(); listener.start(); }
+                            }
+                        }
+                        await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                            for (var db : List.of(recommendation,engagement)) {
+                                assertThat(db.queryForObject("SELECT last_revision FROM book_event_offsets WHERE book_id=?",Long.class,book)).isEqualTo(2L);
+                                assertThat(db.queryForObject("SELECT count(*) FROM kafka_consumer_quarantine WHERE source_topic=? AND source_offset=? AND status='BLOCKED'",Long.class,KafkaTopics.BOOK_EVENTS_AVRO,metadata.offset())).isEqualTo(1L);
+                            }
+                        });
+                        // Restore the missing business fact via its original JSON route; never edit checkpoints.
+                        var missing = BookAvroFixture.event(book,3,BookChangedEvent.Kind.UPDATED);
+                        new KafkaTemplate<>(factory).send(KafkaTopics.BOOK_EVENTS,book.toString(),missing).get(15,TimeUnit.SECONDS);
+                        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                            for (var db : List.of(recommendation,engagement))
+                                assertThat(db.queryForObject("SELECT last_revision FROM book_event_offsets WHERE book_id=?",Long.class,book)).isEqualTo(3L);
+                        });
+                        for (var db : List.of(recommendation,engagement)) {
+                            assertThat(db.update("UPDATE kafka_consumer_quarantine SET status='RETRY_REQUESTED' WHERE source_topic=? AND source_offset=? AND status='BLOCKED'",KafkaTopics.BOOK_EVENTS_AVRO,metadata.offset())).isEqualTo(1);
+                        }
+                        for (var listeners : List.of(recommendationListeners,engagementListeners)) {
+                            for (var listener : listeners.getListenerContainers()) {
+                                if (listener.getGroupId().endsWith("-book-avro")) {
+                                    listener.stop();
+                                    listener.resumePartition(new TopicPartition(KafkaTopics.BOOK_EVENTS_AVRO,metadata.partition()));
+                                    listener.start();
+                                }
+                            }
+                        }
+                        reconciled(catalog,engagement,book,4,false);
+                        drained(admin,KafkaTopics.BOOK_EVENTS_AVRO,KafkaConsumerGroups.RECOMMENDATION_BOOK_AVRO,KafkaConsumerGroups.ENGAGEMENT_BOOK_AVRO);
+                        for (var db : List.of(recommendation,engagement))
+                            assertThat(db.queryForObject("SELECT count(*) FROM kafka_consumer_quarantine WHERE source_topic=? AND source_offset=? AND status='RESOLVED'",Long.class,KafkaTopics.BOOK_EVENTS_AVRO,metadata.offset())).isEqualTo(1L);
+                    }
+
                 } finally {factory.destroy();}
             }
         }
