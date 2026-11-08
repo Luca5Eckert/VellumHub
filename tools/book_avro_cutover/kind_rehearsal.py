@@ -93,7 +93,7 @@ def token_for_lab():
 
 
 def kafka(script, *args):
-    return k("exec", "statefulset/kafka", "--", f"/opt/kafka/bin/{script}.sh", "--bootstrap-server", "kafka:9092", *args)
+    return k("exec", "pod/book-avro-kafka-admin", "--", f"/opt/kafka/bin/{script}.sh", "--bootstrap-server", "kafka:9092", *args)
 
 
 def stage(service, **values):
@@ -153,6 +153,20 @@ def main():
         with forward("schema-registry",8080) as root:
             cmd("python3","tools/schema_registry/registry_gate.py","publish","--ephemeral","--url",root,"--state","target/metrics/book-kind-schema-ids.json")
         report["schema_ids"] = json.loads(Path("target/metrics/book-kind-schema-ids.json").read_text())
+        # Administrative JVMs must not share the broker's 1 GiB cgroup.
+        admin = {
+            "apiVersion":"v1", "kind":"Pod",
+            "metadata":{"name":"book-avro-kafka-admin", "namespace":"vellumhub"},
+            "spec":{"restartPolicy":"Never", "containers":[{
+                "name":"admin", "image":"apache/kafka:3.9.1",
+                "command":["sh","-c","sleep 1800"],
+                "env":[{"name":"KAFKA_HEAP_OPTS","value":"-Xms32m -Xmx128m"}],
+                "resources":{"requests":{"cpu":"100m","memory":"128Mi"},
+                             "limits":{"cpu":"500m","memory":"384Mi"}}
+            }]}
+        }
+        k("apply","-f","-",stdin=json.dumps(admin))
+        k("wait","--for=condition=Ready","pod/book-avro-kafka-admin","--timeout=120s",timeout=135)
         description = kafka("kafka-topics", "--describe", "--topic", "book-events")
         match = re.search(r"PartitionCount:\s*(\d+)",description)
         if not match: raise RuntimeError("Cannot determine legacy topic partition count")
