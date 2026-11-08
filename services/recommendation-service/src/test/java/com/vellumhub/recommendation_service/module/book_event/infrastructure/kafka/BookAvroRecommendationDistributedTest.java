@@ -73,7 +73,8 @@ class BookAvroRecommendationDistributedTest extends DistributedIntegrationTestSu
                 var kind = revision == 0 ? BookChangedEvent.Kind.CREATED : BookChangedEvent.Kind.UPDATED;
                 var event = BookAvroFixture.event(book, revision, kind);
                 producer.send(new org.apache.kafka.clients.producer.ProducerRecord<>(
-                        topic, book.toString(), BookAvroFixture.encoded(event)))
+                        topic, book.toString(), revision == 0
+                                ? BookAvroFixture.encodedV1(event) : BookAvroFixture.encoded(event)))
                         .get(15, TimeUnit.SECONDS);
                 final long expected = revision;
                 await().ignoreException(org.springframework.dao.EmptyResultDataAccessException.class)
@@ -104,6 +105,15 @@ class BookAvroRecommendationDistributedTest extends DistributedIntegrationTestSu
                         Integer.class, book)).isZero();
             });
             // Source gap 4 (missing revision 3) must remain blocked at its original offset.
+            var baselineBook = UUID.randomUUID();
+            var baseline = BookAvroFixture.event(baselineBook, 8, BookChangedEvent.Kind.BASELINE);
+            producer.send(new org.apache.kafka.clients.producer.ProducerRecord<>(
+                    topic, baselineBook.toString(), BookAvroFixture.encodedV1(baseline)))
+                    .get(15, TimeUnit.SECONDS);
+            await().ignoreException(org.springframework.dao.EmptyResultDataAccessException.class)
+                    .atMost(Duration.ofSeconds(25)).untilAsserted(() -> assertThat(jdbc.queryForObject(
+                            "SELECT last_revision FROM book_event_offsets WHERE book_id=?",
+                            Long.class, baselineBook)).isEqualTo(8L));
             var gap = BookAvroFixture.event(book, 4, BookChangedEvent.Kind.UPDATED);
             producer.send(new org.apache.kafka.clients.producer.ProducerRecord<>(
                     topic, book.toString(), BookAvroFixture.encoded(gap))).get(15, TimeUnit.SECONDS);

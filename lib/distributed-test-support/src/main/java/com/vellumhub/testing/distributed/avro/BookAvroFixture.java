@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -48,6 +49,11 @@ public final class BookAvroFixture {
             var response = http.send(config, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200)
                 throw new IllegalStateException("Cannot configure Book subject: HTTP " + response.statusCode());
+            // Register the immutable historical writer before v2, so actual listeners resolve both IDs.
+            try (var historical = BookAvroFixture.class.getResourceAsStream("/history/book-v1.avsc")) {
+                if (historical == null) throw new IllegalStateException("Missing historical Book v1 schema");
+                publishSchema(http, base, subject, new Schema.Parser().parse(historical));
+            }
             var payload = JSON.writeValueAsString(Map.of("schemaType", "AVRO", "schema", schema.toString()));
             var req = HttpRequest.newBuilder(URI.create(base + "/subjects/" + subject + "/versions"))
                     .header("Content-Type", "application/vnd.schemaregistry.v1+json")
@@ -58,6 +64,26 @@ public final class BookAvroFixture {
             int schemaId = JSON.readTree(registered.body()).path("id").asInt(-1);
             if (schemaId <= 0) throw new IllegalStateException("Invalid schema ID");
             return schemaId;
+        }
+    }
+
+    private static void publishSchema(HttpClient http, String base, String subject, Schema schema) throws Exception {
+        var req = HttpRequest.newBuilder(URI.create(base + "/subjects/" + subject + "/versions"))
+                .header("Content-Type", "application/vnd.schemaregistry.v1+json")
+                .POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(
+                        Map.of("schemaType", "AVRO", "schema", schema.toString())))).build();
+        if (http.send(req, HttpResponse.BodyHandlers.ofString()).statusCode() != 200)
+            throw new IllegalStateException("Cannot register historical Book writer");
+    }
+
+    public static GenericData.Record encodedV1(BookChangedEvent event) throws Exception {
+        try (var stream = BookAvroFixture.class.getResourceAsStream("/history/book-v1.avsc")) {
+            if (stream == null) throw new IllegalStateException("Missing historical Book schema");
+            var schema = new Schema.Parser().parse(stream);
+            var current = encoded(event);
+            var historical = new GenericData.Record(schema);
+            for (var field : schema.getFields()) historical.put(field.name(), current.get(field.name()));
+            return historical;
         }
     }
 

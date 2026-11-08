@@ -84,10 +84,12 @@ class BookAvroEngagementDistributedTest extends KafkaIntegrationTestSupport {
                         ? BookChangedEvent.Kind.CREATED : BookChangedEvent.Kind.UPDATED;
                 var event = BookAvroFixture.event(book, revision, kind);
                 producer.send(new org.apache.kafka.clients.producer.ProducerRecord<>(
-                        topic, book.toString(), BookAvroFixture.encoded(event)))
+                        topic, book.toString(), revision == 0
+                                ? BookAvroFixture.encodedV1(event) : BookAvroFixture.encoded(event)))
                         .get(15, TimeUnit.SECONDS);
                 final long expected = revision;
-                await().atMost(Duration.ofSeconds(25)).untilAsserted(() -> {
+                await().ignoreException(org.springframework.dao.EmptyResultDataAccessException.class)
+                        .atMost(Duration.ofSeconds(25)).untilAsserted(() -> {
                     assertThat(jdbc.queryForObject("SELECT last_revision FROM book_event_offsets WHERE book_id=?",
                             Long.class, book)).isEqualTo(expected);
                     assertThat(jdbc.queryForObject("SELECT active FROM book_snapshot WHERE book_id=?",
@@ -107,12 +109,22 @@ class BookAvroEngagementDistributedTest extends KafkaIntegrationTestSupport {
             producer.send(new org.apache.kafka.clients.producer.ProducerRecord<>(
                     topic, book.toString(), BookAvroFixture.encoded(deleted)))
                     .get(15, TimeUnit.SECONDS);
-            await().atMost(Duration.ofSeconds(25)).untilAsserted(() -> {
+            await().ignoreException(org.springframework.dao.EmptyResultDataAccessException.class)
+                        .atMost(Duration.ofSeconds(25)).untilAsserted(() -> {
                 assertThat(jdbc.queryForObject("SELECT last_revision FROM book_event_offsets WHERE book_id=?",
                         Long.class, book)).isEqualTo(2L);
                 assertThat(jdbc.queryForObject("SELECT active FROM book_snapshot WHERE book_id=?",
                         Boolean.class, book)).isFalse();
             });
+            var baselineBook = UUID.randomUUID();
+            var baseline = BookAvroFixture.event(baselineBook, 8, BookChangedEvent.Kind.BASELINE);
+            producer.send(new org.apache.kafka.clients.producer.ProducerRecord<>(
+                    topic, baselineBook.toString(), BookAvroFixture.encodedV1(baseline)))
+                    .get(15, TimeUnit.SECONDS);
+            await().ignoreException(org.springframework.dao.EmptyResultDataAccessException.class)
+                    .atMost(Duration.ofSeconds(25)).untilAsserted(() -> assertThat(jdbc.queryForObject(
+                            "SELECT last_revision FROM book_event_offsets WHERE book_id=?",
+                            Long.class, baselineBook)).isEqualTo(8L));
             var gap = BookAvroFixture.event(book, 4, BookChangedEvent.Kind.UPDATED);
             producer.send(new org.apache.kafka.clients.producer.ProducerRecord<>(
                     topic, book.toString(), BookAvroFixture.encoded(gap)))
