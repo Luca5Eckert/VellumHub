@@ -125,7 +125,8 @@ class BookAvroOutboxDistributedTest extends KafkaIntegrationTestSupport {
         try (InputStream stream = com.vellumhub.kafka.avro.book.BookChangedEvent.class
                 .getResourceAsStream("/BookChangedEvent.avsc")) {
             assertThat(stream).isNotNull();
-            String schema = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+            String schema = new org.apache.avro.Schema.Parser().parse(
+                    new String(stream.readAllBytes(), StandardCharsets.UTF_8)).toString();
             String subject = KafkaTopics.BOOK_EVENTS_AVRO + "-" +
                     com.vellumhub.kafka.avro.book.BookChangedEvent.getClassSchema().getFullName();
             String path = URLEncoder.encode(subject, StandardCharsets.UTF_8);
