@@ -48,7 +48,9 @@ jobs:
   distributed-integration:
     name: Distributed integration + cross-service E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Preparation includes cold Maven/image downloads plus evidence upload.
+    # The actual distributed test command retains its independent 150-second gate.
+    timeout-minutes: 8
     permissions:
       contents: read
     steps:
@@ -65,6 +67,7 @@ jobs:
           docker pull testcontainers/ryuk:0.11.0
           docker pull pgvector/pgvector:pg15
           docker pull confluentinc/cp-kafka:7.5.0
+          docker pull apicurio/apicurio-registry:3.1.7
       - name: Warm Maven dependencies and compilation
         run: mvn -B -ntp -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -DskipTests test-compile
       - name: Run distributed suite within 150 second execution budget
