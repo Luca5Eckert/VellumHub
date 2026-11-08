@@ -3,6 +3,7 @@ package com.vellumhub.recommendation_service.module.recommendation.domain.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -61,7 +62,8 @@ public class Recommendation {
             this.releaseYear = releaseYear;
         }
         if(genres != null) {
-            this.genres = genres;
+            // Integration contracts carry immutable snapshots; Hibernate merge mutates entity collections.
+            this.genres = new ArrayList<>(genres);
         }
     }
 
