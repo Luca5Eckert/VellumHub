@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 /** Dedicated serializer, inheriting broker security and ACK settings from JSON factory. */
 @Component
-public class BookAvroPublisher {
+public class BookAvroPublisher implements AutoCloseable {
     private final DefaultKafkaProducerFactory<String, Object> factory;
     private final KafkaTemplate<String, Object> template;
 
@@ -38,5 +38,5 @@ public class BookAvroPublisher {
             String topic, String key, BookChangedEvent event) {
         return template.send(topic, key, BookAvroMapper.toAvro(event));
     }
-    @PreDestroy public void close() { factory.destroy(); }
+    @Override @PreDestroy public void close() { factory.destroy(); }
 }

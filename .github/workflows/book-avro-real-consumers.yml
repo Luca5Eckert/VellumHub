@@ -2,6 +2,7 @@ name: Book Avro real Catalog cutover and consumer acceptance
 on:
   pull_request:
     paths:
+      - 'integration-tests/distributed-e2e/**'
       - 'lib/kafka-avro-contracts/**'
       - 'lib/distributed-test-support/**'
       - 'services/catalog-service/**'
@@ -13,6 +14,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'integration-tests/distributed-e2e/**'
       - 'lib/kafka-avro-contracts/**'
       - 'lib/distributed-test-support/**'
       - 'services/recommendation-service/**'
@@ -52,3 +54,23 @@ jobs:
             lib/kafka-avro-contracts/target/surefire-reports/
           if-no-files-found: warn
           retention-days: 21
+
+  cross-service-cutover:
+    name: Book Avro cross-service freeze drain cutover rollback
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21', cache: maven}
+      - name: Run one Catalog Outbox stream through both real consumers
+        run: >
+          mvn -B -ntp -Pdistributed-e2e -pl integration-tests/distributed-e2e -am
+          -Dtest=BookAvroCutoverE2ETest -Dsurefire.failIfNoSpecifiedTests=false test
+      - name: Preserve cutover evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: book-avro-cross-service-${{ github.sha }}
+          path: integration-tests/distributed-e2e/target/surefire-reports/
+          if-no-files-found: error
