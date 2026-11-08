@@ -20,11 +20,12 @@ import uuid
 OUT = Path("target/metrics/book-avro-kind.json")
 
 
-def cmd(*args, stdin=None, timeout=90):
+def cmd(*args, stdin=None, timeout=90, safe_diagnostic=False):
     p = subprocess.run(args, input=stdin, text=True, capture_output=True, timeout=timeout)
     if p.returncode:
         # Never include command args or arbitrary stderr: a fixture may hold ephemeral credentials.
-        raise RuntimeError(f"Command failed: {Path(args[0]).name}, exit={p.returncode}")
+        detail = ("; " + (p.stdout+"\n"+p.stderr)[-3000:]) if safe_diagnostic else ""
+        raise RuntimeError(f"Command failed: {Path(args[0]).name}, exit={p.returncode}"+detail)
     return p.stdout.strip()
 
 
@@ -93,7 +94,8 @@ def token_for_lab():
 
 
 def kafka(script, *args):
-    return k("exec", "pod/book-avro-kafka-admin", "--", f"/opt/kafka/bin/{script}.sh", "--bootstrap-server", "kafka:9092", *args)
+    # These CLI calls describe/create topics and describe groups; they never carry payloads or credentials.
+    return k("exec", "pod/book-avro-kafka-admin", "--", f"/opt/kafka/bin/{script}.sh", "--bootstrap-server", "kafka:9092", *args, safe_diagnostic=True)
 
 
 def stage(service, **values):
@@ -153,7 +155,11 @@ def main():
         with forward("schema-registry",8080) as root:
             cmd("python3","tools/schema_registry/registry_gate.py","publish","--ephemeral","--url",root,"--state","target/metrics/book-kind-schema-ids.json")
         report["schema_ids"] = json.loads(Path("target/metrics/book-kind-schema-ids.json").read_text())
-        # Administrative JVMs must not share the broker's 1 GiB cgroup.
+        status = json.loads(k("get","pod","kafka-0","-o","json"))["status"]["containerStatuses"][0]
+        report["broker_before_cutover"] = {"restarts":status.get("restartCount",0),
+            "last_termination":status.get("lastState",{}).get("terminated",{}).get("reason")}
+        print("Book Avro Kafka preflight: "+json.dumps(report["broker_before_cutover"]))
+        # Administrative JVMs have their own cgroup, independent of the broker.
         admin = {
             "apiVersion":"v1", "kind":"Pod",
             "metadata":{"name":"book-avro-kafka-admin", "namespace":"vellumhub"},

@@ -57,7 +57,7 @@ spec:
             - {name: KAFKA_LOG_DIRS, value: /var/lib/kafka/data}
             # Leave room for direct buffers/metaspace within the local 1 GiB container.
             - {name: KAFKA_HEAP_OPTS, value: "-Xms256m -Xmx512m"}
-          resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
+          resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 2Gi}}
           volumeMounts: [{name: data, mountPath: /var/lib/kafka/data}]
   volumeClaimTemplates: [{metadata: {name: data}, spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}}]
 ---

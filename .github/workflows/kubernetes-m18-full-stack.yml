@@ -117,6 +117,8 @@ jobs:
         run: |
           kubectl -n vellumhub get deploy,sts,pod,pvc -o wide || true
           kubectl -n vellumhub get jobs -o wide || true
+          kubectl -n vellumhub get pod kafka-0 -o jsonpath='{.status.containerStatuses[0].lastState.terminated.reason}{" "}{.status.containerStatuses[0].lastState.terminated.exitCode}{"\n"}' || true
+          kubectl -n vellumhub logs kafka-0 --previous --tail=60 || true
           kubectl -n vellumhub logs job/vellumhub-business-e2e --tail=60 || true
           kubectl -n vellumhub get events --sort-by=.lastTimestamp | tail -65 || true
           kubectl -n vellumhub get pods -o json |
