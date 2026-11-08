@@ -124,12 +124,15 @@ def drained(book, revision, title, deleted=False):
             group = service+suffix
             lines = kafka("kafka-consumer-groups", "--describe", "--group", group).splitlines()
             rows = [x.split() for x in lines if len(x.split())>=6 and x.split()[1]==topic]
-            if not rows and suffix == "": raise RuntimeError("Missing JSON group positions")
-            # Empty Avro topic may have no committed position before the first Avro write.
+            if not rows and (suffix == "" or revision > 0):
+                raise RuntimeError("Missing consumer group positions")
+            # Before the first Avro fact, Spring may not have committed an empty partition's offset 0.
+            startup_empty = lambda r: bool(suffix) and revision == 0 and r[4] == "0" and r[3] in ("-", "0")
             for row in rows:
-                if not all(v.isdigit() for v in row[2:6]) or int(row[5]) != 0:
+                if not startup_empty(row) and (not all(v.isdigit() for v in row[2:6]) or int(row[5]) != 0):
                     raise RuntimeError("Consumer lag is not zero at the cutover boundary")
-            offsets[group] = [dict(partition=int(r[2]), current=int(r[3]), end=int(r[4]), lag=int(r[5])) for r in rows]
+            offsets[group] = [dict(partition=int(r[2]), current=int(r[3]) if r[3].isdigit() else None,
+                                   end=int(r[4]), lag=0 if startup_empty(r) else int(r[5])) for r in rows]
     rows = json.loads(sql("catalog", f"SELECT coalesce(json_agg(t),'[]') FROM (SELECT event_id,aggregate_version,topic,wire_format,status FROM outbox_events WHERE aggregate_id='{book}' ORDER BY aggregate_version) t;"))
     return dict(revision=revision, checkpoints=revisions, offsets=offsets, outbox=rows)
 
