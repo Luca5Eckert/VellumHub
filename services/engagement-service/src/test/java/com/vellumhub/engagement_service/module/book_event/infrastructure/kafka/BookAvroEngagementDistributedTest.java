@@ -49,6 +49,8 @@ class BookAvroEngagementDistributedTest extends KafkaIntegrationTestSupport {
         props.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         props.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
         props.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
+        // Override the explicit H2 dialect inherited from test application.properties.
+        props.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.PostgreSQLDialect");
         props.add("spring.datasource.username", POSTGRES::getUsername);
         props.add("spring.datasource.password", POSTGRES::getPassword);
         props.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
