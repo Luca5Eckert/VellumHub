@@ -125,7 +125,8 @@ jobs:
           retention-days: 30
 
   distributed-evidence:
-    name: Combined distributed architecture evidence
+    # Preserve the aggregate check name used before the per-service split.
+    name: Distributed integration + cross-service E2E
     needs: distributed-integration
     if: always()
     runs-on: ubuntu-latest
@@ -161,6 +162,12 @@ jobs:
           overwrite: true
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Require every distributed suite to meet correctness and execution budget
+        if: always()
+        env:
+          DISTRIBUTED_RESULT: ${{ needs.distributed-integration.result }}
+        run: test "$DISTRIBUTED_RESULT" = success
 
   build-and-scan:
     name: Build and scan ${{ matrix.service }}
