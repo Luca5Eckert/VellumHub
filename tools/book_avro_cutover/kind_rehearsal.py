@@ -99,6 +99,15 @@ def kafka(script, *args):
 
 
 def stage(service, **values):
+    # Only this disposable Kind lab uses single-replica recreate-first rollouts.
+    # With the Registry and Kafka admin pod running, the single Kind node cannot
+    # schedule a second Java service replica (FailedScheduling: Insufficient cpu).
+    # Keep the real deployment templates/production rollout strategy unchanged.
+    if service not in ("recommendation-service", "engagement-service", "catalog-service"):
+        raise ValueError("Unsupported Book Avro lab deployment")
+    policy = {"spec": {"strategy": {"type": "RollingUpdate",
+                                    "rollingUpdate": {"maxSurge": 0, "maxUnavailable": 1}}}}
+    k("patch", "deployment", service, "--type=merge", "-p", json.dumps(policy))
     k("set", "env", f"deployment/{service}", *(f"{key}={value}" for key,value in values.items()))
     k("rollout", "status", f"deployment/{service}", "--timeout=240s", timeout=255)
 

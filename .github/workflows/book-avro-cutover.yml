@@ -32,3 +32,4 @@ jobs:
           kubectl kustomize deploy/kubernetes/schema-registry/overlays/local > /tmp/book-registry.yaml
           python3 tools/book_avro_cutover/check_topology.py /tmp/book-main.yaml /tmp/book-registry.yaml
           python3 tools/book_avro_cutover/check_acl.py
+          python3 -m unittest discover -s tools/book_avro_cutover -p 'test_*.py' -v
