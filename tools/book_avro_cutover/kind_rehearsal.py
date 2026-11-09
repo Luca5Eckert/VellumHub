@@ -18,6 +18,10 @@ import urllib.request
 import uuid
 
 OUT = Path("target/metrics/book-avro-kind.json")
+BOOK_FIELDS = (
+    "title", "description", "releaseYear", "coverUrl", "author",
+    "isbn", "pageCount", "publisher", "genres",
+)
 
 
 def cmd(*args, stdin=None, timeout=90, safe_diagnostic=False):
@@ -68,11 +72,33 @@ def request(url, method="GET", body=None, token=None, expected=200):
                                  data=json.dumps(body).encode() if body is not None else None)
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
-            status, raw = r.status, r.read()
+            status, raw, response_headers = r.status, r.read(), r.headers
     except urllib.error.HTTPError as e:
-        status, raw = e.code, e.read()
-    if status != expected: raise RuntimeError(f"HTTP fixture expected {expected}, received {status}")
+        status, raw, response_headers = e.code, e.read(), e.headers
+    if status != expected:
+        # Log only the bounded API error *category*, never arbitrary response
+        # details, token claims, credentials or response bodies.
+        try:
+            parsed = json.loads(raw)
+            category = parsed.get("error") if isinstance(parsed, dict) else None
+        except (ValueError, TypeError):
+            category = None
+        raise RuntimeError(
+            f"HTTP fixture expected {expected}, received {status}; "
+            f"API error category={str(category or 'unavailable')[:80]}"
+        )
+    if expected == 503 and response_headers.get("Retry-After") != "5":
+        raise RuntimeError("Frozen Book mutation must include Retry-After: 5")
     return json.loads(raw) if raw else None
+
+
+def book_update_payload(original, title):
+    """Send the complete API update shape, not a partial PUT that can fail
+    decoding or validation before reaching the transactional Book write fence.
+    """
+    if set(original) != set(BOOK_FIELDS) or not original.get("genres"):
+        raise RuntimeError("Book cutover fixture is incomplete for the PUT contract")
+    return dict(original, title=title)
 
 
 def token_for_lab():
@@ -210,11 +236,16 @@ def main():
         freeze(True)
         report["stages"].append(drained(book,0,name))
         with forward("catalog-service",8080) as root:
-            request(root+"/books/"+book,"PUT",dict(title=name+" frozen"),token,503)
+            # A frozen DELETE proves all mutations are gated independent of a
+            # request body; the full PUT also proves updates return 503.
+            request(root+"/books/"+book,"DELETE",token=token,expected=503)
+            request(root+"/books/"+book,"PUT",book_update_payload(payload,name+" frozen"),token,503)
+        if sql("catalog",f"SELECT title FROM books WHERE id='{book}';") != name:
+            raise RuntimeError("Frozen Book mutation committed despite the write gate")
         stage("catalog-service",BOOK_EVENTS_WIRE_FORMAT="avro")
         freeze(False)
         with forward("catalog-service",8080) as root:
-            request(root+"/books/"+book,"PUT",dict(title=name+" Avro"),token)
+            request(root+"/books/"+book,"PUT",book_update_payload(payload,name+" Avro"),token)
         freeze(True)
         report["stages"].append(drained(book,1,name+" Avro"))
         assert report["stages"][-1]["outbox"][-1]["wire_format"] == "AVRO"
