@@ -40,6 +40,16 @@ class KafkaAclPolicyTest(unittest.TestCase):
         self.assertIn("engagement.ratings.v1", self.policy["recommendation_service"]["subscribe"])
         self.assertNotIn("engagement.ratings.v1", self.policy["recommendation_service"]["publish"])
 
+    def test_book_avro_acl_isolation(self):
+        self.assertIn("book-events.avro", self.policy["catalog_service"]["publish"])
+        self.assertNotIn("book-events.avro", self.policy["user_service"]["publish"])
+        for name in ("recommendation_service", "engagement_service"):
+            p = self.policy[name]
+            self.assertIn("book-events.avro", p["subscribe"])
+            self.assertIn("book-events.avro", p["ordered_dlt"])
+            self.assertIn(name.replace("_", "-") + "-book-avro", p["groups"])
+            self.assertNotIn("book-events.avro", p["publish"])
+
     def test_canonical_dlt_families_are_service_scoped(self):
         for user in ("engagement_service", "recommendation_service"):
             rights = self.policy[user]
