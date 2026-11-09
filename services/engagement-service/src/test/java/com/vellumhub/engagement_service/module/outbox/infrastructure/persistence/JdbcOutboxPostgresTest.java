@@ -5,6 +5,7 @@ import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.engagement.RatingCreatedEvent;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -32,6 +33,10 @@ class JdbcOutboxPostgresTest {
         Flyway.configure().dataSource(ds).locations("classpath:db/migration").load().migrate();
         jdbc=new JdbcTemplate(ds);
         writer=new JdbcOutboxWriter(jdbc);store=new JdbcOutboxStore(jdbc);
+    }
+    @BeforeEach void isolateRelayQueue() {
+        // claimNext scans the entire queue; failure fixtures intentionally leave pending rows.
+        jdbc.update("DELETE FROM outbox_events");
     }
     private OutboxMessage message(long ratingId,int stars,long revision) {
         var event=new RatingCreatedEvent(UUID.randomUUID(),Instant.now(),ratingId,

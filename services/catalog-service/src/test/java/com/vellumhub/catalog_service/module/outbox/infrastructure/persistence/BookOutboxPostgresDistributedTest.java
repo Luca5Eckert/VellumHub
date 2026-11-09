@@ -124,5 +124,93 @@ class BookOutboxPostgresDistributedTest {
                 .isEqualTo(1);
     }
 
+    @Test void legacyJsonRowWithoutNewColumnsRemainsEligibleAfterFlyway() throws Exception {
+        UUID book = UUID.randomUUID();
+        var message = event(book, 0, BookChangedEvent.Kind.CREATED);
+        var json = com.fasterxml.jackson.databind.json.JsonMapper.builder().findAndAddModules()
+                .build().writeValueAsString(message.payload());
+        jdbc.update("""
+                INSERT INTO outbox_events(event_id, aggregate_type, aggregate_id,
+                     aggregate_version, event_type, topic, message_key, payload)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb))
+                """, message.eventId(), "BOOK", book, 0L, "BookChangedEvent",
+                "book-events", book.toString(), json);
+        var state = jdbc.queryForMap("SELECT wire_format, payload_schema_version, payload::text AS body FROM outbox_events WHERE event_id=?",
+                message.eventId());
+        assertThat(state.get("wire_format")).isEqualTo("JSON");
+        assertThat(state.get("payload_schema_version")).isEqualTo(1);
+        assertThat((String) state.get("body")).contains(message.eventId().toString());
+    }
+
+    @Test void newAvroBookOutboxRowRetainsJsonbAndImmutableDestination() {
+        UUID book = UUID.randomUUID();
+        var message = event(book, 0, BookChangedEvent.Kind.CREATED);
+        var avro = OutboxMessage.book((BookChangedEvent) message.payload(), true);
+        writer.append(avro);
+        var state = jdbc.queryForMap("""
+                SELECT topic, wire_format, payload_schema_version, aggregate_version,
+                       payload->>'eventId' AS stored_event_id
+                FROM outbox_events WHERE event_id=?
+                """, message.eventId());
+        assertThat(state.get("topic")).isEqualTo("book-events.avro");
+        assertThat(state.get("wire_format")).isEqualTo("AVRO");
+        assertThat(state.get("payload_schema_version")).isEqualTo(1);
+        assertThat(((Number) state.get("aggregate_version")).longValue()).isZero();
+        assertThat(state.get("stored_event_id")).isEqualTo(message.eventId().toString());
+    }
+
+    @Test void BookFreezeFenceRejectsMutationsAndSupportsSafeReopening() {
+        var gate = new com.vellumhub.catalog_service.module.book.infrastructure.persistence.JdbcBookWriteGate(jdbc);
+        var txn = new TransactionTemplate(new DataSourceTransactionManager(ds));
+        jdbc.update("UPDATE book_write_gate SET frozen=true, updated_at=now() WHERE id=1");
+        try {
+            assertThatThrownBy(() -> txn.executeWithoutResult(status -> gate.requireWritable()))
+                .isInstanceOf(com.vellumhub.catalog_service.module.book.domain.exception.BookWritesFrozenException.class);
+            assertThat(jdbc.queryForObject("SELECT frozen FROM book_write_gate WHERE id=1", Boolean.class))
+                .isTrue();
+        } finally {
+            jdbc.update("UPDATE book_write_gate SET frozen=false, updated_at=now() WHERE id=1");
+        }
+        assertThatCode(() -> txn.executeWithoutResult(status -> gate.requireWritable()))
+            .doesNotThrowAnyException();
+        assertThatThrownBy(gate::requireWritable)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("share a database transaction");
+    }
+
+    @Test void FreezeWaitsForInFlightBookOutboxTransaction() throws Exception {
+        var gate = new com.vellumhub.catalog_service.module.book.infrastructure.persistence.JdbcBookWriteGate(jdbc);
+        var txn = new TransactionTemplate(new DataSourceTransactionManager(ds));
+        var acquired = new java.util.concurrent.CountDownLatch(1);
+        var release = new java.util.concurrent.CountDownLatch(1);
+        try (var workers = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var writer = workers.submit(() -> txn.executeWithoutResult(status -> {
+                gate.requireWritable();
+                acquired.countDown();
+                try {
+                    if (!release.await(10, java.util.concurrent.TimeUnit.SECONDS))
+                        throw new IllegalStateException("Timed out holding Book gate");
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(ex);
+                }
+            }));
+            assertThat(acquired.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            var freezer = workers.submit(() -> jdbc.update(
+                    "UPDATE book_write_gate SET frozen=true, updated_at=now() WHERE id=1"));
+            try {
+                assertThatThrownBy(() -> freezer.get(200, java.util.concurrent.TimeUnit.MILLISECONDS))
+                    .isInstanceOf(java.util.concurrent.TimeoutException.class);
+            } finally {
+                release.countDown();
+            }
+            writer.get(10, java.util.concurrent.TimeUnit.SECONDS);
+            assertThat(freezer.get(10, java.util.concurrent.TimeUnit.SECONDS)).isEqualTo(1);
+        } finally {
+            release.countDown();
+            jdbc.update("UPDATE book_write_gate SET frozen=false, updated_at=now() WHERE id=1");
+        }
+    }
+
 }
 

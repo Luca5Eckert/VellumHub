@@ -8,7 +8,8 @@ import java.util.UUID;
 
 /** Immutable instruction to durably enqueue a domain change within the writer transaction. */
 public record OutboxMessage(UUID eventId, String aggregateType, UUID aggregateId, long revision,
-                            String eventType, String topic, String messageKey, Object payload) {
+                            String eventType, String topic, String messageKey, Object payload,
+                            String wireFormat, int payloadSchemaVersion) {
     public OutboxMessage {
         Objects.requireNonNull(eventId);
         Objects.requireNonNull(aggregateType);
@@ -17,7 +18,17 @@ public record OutboxMessage(UUID eventId, String aggregateType, UUID aggregateId
         Objects.requireNonNull(topic);
         Objects.requireNonNull(messageKey);
         Objects.requireNonNull(payload);
+        if (!"JSON".equals(wireFormat) && !"AVRO".equals(wireFormat))
+            throw new IllegalArgumentException("Unknown outbox wire format");
+        if (payloadSchemaVersion < 1) throw new IllegalArgumentException("Invalid JSONB payload schema version");
         if (revision < 0) throw new IllegalArgumentException("Invalid aggregate revision");
+    }
+
+    /** Legacy source compatibility for tests and other callers. */
+    public OutboxMessage(UUID eventId, String aggregateType, UUID aggregateId, long revision,
+                         String eventType, String topic, String messageKey, Object payload) {
+        this(eventId, aggregateType, aggregateId, revision, eventType, topic,
+                messageKey, payload, "JSON", 1);
     }
 
     public static OutboxMessage readingProgress(ReadingProgressChangedEvent event) {
@@ -27,8 +38,14 @@ public record OutboxMessage(UUID eventId, String aggregateType, UUID aggregateId
     }
 
     public static OutboxMessage book(BookChangedEvent event) {
+        return book(event, false);
+    }
+
+    /** Routing is a durable property of each row, never re-derived by the relay. */
+    public static OutboxMessage book(BookChangedEvent event, boolean avro) {
         return new OutboxMessage(event.eventId(), "BOOK", event.bookId(), event.revision(),
-                "BookChangedEvent", KafkaTopics.BOOK_EVENTS, event.bookId().toString(), event);
+                "BookChangedEvent", avro ? KafkaTopics.BOOK_EVENTS_AVRO : KafkaTopics.BOOK_EVENTS,
+                event.bookId().toString(), event, avro ? "AVRO" : "JSON", 1);
     }
 }
 
