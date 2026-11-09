@@ -17,6 +17,13 @@ Read the issue/PR, repository code and tests, relevant ADR, and existing .github
 - JVM performance: .agents/skills/jvm-performance/SKILL.md
 - Before delivery: .agents/skills/backend-delivery-verification/SKILL.md
 
+### Focused supplements retained from #355
+Use only when the additional specialization is relevant; do not load overlapping skills by default.
+- Spring/JPA implementation cross-check: .agents/skills/spring-backend-engineering/SKILL.md
+- Authorization-specific threat review: .agents/skills/security-authorization-review/SKILL.md
+- Architecture fitness regression review: .agents/skills/architecture-fitness-review/SKILL.md
+- Final verification cross-check: .agents/skills/backend-change-verification/SKILL.md
+
 ## Validation and quality
 Preserve existing Maven profiles, architecture fitness rules and CI gates. Use focused tests during implementation, then the appropriate reactor validation (mvn -B verify); when distributed behavior changes, include relevant Docker-backed / -Pdistributed-e2e checks if the environment supports them. Consult docs/ARCHITECTURE_FITNESS_FUNCTIONS.md and tools/architecture/ for architecture tests. Report skipped/not-run tests rather than claiming green. Confirm CI and acceptance against the exact PR SHA. A green single job, a merged PR and a deployment are distinct evidence stages.
 
