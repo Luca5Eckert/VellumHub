@@ -21,11 +21,17 @@ on:
 jobs:
   boundaries:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
       - name: Verify static AFFs and export evidence
         run: >-
           python tools/architecture/generate_evidence.py
@@ -41,16 +47,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-  archunit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
+
+      # Run all three independent fitness assertions even if an earlier one fails.
+      # Preserve the original AFF evidence artifact names and fail-closed status.
       - name: Run five service architecture suites
+        if: success() || failure()
         run: >-
           mvn -B
           -pl services/catalog-service,services/engagement-service,services/user-service,services/recommendation-service,services/gateway-service
@@ -75,16 +76,9 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-  kafka-contracts:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
+
       - name: Run canonical wire compatibility fixtures
+        if: success() || failure()
         run: mvn -B -f lib/kafka-contracts/pom.xml test
 
       - name: Validate contract AFF evidence

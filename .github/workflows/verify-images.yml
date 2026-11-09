@@ -171,8 +171,10 @@ jobs:
 
   build-and-scan:
     name: Build and scan ${{ matrix.service }}
+    # Overlap image builds/scans with the longer reactor verification.
+    # The caller's Kind gate still waits for *all* jobs in this reusable
+    # workflow, including Maven and all distributed acceptance evidence.
     needs:
-      - maven-verify
       - distributed-integration
       - distributed-evidence
     runs-on: ubuntu-latest
