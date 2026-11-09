@@ -2,15 +2,22 @@ FROM maven:3.9.9-eclipse-temurin-21 AS build
 
 WORKDIR /workspace
 
+# Shared Avro wire contract has a reactor parent even in independently built services.
+COPY pom.xml pom.xml
+RUN mvn -B -ntp -f pom.xml install -N -Dmaven.test.skip=true
 COPY lib/jwt-security/pom.xml lib/jwt-security/pom.xml
 COPY lib/jwt-security/src lib/jwt-security/src
 
 COPY lib/kafka-contracts/pom.xml lib/kafka-contracts/pom.xml
 COPY lib/kafka-contracts/src lib/kafka-contracts/src
+COPY lib/kafka-avro-contracts/pom.xml lib/kafka-avro-contracts/pom.xml
+COPY lib/kafka-avro-contracts/src lib/kafka-avro-contracts/src
+
 COPY services/catalog-service/pom.xml services/catalog-service/pom.xml
 
 RUN mvn -B -ntp -f lib/jwt-security/pom.xml install -Dmaven.test.skip=true \
-    && mvn -B -ntp -f lib/kafka-contracts/pom.xml install -Dmaven.test.skip=true
+    && mvn -B -ntp -f lib/kafka-contracts/pom.xml install -Dmaven.test.skip=true \
+    && mvn -B -ntp -f lib/kafka-avro-contracts/pom.xml install -Dmaven.test.skip=true
 
 COPY services/catalog-service/src services/catalog-service/src
 RUN mvn -B -ntp -f services/catalog-service/pom.xml package -DproductionImageBuild=true -Dmaven.test.skip=true
