@@ -1,0 +1,34 @@
+name: Book Avro staged Kubernetes and ACL gate
+on:
+  pull_request:
+    paths:
+      - 'tools/book_avro_cutover/**'
+      - 'lib/kafka-avro-contracts/**'
+      - 'services/catalog-service/**'
+      - 'services/recommendation-service/**'
+      - 'services/engagement-service/**'
+      - 'infra/kafka/acl-policy.json'
+      - '.github/workflows/book-avro-cutover.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/book_avro_cutover/**'
+      - 'lib/kafka-avro-contracts/**'
+      - 'infra/kafka/acl-policy.json'
+permissions: {contents: read}
+jobs:
+  static-topology:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: azure/setup-kubectl@v4
+        with: {version: v1.31.2}
+      - run: python3 -m pip install 'PyYAML==6.0.2'
+      - name: Validate canonical base and Kind Registry separately
+        run: |
+          kubectl kustomize deploy/kubernetes/base > /tmp/book-main.yaml
+          kubectl kustomize deploy/kubernetes/schema-registry/overlays/local > /tmp/book-registry.yaml
+          python3 tools/book_avro_cutover/check_topology.py /tmp/book-main.yaml /tmp/book-registry.yaml
+          python3 tools/book_avro_cutover/check_acl.py

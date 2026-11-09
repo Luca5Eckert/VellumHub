@@ -46,9 +46,19 @@ jobs:
           retention-days: 30
 
   distributed-integration:
-    name: Distributed integration + cross-service E2E
+    name: Distributed integration / ${{ matrix.name }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {name: catalog, module: services/catalog-service, test: ''}
+          - {name: engagement, module: services/engagement-service, test: ''}
+          - {name: recommendation, module: services/recommendation-service, test: ''}
+          - {name: cross-service, module: integration-tests/distributed-e2e, test: CatalogToRecommendationE2ETest}
+    # Preparation includes cold Maven/image downloads plus evidence upload.
+    # The actual distributed test command retains its independent 150-second gate.
+    timeout-minutes: 8
     permissions:
       contents: read
     steps:
@@ -64,14 +74,24 @@ jobs:
         run: |
           docker pull testcontainers/ryuk:0.11.0
           docker pull pgvector/pgvector:pg15
+          docker pull postgres:15-alpine
           docker pull confluentinc/cp-kafka:7.5.0
+          docker pull apicurio/apicurio-registry:3.1.7
       - name: Warm Maven dependencies and compilation
-        run: mvn -B -ntp -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -DskipTests test-compile
+        run: mvn -B -ntp -Pdistributed-e2e -pl ${{ matrix.module }} -am -DskipTests test-compile
       - name: Run distributed suite within 150 second execution budget
         shell: bash
+        env:
+          DISTRIBUTED_MODULE: ${{ matrix.module }}
+          DISTRIBUTED_TEST: ${{ matrix.test }}
         run: |
+          suite_args=()
+          if [[ -n "$DISTRIBUTED_TEST" ]]; then
+            suite_args+=("-Dtest=$DISTRIBUTED_TEST" -Dsurefire.failIfNoSpecifiedTests=false)
+          fi
           started_at=$(date +%s)
-          mvn -B -ntp -T 2 -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -Dgroups=distributed test
+          mvn -B -ntp -T 2 -Pdistributed-e2e -pl "$DISTRIBUTED_MODULE" -am \
+            -Dgroups=distributed -DexcludedGroups=book-avro-e2e "${suite_args[@]}" test
           elapsed=$(( $(date +%s) - started_at ))
           echo "Distributed integration suite execution: ${elapsed}s"
           if (( elapsed > 150 )); then
@@ -80,8 +100,58 @@ jobs:
           fi
 
 
-      - name: Generate distributed behavioral AFF evidence
+      - name: Preserve original JUnit paths for combined architecture evidence
         if: always()
+        env:
+          DISTRIBUTED_SHARD: ${{ matrix.name }}
+        run: |
+          python3 - <<'PYTHON'
+          import os, tarfile
+          from pathlib import Path
+          Path('target').mkdir(exist_ok=True)
+          with tarfile.open('target/distributed-'+os.environ['DISTRIBUTED_SHARD']+'.tar', 'w') as archive:
+              for root in ('services', 'lib', 'integration-tests'):
+                  for report in Path(root).glob('**/target/surefire-reports/TEST-*.xml'):
+                      archive.add(report, arcname=str(report))
+          PYTHON
+      - name: Upload distributed JUnit shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: distributed-junit-${{ matrix.name }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: target/distributed-${{ matrix.name }}.tar
+          overwrite: true
+          if-no-files-found: error
+          retention-days: 30
+
+  distributed-evidence:
+    # Preserve the aggregate check name used before the per-service split.
+    name: Distributed integration + cross-service E2E
+    needs: distributed-integration
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: distributed-junit-*-${{ github.event.pull_request.head.sha || github.sha }}
+          path: target/distributed-inputs
+          merge-multiple: true
+      - name: Restore original JUnit paths from all four executed shards
+        run: |
+          python3 - <<'PYTHON'
+          import tarfile
+          from pathlib import Path
+          archives = list(Path('target/distributed-inputs').glob('distributed-*.tar'))
+          if len(archives) != 4:
+              raise SystemExit('Expected executed reports from all four distributed shards')
+          for archive in archives:
+              with tarfile.open(archive) as source:
+                  source.extractall('.', filter='data')
+          PYTHON
+      - name: Generate distributed behavioral AFF evidence
         run: python3 tools/architecture/generate_evidence.py --profile behavioral --sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Upload behavioral AFF evidence
         if: always()
@@ -89,14 +159,22 @@ jobs:
         with:
           name: aff-behavioral-${{ github.event.pull_request.head.sha || github.sha }}
           path: target/architecture-evidence/
+          overwrite: true
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Require every distributed suite to meet correctness and execution budget
+        if: always()
+        env:
+          DISTRIBUTED_RESULT: ${{ needs.distributed-integration.result }}
+        run: test "$DISTRIBUTED_RESULT" = success
 
   build-and-scan:
     name: Build and scan ${{ matrix.service }}
     needs:
       - maven-verify
       - distributed-integration
+      - distributed-evidence
     runs-on: ubuntu-latest
     permissions:
       contents: read
