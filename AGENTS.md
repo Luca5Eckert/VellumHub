@@ -1,22 +1,31 @@
-# Agent instructions — VellumHub
+# VellumHub — agent entry point
 
-Read README.md and the issue/PR acceptance criteria before editing. Inspect the current module, dependency versions, configuration, tests and relevant ADRs; source and runnable tests take precedence over narrative docs.
+## Source of truth and scope
+Read the issue/PR, repository code and tests, relevant ADR, and existing .github/workflows before editing. GitHub issues are the executable backlog; Obsidian Vault provides explanatory knowledge and is not code or CI proof. Use a feature branch for changes; do not merge, deploy or publish without request.
 
-## Skill routing (read only what matches the task)
-- Spring/JPA/API behavior: .agents/skills/spring-backend-engineering/SKILL.md
-- Unit, integration, contract or distributed tests: .agents/skills/backend-testing/SKILL.md
-- Errors, regressions or red CI: .agents/skills/systematic-debugging/SKILL.md
-- Identity, token handling or authorization: .agents/skills/security-authorization-review/SKILL.md
-- Kafka, Outbox, schema evolution or projection consistency: .agents/skills/event-driven-reliability/SKILL.md
-- Module boundaries or architecture fitness functions: .agents/skills/architecture-fitness-review/SKILL.md
-- Before requesting merge / declaring an issue done: .agents/skills/backend-change-verification/SKILL.md
+## Agent skills (load only what the task needs)
+- Java/Spring feature: .agents/skills/spring-boot-engineering/SKILL.md
+- JPA/SQL/Flyway: .agents/skills/jpa-persistence/SKILL.md
+- Java unit/integration/contract tests: .agents/skills/backend-testing/SKILL.md
+- OAuth2/JWT/permissions: .agents/skills/backend-security/SKILL.md
+- OpenTelemetry/latency: .agents/skills/backend-observability/SKILL.md
+- Architecture boundaries: .agents/skills/architecture-fitness/SKILL.md
+- Kafka/outbox/schema/evolution: .agents/skills/event-driven-reliability/SKILL.md
+- Fault investigation: .agents/skills/systematic-debugging/SKILL.md
+- PR self-review: .agents/skills/backend-code-review/SKILL.md
+- CI/pipeline security: .agents/skills/ci-hardening/SKILL.md
+- JVM performance: .agents/skills/jvm-performance/SKILL.md
+- Before delivery: .agents/skills/backend-delivery-verification/SKILL.md
 
-## Repository invariants
-- Never edit directly on main for an issue; use a scoped branch. Keep commits small, semantic and focused. Preserve uncommitted user changes; do not alter unrelated modules.
-- Respect Java and Spring versions declared by each module POM. Do not upgrade dependencies or alter quality gates merely to satisfy a skill.
-- Service data ownership and integration contracts are architectural constraints. Do not substitute synchronous service fan-out for local projections without an explicit decision.
-- The existing architecture fitness, Maven, contract, Postman and distributed workflows are authoritative for their respective coverage. See docs/ARCHITECTURE_FITNESS_FUNCTIONS.md and .github/workflows/.
-- Run focused tests first. For the Java reactor use mvn -B verify when available; the distributed reactor is opt-in via mvn -B -Pdistributed-e2e verify and requires Docker. Verify which tests actually ran.
-- A passing local command is not evidence that remote CI passed; CI passing is not evidence of deployment. Always record exact commit SHA, checks, skips and remaining acceptance gaps.
-- Reconcile durable decisions with appropriate ADRs and Obsidian project references only when scope and verification justify it; never copy private employer data here.
-- No automatic PR merge, issue closure or deployment without explicit instruction.
+### Focused supplements retained from #355
+Use only when the additional specialization is relevant; do not load overlapping skills by default.
+- Spring/JPA implementation cross-check: .agents/skills/spring-backend-engineering/SKILL.md
+- Authorization-specific threat review: .agents/skills/security-authorization-review/SKILL.md
+- Architecture fitness regression review: .agents/skills/architecture-fitness-review/SKILL.md
+- Final verification cross-check: .agents/skills/backend-change-verification/SKILL.md
+
+## Validation and quality
+Preserve existing Maven profiles, architecture fitness rules and CI gates. Use focused tests during implementation, then the appropriate reactor validation (mvn -B verify); when distributed behavior changes, include relevant Docker-backed / -Pdistributed-e2e checks if the environment supports them. Consult docs/ARCHITECTURE_FITNESS_FUNCTIONS.md and tools/architecture/ for architecture tests. Report skipped/not-run tests rather than claiming green. Confirm CI and acceptance against the exact PR SHA. A green single job, a merged PR and a deployment are distinct evidence stages.
+
+## Project discipline
+Use small, coherent commits with behavior and its tests together where appropriate. Avoid unrelated edits. No secrets, credentials, internal employer material or production data in this public repository. A skill does not override an explicit repo rule, issue acceptance, security policy or measured evidence.

@@ -1,13 +1,24 @@
 ---
 name: systematic-debugging
-description: Use for failing tests, broken pipelines, regressions, performance anomalies or intermittent distributed failures.
+description: Investigate failing tests, CI failures and runtime defects by reproducing and falsifying hypotheses before patching.
 ---
-# Systematic debugging
 
-1. Preserve the complete failure symptom, environment, commit, expected behavior and reproduction command.
-2. Reproduce the smallest failing case. If the failure cannot be reproduced, distinguish a hypothesis from verified evidence.
-3. Trace the failing path, including logs, SQL, event headers, timing, dependencies and recent relevant diffs; form competing hypotheses.
-4. Design a discriminating experiment or regression test before changing code. Use the smallest intervention that explains the evidence.
-5. Re-run the failing case and closely related tests; then run required higher-level checks and examine unintended changes.
-6. If CI remains red, identify the exact remaining error. Do not change production behavior merely to accommodate a broken test assumption without verifying the contract.
-7. Report root cause, proof, correction, validation and uncertainty. Never say resolved from a speculative patch.
+# systematic-debugging
+
+## Trigger
+Unexpected output, flaky integration test, CI failure, authentication bug, database inconsistency, performance regression.
+
+## Procedure
+1. Capture the exact failing command, revision, input and failure signature. Establish whether the error is reproducible or environmental.
+2. Trace the flow and identify the first incorrect observable state; compare a known-good baseline when available.
+3. List minimal competing hypotheses and falsification checks. Inspect logs, test report, stack trace and config; avoid changing several unrelated factors.
+4. Reproduce with the smallest failing test or command. If CI-only, inspect job context and distinguish credentials, infrastructure, timeouts and code regressions.
+5. Fix the root cause with minimal scope; keep or add a regression test and rerun the original failing check.
+6. Stop speculative patch loops. When the cause is still unknown, report collected evidence and a precise next experiment.
+7. Never disable quality gates, reduce coverage, loosen security or mark integration tests skipped just to get green CI.
+
+## Output
+Symptom -> reproduced evidence -> root cause or hypotheses -> patch -> revalidation.
+
+## Reference
+Adapted from https://github.com/obra/superpowers/tree/main/skills/systematic-debugging/SKILL.md.
