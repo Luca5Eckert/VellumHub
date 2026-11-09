@@ -2,6 +2,7 @@ package com.vellumhub.catalog_service.module.book.application.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookWritesFrozenException;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
 import com.vellumhub.catalog_service.module.book.presentation.controller.BookController;
 import com.vellumhub.catalog_service.share.security.SecurityConfig;
@@ -58,6 +59,16 @@ class BookControllerTest {
                 .authorities(new SimpleGrantedAuthority("ROLE_USER"),
                         new SimpleGrantedAuthority("SCOPE_catalog:read"),
                         new SimpleGrantedAuthority("SCOPE_catalog:write"));
+    }
+
+    @Test
+    void frozenBookMutationReturnsRetryable503ThroughControllerAdvice() throws Exception {
+        UUID book = UUID.randomUUID();
+        org.mockito.Mockito.doThrow(new BookWritesFrozenException()).when(bookService).delete(book);
+        mockMvc.perform(delete("/books/"+book).with(adminJwt()))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Retry-After", "5"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value(503));
     }
 
     @Nested
