@@ -40,10 +40,7 @@ public final class BookAvroFixture {
         try (var stream = com.vellumhub.kafka.avro.book.BookChangedEvent.class
                 .getResourceAsStream("/BookChangedEvent.avsc")) {
             if (stream == null) throw new IllegalStateException("Missing approved Book Avro contract resource");
-            // Match the production Registry gate: register the approved AVSC
-            // document, not Schema.toString()'s re-rendered Java Avro variant.
-            String approvedSchemaJson = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-            new Schema.Parser().parse(approvedSchemaJson);
+            Schema schema = new Schema.Parser().parse(stream);
             HttpClient http = HttpClient.newHttpClient();
             var config = HttpRequest.newBuilder(URI.create(base + "/config/" + subject))
                     .header("Content-Type", "application/vnd.schemaregistry.v1+json")
@@ -55,12 +52,9 @@ public final class BookAvroFixture {
             // Register the immutable historical writer before v2, so actual listeners resolve both IDs.
             try (var historical = BookAvroFixture.class.getResourceAsStream("/history/book-v1.avsc")) {
                 if (historical == null) throw new IllegalStateException("Missing historical Book v1 schema");
-                String historicalJson = new String(historical.readAllBytes(), StandardCharsets.UTF_8);
-                new Schema.Parser().parse(historicalJson);
-                publishSchema(http, base, subject, historicalJson);
+                publishSchema(http, base, subject, new Schema.Parser().parse(historical));
             }
-            var payload = JSON.writeValueAsString(Map.of("schemaType", "AVRO",
-                    "schema", JSON.writeValueAsString(JSON.readTree(approvedSchemaJson))));
+            var payload = JSON.writeValueAsString(Map.of("schemaType", "AVRO", "schema", schema.toString()));
             var req = HttpRequest.newBuilder(URI.create(base + "/subjects/" + subject + "/versions"))
                     .header("Content-Type", "application/vnd.schemaregistry.v1+json")
                     .POST(HttpRequest.BodyPublishers.ofString(payload)).build();
@@ -73,12 +67,11 @@ public final class BookAvroFixture {
         }
     }
 
-    private static void publishSchema(HttpClient http, String base, String subject, String schemaJson) throws Exception {
+    private static void publishSchema(HttpClient http, String base, String subject, Schema schema) throws Exception {
         var req = HttpRequest.newBuilder(URI.create(base + "/subjects/" + subject + "/versions"))
                 .header("Content-Type", "application/vnd.schemaregistry.v1+json")
                 .POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(
-                        Map.of("schemaType", "AVRO",
-                               "schema", JSON.writeValueAsString(JSON.readTree(schemaJson)))))).build();
+                        Map.of("schemaType", "AVRO", "schema", schema.toString())))).build();
         if (http.send(req, HttpResponse.BodyHandlers.ofString()).statusCode() != 200)
             throw new IllegalStateException("Cannot register historical Book writer");
     }
