@@ -22,7 +22,7 @@ class ComposeInfrastructureContractTest(unittest.TestCase):
         ):
             self.assertRegex(
                 compose,
-                rf"(?m)^  {service}:\\n    image: {image.replace('.', r'\\.')}\\n",
+                f"  {service}:\n    image: {image}\n",
             )
         self.assertFalse(list((ROOT / "infra" / "docker").glob("postgres-*/Dockerfile")))
         self.assertFalse(list((ROOT / "infra" / "docker").glob("postgres-*/init.sql")))
