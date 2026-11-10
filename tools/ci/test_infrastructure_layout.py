@@ -25,6 +25,7 @@ class InfrastructureLayoutContractTest(unittest.TestCase):
     def test_single_root_maven_wrapper_preserves_service_builds(self):
         for name in ("mvnw", "mvnw.cmd", ".mvn/wrapper/maven-wrapper.properties"):
             self.assertTrue((ROOT / name).exists(), name)
+        self.assertTrue((ROOT / "mvnw").stat().st_mode & 0o111, "root Maven wrapper must be executable")
         for service in ("user", "catalog", "engagement", "recommendation", "gateway"):
             path = ROOT / f"services/{service}-service"
             self.assertFalse((path / "mvnw").exists())
