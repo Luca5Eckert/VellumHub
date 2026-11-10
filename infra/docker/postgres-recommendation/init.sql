@@ -1,1 +1,0 @@
--- Schema, extensions, and indexes are managed by Flyway migrations in recommendation-service.

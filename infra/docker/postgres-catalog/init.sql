@@ -1,1 +1,0 @@
--- Schema and seed data are managed by Flyway migrations in catalog-service.
