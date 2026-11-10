@@ -120,5 +120,57 @@ class BookFixtureContractTest(unittest.TestCase):
         self.assertNotIn("sensitive diagnostic", str(ctx.exception))
 
 
+
+class CutoverFailureEvidenceTest(unittest.TestCase):
+    def test_stalled_book_evidence_is_bounded_and_contains_no_error_messages(self):
+        # The Outbox status and immutable routing metadata, not arbitrary payloads or
+        # exception text, must survive in the artifact after a Kind failure.
+        def query(service, statement):
+            if "SELECT version FROM books" in statement:
+                return "1"
+            if "FROM outbox_events WHERE aggregate_id=" in statement:
+                return json.dumps([{
+                    "aggregate_version": 1, "topic": "book-events.avro",
+                    "wire_format": "AVRO", "status": "PENDING", "attempts": 4,
+                    "waiting_for_retry": True, "error_type": "RestClientException",
+                }])
+            if "FROM kafka_consumer_quarantine" in statement:
+                return "[]"
+            raise AssertionError("Unexpected diagnostic query")
+
+        with patch.object(rehearsal, "sql", side_effect=query) as db, \
+             patch.object(rehearsal, "kafka",
+                          return_value="GROUP TOPIC PARTITION CURRENT-OFFSET LOG-END-OFFSET LAG\n"
+                                       "recommendation-service-book-avro book-events.avro 0 - 0 0"):
+            evidence = rehearsal.reconciliation_evidence(
+                "8a2805ae-88d0-4a84-b3c9-837238d18ec3", 1, "1",
+                {"recommendation": "0", "engagement": "0"},
+                {"recommendation": "0", "engagement": "0"},
+                "Old title", "t", "Expected title", False,
+            )
+
+        self.assertEqual(evidence["outbox_for_book"][0]["wire_format"], "AVRO")
+        self.assertEqual(evidence["outbox_for_book"][0]["error_type"], "RestClientException")
+        self.assertFalse(evidence["recommendation_title_matches"])
+        self.assertTrue(evidence["engagement_active_matches"])
+        self.assertEqual(evidence["recommendation-service-book-avro_offsets"][0]["lag"], "0")
+        self.assertNotIn("payload", json.dumps(evidence))
+        self.assertEqual(db.call_count, 4)
+
+    def test_diagnostics_fail_closed_if_a_read_is_unavailable(self):
+        with patch.object(rehearsal, "sql", side_effect=RuntimeError("secret-error")), \
+             patch.object(rehearsal, "kafka", side_effect=RuntimeError("broker details")):
+            evidence = rehearsal.reconciliation_evidence(
+                "8a2805ae-88d0-4a84-b3c9-837238d18ec3", 1, "1",
+                {"recommendation": "0"}, {"recommendation": "0"},
+                "", "", "Expected", False,
+            )
+        self.assertEqual(evidence["catalog_revision"], {"collection_error_type": "RuntimeError"})
+        self.assertEqual(evidence["recommendation-service-book-avro_offsets"],
+                         {"collection_error_type": "RuntimeError"})
+        self.assertNotIn("secret-error", json.dumps(evidence))
+        self.assertNotIn("broker details", json.dumps(evidence))
+
+
 if __name__ == "__main__":
     unittest.main()
