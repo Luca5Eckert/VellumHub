@@ -1,6 +1,7 @@
 package com.vellumhub.catalog_service.share.exception;
 
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookWritesFrozenException;
 import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
 import com.vellumhub.catalog_service.module.book_list.domain.exception.MembershipBookListDomainException;
 import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListResourceNotFoundException;
@@ -138,6 +139,18 @@ public class GlobalExceptionHandler {
                 .status(status.value()).error("Book List Error").message(ex.getMessage())
                 .details(List.of("Book list business rule violation"))
                 .path(request.getRequestURI()).timestamp(Instant.now()).build());
+    }
+
+    @ExceptionHandler(BookWritesFrozenException.class)
+    public ResponseEntity<ApiResponseError> handleBookWritesFrozen(
+            BookWritesFrozenException ex, HttpServletRequest request) {
+        // Controller advice runs before @ResponseStatus; the generic handler would return 500.
+        HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
+        return ResponseEntity.status(status).header("Retry-After", "5")
+                .body(ApiResponseError.builder()
+                        .status(status.value()).error("Service Unavailable")
+                        .message(ex.getMessage()).details(List.of("Retry the Book mutation later"))
+                        .path(request.getRequestURI()).timestamp(Instant.now()).build());
     }
 
     @ExceptionHandler(BookDomainException.class)

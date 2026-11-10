@@ -8,6 +8,8 @@ public final class KafkaTopics {
 
     /** Ordered, full-snapshot Book lifecycle stream (v2). */
     public static final String BOOK_EVENTS = "book-events";
+    /** Avro-only cutover: never write these bytes into BOOK_EVENTS. */
+    public static final String BOOK_EVENTS_AVRO = "book-events.avro";
 
     /** Bounded-context streams contain immutable facts, not commands. */
     public static final String ENGAGEMENT_RATINGS = "engagement.ratings.v1";

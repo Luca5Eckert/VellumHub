@@ -11,6 +11,7 @@
 
     <modules>
         <module>lib/kafka-contracts</module>
+        <module>lib/kafka-avro-contracts</module>
         <module>lib/jwt-security</module>
         <module>lib/distributed-test-support</module>
         <module>services/catalog-service</module>
@@ -21,6 +22,7 @@
         <module>services/auth-service</module>
     </modules>
 
+    <repositories><repository><id>confluent</id><url>https://packages.confluent.io/maven/</url></repository></repositories>
     <profiles>
         <profile>
             <id>distributed-e2e</id>

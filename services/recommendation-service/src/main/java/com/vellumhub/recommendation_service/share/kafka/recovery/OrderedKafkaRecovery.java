@@ -201,7 +201,7 @@ public class OrderedKafkaRecovery {
                     "service", service, "topic", record.topic(),
                     "consumer_group", group, "category", category).increment();
             log.error("operation=kafka_quarantined topic={} partition={} offset={} group={} category={} dlt={}",
-                    record.topic(), record.partition(), record.offset(), group, category, dltTopic);
+                    record.topic(), record.partition(), record.offset(), group, category, dltTopic, error);
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted before Kafka quarantine completed", interrupted);

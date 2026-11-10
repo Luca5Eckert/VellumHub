@@ -25,8 +25,9 @@ permissions:
   contents: read
 
 jobs:
-  static:
+  contract-drift:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -70,13 +71,6 @@ jobs:
                   raise SystemExit(
                       f"{path} contains a JWT-like value; committed artifacts must stay secret-free"
                   )
-
-  contract-drift:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: Set up local environment
         shell: bash

@@ -1,0 +1,76 @@
+name: Book Avro real Catalog cutover and consumer acceptance
+on:
+  pull_request:
+    paths:
+      - 'integration-tests/distributed-e2e/**'
+      - 'lib/kafka-avro-contracts/**'
+      - 'lib/distributed-test-support/**'
+      - 'services/catalog-service/**'
+      - 'services/recommendation-service/**'
+      - 'services/engagement-service/**'
+      - 'infra/schema-registry/**'
+      - '.github/workflows/book-avro-real-consumers.yml'
+      - '.github/workflows/verify-images.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'integration-tests/distributed-e2e/**'
+      - 'lib/kafka-avro-contracts/**'
+      - 'lib/distributed-test-support/**'
+      - 'services/recommendation-service/**'
+      - 'services/engagement-service/**'
+      - '.github/workflows/book-avro-real-consumers.yml'
+permissions: {contents: read}
+jobs:
+  avro-book-read-model:
+    name: Actual Book Avro ${{ matrix.service }} integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [catalog-service, recommendation-service, engagement-service]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21', cache: maven}
+      - name: Confirm Kafka / PostgreSQL / Registry Testcontainers are available
+        run: |
+          docker info
+          docker pull confluentinc/cp-kafka:7.5.0
+          docker pull apicurio/apicurio-registry:3.1.7
+      - name: Run real Book Avro Kafka listener and SQL read-model acceptance tests
+        run: >
+          mvn -B -ntp -pl services/${{ matrix.service }} -am
+          -Dgroups=book-avro-e2e
+          -Dsurefire.failIfNoSpecifiedTests=false test
+      - name: Preserve test reports for traceable acceptance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: book-avro-actual-${{ matrix.service }}-${{ github.sha }}
+          path: |
+            services/${{ matrix.service }}/target/surefire-reports/
+            lib/kafka-avro-contracts/target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 21
+
+  cross-service-cutover:
+    name: Book Avro cross-service freeze drain cutover rollback
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21', cache: maven}
+      - name: Run one Catalog Outbox stream through both real consumers
+        run: >
+          mvn -B -ntp -Pdistributed-e2e -pl integration-tests/distributed-e2e -am
+          -Dtest=BookAvroCutoverE2ETest -Dsurefire.failIfNoSpecifiedTests=false test
+      - name: Preserve cutover evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: book-avro-cross-service-${{ github.sha }}
+          path: integration-tests/distributed-e2e/target/surefire-reports/
+          if-no-files-found: error

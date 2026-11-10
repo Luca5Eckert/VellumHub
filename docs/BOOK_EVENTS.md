@@ -65,3 +65,18 @@ HTTP 201, 200 or 204 reflect the local Catalog transaction only. They do not imp
 - Rating and Reaction canonical consumers have identity checkpoints under #200/#202. Legacy topic handlers remain excluded from those guarantees until coordinated cutover; retry/DLT and operational replay remain in #272.
 
 See `docs/DISTRIBUTED_TESTING.md` for distributed test infrastructure.
+
+## Book Avro migration (issue #349)
+
+Book JSON remains the default. The opt-in Avro path uses `book-events.avro`, the shared
+`lib/kafka-avro-contracts` generated contract and an isolated producer/decoder. Catalog
+Outbox payloads remain JSONB; `wire_format` and `payload_schema_version` are persisted
+per row. Historical JSON rows keep their destination after a producer flag change.
+Recommendation and Engagement reuse their existing projection/checkpoint transaction.
+Reading Progress, Ratings and Reactions retain their existing transport.
+
+See [the cutover runbook](BOOK_AVRO_CUTOVER_RUNBOOK.md) for freeze/drain, rollback and
+executable acceptance commands. Per-service acceptance, the combined consumer E2E and
+the full-stack Kind rehearsal archive evidence against the tested SHA. Check those CI
+results before accepting the migration; harness source alone does not establish a
+successful rollout. No production rollout is claimed.

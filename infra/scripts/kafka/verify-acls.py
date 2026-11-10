@@ -76,6 +76,12 @@ def consume(name, topic, group, permitted):
 def main():
     publish("catalog_service", "book-events", True)
     publish("user_service", "created-user-preference", True)
+    publish("catalog_service", "book-events.avro", True)
+    consume("recommendation_service", "book-events.avro", "recommendation-service-book-avro", True)
+    consume("engagement_service", "book-events.avro", "engagement-service-book-avro", True)
+    publish("user_service", "book-events.avro", False)
+    publish("recommendation_service", "book-events.avro", False)
+    consume("recommendation_service", "book-events.avro", "engagement-service-book-avro", False)
     consume("recommendation_service", "created-user-preference", "recommendation-service", True)
     publish("engagement_service", "engagement.ratings.v1", True)
     consume("recommendation_service", "engagement.ratings.v1", "recommendation-service", True)
