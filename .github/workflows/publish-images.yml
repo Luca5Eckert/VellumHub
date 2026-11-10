@@ -32,22 +32,16 @@ jobs:
         include:
           - service: gateway-service
             image: vellumhub-gateway
-            dockerfile: services/gateway-service/Dockerfile
           - service: auth-service
             image: vellumhub-auth
-            dockerfile: services/auth-service/Dockerfile
           - service: user-service
             image: vellumhub-user
-            dockerfile: services/user-service/Dockerfile
           - service: catalog-service
             image: vellumhub-catalog
-            dockerfile: services/catalog-service/Dockerfile
           - service: engagement-service
             image: vellumhub-engagement
-            dockerfile: services/engagement-service/Dockerfile
           - service: recommendation-service
             image: vellumhub-recommendation
-            dockerfile: services/recommendation-service/Dockerfile
     env:
       IMAGE: ghcr.io/luca5eckert/${{ matrix.image }}
     steps:

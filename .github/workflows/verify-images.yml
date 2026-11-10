@@ -186,22 +186,46 @@ jobs:
         include:
           - service: gateway-service
             image: vellumhub-gateway
-            dockerfile: services/gateway-service/Dockerfile
+            dockerfile: infra/docker/java/Dockerfile
+            dep_stage: deps-jwt
+            runtime_image: eclipse-temurin:21-jre-alpine
+            app_port: '8080'
+            health_port: '8080'
           - service: auth-service
             image: vellumhub-auth
-            dockerfile: services/auth-service/Dockerfile
+            dockerfile: infra/docker/java/Dockerfile
+            dep_stage: deps-jwt
+            runtime_image: eclipse-temurin:21-jre-alpine
+            app_port: '9000'
+            health_port: '9001'
           - service: user-service
             image: vellumhub-user
-            dockerfile: services/user-service/Dockerfile
+            dockerfile: infra/docker/java/Dockerfile
+            dep_stage: deps-kafka
+            runtime_image: eclipse-temurin:21-jre-alpine
+            app_port: '8080'
+            health_port: '8080'
           - service: catalog-service
             image: vellumhub-catalog
-            dockerfile: services/catalog-service/Dockerfile
+            dockerfile: infra/docker/java/Dockerfile
+            dep_stage: deps-avro
+            runtime_image: eclipse-temurin:21-jre-alpine
+            app_port: '8080'
+            health_port: '8080'
           - service: engagement-service
             image: vellumhub-engagement
-            dockerfile: services/engagement-service/Dockerfile
+            dockerfile: infra/docker/java/Dockerfile
+            dep_stage: deps-avro
+            runtime_image: eclipse-temurin:21-jre-alpine
+            app_port: '8080'
+            health_port: '8080'
           - service: recommendation-service
             image: vellumhub-recommendation
-            dockerfile: services/recommendation-service/Dockerfile
+            dockerfile: infra/docker/java/Dockerfile
+            dep_stage: deps-avro
+            runtime_image: eclipse-temurin:21-jre
+            app_port: '8080'
+            health_port: '8080'
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -209,6 +233,12 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
+          build-args: |
+            SERVICE=${{ matrix.service }}
+            DEPS_STAGE=${{ matrix.dep_stage }}
+            RUNTIME_IMAGE=${{ matrix.runtime_image }}
+            APP_PORT=${{ matrix.app_port }}
+            HEALTH_PORT=${{ matrix.health_port }}
           load: true
           push: false
           tags: ghcr.io/luca5eckert/${{ matrix.image }}:${{ github.sha }}

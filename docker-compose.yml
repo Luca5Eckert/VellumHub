@@ -4,6 +4,10 @@ networks:
   vellum-network:
     driver: bridge
 
+x-java-build: &java-build
+  context: .
+  dockerfile: infra/docker/java/Dockerfile
+
 x-otel-java-env: &otel-java-env
   OTEL_RESOURCE_ATTRIBUTES: service.namespace=vellumhub,deployment.environment=local
   OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
@@ -18,8 +22,10 @@ services:
   # GATEWAY LAYER
   gateway-service:
     build:
-      context: .
-      dockerfile: services/gateway-service/Dockerfile
+      <<: *java-build
+      args:
+        SERVICE: gateway-service
+        DEPS_STAGE: deps-jwt
     container_name: gateway-service
     restart: on-failure
     ports:
@@ -347,8 +353,10 @@ services:
   # MICROSERVICES LAYER
   catalog-service:
     build:
-      context: .
-      dockerfile: services/catalog-service/Dockerfile
+      <<: *java-build
+      args:
+        SERVICE: catalog-service
+        DEPS_STAGE: deps-avro
     container_name: catalog-service
     restart: on-failure
     env_file: .env
@@ -386,8 +394,10 @@ services:
 
   engagement-service:
     build:
-      context: .
-      dockerfile: services/engagement-service/Dockerfile
+      <<: *java-build
+      args:
+        SERVICE: engagement-service
+        DEPS_STAGE: deps-avro
     container_name: engagement-service
     restart: on-failure
     env_file: .env
@@ -425,8 +435,12 @@ services:
 
   auth-service:
     build:
-      context: .
-      dockerfile: services/auth-service/Dockerfile
+      <<: *java-build
+      args:
+        SERVICE: auth-service
+        DEPS_STAGE: deps-jwt
+        APP_PORT: "9000"
+        HEALTH_PORT: "9001"
     container_name: auth-service
     restart: on-failure
     ports:
@@ -472,8 +486,10 @@ services:
 
   user-service:
     build:
-      context: .
-      dockerfile: services/user-service/Dockerfile
+      <<: *java-build
+      args:
+        SERVICE: user-service
+        DEPS_STAGE: deps-kafka
     container_name: user-service
     restart: on-failure
     env_file: .env
@@ -513,8 +529,11 @@ services:
 
   recommendation-service:
     build:
-      context: .
-      dockerfile: services/recommendation-service/Dockerfile
+      <<: *java-build
+      args:
+        SERVICE: recommendation-service
+        DEPS_STAGE: deps-avro
+        RUNTIME_IMAGE: eclipse-temurin:21-jre
     container_name: recommendation-service
     restart: on-failure
     env_file: .env
