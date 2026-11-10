@@ -22,7 +22,7 @@ class JavaImageBuildContractTest(unittest.TestCase):
         for required in ("FROM ${DEPS_STAGE} AS build", "FROM ${RUNTIME_IMAGE} AS runtime",
                          "USER vellumhub", "libstdc++6", "opentelemetry-javaagent.jar"):
             self.assertIn(required, content)
-        compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+        compose = (ROOT / "compose.yaml").read_text(encoding="utf-8")
         workflow = (ROOT / ".github/workflows/verify-images.yml").read_text(encoding="utf-8")
         for name, stage in EXPECTED_STAGES.items():
             self.assertFalse((ROOT / f"services/{name}/Dockerfile").exists())
@@ -39,8 +39,8 @@ class JavaImageBuildContractTest(unittest.TestCase):
         self.assertIn("RUNTIME_IMAGE=${{ matrix.runtime_image }}", workflow)
 
     def test_standalone_auth_poc_and_oidc_overlay(self):
-        poc = (ROOT / "docker-compose.auth-poc.yml").read_text(encoding="utf-8")
-        oidc = (ROOT / "docker-compose.oidc-lote2.yml").read_text(encoding="utf-8")
+        poc = (ROOT / "infra/compose/tests/auth-poc.yaml").read_text(encoding="utf-8")
+        oidc = (ROOT / "infra/compose/oidc-local.yaml").read_text(encoding="utf-8")
         self.assertIn("dockerfile: infra/docker/java/Dockerfile", poc)
         self.assertNotIn("dockerfile:", oidc)
         self.assertNotIn("services/auth-service/Dockerfile", poc + oidc)

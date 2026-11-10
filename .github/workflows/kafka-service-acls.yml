@@ -6,8 +6,8 @@ on:
       - ".github/workflows/kafka-service-acls.yml"
       - "infra/kafka/**"
       - "infra/scripts/kafka/**"
-      - "docker-compose.kafka-secure.yml"
-      - "docker-compose.yml"
+      - "infra/compose/kafka-secure.yaml"
+      - "compose.yaml"
       - "services/**/src/main/resources/application.properties"
       - "services/**/src/main/java/**/*Kafka*.java"
       - "services/**/src/main/java/**/kafka/**"
@@ -67,24 +67,24 @@ jobs:
           done
       - name: Run authenticated broker with deny-by-default ACLs
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml config --quiet
-          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml up -d --wait zookeeper kafka
-          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml run --rm --no-deps kafka-acl-init
+          docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml config --quiet
+          docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml up -d --wait zookeeper kafka
+          docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml run --rm --no-deps kafka-acl-init
       - name: Verify authorized and forbidden read/write, DLT and retry
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml run --rm --no-deps \
+          docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml run --rm --no-deps \
             --entrypoint python3 kafka-acl-init /opt/kafka/verify-acls.py
       - name: Diagnose failed broker startup without exposing credentials
         if: failure()
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml ps kafka zookeeper || true
-          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml logs --no-color --tail=180 kafka \
+          docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml ps kafka zookeeper || true
+          docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml logs --no-color --tail=180 kafka \
             | sed -E 's/(password|sasl.jaas.config)=([^ ;]+)/\\1=[REDACTED]/Ig' \
             | grep -E -i 'ERROR|Exception|FATAL|WARN|Invalid|Caused by|Failed|Started|configuration error|jaas|security' \
             | tail -n 85 || true
-          docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml logs --no-color --tail=75 zookeeper \
+          docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml logs --no-color --tail=75 zookeeper \
             | grep -E -i 'ERROR|WARN|closed|refused|auth|expired|session|quorum' \
             | tail -n 35 || true
       - name: Cleanup
         if: always()
-        run: docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml down -v --remove-orphans || true
+        run: docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml down -v --remove-orphans || true

@@ -7,7 +7,7 @@ on:
       - 'services/**/pom.xml'
       - 'services/**/src/**'
       - 'tools/architecture/**'
-      - 'docker-compose.yml'
+      - 'compose.yaml'
       - 'lib/kafka-contracts/**'
       - '.github/workflows/architecture-fitness.yml'
   push:

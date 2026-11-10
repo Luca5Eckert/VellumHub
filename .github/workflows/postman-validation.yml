@@ -6,7 +6,7 @@ on:
     paths:
       - "postman/**"
       - ".github/workflows/postman-validation.yml"
-      - "docker-compose.yml"
+      - "compose.yaml"
       - ".env.example"
       - "services/auth-service/src/main/**"
       - "services/auth-service/pom.xml"

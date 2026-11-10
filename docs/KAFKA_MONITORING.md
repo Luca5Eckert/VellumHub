@@ -25,7 +25,7 @@ Kafka UI is a web-based management and monitoring tool that provides:
 - View broker metrics via JMX
 
 **Usage:**
-1. Start the stack: `docker-compose up -d`
+1. Start the stack: `docker compose up -d`
 2. Navigate to http://localhost:8090
 3. The default cluster "vellumhub-cluster" will be displayed
 4. Explore topics, consumers, and brokers from the dashboard

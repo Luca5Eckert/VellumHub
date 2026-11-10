@@ -1,5 +1,5 @@
 # Regression overlay for the local PKCE/OIDC harness. Base Compose already uses auth-service as the canonical issuer.
-# docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml up --build
+# docker compose -f compose.yaml -f infra/compose/oidc-local.yaml up --build
 # Never deploy this loopback HTTP test setup on a public host.
 services:
   auth-postgres:

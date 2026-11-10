@@ -24,7 +24,7 @@ export VELLUM_POC_RUN_AS="$(id -u):$(id -g)"
 export VELLUM_POC_LOGIN='fixture@example.invalid'
 export VELLUM_POC_PASSWORD='<unique local fixture password>'
 sh infra/scripts/security/generate_auth_poc_keys.sh
-docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml -f docker-compose.oidc-lote3.yml --profile oidc-lote2 up --build
+docker compose -f compose.yaml -f infra/compose/oidc-local.yaml -f infra/compose/google-federation.yaml --profile oidc-lote2 up --build
 ```
 
 Never use local HTTP or PoC fixture settings on a shared or public host. Behind HTTPS, validate the trusted forwarded-header setup, issuer and callback equality, cookie Secure/HttpOnly/SameSite policies, CORS allowlist and secrets mounts. Production needs authenticated inter-service transport, DB encryption/backup/rotation, login throttling and incident handling.

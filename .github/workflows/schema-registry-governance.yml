@@ -2,7 +2,7 @@ name: Registry persistence, contracts and Kubernetes smoke
 on:
   pull_request:
     paths:
-      - 'docker-compose.schema-registry.yml'
+      - 'infra/compose/schema-registry.yaml'
       - 'deploy/kubernetes/schema-registry/**'
       - 'infra/schema-registry/**'
       - 'tools/schema_registry/**'
@@ -12,7 +12,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docker-compose.schema-registry.yml'
+      - 'infra/compose/schema-registry.yaml'
       - 'deploy/kubernetes/schema-registry/**'
       - 'infra/schema-registry/**'
       - 'tools/schema_registry/**'
@@ -45,7 +45,7 @@ jobs:
         env:
           REGISTRY_DB_PASSWORD: ci-fixture-no-real-secret
         run: |
-          docker compose -f docker-compose.schema-registry.yml config --quiet
+          docker compose --project-directory . -f infra/compose/schema-registry.yaml config --quiet
           kubectl kustomize deploy/kubernetes/schema-registry/overlays/local > /tmp/registry-local.yaml
           kubectl kustomize deploy/kubernetes/schema-registry/overlays/prod > /tmp/registry-prod.yaml
           python3 tools/schema_registry/validate_manifests.py /tmp/registry-local.yaml /tmp/registry-prod.yaml
@@ -58,7 +58,7 @@ jobs:
           echo "REGISTRY_DB_PASSWORD=$PASSWORD" >> "$GITHUB_ENV"
       - name: Run durable Registry with actual PostgreSQL
         run: |
-          docker compose -f docker-compose.schema-registry.yml up -d --wait
+          docker compose --project-directory . -f infra/compose/schema-registry.yaml up -d --wait
           python3 tools/schema_registry/wait_ready.py http://127.0.0.1:18081/apis/ccompat/v7/subjects
           for p in /health/ready /health/live; do
             status="$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:18081$p")"
@@ -70,20 +70,20 @@ jobs:
           python3 tools/schema_registry/registry_gate.py publish --ephemeral --state /tmp/schema-ids.json
           python3 tools/schema_registry/registry_gate.py verify --state /tmp/schema-ids.json
           python3 tools/schema_registry/registry_gate.py negative
-          docker compose -f docker-compose.schema-registry.yml restart schema-registry
+          docker compose --project-directory . -f infra/compose/schema-registry.yaml restart schema-registry
           python3 tools/schema_registry/wait_ready.py http://127.0.0.1:18081/apis/ccompat/v7/subjects
           python3 tools/schema_registry/registry_gate.py verify --state /tmp/schema-ids.json
-          docker compose -f docker-compose.schema-registry.yml restart registry-postgres schema-registry
+          docker compose --project-directory . -f infra/compose/schema-registry.yaml restart registry-postgres schema-registry
           python3 tools/schema_registry/wait_ready.py http://127.0.0.1:18081/apis/ccompat/v7/subjects
           python3 tools/schema_registry/registry_gate.py verify --state /tmp/schema-ids.json
           python3 tools/schema_registry/registry_gate.py publish --ephemeral
           python3 tools/schema_registry/registry_gate.py verify --state /tmp/schema-ids.json
       - name: Metadata-only failure diagnostics
         if: failure()
-        run: docker compose -f docker-compose.schema-registry.yml ps || true
+        run: docker compose --project-directory . -f infra/compose/schema-registry.yaml ps || true
       - name: Clean disposable data
         if: always()
-        run: docker compose -f docker-compose.schema-registry.yml down -v --remove-orphans || true
+        run: docker compose --project-directory . -f infra/compose/schema-registry.yaml down -v --remove-orphans || true
       - name: Preserve Surefire reports
         if: always()
         uses: actions/upload-artifact@v4

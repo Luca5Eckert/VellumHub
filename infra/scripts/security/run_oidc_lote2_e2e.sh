@@ -40,15 +40,15 @@ chmod 644 .local/legacy-oidc-test/public.pem
 cleanup() {
   status=$?
   if [ "$status" -ne 0 ]; then
-    docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml ps
+    docker compose -f compose.yaml -f infra/compose/oidc-local.yaml ps
   fi
-  docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml down -v --remove-orphans || true
+  docker compose -f compose.yaml -f infra/compose/oidc-local.yaml down -v --remove-orphans || true
   exit "$status"
 }
 trap cleanup EXIT
-docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml config --quiet
-docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml up -d redis-gateway kafka postgres-user postgres-catalog postgres-engagement postgres-recommendation auth-postgres
-docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml up -d --build --no-deps user-service auth-service catalog-service engagement-service recommendation-service gateway-service
+docker compose -f compose.yaml -f infra/compose/oidc-local.yaml config --quiet
+docker compose -f compose.yaml -f infra/compose/oidc-local.yaml up -d redis-gateway kafka postgres-user postgres-catalog postgres-engagement postgres-recommendation auth-postgres
+docker compose -f compose.yaml -f infra/compose/oidc-local.yaml up -d --build --no-deps user-service auth-service catalog-service engagement-service recommendation-service gateway-service
 for service in auth-service user-service catalog-service engagement-service recommendation-service gateway-service; do
   ready=0
   for attempt in $(seq 1 75); do
@@ -57,7 +57,7 @@ for service in auth-service user-service catalog-service engagement-service reco
     elif [ "$service" = gateway-service ]; then
       curl -sf http://127.0.0.1:8080/actuator/health >/dev/null && ready=1
     else
-      docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml exec -T "$service" wget -q -O /dev/null http://127.0.0.1:8080/actuator/health/liveness >/dev/null 2>&1 && ready=1
+      docker compose -f compose.yaml -f infra/compose/oidc-local.yaml exec -T "$service" wget -q -O /dev/null http://127.0.0.1:8080/actuator/health/liveness >/dev/null 2>&1 && ready=1
     fi
     if [ "$ready" = 1 ]; then break; fi
     sleep 3

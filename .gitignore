@@ -1,4 +1,6 @@
 # Default ignored files
+# IntelliJ IDEA project/user metadata belongs to each developer, not Git.
+/.idea/
 /shelf/
 /workspace.xml
 .m2

@@ -2,7 +2,7 @@
 """Broker-backed SEC-14 smoke: allowed principal succeeds; cross-service access fails.
 
 Uses a disposable local broker, never a real-user token or business payload.
-Run after provision-acls.py with docker-compose.kafka-secure.yml.
+Run after provision-acls.py with infra/compose/kafka-secure.yaml.
 """
 import os
 from pathlib import Path

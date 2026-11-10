@@ -12,13 +12,13 @@ The pilot #347 proved the Confluent ccompat v7 API on Apicurio with TopicRecordN
 
 ## Compose: independent activation, isolated project and network
 
-docker-compose.schema-registry.yml is opt-in and can start independently of the six application containers and their environment variables. It uses its own `vellumhub-schema-registry` Compose project and `vellumhub-schema-registry-net` network. Running `down --remove-orphans` for the Registry must not remove containers in the main `vellum-hub` Compose project. For application-to-Registry communication, explicitly attach the Registry container to the application's network as described below; isolation is the default to prevent accidental cross-project deletion. The API is bound only to 127.0.0.1:18081. PostgreSQL does not publish port 5432; persistent data uses registry_postgres_data. This local Registry deliberately disables OIDC and must never be exposed publicly.
+infra/compose/schema-registry.yaml is opt-in and can start independently of the six application containers and their environment variables. It uses its own `vellumhub-schema-registry` Compose project and `vellumhub-schema-registry-net` network. Running `down --remove-orphans` for the Registry must not remove containers in the main `vellum-hub` Compose project. For application-to-Registry communication, explicitly attach the Registry container to the application's network as described below; isolation is the default to prevent accidental cross-project deletion. The API is bound only to 127.0.0.1:18081. PostgreSQL does not publish port 5432; persistent data uses registry_postgres_data. This local Registry deliberately disables OIDC and must never be exposed publicly.
 
 Local commands:
 
     export REGISTRY_DB_PASSWORD="$(openssl rand -hex 24)"
-    docker compose -f docker-compose.schema-registry.yml config --quiet
-    docker compose -f docker-compose.schema-registry.yml up -d --wait
+    docker compose --project-directory . -f infra/compose/schema-registry.yaml config --quiet
+    docker compose --project-directory . -f infra/compose/schema-registry.yaml up -d --wait
     python3 tools/schema_registry/wait_ready.py http://127.0.0.1:18081/apis/ccompat/v7/subjects
     python3 tools/schema_registry/registry_gate.py check
     python3 tools/schema_registry/registry_gate.py publish --ephemeral --state /tmp/registry-ids.json
@@ -27,7 +27,7 @@ Local commands:
 
 To let application containers running in the main `vellum-hub` project resolve `http://schema-registry:8080`, first start the main stack, then attach **only** the Registry container to the application's network:
 
-    docker network connect vellum-hub_vellum-network "$(docker compose -f docker-compose.schema-registry.yml ps -q schema-registry)"
+    docker network connect vellum-hub_vellum-network "$(docker compose --project-directory . -f infra/compose/schema-registry.yaml ps -q schema-registry)"
 
 This optional network attachment is ephemeral: re-run it after recreating the Registry container. Without it, the standalone Registry remains accessible via the loopback-published port `127.0.0.1:18081`, but not from the application network. Never combine Registry and main Compose files through `-f` expecting a single project; they have intentionally different project identities. The Kubernetes Registry deployment uses its own Kustomize configuration and is unaffected.
 

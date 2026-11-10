@@ -185,4 +185,4 @@ Gateway and every domain Resource Server validate only RS256 access tokens issue
 
 `VerifiedBearerRelayFilter` removes untrusted incoming Authorization headers and forwards only the access token from a validated `JwtAuthenticationToken`, never an ID Token or forwarded username. Public legacy login routes do not receive Authorization. SecurityChain verifies RS256 JWKS, issuer, audience and RFC 9068 type before Gateway filtering. Internal provisioning paths are denied and not routed.
 
-The default Compose runtime uses `auth-service` as the single issuer/JWKS source. `docker-compose.oidc-lote2.yml` is retained only as a local regression harness for the PKCE/OIDC flow; it is no longer the activation mechanism and there is no legacy or dual-issuer fallback.
+The default Compose runtime uses `auth-service` as the single issuer/JWKS source. `infra/compose/oidc-local.yaml` is retained only as a local regression harness for the PKCE/OIDC flow; it is no longer the activation mechanism and there is no legacy or dual-issuer fallback.

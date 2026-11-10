@@ -1,6 +1,6 @@
 # SEC-07/08: explicitly opt in to Google upstream federation on top of the Lote 2 stack.
 # Local browser development only; production requires HTTPS issuer, trusted proxy/TLS and secrets.
-# docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml -f docker-compose.oidc-lote3.yml --profile oidc-lote2 up --build
+# docker compose -f compose.yaml -f infra/compose/oidc-local.yaml -f infra/compose/google-federation.yaml --profile oidc-lote2 up --build
 services:
   auth-service:
     environment:
