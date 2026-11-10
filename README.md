@@ -286,6 +286,8 @@ Obtain a bearer from Auth through an explicitly enabled PKCE client. The default
 
 ## Run Locally
 
+The six services share a parameterized Java Dockerfile, but retain independent images. Compose project isolation, build-stage selection and Kubernetes layout are documented in [Infrastructure Layout](docs/INFRASTRUCTURE_LAYOUT.md). The canonical Maven Wrapper lives at the repository root.
+
 ### Prerequisites
 
 - Docker with the Docker Compose plugin
@@ -407,7 +409,7 @@ The local observability profile connects **Prometheus, Grafana Alloy, Loki, Temp
 |---|---|---|
 | Metrics | Actuator/Micrometer → Prometheus → Grafana | All six services; Auth uses private management port `9001` |
 | Logs | Docker discovery → Alloy → Loki | All six services are discovered; Gateway/domain services configure structured JSON, while Auth's logging configuration still needs parity |
-| Traces | OpenTelemetry Java Agent → Alloy → Tempo | Agent bundled in Gateway and the four domain images; Auth's image does not yet bundle it |
+| Traces | OpenTelemetry Java Agent → Alloy → Tempo | Agent bundled in all six images; Auth does not enable it by default |
 
 The Java Agent does not duplicate metrics export. Loki labels stay low-cardinality (service, level and environment); correlation IDs and trace context stay in log bodies. Alloy forwards bodies without redaction, so credential/payload filtering remains an application responsibility.
 

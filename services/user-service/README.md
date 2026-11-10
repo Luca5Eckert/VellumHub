@@ -123,31 +123,32 @@ Other services should treat this service as the source of truth for user identit
 
 ## Run Locally
 
+Run the following commands from the **repository root**, where the single Maven Wrapper and reactor POM live.
+
 Standalone:
 
 ```bash
-cd user-service
-./mvnw spring-boot:run
+./mvnw -pl services/user-service -am -DskipTests install
+./mvnw -f services/user-service/pom.xml spring-boot:run
 ```
 
 Windows PowerShell:
 
 ```powershell
-cd user-service
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd -pl services/user-service -am -DskipTests install
+.\mvnw.cmd -f services/user-service/pom.xml spring-boot:run
 ```
 
 With Docker Compose from the repository root:
 
 ```bash
-docker-compose up -d user-service postgres-user kafka
+docker compose up -d user-service postgres-user kafka
 ```
 
 ## Verify
 
 ```powershell
-cd user-service
-.\mvnw.cmd test
+.\mvnw.cmd -pl services/user-service -am test
 ```
 
 For gateway routes and full system flow, see the [root README](../../README.md).

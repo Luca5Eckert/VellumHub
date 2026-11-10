@@ -138,31 +138,32 @@ Engagement data is behavioral. It should not become the source of truth for cata
 
 ## Run Locally
 
+Run the following commands from the **repository root**, where the single Maven Wrapper and reactor POM live.
+
 Standalone:
 
 ```bash
-cd engagement-service
-./mvnw spring-boot:run
+./mvnw -pl services/engagement-service -am -DskipTests install
+./mvnw -f services/engagement-service/pom.xml spring-boot:run
 ```
 
 Windows PowerShell:
 
 ```powershell
-cd engagement-service
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd -pl services/engagement-service -am -DskipTests install
+.\mvnw.cmd -f services/engagement-service/pom.xml spring-boot:run
 ```
 
 With Docker Compose from the repository root:
 
 ```bash
-docker-compose up -d engagement-service postgres-engagement kafka
+docker compose up -d engagement-service postgres-engagement kafka
 ```
 
 ## Verify
 
 ```powershell
-cd engagement-service
-.\mvnw.cmd test
+.\mvnw.cmd -pl services/engagement-service -am test
 ```
 
 For the platform event backbone and known Kafka contract hardening work, see the [root README](../README.md).

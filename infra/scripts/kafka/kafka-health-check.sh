@@ -5,8 +5,8 @@
 
 set -e
 
-KAFKA_BROKER="${KAFKA_BROKER:-localhost:9092}"
-KAFKA_CONTAINER="${KAFKA_CONTAINER:-kafka}"
+KAFKA_BROKER="${KAFKA_BROKER:-kafka:29092}"
+KAFKA_SERVICE="${KAFKA_SERVICE:-kafka}"
 
 echo "========================================="
 echo "Kafka Health Check"
@@ -15,7 +15,7 @@ echo ""
 
 # Check if Kafka container is running
 echo "1. Checking if Kafka container is running..."
-if docker ps | grep -q "$KAFKA_CONTAINER"; then
+if [ -n "$(docker compose ps -q "$KAFKA_SERVICE")" ]; then
     echo "✓ Kafka container is running"
 else
     echo "✗ Kafka container is not running"
@@ -26,7 +26,7 @@ echo ""
 
 # Check broker connectivity
 echo "2. Testing broker connectivity..."
-if docker exec "$KAFKA_CONTAINER" kafka-broker-api-versions --bootstrap-server "$KAFKA_BROKER" > /dev/null 2>&1; then
+if docker compose exec -T "$KAFKA_SERVICE" kafka-broker-api-versions --bootstrap-server "$KAFKA_BROKER" > /dev/null 2>&1; then
     echo "✓ Successfully connected to Kafka broker"
 else
     echo "✗ Failed to connect to Kafka broker"
@@ -37,7 +37,7 @@ echo ""
 
 # List topics
 echo "3. Listing existing Kafka topics..."
-TOPICS=$(docker exec "$KAFKA_CONTAINER" kafka-topics --bootstrap-server "$KAFKA_BROKER" --list 2>/dev/null)
+TOPICS=$(docker compose exec -T "$KAFKA_SERVICE" kafka-topics --bootstrap-server "$KAFKA_BROKER" --list 2>/dev/null)
 if [ -z "$TOPICS" ]; then
     echo "⚠ No topics found (this is normal for a new installation)"
 else
@@ -51,7 +51,7 @@ echo ""
 
 # Check consumer groups
 echo "4. Checking consumer groups..."
-GROUPS=$(docker exec "$KAFKA_CONTAINER" kafka-consumer-groups --bootstrap-server "$KAFKA_BROKER" --list 2>/dev/null)
+GROUPS=$(docker compose exec -T "$KAFKA_SERVICE" kafka-consumer-groups --bootstrap-server "$KAFKA_BROKER" --list 2>/dev/null)
 if [ -z "$GROUPS" ]; then
     echo "⚠ No consumer groups found"
 else
@@ -69,7 +69,7 @@ if [ -n "$TOPICS" ]; then
     echo "$TOPICS" | while read -r topic; do
         echo ""
         echo "Topic: $topic"
-        docker exec "$KAFKA_CONTAINER" kafka-topics --bootstrap-server "$KAFKA_BROKER" --describe --topic "$topic" 2>/dev/null || echo "  ✗ Could not describe topic"
+        docker compose exec -T "$KAFKA_SERVICE" kafka-topics --bootstrap-server "$KAFKA_BROKER" --describe --topic "$topic" 2>/dev/null || echo "  ✗ Could not describe topic"
     done
 fi
 

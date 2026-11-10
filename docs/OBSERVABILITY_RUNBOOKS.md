@@ -59,7 +59,7 @@ curl http://localhost:9090/api/v1/query?query=up%7Bjob%3D%22recommendation-servi
 
 ```bash
 docker compose ps kafka zookeeper recommendation-service engagement-service
-docker exec kafka kafka-consumer-groups --bootstrap-server kafka:29092 --all-groups --describe
+docker compose exec -T kafka kafka-consumer-groups --bootstrap-server kafka:29092 --all-groups --describe
 docker compose logs --tail=200 recommendation-service engagement-service kafka
 ```
 
@@ -81,8 +81,8 @@ docker compose logs --tail=200 recommendation-service engagement-service kafka
 
 ```bash
 docker compose logs --tail=200 engagement-service recommendation-service
-docker exec kafka kafka-topics --bootstrap-server kafka:29092 --list
-docker exec kafka kafka-console-consumer --bootstrap-server kafka:29092 --topic <topic-name>-dlt --from-beginning --max-messages 5
+docker compose exec -T kafka kafka-topics --bootstrap-server kafka:29092 --list
+docker compose exec -T kafka kafka-console-consumer --bootstrap-server kafka:29092 --topic <topic-name>-dlt --from-beginning --max-messages 5
 ```
 
 **Likely Causes:** Invalid event shape, schema/topic drift, missing referenced entity, database constraint failure, or an application bug in the consumer.

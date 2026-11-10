@@ -151,31 +151,32 @@ Downstream services should consume catalog truth through HTTP or Kafka events, n
 
 ## Run Locally
 
+Run the following commands from the **repository root**, where the single Maven Wrapper and reactor POM live.
+
 Standalone:
 
 ```bash
-cd catalog-service
-./mvnw spring-boot:run
+./mvnw -pl services/catalog-service -am -DskipTests install
+./mvnw -f services/catalog-service/pom.xml spring-boot:run
 ```
 
 Windows PowerShell:
 
 ```powershell
-cd catalog-service
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd -pl services/catalog-service -am -DskipTests install
+.\mvnw.cmd -f services/catalog-service/pom.xml spring-boot:run
 ```
 
 With Docker Compose from the repository root:
 
 ```bash
-docker-compose up -d catalog-service postgres-catalog kafka
+docker compose up -d catalog-service postgres-catalog kafka
 ```
 
 ## Verify
 
 ```powershell
-cd catalog-service
-.\mvnw.cmd test
+.\mvnw.cmd -pl services/catalog-service -am test
 ```
 
 For full platform topology and event flow, see the [root README](../README.md).
