@@ -28,6 +28,11 @@ public class BookAvroPublisher implements AutoCloseable {
         options.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         options.put("schema.registry.url", registryUrl);
         options.put("auto.register.schemas", false);
+        // Use the pre-approved Registry writer schema instead of a brittle
+        // byte-for-byte lookup against the code-generated SpecificRecord schema.
+        // Never auto-register; reject incompatible Registry revisions.
+        options.put("use.latest.version", true);
+        options.put("latest.compatibility.strict", true);
         options.put("avro.remove.java.properties", true);
         options.put("value.subject.name.strategy",
                 "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy");
