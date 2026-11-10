@@ -1,5 +1,5 @@
 # Opt-in local stack. Unauthenticated: never expose outside loopback.
-name: vellum-hub
+name: vellumhub-schema-registry
 services:
   registry-postgres:
     image: postgres:16-alpine
@@ -31,6 +31,6 @@ services:
       registry-postgres: {condition: service_healthy}
 networks:
   vellum-network:
-    name: vellum-hub_vellum-network
+    name: vellumhub-schema-registry-net
 volumes:
   registry_postgres_data:
