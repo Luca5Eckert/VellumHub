@@ -34,6 +34,9 @@ class JavaImageBuildContractTest(unittest.TestCase):
         self.assertIn("APP_PORT: \"9000\"", compose)
         self.assertIn("HEALTH_PORT: \"9001\"", compose)
         self.assertIn("build-args: |", workflow)
+        self.assertIn("SERVICE=${{ matrix.service }}", workflow)
+        self.assertIn("DEPS_STAGE=${{ matrix.dep_stage }}", workflow)
+        self.assertIn("RUNTIME_IMAGE=${{ matrix.runtime_image }}", workflow)
 
     def test_standalone_auth_poc_and_oidc_overlay(self):
         poc = (ROOT / "docker-compose.auth-poc.yml").read_text(encoding="utf-8")
