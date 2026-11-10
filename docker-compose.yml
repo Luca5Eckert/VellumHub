@@ -26,7 +26,6 @@ services:
       args:
         SERVICE: gateway-service
         DEPS_STAGE: deps-jwt
-    container_name: gateway-service
     restart: on-failure
     ports:
       - "8080:8080"
@@ -72,8 +71,7 @@ services:
       start_period: 40s
 
   redis-gateway:
-    image: redis:7-alpine
-    container_name: redis-gateway
+    image: redis:7.4-alpine
     restart: unless-stopped
     networks:
       - vellum-network
@@ -88,7 +86,6 @@ services:
   # DATABASES LAYER
   postgres-catalog:
     image: postgres:15-alpine
-    container_name: postgres-catalog
     restart: unless-stopped
     shm_size: 256mb
     command: postgres -c shared_buffers=256MB -c max_connections=200 -c work_mem=16MB
@@ -109,7 +106,6 @@ services:
 
   postgres-engagement:
     image: postgres:15-alpine
-    container_name: postgres-engagement
     restart: unless-stopped
     shm_size: 256mb
     command: postgres -c shared_buffers=256MB -c max_connections=200 -c work_mem=16MB
@@ -130,7 +126,6 @@ services:
 
   postgres-user:
     image: postgres:15-alpine
-    container_name: postgres-user
     restart: unless-stopped
     shm_size: 256mb
     command: postgres -c shared_buffers=256MB -c max_connections=200 -c work_mem=16MB
@@ -151,7 +146,6 @@ services:
 
   auth-postgres:
     image: postgres:16-alpine
-    container_name: auth-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: vellum_auth
@@ -169,7 +163,6 @@ services:
 
   postgres-recommendation:
     image: pgvector/pgvector:pg15
-    container_name: postgres-recommendation
     restart: unless-stopped
     shm_size: 256mb
     command: postgres -c shared_buffers=256MB -c max_connections=200 -c work_mem=16MB
@@ -191,7 +184,6 @@ services:
   # MESSAGING LAYER
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
-    container_name: zookeeper
     restart: unless-stopped
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -209,7 +201,6 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    container_name: kafka
     restart: unless-stopped
     volumes:
       - kafka_data:/var/lib/kafka/data
@@ -236,7 +227,6 @@ services:
 
   kafka-ui:
     image: provectuslabs/kafka-ui@sha256:8f2ff02d64b0a7a2b71b6b3b3148b85f66d00ec20ad40c30bdcd415d46d31818
-    container_name: kafka-ui
     restart: unless-stopped
     ports:
       - "8090:8080"
@@ -254,7 +244,6 @@ services:
   # OBSERVABILITY LAYER
   prometheus:
     image: prom/prometheus:v3.12.0
-    container_name: prometheus
     restart: unless-stopped
     profiles:
       - observability
@@ -275,7 +264,6 @@ services:
 
   grafana:
     image: grafana/grafana:13.0.1
-    container_name: grafana
     restart: unless-stopped
     profiles:
       - observability
@@ -301,7 +289,6 @@ services:
 
   loki:
     image: grafana/loki:3.7.2
-    container_name: loki
     restart: unless-stopped
     ports:
       - "3100:3100"
@@ -315,7 +302,6 @@ services:
 
   tempo:
     image: grafana/tempo:2.10.5
-    container_name: tempo
     restart: unless-stopped
     ports:
       - "3200:3200"
@@ -329,7 +315,6 @@ services:
 
   alloy:
     image: grafana/alloy:v1.16.1
-    container_name: alloy
     restart: unless-stopped
     ports:
       - "12345:12345"
@@ -357,7 +342,6 @@ services:
       args:
         SERVICE: catalog-service
         DEPS_STAGE: deps-avro
-    container_name: catalog-service
     restart: on-failure
     env_file: .env
     environment:
@@ -398,7 +382,6 @@ services:
       args:
         SERVICE: engagement-service
         DEPS_STAGE: deps-avro
-    container_name: engagement-service
     restart: on-failure
     env_file: .env
     environment:
@@ -441,7 +424,6 @@ services:
         DEPS_STAGE: deps-jwt
         APP_PORT: "9000"
         HEALTH_PORT: "9001"
-    container_name: auth-service
     restart: on-failure
     ports:
       - "127.0.0.1:9000:9000"
@@ -490,7 +472,6 @@ services:
       args:
         SERVICE: user-service
         DEPS_STAGE: deps-kafka
-    container_name: user-service
     restart: on-failure
     env_file: .env
     environment:
@@ -534,7 +515,6 @@ services:
         SERVICE: recommendation-service
         DEPS_STAGE: deps-avro
         RUNTIME_IMAGE: eclipse-temurin:21-jre
-    container_name: recommendation-service
     restart: on-failure
     env_file: .env
     environment:

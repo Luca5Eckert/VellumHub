@@ -134,24 +134,26 @@ The public recommendation endpoint is JWT-protected.
 
 ## Run Locally
 
+Run the following commands from the **repository root**, where the single Maven Wrapper and reactor POM live.
+
 Standalone from the repository root:
 
 ```bash
-cd services/recommendation-service
-./mvnw spring-boot:run
+./mvnw -pl services/recommendation-service -am -DskipTests install
+./mvnw -f services/recommendation-service/pom.xml spring-boot:run
 ```
 
 Windows PowerShell:
 
 ```powershell
-cd services/recommendation-service
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd -pl services/recommendation-service -am -DskipTests install
+.\mvnw.cmd -f services/recommendation-service/pom.xml spring-boot:run
 ```
 
 With Docker Compose from the repository root:
 
 ```bash
-docker-compose up -d recommendation-service postgres-recommendation kafka
+docker compose up -d recommendation-service postgres-recommendation kafka
 ```
 
 ## Verify
@@ -159,8 +161,7 @@ docker-compose up -d recommendation-service postgres-recommendation kafka
 Module tests on Windows:
 
 ```powershell
-cd services/recommendation-service
-.\mvnw.cmd test
+.\mvnw.cmd -pl services/recommendation-service -am test
 ```
 
 The failure-sensitive Kafka integration suite uses real Kafka and PostgreSQL/pgvector Testcontainers. No local Kafka or PostgreSQL installation is required, but Docker must be running.

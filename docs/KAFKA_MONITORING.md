@@ -138,8 +138,8 @@ Consumer lag indicates how far behind consumers are in processing messages.
 
 **Via CLI:**
 ```bash
-docker exec kafka kafka-consumer-groups \
-  --bootstrap-server localhost:9092 \
+docker compose exec -T kafka kafka-consumer-groups \
+  --bootstrap-server kafka:29092 \
   --describe --group recommendation-service-group
 ```
 
@@ -148,7 +148,7 @@ docker exec kafka kafka-consumer-groups \
 Monitor producer logs for successful message delivery:
 ```bash
 # Check engagement-service logs for Kafka events
-docker logs engagement-service | grep "Event sent successfully"
+docker compose logs engagement-service | grep "Event sent successfully"
 ```
 
 ### 4. Topic Retention and Storage
@@ -164,17 +164,17 @@ Monitor topic storage and retention:
 
 1. Check Zookeeper status:
 ```bash
-docker logs zookeeper
+docker compose logs zookeeper
 ```
 
 2. Verify Zookeeper connectivity:
 ```bash
-docker exec kafka nc -z zookeeper 2181
+docker compose exec -T kafka nc -z zookeeper 2181
 ```
 
 3. Check Kafka logs:
 ```bash
-docker logs kafka
+docker compose logs kafka
 ```
 
 ### Services Can't Connect to Kafka
@@ -183,32 +183,32 @@ docker logs kafka
 2. Verify Kafka is healthy: `./infra/scripts/kafka/kafka-health-check.sh`
 3. Check service logs:
 ```bash
-docker logs catalog-service | grep -i kafka
+docker compose logs catalog-service | grep -i kafka
 ```
 
 4. Verify network connectivity:
 ```bash
-docker exec catalog-service nc -z kafka 29092
+docker compose exec -T catalog-service nc -z kafka 29092
 ```
 
 ### Messages Not Being Consumed
 
 1. Check if topics exist:
 ```bash
-docker exec kafka kafka-topics --bootstrap-server localhost:9092 --list
+docker compose exec -T kafka kafka-topics --bootstrap-server kafka:29092 --list
 ```
 
 2. Check consumer group status:
 ```bash
-docker exec kafka kafka-consumer-groups \
-  --bootstrap-server localhost:9092 \
+docker compose exec -T kafka kafka-consumer-groups \
+  --bootstrap-server kafka:29092 \
   --describe --group recommendation-service-group
 ```
 
 3. View messages in topic:
 ```bash
-docker exec kafka kafka-console-consumer \
-  --bootstrap-server localhost:9092 \
+docker compose exec -T kafka kafka-console-consumer \
+  --bootstrap-server kafka:29092 \
   --topic created-book \
   --from-beginning \
   --max-messages 10

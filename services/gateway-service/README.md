@@ -124,24 +124,26 @@ Gateway route logging is currently configured at `TRACE` for Spring Cloud Gatewa
 
 ## Run Locally
 
+Run the following commands from the **repository root**, where the single Maven Wrapper and reactor POM live.
+
 Standalone:
 
 ```bash
-cd services/gateway-service
-./mvnw spring-boot:run
+./mvnw -pl services/gateway-service -am -DskipTests install
+./mvnw -f services/gateway-service/pom.xml spring-boot:run
 ```
 
 Windows PowerShell:
 
 ```powershell
-cd services/gateway-service
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd -pl services/gateway-service -am -DskipTests install
+.\mvnw.cmd -f services/gateway-service/pom.xml spring-boot:run
 ```
 
 For the centralized Swagger UI, run the default Docker Compose stack so the gateway can resolve all four downstream services:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Access:
@@ -161,8 +163,7 @@ When a domain service is run directly, its own `/swagger-ui/index.html` and `/v3
 ## Verify
 
 ```powershell
-cd services/gateway-service
-.\mvnw.cmd test
+.\mvnw.cmd -pl services/gateway-service -am test
 ```
 
 `OpenApiDocumentationConfigurationTest` guards the four Swagger UI entries and their matching gateway routes against accidental configuration drift.

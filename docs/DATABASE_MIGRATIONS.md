@@ -23,22 +23,16 @@ Keep migrations append-only after they are shared. For schema changes, update th
 
 ## Docker Compose
 
-The PostgreSQL `init.sql` files no longer create application schema. Compose creates the empty databases, then each service applies its own migrations during startup. The recommendation database still uses the pgvector image, and the `vector` extension is created by the recommendation migration.
+No PostgreSQL `init.sql` files are required in local Compose. Compose creates the empty databases, then each service applies its own migrations during startup. The recommendation database still uses the pgvector image, and the `vector` extension is created by the recommendation migration.
 
 ## Runtime verification
 
 Each database-owning service has a Testcontainers integration test that starts an empty PostgreSQL database with the `prod` profile. The test verifies that Flyway applies the schema, Hibernate validates it, and an incompatible schema prevents a second application startup. The recommendation test uses `pgvector/pgvector:pg15` and also verifies the `vector` extension and HNSW indexes.
 
-The services consume the local `kafka-contracts` artifact, so install it before running service tests independently:
+The root Maven reactor builds the required shared contracts together with service tests; use the single root wrapper from the repository root:
 
 ```powershell
-.\services\catalog-service\mvnw.cmd -f .\lib\kafka-contracts\pom.xml install
-
-foreach ($service in 'catalog-service','user-service','engagement-service','recommendation-service') {
-    Push-Location "services\$service"
-    .\mvnw.cmd test
-    Pop-Location
-}
+.\mvnw.cmd -pl services/catalog-service,services/user-service,services/engagement-service,services/recommendation-service -am test
 ```
 
 Docker must be available to run the Testcontainers tests. To validate the same behavior through Compose without reusing existing volumes, run the stack with an isolated project name and inspect the four service healthchecks:

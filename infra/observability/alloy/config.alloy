@@ -6,14 +6,14 @@ discovery.relabel "vellumhub_logs" {
   targets = discovery.docker.vellumhub.targets
 
   rule {
-    source_labels = ["__meta_docker_container_name"]
-    regex         = "/(auth-service|gateway-service|user-service|catalog-service|engagement-service|recommendation-service)"
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    regex         = "(auth-service|gateway-service|user-service|catalog-service|engagement-service|recommendation-service)"
     action        = "keep"
   }
 
   rule {
-    source_labels = ["__meta_docker_container_name"]
-    regex         = "/(.*)"
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    regex         = "(.*)"
     target_label  = "service"
   }
 
