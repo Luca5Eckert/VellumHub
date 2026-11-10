@@ -17,9 +17,7 @@ services:
       timeout: 3s
       retries: 15
   auth-service:
-    build:
-      context: .
-      dockerfile: services/auth-service/Dockerfile
+    # Reuse the image build defined by the main Compose file.
     user: ${VELLUM_POC_RUN_AS:?UID:GID of 0600 PEM owner required}
     volumes:
       - ./.local/auth-poc:/run/keys:ro

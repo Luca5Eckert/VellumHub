@@ -18,7 +18,12 @@ services:
   auth-service:
     build:
       context: .
-      dockerfile: services/auth-service/Dockerfile
+      dockerfile: infra/docker/java/Dockerfile
+      args:
+        SERVICE: auth-service
+        DEPS_STAGE: deps-jwt
+        APP_PORT: "9000"
+        HEALTH_PORT: "9001"
     profiles: [auth-poc]
     # Match the host owner of mode-0600 private key files; never chmod keys world-readable.
     user: ${VELLUM_POC_RUN_AS:?Set to the UID:GID owning local signing keys}
