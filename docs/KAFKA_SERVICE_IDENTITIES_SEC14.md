@@ -40,9 +40,9 @@ The DLT regex listener sees only topics it can describe/read.
 
 ### Local protected Compose integration
 
-The standard `docker-compose.yml` broker is deliberately PLAINTEXT for
+The standard `compose.yaml` broker is deliberately PLAINTEXT for
 offline/dev compatibility. The security verification runs against the explicit
-[`docker-compose.kafka-secure.yml`](../docker-compose.kafka-secure.yml)
+[`infra/compose/kafka-secure.yaml`](../infra/compose/kafka-secure.yaml)
 overlay, which enables SASL/PLAIN and denies all non-authorized topic/group
 operations. **SASL_PLAINTEXT has no transport confidentiality and is limited to
 the isolated local Docker network; never expose the listener publicly.**
@@ -63,18 +63,18 @@ The unauthenticated Kafka UI is not started in the secure overlay.
    local Docker environment with the same UIDs, apply the matching `chown`
    through a privileged local setup. Never relax secrets to world-readable.
 3. Start isolated infrastructure:
-   `docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml up -d --wait zookeeper kafka`.
+   `docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml up -d --wait zookeeper kafka`.
 4. Run ACL provisioning:
-   `docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml run --rm --no-deps kafka-acl-init`.
+   `docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml run --rm --no-deps kafka-acl-init`.
    Full-stack Compose uses `depends_on: kafka-acl-init`, so services cannot
    start before ACL provisioning succeeds.
 5. Broker-backed negative test:
-   `docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml run --rm --no-deps --entrypoint python3 kafka-acl-init /opt/kafka/verify-acls.py`.
+   `docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml run --rm --no-deps --entrypoint python3 kafka-acl-init /opt/kafka/verify-acls.py`.
    The test verifies allowed Catalog publish / Engagement consume; denies
    User reading Book events and unauthorized cross-service writes; verifies
    that authorized Engagement DLT and retry publishing/consumption succeed.
    Denials must be real authorization errors, not just empty-topic timeouts.
-6. Stop isolated broker with `docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml down -v`
+6. Stop isolated broker with `docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml down -v`
    **only** in a disposable local environment; `-v` destroys persisted data.
 
 The generated property file is loaded through Spring `SPRING_CONFIG_IMPORT`

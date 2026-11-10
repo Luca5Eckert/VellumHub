@@ -286,7 +286,7 @@ Obtain a bearer from Auth through an explicitly enabled PKCE client. The default
 
 ## Run Locally
 
-The six services share a parameterized Java Dockerfile, but retain independent images. Compose project isolation, build-stage selection and Kubernetes layout are documented in [Infrastructure Layout](docs/INFRASTRUCTURE_LAYOUT.md). The canonical Maven Wrapper lives at the repository root.
+The six services share a parameterized Java Dockerfile, but retain independent images. Compose project isolation, build-stage selection and Kubernetes layout are documented in [Infrastructure Layout](docs/INFRASTRUCTURE_LAYOUT.md). The canonical Maven Wrapper lives at the repository root. The default `compose.yaml` remains in the repository root; optional Compose overlays and isolated fixtures live under `infra/compose/`, described in the [Infrastructure Layout](docs/INFRASTRUCTURE_LAYOUT.md).
 
 ### Prerequisites
 

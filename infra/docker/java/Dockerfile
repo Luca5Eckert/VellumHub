@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # Every deployable service builds independently. Keep this matrix in sync with
-# docker-compose.yml and .github/workflows/verify-images.yml.
+# compose.yaml and .github/workflows/verify-images.yml.
 ARG MAVEN_IMAGE=maven:3.9.9-eclipse-temurin-21
 ARG DEPS_STAGE=deps-avro
 ARG RUNTIME_IMAGE=eclipse-temurin:21-jre-alpine

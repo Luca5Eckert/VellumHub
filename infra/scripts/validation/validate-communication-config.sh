@@ -145,13 +145,13 @@ done
 echo ""
 echo -e "${BLUE}Test 7: Docker Network Configuration${NC}"
 
-if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
-    if grep -q "vellum-network" "$PROJECT_ROOT/docker-compose.yml"; then
+if [ -f "$PROJECT_ROOT/compose.yaml" ]; then
+    if grep -q "vellum-network" "$PROJECT_ROOT/compose.yaml"; then
         print_result "Docker Network" "PASS" "vellum-network defined"
         
         # Check all services are on the same network
-        cat_network_check=$(grep -A 20 "catalog-service:" "$PROJECT_ROOT/docker-compose.yml" | grep -c "vellum-network" || echo "0")
-        rec_network_check=$(grep -A 20 "recommendation-service:" "$PROJECT_ROOT/docker-compose.yml" | grep -c "vellum-network" || echo "0")
+        cat_network_check=$(grep -A 20 "catalog-service:" "$PROJECT_ROOT/compose.yaml" | grep -c "vellum-network" || echo "0")
+        rec_network_check=$(grep -A 20 "recommendation-service:" "$PROJECT_ROOT/compose.yaml" | grep -c "vellum-network" || echo "0")
         
         if [ "$cat_network_check" -gt 0 ] && [ "$rec_network_check" -gt 0 ]; then
             print_result "Network Assignment" "PASS" "Services on same network"
@@ -162,7 +162,7 @@ if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
         print_result "Docker Network" "FAIL" "Network not defined"
     fi
 else
-    print_result "docker-compose.yml" "FAIL" "File not found"
+    print_result "compose.yaml" "FAIL" "File not found"
 fi
 
 # Test 8: Verify health check endpoints are configured

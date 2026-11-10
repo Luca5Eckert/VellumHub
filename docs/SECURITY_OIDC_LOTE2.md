@@ -14,13 +14,13 @@ This document preserves the historical SEC-06/09 integration and opt-in harness 
 - Unique constraints for UUID/email, `ON CONFLICT DO NOTHING` and subsequent record comparison distinguish retry from collision; no role escalation (User role is fixed).
 - Auth cannot issue JWT for pending account; scheduled reconciliation retries the **same UUID** after User outage/timeout without requiring the original password. A pending account is not silently activated on a conflicting profile.
 - Gateway accepts only cryptographically verified JWT and forwards only the bearer attached to `JwtAuthenticationToken`. It strips untrusted `X-User-*` identity headers and never emits a token. Gateway and downstream Services each validate issuer, audience, alg, type and signature with trusted JWKS.
-- **No implicit dual issuer mode.** The default Compose stays on the User issuer. The dedicated opt-in `docker-compose.oidc-lote2.yml` explicitly switches all service validators together. **Cutover**, rollback and client replacements belong to #317.
+- **No implicit dual issuer mode.** The default Compose stays on the User issuer. The dedicated opt-in `infra/compose/oidc-local.yaml` explicitly switches all service validators together. **Cutover**, rollback and client replacements belong to #317.
 
 ## Development-only integration instructions
 
 1. Create ignored RSA PEMs with `sh infra/scripts/security/generate_auth_poc_keys.sh`; keep 0600 and set `VELLUM_POC_RUN_AS="$(id -u):$(id -g)"`.
 2. Configure existing `.env` for the base Compose and set `VELLUM_AUTH_DB_PASSWORD`, `VELLUM_POC_LOGIN`/`PASSWORD` (local-poc fixture), `VELLUM_INTERNAL_PROVISION_KEY` (strong unique random 32+ chars), `JWT_ISSUER=http://127.0.0.1:9000`, `CORS_ALLOWED_ORIGINS=http://127.0.0.1:9100`.
-3. Launch `docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml up --build`. **HTTP/cookie Secure=false and loopback key path are for local validation only. Do not deploy this overlay remotely.**
+3. Launch `docker compose -f compose.yaml -f infra/compose/oidc-local.yaml up --build`. **HTTP/cookie Secure=false and loopback key path are for local validation only. Do not deploy this overlay remotely.**
 4. POST JSON `{"name":"Ada","email":"ada@example.invalid","password":"unique-password-12+"}` to `http://127.0.0.1:9000/v1/identity/register`, then use the existing PKCE test client with the same login. Query `/api/v1/users/me` through Gateway with the access token, then inspect at least one protected Catalog endpoint.
 5. Test wrong provision key, different UUID same email, repeated same UUID, User unavailable followed by reconciliation, wrong `iss/aud/typ/kid`, ID Token as bearer, missing auth, JWT spoof, AS unavailable (warm and cold JWKS) and expected 401/403.
 6. Run `mvn -B -ntp -Pauth-poc -pl services/auth-service,services/user-service,services/gateway-service -am verify`. Collect CI SHA, results, restart evidence and PR review before declaring completion.

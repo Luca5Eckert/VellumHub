@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class InfrastructureLayoutContractTest(unittest.TestCase):
     def test_no_fixed_container_names_and_stable_docker_service_labels(self):
-        compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+        compose = (ROOT / "compose.yaml").read_text(encoding="utf-8")
         alloy = (ROOT / "infra/observability/alloy/config.alloy").read_text(encoding="utf-8")
         self.assertNotIn("container_name:", compose)
         self.assertIn("__meta_docker_container_label_com_docker_compose_service", alloy)

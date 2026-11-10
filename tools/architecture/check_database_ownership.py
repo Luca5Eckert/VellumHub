@@ -77,8 +77,8 @@ def check(compose: str) -> list[str]:
 
 
 def main() -> int:
-    file = Path(__file__).resolve().parents[2] / "docker-compose.yml"
-    errors = check(file.read_text(encoding="utf-8")) if file.exists() else ["AFF-DATA-004: missing docker-compose.yml"]
+    file = Path(__file__).resolve().parents[2] / "compose.yaml"
+    errors = check(file.read_text(encoding="utf-8")) if file.exists() else ["AFF-DATA-004: missing compose.yaml"]
     for error in errors:
         print(error, file=sys.stderr)
     if not errors:

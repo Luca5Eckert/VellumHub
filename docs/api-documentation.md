@@ -61,7 +61,7 @@ See [`postman/README.md`](../postman/README.md) for import instructions, variabl
 From the repository root:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Then:

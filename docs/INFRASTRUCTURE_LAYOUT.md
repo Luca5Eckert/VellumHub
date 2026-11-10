@@ -25,13 +25,32 @@ na CI; `-Dmaven.test.skip=true` no Dockerfile não substitui a validação Maven
 
 ## Execução local: contratos entre arquivos Compose
 
-- `docker-compose.yml`: topologia principal; apps, bancos, Kafka, Redis e
+`compose.yaml` é o único Compose na raiz e continua sendo detectado por
+`docker compose up -d`. Os outros arquivos vivem em `infra/compose/`.
+Para overlays, especifique **primeiro** `-f compose.yaml`, depois `-f infra/compose/...`:
+o Compose resolve caminhos relativos de bind mounts e build a partir do primeiro
+arquivo, preservando `./.secrets`, `./.local` e `./infra` da raiz.
+
+Para os ambientes **independentes** (Schema Registry e Auth PoC), execute da
+raiz do repositório com `--project-directory .` para preservar a resolução
+explícita de caminhos e o contexto do Dockerfile:
+
+```bash
+# Independente: não compartilha o projeto da stack principal.
+REGISTRY_DB_PASSWORD='substitua-por-um-valor-local' docker compose --project-directory . -f infra/compose/schema-registry.yaml config --quiet
+
+# Auth PoC: requer as variáveis de ambiente/PEMs do runbook antes de iniciar.
+docker compose --project-directory . -f infra/compose/tests/auth-poc.yaml --profile auth-poc config --quiet
+```
+
+
+- `compose.yaml`: topologia principal; apps, bancos, Kafka, Redis e
   observabilidade opt-in
-- `docker-compose.kafka-secure.yml`: overlay opcional de SASL/ACL local
-- `docker-compose.oidc-lote2.yml`: harness local de PKCE e provisionamento
-- `docker-compose.oidc-lote3.yml`: extensão opt-in de federação Google
-- `docker-compose.auth-poc.yml`: fixture isolada para Auth e seu banco
-- `docker-compose.schema-registry.yml`: Registry SQL opt-in em projeto
+- `infra/compose/kafka-secure.yaml`: overlay opcional de SASL/ACL local
+- `infra/compose/oidc-local.yaml`: harness local de PKCE e provisionamento
+- `infra/compose/google-federation.yaml`: extensão opt-in de federação Google
+- `infra/compose/tests/auth-poc.yaml`: fixture isolada para Auth e seu banco
+- `infra/compose/schema-registry.yaml`: Registry SQL opt-in em projeto
   Compose e rede independentes (consulte `SCHEMA_REGISTRY_OPERATIONS.md`)
 
 A resolução de serviços deve usar nomes Compose, não IDs ou nomes fixos de

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SEC-06/09: live Auth -> User -> Gateway -> Catalog smoke, local Compose only.
 Uses the real OAuth protocol harness and refuses to interpret an ID Token as bearer.
-Requires all services from the docker-compose.oidc-lote2.yml overlay to be started.
+Requires all services from the infra/compose/oidc-local.yaml overlay to be started.
 """
 import json
 import os
@@ -113,7 +113,7 @@ assert malformed.status == 401, "Gateway accepted malformed JWT"
 print("Real Auth UUIDv7 -> User profile -> Gateway -> User/Catalog/Engagement/Recommendation and negative JWT checks: OK")
 
 if os.environ.get("VELLUM_VERIFY_OFFLINE") == "1":
-    cmd = ["docker", "compose", "-f", "docker-compose.yml", "-f", "docker-compose.oidc-lote2.yml"]
+    cmd = ["docker", "compose", "-f", "compose.yaml", "-f", "infra/compose/oidc-local.yaml"]
     subprocess.run(cmd + ["stop", "auth-service"], check=True)
     try:
         cached = get("/api/v1/users/me", access)

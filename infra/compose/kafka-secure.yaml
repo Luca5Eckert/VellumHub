@@ -1,6 +1,6 @@
 # Optional SEC-14 local integration profile, not a substitute for production TLS.
 # Prerequisite: python3 infra/scripts/kafka/generate-local-secrets.py
-# Start with: docker compose -f docker-compose.yml -f docker-compose.kafka-secure.yml up -d
+# Start with: docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml up -d
 services:
   kafka:
     # In Confluent 7.5, the Docker 'ensure' preflight uses a standalone

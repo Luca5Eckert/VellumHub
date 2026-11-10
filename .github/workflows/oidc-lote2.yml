@@ -7,7 +7,7 @@ on:
       - 'services/user-service/**'
       - 'services/gateway-service/**'
       - 'lib/jwt-security/**'
-      - 'docker-compose.oidc-lote2.yml'
+      - 'infra/compose/oidc-local.yaml'
       - '.github/workflows/oidc-lote2.yml'
   push:
     branches: [main]
@@ -55,7 +55,7 @@ jobs:
           # The integration overlay intentionally does not define the normal
           # services' images/build; validate its actual composition with base.
           touch .env
-          docker compose -f docker-compose.yml -f docker-compose.oidc-lote2.yml config --quiet
+          docker compose -f compose.yaml -f infra/compose/oidc-local.yaml config --quiet
 
   distributed-oidc:
     runs-on: ubuntu-latest

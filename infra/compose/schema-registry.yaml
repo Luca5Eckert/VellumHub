@@ -1,4 +1,6 @@
 # Opt-in local stack. Unauthenticated: never expose outside loopback.
+# Run from the repository root with --project-directory . to make project
+# path resolution explicit; the project name and volumes stay unchanged.
 name: vellumhub-schema-registry
 services:
   registry-postgres:

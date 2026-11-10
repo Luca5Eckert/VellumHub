@@ -81,7 +81,7 @@ Default runtime topology:
 - Prometheus scrapes the Auth management endpoint;
 - Alloy collects Auth logs.
 
-The historical `docker-compose.auth-poc.yml`, Lote 2 and Lote 3 files are retained only as regression harnesses. They are no longer activation switches for the authentication architecture.
+The historical `infra/compose/tests/auth-poc.yaml`, Lote 2 and Lote 3 files are retained only as regression harnesses. They are no longer activation switches for the authentication architecture.
 
 ## Verification
 

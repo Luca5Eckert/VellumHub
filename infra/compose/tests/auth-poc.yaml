@@ -1,5 +1,7 @@
-# Isolated local proof of concept. Does NOT change the existing docker-compose.yml.
-# docker compose -f docker-compose.auth-poc.yml up --build
+# Isolated local proof of concept. Does NOT change the existing compose.yaml.
+# Use --project-directory . when running this standalone file so the Docker
+# build context and .local/auth-poc key mount resolve from the repository root.
+# docker compose -f infra/compose/tests/auth-poc.yaml up --build
 services:
   auth-postgres:
     image: postgres:16-alpine
