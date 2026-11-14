@@ -83,6 +83,20 @@ services:
       timeout: 3s
       retries: 5
 
+  # Optional Recommendation response cache: isolated from the Gateway rate limiter.
+  # Volatile contents are disposable. Version tokens use non-expiring UUID epochs.
+  redis-recommendation-cache:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "128mb", "--maxmemory-policy", "noeviction"]
+    networks:
+      - vellum-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # DATABASES LAYER
   postgres-catalog:
     image: postgres:15-alpine
@@ -239,6 +253,8 @@ services:
       DYNAMIC_CONFIG_ENABLED: 'true'
     depends_on:
       kafka:
+        condition: service_healthy
+      redis-recommendation-cache:
         condition: service_healthy
 
   # OBSERVABILITY LAYER
@@ -524,6 +540,10 @@ services:
       SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
       JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: recommendation-service
+      RECOMMENDATION_CACHE_ENABLED: ${RECOMMENDATION_CACHE_ENABLED:-false}
+      RECOMMENDATION_CACHE_REDIS_HOST: redis-recommendation-cache
+      RECOMMENDATION_CACHE_REDIS_PORT: "6379"
+      RECOMMENDATION_CACHE_TTL_SECONDS: ${RECOMMENDATION_CACHE_TTL_SECONDS:-45}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-recommendation:5432/recommendation_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_RECOMMENDATION_USER:?POSTGRES_RECOMMENDATION_USER required}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_RECOMMENDATION_PASSWORD:?POSTGRES_RECOMMENDATION_PASSWORD required}
