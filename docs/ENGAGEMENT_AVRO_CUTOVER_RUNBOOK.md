@@ -1,6 +1,6 @@
 # Engagement Ratings / Reactions JSON → Avro cutover (#350)
 
-Status: implementation and CI validation; **not evidence of production rollout**. Source: [PR #362](https://github.com/Luca5Eckert/VellumHub/pull/362). Phase 1 Reading Progress: [PR #361](https://github.com/Luca5Eckert/VellumHub/pull/361).
+Status: implementation integrated via [PR #362](https://github.com/Luca5Eckert/VellumHub/pull/362); disposable-lab rehearsal added in [PR #364](https://github.com/Luca5Eckert/VellumHub/pull/364). **No production rollout has been evidenced.** Source: [PR #362](https://github.com/Luca5Eckert/VellumHub/pull/362). Phase 1 Reading Progress: [PR #361](https://github.com/Luca5Eckert/VellumHub/pull/361).
 
 ## Invariants and wire contracts
 
@@ -65,3 +65,12 @@ Freeze the specific aggregate type again and capture an Avro topic high-watermar
 - Both streams: baseline checkpoint-only, CREATED/UPDATED/DELETED and reaction transitions, duplicate redelivery, revision gap and revision collision, original raw-wire DLT with source position, identity-preserving replay.
 - Legacy JSON pending Outbox after upgrade; freeze/drain across in-flight writers; fail-closed Registry/Kafka; actual coordinated rollback on representative data.
 - Retain GitHub Actions job URLs, code SHA and sanitized SQL reconciliation results **per stream**. Passing mapper, topology or partial distributed tests does not establish a complete rollback rehearsal.
+
+
+## Executed disposable-lab rehearsal — 14/11/2026
+
+- [Engagement Ratings and Reactions rehearsal test](../services/engagement-service/src/test/java/com/vellumhub/engagement_service/module/outbox/infrastructure/dispatcher/EngagementAvroCutoverRehearsalDistributedTest.java) starts with actual pre-V10 JSONB data in PostgreSQL, upgrades through V10, freezes the writers and drains the JSON Outbox, publishes RatingUpdated and ReactionChanged via registered Avro subjects, drains, then rolls each stream back to JSON independently. It verifies 3 unique `eventId` facts per stream, no route crossover and immutable per-row `wire_format`.
+- [Recommendation consumer integration](../services/recommendation-service/src/test/java/com/vellumhub/recommendation_service/module/user_profile/infrastructure/consumer/EngagementAvroRecommendationDistributedTest.java) verifies six event types, v2 compatible writer vs v1 deployed reader, baseline-only checkpointing, duplicate no-op, gap quarantine and raw-wire DLT with source metadata.
+- Evidence: [PR #364 five-job acceptance workflow](https://github.com/Luca5Eckert/VellumHub/actions/runs/43615689013) at SHA `281bc752b8ae21735ee836f80cd58add5a6ed17f`; individual job logs and Surefire reports establish actual execution. This is a **test-harness rehearsal, not observed production delivery or an offset drain of a real retained dataset**.
+
+A rollout in a shared environment remains subject to real SQL snapshot/high-watermark records, actual group offset reconciliation, approval, verification of all legacy topics tied to `KAFKA_LEGACY_CONSUMERS_ENABLED`, observability and a recorded rollback decision. No production or staging credentials are used by this CI job.

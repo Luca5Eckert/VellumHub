@@ -1,6 +1,6 @@
 # Reading Progress JSON → Avro cutover (#350)
 
-Status: implementation in progress; **not evidence of a production migration**.
+Status: implementation integrated via [PR #361](https://github.com/Luca5Eckert/VellumHub/pull/361); disposable-lab rehearsal added in [PR #364](https://github.com/Luca5Eckert/VellumHub/pull/364). **No production migration has been evidenced.**
 
 ## Boundaries
 
@@ -48,3 +48,12 @@ Freeze Reading Progress again, then drain **all Avro-stamped** Outbox rows and A
 ### Evidence required
 
 Real PostgreSQL/Kafka/Apicurio tests must show old JSONB rows sent after upgrade, cold Registry failure with no invalid publication, ACK ambiguity, duplicate delivery, gap handling, raw-wire DLT and recovery, both actual consumers, and complete freeze/drain/cutover/rollback. Passing configuration rendering or unit mapper tests is **not** evidence of this operational rehearsal.
+
+
+## Executed disposable-lab rehearsal — 14/11/2026
+
+- [Reading Progress Catalog rehearsal test](../services/catalog-service/src/test/java/com/vellumhub/catalog_service/module/outbox/infrastructure/dispatcher/ReadingProgressAvroCutoverRehearsalDistributedTest.java) starts with actual Flyway V4 data (legacy JSONB row written before V5), migrates to V5, holds the Reading writer gate while draining the JSON Outbox, switches only new events to Avro, decodes approved schema ID and event identity, drains Avro, then restores JSON without changing prior Avro rows.
+- [Actual consumers](../services/engagement-service/src/test/java/com/vellumhub/engagement_service/module/reading_progress/infrastructure/kafka/ReadingProgressAvroEngagementDistributedTest.java) and [Recommendation projection](../services/recommendation-service/src/test/java/com/vellumhub/recommendation_service/module/reading_progress/infrastructure/kafka/ReadingProgressAvroRecommendationDistributedTest.java) verify the original checkpoint and downstream behavior with Kafka/PostgreSQL/Registry.
+- Evidence: [PR #364 five-job acceptance workflow](https://github.com/Luca5Eckert/VellumHub/actions/runs/43615689013) at SHA `281bc752b8ae21735ee836f80cd58add5a6ed17f`; exact Maven tests and per-stream reports archived in job artifacts. This is a **test-harness rehearsal, not a live consumer-group offset drain with a real dataset**.
+
+Before any staged/production switch, an operator must still capture actual topic offsets, groups, SQL high-watermarks, baseline reconciliation, approvals and rollback outcomes for that environment. The shared legacy-consumer switch must not be disabled from a Reading-only cutover.
