@@ -8,7 +8,8 @@
       "reading-progress-events",
       "created-reading-progress",
       "updated-reading-progress",
-      "book-events.avro"
+      "book-events.avro",
+      "reading-progress-events.avro"
     ],
     "subscribe": [],
     "legacy_retry": [],
@@ -39,7 +40,8 @@
       "deleted-book",
       "created-reading-progress",
       "updated-reading-progress",
-      "book-events.avro"
+      "book-events.avro",
+      "reading-progress-events.avro"
     ],
     "legacy_retry": [
       "created-book",
@@ -50,12 +52,14 @@
     "ordered_dlt": [
       "book-events",
       "reading-progress-events",
-      "book-events.avro"
+      "book-events.avro",
+      "reading-progress-events.avro"
     ],
     "groups": [
       "engagement-service",
       "engagement-service-dlt-group",
-      "engagement-service-book-avro"
+      "engagement-service-book-avro",
+      "engagement-service-reading-progress-avro"
     ]
   },
   "recommendation_service": {
@@ -74,7 +78,8 @@
       "created-reading-progress",
       "updated-reading-progress",
       "user-reaction-changed",
-      "book-events.avro"
+      "book-events.avro",
+      "reading-progress-events.avro"
     ],
     "legacy_retry": [
       "created-book",
@@ -92,14 +97,16 @@
       "reading-progress-events",
       "engagement.ratings.v1",
       "engagement.reactions.v1",
-      "book-events.avro"
+      "book-events.avro",
+      "reading-progress-events.avro"
     ],
     "groups": [
       "recommendation-service",
       "recommendation-service-dlt-group",
       "recommendation_service_group",
       "recommendation-group",
-      "recommendation-service-book-avro"
+      "recommendation-service-book-avro",
+      "recommendation-service-reading-progress-avro"
     ]
   }
 }
