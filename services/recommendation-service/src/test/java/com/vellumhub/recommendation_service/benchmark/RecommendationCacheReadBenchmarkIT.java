@@ -113,8 +113,12 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
                     List<UUID> users = workload(scenario, operations);
                     // Warm-up is never included in the measured samples.
                     if ("cold".equals(scenario)) {
-                        // Warm the JVM/HTTP/DB path without pre-populating measured keys.
+                        // Warm HTTP/JVM/PG without populating any measured cold keys.
                         for (int i = 0; i < 30; i++) request(id("user", USERS - 1));
+                    } else if ("mixed".equals(scenario)) {
+                        // Only the 12 designated hot keys are warm. The remaining
+                        // ~20% of requests use unique cold keys and must MISS.
+                        for (int i = 0; i < 30; i++) request(id("user", i % 12));
                     } else {
                         for (int i = 0; i < Math.min(30, users.size()); i++) request(users.get(i));
                     }
