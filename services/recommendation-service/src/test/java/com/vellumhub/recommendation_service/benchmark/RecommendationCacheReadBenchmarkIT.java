@@ -108,6 +108,10 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
             jdbc.update("insert into recommendations (book_id, title, description, release_year, cover_url, author) values (?, ?, ?, ?, ?, ?)",
                     book, "Book " + i, "Deterministic benchmark", 2026,
                     "https://example.test/cache/" + i + ".jpg", "Reference");
+            jdbc.update("insert into recommendation_genres (recommendation_book_id, genres) values (?, ?)",
+                    book, "Genre " + (i % 8));
+            jdbc.update("insert into recommendation_genres (recommendation_book_id, genres) values (?, ?)",
+                    book, "Literature");
         }
         for (int i = 0; i < userCount; i++) {
             jdbc.update("insert into user_profiles (user_id, version, profile_vector, interacted_book_ids, total_engagement_score, last_updated, created_at) values (?, 0, cast(? as vector), '{}'::uuid[], 0, now(), now())",
@@ -300,6 +304,16 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
         row.put("sql_prepared_statements", sqlStats.getPrepareStatementCount() - sqlBefore);
         row.put("process_cpu_ms", startCpu < 0 ? -1.0 : (processCpuNanos() - startCpu) / 1e6);
         row.put("latencies_ms", latency);
+        // With one local instance and a versioned key, 32 simultaneous requests
+        // must not generate 32 copies of the ranked SQL. Allow minimal race
+        // in task scheduling without depending on runner p95.
+        if (Boolean.parseBoolean(System.getProperty("cache.benchmark.enabled", "false"))
+                && concurrency >= 8) {
+            assertThat((Number) row.get("sql_prepared_statements"))
+                    .extracting(Number::longValue)
+                    .as("single-flight should keep burst SQL bounded")
+                    .satisfies(count -> assertThat(count).isLessThanOrEqualTo(6L));
+        }
         return row;
     }
 
