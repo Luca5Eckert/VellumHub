@@ -38,6 +38,10 @@ class RecommendationResponseCacheTest {
         registry = new SimpleMeterRegistry();
         when(redis.opsForValue()).thenReturn(values);
         when(values.get(anyString())).thenAnswer(call -> store.get(call.getArgument(0, String.class)));
+        when(values.multiGet(anyCollection())).thenAnswer(call -> {
+            java.util.Collection<String> keys = call.getArgument(0);
+            return keys.stream().map(store::get).toList();
+        });
         when(values.setIfAbsent(anyString(), anyString())).thenAnswer(call ->
                 store.putIfAbsent(call.getArgument(0), call.getArgument(1)) == null);
         doAnswer(call -> {
