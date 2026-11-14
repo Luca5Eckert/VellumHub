@@ -51,7 +51,7 @@ class FreshInstallTest(unittest.TestCase):
     def test_kind_overlay_matches_compose_without_changing_existing_local(self):
         overlay = self.read_yaml("deploy/kubernetes/overlays/local-avro-fresh/kustomization.yaml")
         self.assertIn("../local", overlay["resources"])
-        self.assertIn("../../schema-registry/overlays/local", overlay["resources"])
+        self.assertNotIn("../../schema-registry/overlays/local", overlay["resources"])
         for service in REQUIRED:
             patch = self.read_yaml(f"deploy/kubernetes/overlays/local-avro-fresh/{service.split('-')[0]}.yaml")
             self.assertEqual(service, patch["metadata"]["name"])

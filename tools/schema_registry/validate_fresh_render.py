@@ -18,11 +18,5 @@ for service, expected in REQUIRED.items():
     for key, value in expected.items():
         if actual.get(key, "").lower() != value.lower():
             raise SystemExit(f"Rendered {service}: {key} should be {value}")
-assert ("StatefulSet", "registry-postgres") in objects, "Registry SQL storage missing"
-registry = objects[("Deployment", "schema-registry")]
-assert registry["spec"]["template"]["spec"]["containers"][0]["image"] == "apicurio/apicurio-registry:3.1.7"
-registry_env = {item["name"]: item for item in registry["spec"]["template"]["spec"]["containers"][0]["env"]}
-assert registry_env["QUARKUS_OIDC_TENANT_ENABLED"]["value"] == "false"
-assert ("Service", "schema-registry") in objects
-assert ("NetworkPolicy", "schema-registry-internal-only") in objects
-print("Rendered fresh Kind app routes + SQL-backed Registry: PASS")
+assert ("Service", "schema-registry") not in objects, "Registry must be bootstrapped separately"
+print("Rendered fresh Kind application routes: PASS (Registry is installed and verified separately)")

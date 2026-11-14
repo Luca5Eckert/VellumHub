@@ -1,10 +1,9 @@
-# For a NEW Kind environment only. Provision/approve local Registry subjects first.
+# For a NEW Kind environment only. Provision/approve the SEPARATE local Registry first.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: vellumhub
 resources:
   - ../local
-  - ../../schema-registry/overlays/local
 patches:
   - path: catalog.yaml
   - path: engagement.yaml

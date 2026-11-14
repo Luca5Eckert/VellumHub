@@ -41,7 +41,7 @@ Para verificar posteriormente sem alterar o Registry: `python3 tools/schema_regi
 
 ## Kubernetes / Kind novo
 
-O overlay `deploy/kubernetes/overlays/local-avro-fresh` inclui a infraestrutura local existente, o Registry com PostgreSQL persistente e os mesmos flags de Avro. **Não aplique diretamente sobre um cluster com bancos ou tópicos JSON já populados.** O bootstrap separa registro de contratos e início dos aplicativos:
+O overlay `deploy/kubernetes/overlays/local-avro-fresh` inclui a infraestrutura local existente e os mesmos flags de Avro, mas **não** incorpora o Registry: este deve ser instalado e ter os contratos registrados separadamente, antes dos aplicativos. **Não aplique diretamente sobre um cluster com bancos ou tópicos JSON já populados.** O bootstrap separa registro de contratos e início dos aplicativos:
 
 ```bash
 # Pré-requisito: namespace, os secrets existentes da stack e imagens carregadas/publicadas.
