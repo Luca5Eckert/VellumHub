@@ -61,7 +61,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @AutoConfigureMockMvc
 class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSupport {
     private static final int BOOKS = 600;
-    private static final int USERS = 900;
+    private int userCount;
     private static final long SEED = 360_036L;
 
     @Container
@@ -89,6 +89,13 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
 
     @BeforeEach
     void prepare() {
+        String profile = System.getProperty("benchmark.profile", "smoke");
+        userCount = switch (profile) {
+            case "smoke" -> 400;
+            case "reference" -> 1400;
+            case "stress" -> 3500;
+            default -> throw new IllegalArgumentException("Unknown profile: " + profile);
+        };
         jdbc.update("delete from recommendation_genres");
         jdbc.update("delete from user_profiles");
         jdbc.update("delete from recommendations");
@@ -102,22 +109,35 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
                     book, "Book " + i, "Deterministic benchmark", 2026,
                     "https://example.test/cache/" + i + ".jpg", "Reference");
         }
-        for (int i = 0; i < USERS; i++) {
+        for (int i = 0; i < userCount; i++) {
             jdbc.update("insert into user_profiles (user_id, version, profile_vector, interacted_book_ids, total_engagement_score, last_updated, created_at) values (?, 0, cast(? as vector), '{}'::uuid[], 0, now(), now())",
                     id("user", i), vector(i % 8));
         }
     }
 
     @Test
-    @Timeout(value = 25, unit = TimeUnit.MINUTES)
+    @Timeout(value = 60, unit = TimeUnit.MINUTES)
     void measureOffColdWarmAndMixedReads() throws Exception {
         boolean cacheEnabled = Boolean.parseBoolean(System.getProperty("cache.benchmark.enabled", "false"));
         String profile = System.getProperty("benchmark.profile", "smoke");
-        boolean reference = "reference".equals(profile);
-        if (!reference && !"smoke".equals(profile)) throw new IllegalArgumentException("Unknown profile " + profile);
-        int repeats = reference ? 3 : 1;
-        int operations = reference ? 500 : 24;
-        int[] concurrencies = reference ? new int[]{1, 8, 32} : new int[]{1, 8};
+        int repeats = "smoke".equals(profile) ? 1 : 3;
+        int operations = switch (profile) {
+            case "smoke" -> 120;
+            case "reference" -> 1000;
+            case "stress" -> 3000;
+            default -> throw new IllegalArgumentException("Unknown profile " + profile);
+        };
+        int[] concurrencies = switch (profile) {
+            case "smoke" -> new int[]{1, 8};
+            case "reference" -> new int[]{1, 8, 32};
+            case "stress" -> new int[]{8, 32, 64};
+            default -> throw new IllegalArgumentException("Unknown profile " + profile);
+        };
+        // Cold keys must be unique in each scenario. Reusing keys after 900 requests
+        // accidentally converted the old "cold" reference workload into warm traffic.
+        if (operations >= userCount - 24) {
+            throw new IllegalStateException("Insufficient users for genuinely cold workload");
+        }
         List<Map<String, Object>> summaries = new ArrayList<>();
 
         for (int concurrency : concurrencies) {
@@ -129,7 +149,7 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
                     // Warm-up is never included in the measured samples.
                     if ("cold".equals(scenario)) {
                         // Warm HTTP/JVM/PG without populating any measured cold keys.
-                        for (int i = 0; i < 30; i++) request(id("user", USERS - 1));
+                        for (int i = 0; i < 30; i++) request(id("user", userCount - 1));
                     } else if (scenario.startsWith("mixed")) {
                         // Only the 12 designated hot keys are warm. The remaining
                         // ~20% of requests use unique cold keys and must MISS.
@@ -149,6 +169,10 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
                     long generationCountBefore = timerCount("generation");
                     long getCountBefore = timerCount("get");
                     long putCountBefore = timerCount("put");
+                    double leadersBefore = singleFlightCount("leader");
+                    double joinedBefore = singleFlightCount("joined");
+                    double timeoutsBefore = singleFlightCount("timeout");
+                    double overflowBefore = singleFlightCount("capacity");
                     double hitsBefore = cacheCount("hit");
                     double missesBefore = cacheCount("miss");
                     double errorsBefore = cacheCount("error");
@@ -189,7 +213,13 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
                     row.put("process_cpu_ms", cpuBefore < 0 ? -1 : (processCpuNanos() - cpuBefore) / 1e6);
                     row.put("gc_collection_ms", gcMillis() - gcBefore);
                     row.put("redis_memory_delta_bytes", redisUsedMemoryBytes() - memoryBefore);
-                    row.put("cache_hits", cacheCount("hit") - hitsBefore);
+                    row.put("singleflight_leaders", singleFlightCount("leader") - leadersBefore);
+                    row.put("singleflight_joins", singleFlightCount("joined") - joinedBefore);
+                    row.put("singleflight_timeouts", singleFlightCount("timeout") - timeoutsBefore);
+                    row.put("singleflight_capacity_bypass", singleFlightCount("capacity") - overflowBefore);
+                    row.put("singleflight_leaders", singleFlightCount("leader") - leadersBefore);
+        row.put("singleflight_joins", singleFlightCount("joined") - joinedBefore);
+        row.put("cache_hits", cacheCount("hit") - hitsBefore);
                     row.put("cache_misses", cacheCount("miss") - missesBefore);
                     row.put("cache_errors", cacheCount("error") - errorsBefore);
                     row.put("cache_bypass", cacheCount("bypass") - bypassBefore);
@@ -207,7 +237,7 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
         json.writerWithDefaultPrettyPrinter().writeValue(dir.resolve(mode + ".json").toFile(),
                 Map.of("commit_sha", sha, "timestamp_utc", Instant.now().toString(),
                         "cache_enabled", cacheEnabled, "profile", profile,
-                        "dataset", "600 deterministic books / 900 profile vectors, seed 360036",
+                        "dataset", "600 deterministic books / " + userCount + " profile vectors, seed 360036",
                         "notes", "MockMvc authenticated HTTP, PostgreSQL pgvector + Redis Testcontainers; SQL statements from Hibernate statistics, process CPU/GC plus aggregate Redis stages. Not a network HTTP benchmark or production SLA. Warmup excluded.",
                         "measurements", summaries));
     }
@@ -215,13 +245,15 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
     /** Uncached concurrent requests for ONE user expose stampede amplification on MISS. */
     private Map<String, Object> measureStampede(int concurrency, int repetition) throws Exception {
         redis.getConnectionFactory().getConnection().serverCommands().flushDb();
-        UUID hotUser = id("user", USERS - 2);
+        UUID hotUser = id("user", userCount - 2);
         // Warm Spring/JPA without warming this user's cache key.
         for (int i = 0; i < 30; i++) request(id("user", USERS - 1));
 
         var sqlStats = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
         long sqlBefore = sqlStats.getPrepareStatementCount();
         double hitsBefore = cacheCount("hit"), missesBefore = cacheCount("miss");
+        double joinedBefore = singleFlightCount("joined");
+        double leadersBefore = singleFlightCount("leader");
         double generationBefore = timerMillis("generation");
         double getBefore = timerMillis("get"), putBefore = timerMillis("put");
         double rankerBefore = rankingMillis();
@@ -312,6 +344,13 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
         return info == null ? -1L : Long.parseLong(info.getProperty("used_memory", "-1"));
     }
 
+    private double singleFlightCount(String result) {
+        var counter = meterRegistry.find("vellumhub.cache.singleflight.events")
+                .tag("cache", "recommendations")
+                .tag("result", result).counter();
+        return counter == null ? 0.0 : counter.count();
+    }
+
     private double cacheCount(String result) {
         var counter = meterRegistry.find("vellumhub.cache.requests")
                 .tag("cache", "recommendations")
@@ -324,9 +363,9 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
         List<UUID> users = new ArrayList<>(operations);
         for (int i = 0; i < operations; i++) {
             int index = switch (scenario) {
-                case "cold" -> i % USERS;
+                case "cold" -> i % userCount;
                 case "warm" -> i % 8;
-                case "mixed80" -> i % 5 == 0 ? 24 + (i % (USERS - 24)) : i % 12;
+                case "mixed80" -> i % 5 == 0 ? 24 + (i % (userCount - 24)) : i % 12;
                 case "mixed95" -> i % 20 == 0 ? 24 + (i % (USERS - 24)) : i % 12;
                 default -> throw new IllegalArgumentException(scenario);
             };
