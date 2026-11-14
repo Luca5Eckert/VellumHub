@@ -30,6 +30,8 @@ jobs:
     timeout-minutes: 35
     env:
       BENCHMARK_PROFILE: ${{ github.event_name == 'pull_request' && 'smoke' || inputs.profile || 'reference' }}
+      # One focused reference-load investigation on #367; other PRs retain smoke.
+      CACHE_BENCHMARK_PROFILE: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 367 && 'reference' || github.event_name == 'pull_request' && 'smoke' || inputs.profile || 'reference' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -92,7 +94,7 @@ jobs:
           -Dsurefire.failIfNoSpecifiedTests=false
           -Dgroups=cache-benchmark
           -Dcache.benchmark.enabled=false
-          -Dbenchmark.profile=${BENCHMARK_PROFILE}
+          -Dbenchmark.profile=${CACHE_BENCHMARK_PROFILE}
           -Dbenchmark.commitSha=${{ github.event.pull_request.head.sha || github.sha }}
           test
 
@@ -103,7 +105,7 @@ jobs:
           -Dsurefire.failIfNoSpecifiedTests=false
           -Dgroups=cache-benchmark
           -Dcache.benchmark.enabled=true
-          -Dbenchmark.profile=${BENCHMARK_PROFILE}
+          -Dbenchmark.profile=${CACHE_BENCHMARK_PROFILE}
           -Dbenchmark.commitSha=${{ github.event.pull_request.head.sha || github.sha }}
           test
 
