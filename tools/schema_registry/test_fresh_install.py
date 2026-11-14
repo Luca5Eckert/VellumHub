@@ -66,7 +66,7 @@ class FreshInstallTest(unittest.TestCase):
             )
         source_patches = (ROOT / "deploy/kubernetes/overlays/local/local-patches.yaml").read_text()
         local_patches = (ROOT / "deploy/kubernetes/overlays/local-avro-fresh/local-patches.yaml").read_text()
-        self.assertEqual(source_patches.split("---\\napiVersion: networking.k8s.io/v1")[0].rstrip(),
+        self.assertEqual(source_patches[:source_patches.index("apiVersion: networking.k8s.io/v1")].rstrip().removesuffix("---").rstrip(),
                          local_patches.rstrip())
         self.assertIn("local-allow.yaml", overlay["resources"])
         stable = self.read_yaml("deploy/kubernetes/overlays/local/kustomization.yaml")
