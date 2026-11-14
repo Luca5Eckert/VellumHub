@@ -44,6 +44,8 @@ class RecommendationResponseCacheTest {
             store.put(call.getArgument(0), call.getArgument(1));
             return null;
         }).when(values).set(anyString(), anyString());
+        when(values.setIfAbsent(anyString(), anyString(), any(Duration.class)))
+                .thenAnswer(call -> store.putIfAbsent(call.getArgument(0), call.getArgument(1)) == null);
         doAnswer(call -> {
             store.put(call.getArgument(0), call.getArgument(1));
             return null;
@@ -164,6 +166,19 @@ class RecommendationResponseCacheTest {
         assertThat(disabled.read(UUID.randomUUID(), -1, -1, () -> books)).isEqualTo(books);
         verify(redis, never()).delete(anyString());
         verify(values, never()).get(anyString());
+    }
+
+    @Test
+    void corruptDtoIsEvictedAndRecomputedWithoutReturningCorruptBytes() {
+        UUID user = UUID.randomUUID();
+        List<RecommendationResponse> original = response("Original");
+        cache.read(user, 10, 0, () -> original);
+        String payloadKey = store.keySet().stream().filter(key -> key.contains(":limit:10:offset:0:"))
+                .findFirst().orElseThrow();
+        store.put(payloadKey, "not-json");
+        List<RecommendationResponse> repaired = response("Repaired");
+        assertThat(cache.read(user, 10, 0, () -> repaired)).isEqualTo(repaired);
+        assertThat(cache.read(user, 10, 0, () -> original)).isEqualTo(repaired);
     }
 
     @Test
