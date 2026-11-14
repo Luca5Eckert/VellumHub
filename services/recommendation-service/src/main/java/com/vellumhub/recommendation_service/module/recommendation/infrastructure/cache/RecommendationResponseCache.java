@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 /**
  * Optional cache of *response DTOs*, not JPA entities or embeddings.
  *
- * Version keys have NO TTL. They live in the isolated Redis instance (noeviction).
+ * Global version has no TTL; per-user versions expire after 24 hours (much\n * longer than a response TTL). The Redis instance uses noeviction.
  * A reader that started before invalidation can only fill its OLD versioned key;
  * it cannot resurrect an entry for a new generation. If Redis is unavailable,
  * reads use PostgreSQL. A failed post-commit invalidation can leave data stale
@@ -32,6 +32,9 @@ public class RecommendationResponseCache {
     private static final String PREFIX = "vellumhub:recommendation:response:v1:ranker-70-30:";
     private static final String GLOBAL_VERSION_KEY = PREFIX + "global-generation";
     private static final String USER_VERSION_PREFIX = PREFIX + "user-generation:";
+    // User generations expire after a day: response TTL <= one hour, and a new
+    // random generation cannot expose an old response even when a key survives.
+    private static final Duration USER_GENERATION_TTL = Duration.ofDays(1);
     private static final TypeReference<List<RecommendationResponse>> RESPONSES = new TypeReference<>() {};
 
     private final StringRedisTemplate redis;
@@ -160,7 +163,11 @@ public class RecommendationResponseCache {
     private void invalidate(String versionKey, String scope) {
         try {
             timed("invalidate", () -> {
-                redis.opsForValue().set(versionKey, UUID.randomUUID().toString());
+                if (versionKey.startsWith(USER_VERSION_PREFIX)) {
+                    redis.opsForValue().set(versionKey, UUID.randomUUID().toString(), USER_GENERATION_TTL);
+                } else {
+                    redis.opsForValue().set(versionKey, UUID.randomUUID().toString());
+                }
                 return null;
             });
             registry.counter("vellumhub.cache.invalidations", "cache", "recommendations",
@@ -178,7 +185,9 @@ public class RecommendationResponseCache {
             String value = redis.opsForValue().get(versionKey);
             if (value != null) return value;
             String candidate = UUID.randomUUID().toString();
-            Boolean created = redis.opsForValue().setIfAbsent(versionKey, candidate);
+            Boolean created = versionKey.startsWith(USER_VERSION_PREFIX)
+                    ? redis.opsForValue().setIfAbsent(versionKey, candidate, USER_GENERATION_TTL)
+                    : redis.opsForValue().setIfAbsent(versionKey, candidate);
             if (Boolean.TRUE.equals(created)) return candidate;
             value = redis.opsForValue().get(versionKey);
             if (value == null) throw new IllegalStateException("Missing cache generation");
