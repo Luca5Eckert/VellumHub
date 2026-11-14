@@ -1,6 +1,7 @@
 package com.vellumhub.recommendation_service.module.recommendation.infrastructure.persistence.repository;
 
 import com.vellumhub.recommendation_service.module.recommendation.domain.model.Recommendation;
+import com.vellumhub.recommendation_service.module.recommendation.infrastructure.cache.RecommendationResponseCache;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +21,9 @@ class SpringRecommendationRepositoryAdapterTest {
 
     @Mock
     private RecommendationRepositoryJpa recommendationRepositoryJpa;
+
+    @Mock
+    private RecommendationResponseCache cache;
 
     @InjectMocks
     private SpringRecommendationRepositoryAdapter adapter;
@@ -45,6 +49,7 @@ class SpringRecommendationRepositoryAdapterTest {
         adapter.save(rec);
 
         verify(recommendationRepositoryJpa, times(1)).save(rec);
+        verify(cache).invalidateAllAfterCommit();
     }
 
     @Test
@@ -79,6 +84,7 @@ class SpringRecommendationRepositoryAdapterTest {
         adapter.deleteById(bookId);
 
         verify(recommendationRepositoryJpa, times(1)).deleteById(bookId);
+        verify(cache).invalidateAllAfterCommit();
     }
 
     @Test
