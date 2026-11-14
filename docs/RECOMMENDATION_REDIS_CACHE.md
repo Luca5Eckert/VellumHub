@@ -97,3 +97,26 @@ The first reference measurement (head `68f3d67`, [GitHub Actions #43639474560](h
 The original cache implementation performed two sequential generation GETs, a payload GET, two additional generation GETs after SQL and a response SET (plus SETNX for first-seen users). Because both generations are part of the immutable response key, those two post-SQL GETs are unnecessary for invalidation safety. A subsequent patch uses MGET for both generations and removes this redundant reread: hot HIT uses 2 Redis network roundtrips, an existing-version MISS 3, and a first-use user may require an extra SETNX. This is a performance **hypothesis under evaluation**; compare the post-change reference benchmark before claiming improvement.
 
 Note that reference SQL counts use Hibernate statistics, and CPU/GC and Redis timings are diagnostics from a GitHub-hosted MockMvc integration run, **not** capacity or external-network HTTP performance.
+
+
+### Repeated reference after generation MGET — intervention on #36
+
+The optimized revision `753c8e80506318b6f0817df1294aa5d530befc04` passed the [same reference job #43640098145](https://github.com/Luca5Eckert/VellumHub/actions/runs/43640098145). This keeps dataset, ranker, profile, scenarios, three repetitions and concurrency settings identical to the previous run. **Different CI processes and host scheduling can still introduce run-to-run variability**; therefore, compare the stage-level evidence and not just a single p95.
+
+Medians of the three within-run p95 measurements (milliseconds):
+
+| Scenario | Concurrency | Original OFF / ON | Optimized OFF / ON |
+| --- | ---: | ---: | ---: |
+| Cold, 0% HIT | 1 | 3.82 / 6.78 | 3.77 / 6.66 |
+| Cold, 0% HIT | 8 | 13.61 / 20.46 | 14.98 / 22.26 |
+| Warm, 100% HIT | 8 | 16.54 / 3.11 | 11.43 / 4.79 |
+| Mixed, 80% HIT | 8 | 14.80 / 20.84 | 14.31 / 16.68 |
+| Mixed, 95% HIT | 8 | 14.02 / 8.43 | 14.84 / 8.65 |
+| Mixed, 80% HIT | 32 | 55.75 / 35.92 | 53.04 / 35.79 |
+| Hot-key stampede | 32 | 23.27 / 35.36 | 16.44 / 29.82 |
+
+The **MGET intervention reduced total Redis generation-access time** for 500 mixed80/c8 requests from 1,219.70 to 698.80 ms (approximately 43%). Their cache-enabled p95 dropped 20.84→16.68 ms; the optimized OFF baseline nevertheless remains faster at 14.31 ms. Under mixed95/c8, optimized cache p95 was 8.65 ms against 14.84 ms OFF. At cold c8, optimized cache remains markedly slower (22.26 against 14.98 ms). These are workload-specific samples, not production SLAs or a guarantee of a 20% improvement across all traffic.
+
+**Stampede evidence:** 32 synchronized requests for the same empty cache key produced 32 misses and **384 SQL statements** both before and after MGET, so the patch does not perform single-flight. That is a separate performance problem under concurrent bursts.
+
+**Decision:** retain the feature flag `RECOMMENDATION_CACHE_ENABLED=false` and the PR in draft. Before activation, measure actual key reuse in a representative environment, investigate the existing 12-statement read (likely JPA lazy `@ElementCollection` N+1), and separately evaluate a bounded single-flight strategy under multi-replica tests. Optimize SQL regardless of whether Redis is retained. Do not conflate “a HIT is fast” with “mixed p95 improves.”
