@@ -19,7 +19,7 @@ import java.util.HashMap;
 public class OrderedReadingProgressAvroKafkaConfig {
     @Bean
     ReadingProgressAvroDecoder readingProgressAvroDecoder(
-            @Value("${app.reading-progress.avro.registry-url}") String url) {
+            @Value("${app.reading-progress.avro.registry-url:http://127.0.0.1:18081/apis/ccompat/v7}") String url) {
         return new ReadingProgressAvroDecoder(url);
     }
 
