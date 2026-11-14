@@ -35,7 +35,7 @@ public class RecommendationResponseCache {
     private static final TypeReference<List<RecommendationResponse>> RESPONSES = new TypeReference<>() {};
 
     private final StringRedisTemplate redis;
-    private final ObjectMapper json;
+    private final ObjectMapper json = new ObjectMapper();
     private final MeterRegistry registry;
     private final boolean enabled;
     private final long ttlSeconds;
@@ -43,7 +43,6 @@ public class RecommendationResponseCache {
 
     public RecommendationResponseCache(
             StringRedisTemplate redis,
-            ObjectMapper json,
             MeterRegistry registry,
             @Value("${vellumhub.cache.recommendations.enabled:false}") boolean enabled,
             @Value("${vellumhub.cache.recommendations.ttl-seconds:45}") long ttlSeconds,
@@ -52,7 +51,6 @@ public class RecommendationResponseCache {
             throw new IllegalArgumentException("Invalid recommendation cache bounds");
         }
         this.redis = redis;
-        this.json = json;
         this.registry = registry;
         this.enabled = enabled;
         this.ttlSeconds = ttlSeconds;
