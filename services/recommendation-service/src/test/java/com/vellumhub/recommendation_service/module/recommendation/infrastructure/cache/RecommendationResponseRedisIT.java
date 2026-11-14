@@ -43,7 +43,7 @@ class RecommendationResponseRedisIT {
         factory.afterPropertiesSet();
         redis = new StringRedisTemplate(factory);
         redis.getConnectionFactory().getConnection().serverCommands().flushDb();
-        first = new RecommendationResponseCache(redis, new ObjectMapper(),
+        first = new RecommendationResponseCache(redis,
                 new SimpleMeterRegistry(), true, 45, 100);
         second = new RecommendationResponseCache(redis, new ObjectMapper(),
                 new SimpleMeterRegistry(), true, 45, 100);
