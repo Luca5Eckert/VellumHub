@@ -45,7 +45,7 @@ class RecommendationResponseRedisIT {
         redis.getConnectionFactory().getConnection().serverCommands().flushDb();
         first = new RecommendationResponseCache(redis,
                 new SimpleMeterRegistry(), true, 45, 100);
-        second = new RecommendationResponseCache(redis, new ObjectMapper(),
+        second = new RecommendationResponseCache(redis,
                 new SimpleMeterRegistry(), true, 45, 100);
     }
 
