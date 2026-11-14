@@ -20,6 +20,7 @@ on:
         options:
           - reference
           - smoke
+          - stress
 
 permissions:
   contents: read
@@ -27,7 +28,7 @@ permissions:
 jobs:
   distributed-benchmark:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 90
     env:
       BENCHMARK_PROFILE: ${{ github.event_name == 'pull_request' && 'smoke' || inputs.profile || 'reference' }}
       # One focused reference-load investigation on #367; other PRs retain smoke.
@@ -84,12 +85,12 @@ jobs:
           test
 
       # Reuse this existing job instead of adding another mandatory workflow/check.
-      # Cache correctness and A/B smoke have separate JVM lifecycles from the
+      # Cache correctness, one-query hydration and A/B reference use separate JVM lifecycles from the
       # existing Kafka convergence/freshness harnesses.
       - name: Verify Redis cache and pre-warmed event freshness
         run: >-
           mvn -B -ntp -pl services/recommendation-service -am
-          -Dtest=RecommendationResponseRedisIT,RecommendationCacheFreshnessIT
+          -Dtest=RecommendationResponseRedisIT,RecommendationCacheFreshnessIT,RecommendationBatchHydrationIT
           -Dsurefire.failIfNoSpecifiedTests=false
           -Dgroups=distributed,distributed-benchmark
           test
