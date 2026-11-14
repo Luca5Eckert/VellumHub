@@ -7,10 +7,6 @@ on:
       - 'infra/compose/avro-fresh.yaml'
       - 'deploy/kubernetes/overlays/local-avro-fresh/**'
       - '.env.example'
-      - 'infra/compose/schema-registry-app-network.yaml'
-      - 'infra/compose/avro-fresh.yaml'
-      - 'deploy/kubernetes/overlays/local-avro-fresh/**'
-      - '.env.example'
       - 'deploy/kubernetes/schema-registry/**'
       - 'infra/schema-registry/**'
       - 'lib/kafka-avro-contracts/**'
@@ -22,6 +18,10 @@ on:
     branches: [main]
     paths:
       - 'infra/compose/schema-registry.yaml'
+      - 'infra/compose/schema-registry-app-network.yaml'
+      - 'infra/compose/avro-fresh.yaml'
+      - 'deploy/kubernetes/overlays/local-avro-fresh/**'
+      - '.env.example'
       - 'deploy/kubernetes/schema-registry/**'
       - 'infra/schema-registry/**'
       - 'lib/kafka-avro-contracts/**'
