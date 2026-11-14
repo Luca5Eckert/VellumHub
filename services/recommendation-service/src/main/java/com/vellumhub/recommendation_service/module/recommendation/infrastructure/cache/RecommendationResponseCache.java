@@ -45,7 +45,7 @@ public class RecommendationResponseCache {
     // One in-flight database calculation per versioned key per application replica.
     // Bound the coordinator to avoid a large number of waiting requests consuming memory.
     private static final int MAX_IN_FLIGHT_KEYS = 512;
-    private static final long MAX_FOLLOWER_WAIT_MS = 1_500L;
+    private static final long MAX_FOLLOWER_WAIT_MS = 5_000L;
 
     private final StringRedisTemplate redis;
     private final ObjectMapper json = new ObjectMapper();
