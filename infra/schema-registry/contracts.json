@@ -30,6 +30,84 @@
       ],
       "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/reading-progress-v2-compatible.avsc",
       "negative": "integration-tests/schema-evolution-poc/src/test/resources/history/reading-progress-v2-incompatible.avsc"
+    },
+    {
+      "topic": "engagement.ratings.v1.avro",
+      "record": "com.vellumhub.kafka.avro.engagement.RatingCreatedEvent",
+      "compatibility": "BACKWARD_TRANSITIVE",
+      "versions": [
+        {
+          "label": "v1",
+          "file": "lib/kafka-avro-contracts/src/main/avro/RatingCreatedEvent.avsc"
+        }
+      ],
+      "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/rating-created-event-v2-compatible.avsc",
+      "negative": "integration-tests/schema-evolution-poc/src/test/resources/history/rating-created-event-v2-incompatible.avsc"
+    },
+    {
+      "topic": "engagement.ratings.v1.avro",
+      "record": "com.vellumhub.kafka.avro.engagement.RatingUpdatedEvent",
+      "compatibility": "BACKWARD_TRANSITIVE",
+      "versions": [
+        {
+          "label": "v1",
+          "file": "lib/kafka-avro-contracts/src/main/avro/RatingUpdatedEvent.avsc"
+        }
+      ],
+      "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/rating-updated-event-v2-compatible.avsc",
+      "negative": "integration-tests/schema-evolution-poc/src/test/resources/history/rating-updated-event-v2-incompatible.avsc"
+    },
+    {
+      "topic": "engagement.ratings.v1.avro",
+      "record": "com.vellumhub.kafka.avro.engagement.RatingDeletedEvent",
+      "compatibility": "BACKWARD_TRANSITIVE",
+      "versions": [
+        {
+          "label": "v1",
+          "file": "lib/kafka-avro-contracts/src/main/avro/RatingDeletedEvent.avsc"
+        }
+      ],
+      "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/rating-deleted-event-v2-compatible.avsc",
+      "negative": "integration-tests/schema-evolution-poc/src/test/resources/history/rating-deleted-event-v2-incompatible.avsc"
+    },
+    {
+      "topic": "engagement.ratings.v1.avro",
+      "record": "com.vellumhub.kafka.avro.engagement.RatingBaselineEvent",
+      "compatibility": "BACKWARD_TRANSITIVE",
+      "versions": [
+        {
+          "label": "v1",
+          "file": "lib/kafka-avro-contracts/src/main/avro/RatingBaselineEvent.avsc"
+        }
+      ],
+      "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/rating-baseline-event-v2-compatible.avsc",
+      "negative": "integration-tests/schema-evolution-poc/src/test/resources/history/rating-baseline-event-v2-incompatible.avsc"
+    },
+    {
+      "topic": "engagement.reactions.v1.avro",
+      "record": "com.vellumhub.kafka.avro.engagement.ReactionChangedEvent",
+      "compatibility": "BACKWARD_TRANSITIVE",
+      "versions": [
+        {
+          "label": "v1",
+          "file": "lib/kafka-avro-contracts/src/main/avro/ReactionChangedEvent.avsc"
+        }
+      ],
+      "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/reaction-changed-event-v2-compatible.avsc",
+      "negative": "integration-tests/schema-evolution-poc/src/test/resources/history/reaction-changed-event-v2-incompatible.avsc"
+    },
+    {
+      "topic": "engagement.reactions.v1.avro",
+      "record": "com.vellumhub.kafka.avro.engagement.ReactionBaselineEvent",
+      "compatibility": "BACKWARD_TRANSITIVE",
+      "versions": [
+        {
+          "label": "v1",
+          "file": "lib/kafka-avro-contracts/src/main/avro/ReactionBaselineEvent.avsc"
+        }
+      ],
+      "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/reaction-baseline-event-v2-compatible.avsc",
+      "negative": "integration-tests/schema-evolution-poc/src/test/resources/history/reaction-baseline-event-v2-incompatible.avsc"
     }
   ]
 }
