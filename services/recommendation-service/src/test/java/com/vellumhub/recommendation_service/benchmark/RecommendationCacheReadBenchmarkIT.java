@@ -60,8 +60,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSupport {
-    private static final int BOOKS = 120;
-    private static final int USERS = 420;
+    private static final int BOOKS = 600;
+    private static final int USERS = 900;
     private static final long SEED = 360_036L;
 
     @Container
@@ -75,6 +75,7 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
         registry.add("spring.data.redis.host", REDIS::getHost);
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
         registry.add("spring.jpa.properties.hibernate.generate_statistics", () -> "true");
+        registry.add("logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener", () -> "OFF");
         registry.add("vellumhub.cache.recommendations.enabled",
                 () -> System.getProperty("cache.benchmark.enabled", "false"));
     }
@@ -206,7 +207,7 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
         json.writerWithDefaultPrettyPrinter().writeValue(dir.resolve(mode + ".json").toFile(),
                 Map.of("commit_sha", sha, "timestamp_utc", Instant.now().toString(),
                         "cache_enabled", cacheEnabled, "profile", profile,
-                        "dataset", "120 deterministic books / 420 profile vectors, seed 360036",
+                        "dataset", "600 deterministic books / 900 profile vectors, seed 360036",
                         "notes", "MockMvc authenticated HTTP, PostgreSQL pgvector + Redis Testcontainers; SQL statements from Hibernate statistics, process CPU/GC plus aggregate Redis stages. Not a network HTTP benchmark or production SLA. Warmup excluded.",
                         "measurements", summaries));
     }
