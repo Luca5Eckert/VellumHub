@@ -76,8 +76,9 @@ public class RecommendationResponseCache {
             String global = null;
             String user = null;
             try {
-                global = generation(GLOBAL_VERSION_KEY);
-                user = generation(USER_VERSION_PREFIX + userId);
+                Generations versions = generations(userId);
+                global = versions.global();
+                user = versions.user();
                 key = responseKey(userId, limit, offset, global, user);
                 String lookupKey = key;
                 String cached = timed("get", () -> redis.opsForValue().get(lookupKey));
@@ -107,16 +108,17 @@ public class RecommendationResponseCache {
             List<RecommendationResponse> fresh = loader.get();
             if (key != null && fresh != null && !fresh.isEmpty()) {
                 try {
-                    // If invalidation raced with the DB read, do not write a stale value at all.
-                    if (global.equals(generation(GLOBAL_VERSION_KEY))
-                            && user.equals(generation(USER_VERSION_PREFIX + userId))) {
-                        String payload = json.writeValueAsString(fresh);
-                        String destination = key;
-                        timed("put", () -> {
-                            redis.opsForValue().set(destination, payload, ttl());
-                            return null;
-                        });
-                    }
+                    // Epochs are embedded in the response key. If a commit
+                    // changes either generation during the DB read, this put
+                    // can write ONLY the now-unreachable old key, never the
+                    // new current key. Re-reading both epochs here adds two
+                    // sequential Redis RTTs but does not strengthen freshness.
+                    String payload = json.writeValueAsString(fresh);
+                    String destination = key;
+                    timed("put", () -> {
+                        redis.opsForValue().set(destination, payload, ttl());
+                        return null;
+                    });
                 } catch (RuntimeException | JsonProcessingException redisError) {
                     operationFailure("put");
                     // Redis/serialization never changes the correct source-of-truth response.
@@ -184,19 +186,38 @@ public class RecommendationResponseCache {
         }
     }
 
-    private String generation(String versionKey) {
+    private record Generations(String global, String user) {}
+
+    /**
+     * One roundtrip for the two existing generations via MGET; per-user
+     * SETNX is only necessary on the very first request after expiry.
+     * A global token is created once per Redis lifetime, not per read.
+     */
+    private Generations generations(UUID userId) {
         return timed("generation", () -> {
-            String value = redis.opsForValue().get(versionKey);
-            if (value != null) return value;
-            String candidate = UUID.randomUUID().toString();
-            Boolean created = versionKey.startsWith(USER_VERSION_PREFIX)
-                    ? redis.opsForValue().setIfAbsent(versionKey, candidate, USER_GENERATION_TTL)
-                    : redis.opsForValue().setIfAbsent(versionKey, candidate);
-            if (Boolean.TRUE.equals(created)) return candidate;
-            value = redis.opsForValue().get(versionKey);
-            if (value == null) throw new IllegalStateException("Missing cache generation");
-            return value;
+            String userKey = USER_VERSION_PREFIX + userId;
+            List<String> values = redis.opsForValue().multiGet(List.of(GLOBAL_VERSION_KEY, userKey));
+            if (values == null || values.size() != 2) {
+                throw new IllegalStateException("Missing cache generation response");
+            }
+            String global = values.get(0);
+            String user = values.get(1);
+            if (global == null) global = initializeGeneration(GLOBAL_VERSION_KEY);
+            if (user == null) user = initializeGeneration(userKey);
+            return new Generations(global, user);
         });
+    }
+
+    private String initializeGeneration(String versionKey) {
+        String candidate = UUID.randomUUID().toString();
+        Boolean created = versionKey.startsWith(USER_VERSION_PREFIX)
+                ? redis.opsForValue().setIfAbsent(versionKey, candidate, USER_GENERATION_TTL)
+                : redis.opsForValue().setIfAbsent(versionKey, candidate);
+        if (Boolean.TRUE.equals(created)) return candidate;
+        // Another replica initialized the version before our SETNX.
+        String current = redis.opsForValue().get(versionKey);
+        if (current == null) throw new IllegalStateException("Missing cache generation");
+        return current;
     }
 
     private String responseKey(UUID userId, int limit, int offset, String global, String user) {
