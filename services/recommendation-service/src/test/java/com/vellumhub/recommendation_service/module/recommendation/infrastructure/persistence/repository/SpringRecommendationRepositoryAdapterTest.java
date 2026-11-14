@@ -97,12 +97,12 @@ class SpringRecommendationRepositoryAdapterTest {
                 buildRecommendation(bookId1),
                 buildRecommendation(bookId2)
         );
-        when(recommendationRepositoryJpa.findAllById(ids)).thenReturn(recommendations);
+        when(recommendationRepositoryJpa.findPageWithGenres(ids)).thenReturn(recommendations);
 
         List<Recommendation> result = adapter.findAllById(ids);
 
         assertThat(result).hasSize(2);
-        verify(recommendationRepositoryJpa).findAllById(ids);
+        verify(recommendationRepositoryJpa).findPageWithGenres(ids);
     }
 
     @Test
