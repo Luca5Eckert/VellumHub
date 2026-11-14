@@ -88,7 +88,7 @@ class SpringRecommendationRepositoryAdapterTest {
     }
 
     @Test
-    @DisplayName("Should delegate findAllById to JPA repository and return list")
+    @DisplayName("Should hydrate genres in one page query")
     void shouldDelegateFindAllById() {
         UUID bookId1 = UUID.randomUUID();
         UUID bookId2 = UUID.randomUUID();
@@ -109,10 +109,17 @@ class SpringRecommendationRepositoryAdapterTest {
     @DisplayName("Should return empty list when no recommendations found for given ids")
     void shouldReturnEmptyListWhenNoRecommendationsFound() {
         List<UUID> ids = List.of(UUID.randomUUID());
-        when(recommendationRepositoryJpa.findAllById(ids)).thenReturn(List.of());
+        when(recommendationRepositoryJpa.findPageWithGenres(ids)).thenReturn(List.of());
 
         List<Recommendation> result = adapter.findAllById(ids);
 
         assertThat(result).isEmpty();
+        verify(recommendationRepositoryJpa).findPageWithGenres(ids);
+    }
+
+    @Test
+    void emptyRankedPageSkipsJpaLookup() {
+        assertThat(adapter.findAllById(List.of())).isEmpty();
+        verifyNoInteractions(recommendationRepositoryJpa);
     }
 }
