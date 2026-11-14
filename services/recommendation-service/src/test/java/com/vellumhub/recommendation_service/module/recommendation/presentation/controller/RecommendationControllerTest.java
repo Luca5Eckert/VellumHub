@@ -56,8 +56,7 @@ class RecommendationControllerTest {
                 mapper,
                 getRecommendationsUseCase,
                 new VellumHubMetrics(meterRegistry),
-                new RecommendationResponseCache(mock(StringRedisTemplate.class), new ObjectMapper(),
-                        meterRegistry, false, 45, 100)
+                new RecommendationResponseCache(mock(StringRedisTemplate.class), meterRegistry, false, 45, 100)
         );
     }
 
