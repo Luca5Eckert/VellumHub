@@ -62,7 +62,16 @@ public class EngagementEventProcessor {
             SELECT last_revision FROM engagement_event_offsets
             WHERE aggregate_type=? AND aggregate_id=? FOR UPDATE
             """,Long.class,aggregateType,aggregateId);
-        if(revision<=last) return EventProcessingOutcome.DUPLICATE;
+        if(revision<=last) {
+            Integer known = jdbc.queryForObject("""
+                SELECT count(*) FROM processed_engagement_events
+                WHERE event_id=? AND aggregate_type=? AND aggregate_id=?
+                """,Integer.class,id,aggregateType,aggregateId);
+            if (known != null && known == 1) return EventProcessingOutcome.DUPLICATE;
+            // A different identity for an already-applied revision is not an idempotent redelivery.
+            throw new IllegalStateException("Engagement revision collision aggregate="+aggregateId
+                    +" revision="+revision);
+        }
         // Existing aggregates begin with a baseline at their persisted revision.
         // New aggregates must begin with a creation fact at revision zero.
         boolean baseline=fact instanceof RatingBaselineEvent || fact instanceof ReactionBaselineEvent;
