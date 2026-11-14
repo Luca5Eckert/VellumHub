@@ -251,7 +251,7 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
         redis.getConnectionFactory().getConnection().serverCommands().flushDb();
         UUID hotUser = id("user", userCount - 2);
         // Warm Spring/JPA without warming this user's cache key.
-        for (int i = 0; i < 30; i++) request(id("user", USERS - 1));
+        for (int i = 0; i < 30; i++) request(id("user", userCount - 1));
 
         var sqlStats = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
         long sqlBefore = sqlStats.getPrepareStatementCount();
@@ -379,7 +379,7 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
                 case "cold" -> i % userCount;
                 case "warm" -> i % 8;
                 case "mixed80" -> i % 5 == 0 ? 24 + (i % (userCount - 24)) : i % 12;
-                case "mixed95" -> i % 20 == 0 ? 24 + (i % (USERS - 24)) : i % 12;
+                case "mixed95" -> i % 20 == 0 ? 24 + (i % (userCount - 24)) : i % 12;
                 default -> throw new IllegalArgumentException(scenario);
             };
             users.add(id("user", index));
