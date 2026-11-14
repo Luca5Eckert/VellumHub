@@ -27,7 +27,7 @@ permissions:
 jobs:
   distributed-benchmark:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     env:
       BENCHMARK_PROFILE: ${{ github.event_name == 'pull_request' && 'smoke' || inputs.profile || 'reference' }}
     steps:
@@ -46,6 +46,7 @@ jobs:
         run: |
           docker pull pgvector/pgvector:pg15
           docker pull confluentinc/cp-kafka:7.5.0
+          docker pull redis:7.4-alpine
 
       # Keep the two distributed suites in separate Maven processes. Both suites own
       # static Testcontainers/Spring test state and use the production Kafka consumer
@@ -73,6 +74,39 @@ jobs:
           -Dbenchmark.outputDir=${GITHUB_WORKSPACE}/services/recommendation-service/target/distributed-benchmark/${BENCHMARK_PROFILE}
           test
 
+      # Reuse this existing job instead of adding another mandatory workflow/check.
+      # Cache correctness and A/B smoke have separate JVM lifecycles from the
+      # existing Kafka convergence/freshness harnesses.
+      - name: Verify Redis cache and pre-warmed event freshness
+        run: >-
+          mvn -B -ntp -pl services/recommendation-service -am
+          -Dtest=RecommendationResponseRedisIT,RecommendationCacheFreshnessIT
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dgroups=distributed,distributed-benchmark
+          test
+
+      - name: Measure cache-disabled authenticated read smoke
+        run: >-
+          mvn -B -ntp -pl services/recommendation-service -am
+          -Dtest=RecommendationCacheReadBenchmarkIT
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dgroups=cache-benchmark
+          -Dcache.benchmark.enabled=false
+          -Dbenchmark.profile=${BENCHMARK_PROFILE}
+          -Dbenchmark.commitSha=${{ github.event.pull_request.head.sha || github.sha }}
+          test
+
+      - name: Measure cache-enabled authenticated read smoke
+        run: >-
+          mvn -B -ntp -pl services/recommendation-service -am
+          -Dtest=RecommendationCacheReadBenchmarkIT
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dgroups=cache-benchmark
+          -Dcache.benchmark.enabled=true
+          -Dbenchmark.profile=${BENCHMARK_PROFILE}
+          -Dbenchmark.commitSha=${{ github.event.pull_request.head.sha || github.sha }}
+          test
+
       - name: Assert AFF-REC-009 and AFF-OPS-010 from JUnit and raw evidence
         if: always()
         run: >-
@@ -90,5 +124,6 @@ jobs:
           path: |
             services/recommendation-service/target/distributed-benchmark/${{ env.BENCHMARK_PROFILE }}/
             target/architecture-evidence/
+            services/recommendation-service/target/cache-benchmark/
           if-no-files-found: error
           retention-days: 30
