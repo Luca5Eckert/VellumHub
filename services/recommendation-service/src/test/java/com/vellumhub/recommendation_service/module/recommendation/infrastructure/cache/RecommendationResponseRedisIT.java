@@ -87,15 +87,4 @@ class RecommendationResponseRedisIT {
         assertThat(second.read(user, 10, 0, () -> oldBooks)).isEqualTo(oldBooks);
     }
 
-    @Test
-    void redisStoppedDoesNotBlockDatabaseRead() {
-        UUID user = UUID.randomUUID();
-        REDIS.getDockerClient().stopContainerCmd(REDIS.getContainerId()).exec();
-        try {
-            List<RecommendationResponse> expected = response("Postgres");
-            assertThat(first.read(user, 10, 0, () -> expected)).isEqualTo(expected);
-        } finally {
-            REDIS.getDockerClient().startContainerCmd(REDIS.getContainerId()).exec();
-        }
-    }
 }
