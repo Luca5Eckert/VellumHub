@@ -1,5 +1,7 @@
 # VellumHub
 
+**Instalação nova com Avro:** [Compose e Kind: Registry + contratos + consumers](docs/FRESH_AVRO_INSTALLATION.md). Os defaults legados não foram alterados; selecione o bootstrap de Avro apenas em ambientes vazios.
+
 > A social reading and recommendation platform used to explore when independent services, asynchronous state, and stronger delivery guarantees justify their operational cost.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)

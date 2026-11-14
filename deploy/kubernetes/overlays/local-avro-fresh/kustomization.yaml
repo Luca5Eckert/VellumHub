@@ -6,6 +6,6 @@ resources:
   - ../local
   - ../../schema-registry/overlays/local
 patches:
-  - path: ../avro-fresh-patches/catalog.yaml
-  - path: ../avro-fresh-patches/engagement.yaml
-  - path: ../avro-fresh-patches/recommendation.yaml
+  - path: catalog.yaml
+  - path: engagement.yaml
+  - path: recommendation.yaml
