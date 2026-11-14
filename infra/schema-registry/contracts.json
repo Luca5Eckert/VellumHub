@@ -17,6 +17,19 @@
       ],
       "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/book-v3-compatible.avsc",
       "negative": "integration-tests/schema-evolution-poc/src/test/resources/history/book-v3-incompatible.avsc"
+    },
+    {
+      "topic": "reading-progress-events.avro",
+      "record": "com.vellumhub.kafka.avro.readingprogress.ReadingProgressChangedEvent",
+      "compatibility": "BACKWARD_TRANSITIVE",
+      "versions": [
+        {
+          "label": "v1",
+          "file": "lib/kafka-avro-contracts/src/main/avro/ReadingProgressChangedEvent.avsc"
+        }
+      ],
+      "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/reading-progress-v2-compatible.avsc",
+      "negative": "integration-tests/schema-evolution-poc/src/test/resources/history/reading-progress-v2-incompatible.avsc"
     }
   ]
 }

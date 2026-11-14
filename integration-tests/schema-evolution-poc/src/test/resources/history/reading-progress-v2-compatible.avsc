@@ -1,0 +1,68 @@
+{
+  "type": "record",
+  "name": "ReadingProgressChangedEvent",
+  "namespace": "com.vellumhub.kafka.avro.readingprogress",
+  "doc": "Catalog-owned ordered Reading Progress fact; key is bookProgressId.",
+  "fields": [
+    {
+      "name": "eventId",
+      "type": "string",
+      "doc": "Immutable UUID identifying the original fact"
+    },
+    {
+      "name": "occurredAt",
+      "type": "string",
+      "doc": "UTC ISO-8601 instant"
+    },
+    {
+      "name": "bookProgressId",
+      "type": "string",
+      "doc": "Aggregate UUID and Kafka key"
+    },
+    {
+      "name": "userId",
+      "type": "string"
+    },
+    {
+      "name": "bookId",
+      "type": "string"
+    },
+    {
+      "name": "progress",
+      "type": "string"
+    },
+    {
+      "name": "oldPage",
+      "type": "int"
+    },
+    {
+      "name": "newPage",
+      "type": "int"
+    },
+    {
+      "name": "revision",
+      "type": "long",
+      "doc": "Aggregate revision, not schema version"
+    },
+    {
+      "name": "kind",
+      "type": {
+        "type": "enum",
+        "name": "ReadingProgressKind",
+        "symbols": [
+          "BASELINE",
+          "CREATED",
+          "UPDATED"
+        ]
+      }
+    },
+    {
+      "name": "migrationNote",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    }
+  ]
+}
