@@ -78,7 +78,8 @@ public class RecommendationResponseCache {
                 global = generation(GLOBAL_VERSION_KEY);
                 user = generation(USER_VERSION_PREFIX + userId);
                 key = responseKey(userId, limit, offset, global, user);
-                String cached = timed("get", () -> redis.opsForValue().get(key));
+                String lookupKey = key;
+                String cached = timed("get", () -> redis.opsForValue().get(lookupKey));
                 if (cached != null) {
                     try {
                         List<RecommendationResponse> response = json.readValue(cached, RESPONSES);
@@ -87,7 +88,7 @@ public class RecommendationResponseCache {
                         return response;
                     } catch (JsonProcessingException invalidValue) {
                         // Corrupt/old payload is never returned. Version keys allow safe roll-forward.
-                        timed("delete", () -> { redis.delete(key); return null; });
+                        timed("delete", () -> { redis.delete(lookupKey); return null; });
                     }
                 }
                 outcome = "miss";
