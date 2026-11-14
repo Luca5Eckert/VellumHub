@@ -50,8 +50,16 @@ class FreshInstallTest(unittest.TestCase):
 
     def test_kind_overlay_matches_compose_without_changing_existing_local(self):
         overlay = self.read_yaml("deploy/kubernetes/overlays/local-avro-fresh/kustomization.yaml")
-        self.assertIn("../local", overlay["resources"])
+        self.assertIn("../../base", overlay["resources"])
         self.assertNotIn("../../schema-registry/overlays/local", overlay["resources"])
+        for filename in ("infrastructure.yaml", "databases.yaml", "local-patches.yaml"):
+            self.assertEqual(
+                (ROOT / "deploy/kubernetes/overlays/local" / filename).read_text(),
+                (ROOT / "deploy/kubernetes/overlays/local-avro-fresh" / filename).read_text(),
+                f"Shared Kind infrastructure drift: {filename}",
+            )
+        stable = self.read_yaml("deploy/kubernetes/overlays/local/kustomization.yaml")
+        self.assertEqual(stable["images"], overlay["images"])
         for service in REQUIRED:
             patch = self.read_yaml(f"deploy/kubernetes/overlays/local-avro-fresh/{service.split('-')[0]}.json")
             env = {e["value"]["name"]: e["value"]["value"] for e in patch}
