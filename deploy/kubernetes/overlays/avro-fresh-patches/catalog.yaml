@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: catalog-service}
+spec:
+  template:
+    spec:
+      containers:
+        - name: catalog-service
+          env:
+            - {name: BOOK_EVENTS_WIRE_FORMAT, value: avro}
+            - {name: READING_PROGRESS_EVENTS_WIRE_FORMAT, value: avro}
+            - {name: BOOK_AVRO_REGISTRY_URL, value: "http://schema-registry:8080/apis/ccompat/v7"}
+            - {name: READING_PROGRESS_AVRO_REGISTRY_URL, value: "http://schema-registry:8080/apis/ccompat/v7"}

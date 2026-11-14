@@ -1,0 +1,11 @@
+# Fresh-install local bridge ONLY. The standalone Registry remains independently usable.
+# Docker creates vellum-hub_vellum-network when the main Kafka starts.
+services:
+  schema-registry:
+    networks:
+      - vellum-network
+      - vellum-app-net
+networks:
+  vellum-app-net:
+    external: true
+    name: vellum-hub_vellum-network

@@ -1,0 +1,11 @@
+# For a NEW Kind environment only. Provision/approve local Registry subjects first.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vellumhub
+resources:
+  - ../local
+  - ../../schema-registry/overlays/local
+patches:
+  - path: ../avro-fresh-patches/catalog.yaml
+  - path: ../avro-fresh-patches/engagement.yaml
+  - path: ../avro-fresh-patches/recommendation.yaml
