@@ -170,6 +170,7 @@ public class RecommendationResponseCache {
     private List<RecommendationResponse> await(
             CompletableFuture<List<RecommendationResponse>> pending,
             Supplier<List<RecommendationResponse>> loader) {
+        coalescing("waiting");
         try {
             List<RecommendationResponse> result = pending.get(MAX_FOLLOWER_WAIT_MS, TimeUnit.MILLISECONDS);
             coalescing("joined");
