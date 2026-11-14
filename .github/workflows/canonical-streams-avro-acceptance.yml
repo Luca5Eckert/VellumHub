@@ -1,4 +1,4 @@
-name: Canonical streams Avro real consumer acceptance
+name: Canonical streams Avro distributed publisher and consumer acceptance
 on:
   pull_request:
     paths:
@@ -16,6 +16,7 @@ on:
     paths:
       - '.github/workflows/canonical-streams-avro-acceptance.yml'
       - 'lib/kafka-avro-contracts/**'
+      - 'services/catalog-service/**'
       - 'services/engagement-service/**'
       - 'services/recommendation-service/**'
 
@@ -35,6 +36,8 @@ jobs:
       matrix:
         include:
           - stream: reading-avro-e2e
+            service: catalog-service
+          - stream: reading-avro-e2e
             service: engagement-service
           - stream: reading-avro-e2e
             service: recommendation-service
@@ -51,7 +54,7 @@ jobs:
           docker info
           docker pull confluentinc/cp-kafka:7.5.0
           docker pull apicurio/apicurio-registry:3.1.7
-      - name: Assert actual Kafka Avro listener, SQL projection and checkpoint
+      - name: Assert actual Avro Outbox, cutover, listener and SQL checkpoints
         run: >-
           mvn -B -ntp -pl services/${{ matrix.service }} -am
           -Dgroups=${{ matrix.stream }}
