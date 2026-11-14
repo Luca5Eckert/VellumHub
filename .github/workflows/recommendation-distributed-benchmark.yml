@@ -53,7 +53,7 @@ jobs:
       - name: Focused cache and ranked read unit tests
         run: >-
           mvn -B -ntp -pl services/recommendation-service -am
-          -Dtest=RecommendationResponseCacheTest,GetRecommendationsUseCaseTest
+          -Dtest=RecommendationResponseCacheTest,GetRecommendationsUseCaseTest,SpringRecommendationRepositoryAdapterTest
           -Dsurefire.failIfNoSpecifiedTests=false
           test
 
