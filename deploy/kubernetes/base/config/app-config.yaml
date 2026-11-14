@@ -14,6 +14,11 @@ data:
   RECOMMENDATION_SERVICE_URL: http://recommendation-service:8080
   SPRING_DATA_REDIS_HOST: redis
   SPRING_DATA_REDIS_PORT: "6379"
+  # Recommendation cache is distinct from Gateway's rate limiter.
+  RECOMMENDATION_CACHE_ENABLED: "false"
+  RECOMMENDATION_CACHE_REDIS_HOST: redis-recommendation-cache
+  RECOMMENDATION_CACHE_REDIS_PORT: "6379"
+  RECOMMENDATION_CACHE_TTL_SECONDS: "45"
   KAFKA_BOOTSTRAP_SERVERS: kafka:9092
   # Development-only local broker; production overlay must switch to SASL_SSL.
   KAFKA_SECURITY_PROTOCOL: PLAINTEXT
