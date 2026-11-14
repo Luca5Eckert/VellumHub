@@ -1,6 +1,7 @@
 package com.vellumhub.recommendation_service.module.user_profile.infrastructure.repository;
 
 import com.vellumhub.recommendation_service.module.user_profile.domain.model.UserProfile;
+import com.vellumhub.recommendation_service.module.recommendation.infrastructure.cache.RecommendationResponseCache;
 import com.vellumhub.recommendation_service.module.user_profile.domain.port.UserProfileRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,9 +12,12 @@ import java.util.UUID;
 public class UserProfileRepositoryAdapter implements UserProfileRepository {
 
     private final JpaUserProfileRepository jpaUserProfileRepository;
+    private final RecommendationResponseCache cache;
 
-    public UserProfileRepositoryAdapter(JpaUserProfileRepository jpaUserProfileRepository) {
+    public UserProfileRepositoryAdapter(JpaUserProfileRepository jpaUserProfileRepository,
+            RecommendationResponseCache cache) {
         this.jpaUserProfileRepository = jpaUserProfileRepository;
+        this.cache = cache;
     }
 
     @Override
@@ -24,5 +28,6 @@ public class UserProfileRepositoryAdapter implements UserProfileRepository {
     @Override
     public void save(UserProfile userProfile) {
         jpaUserProfileRepository.save(userProfile);
+        cache.invalidateUserAfterCommit(userProfile.getUserId());
     }
 }
