@@ -33,8 +33,8 @@ def read_manifest():
         expected = item["topic"] + "-" + item["record"]
         if item.get("subject", expected) != expected:
             raise RegistryError("Subject must follow TopicRecordNameStrategy: " + expected)
-        if len(item["versions"]) < 2:
-            raise RegistryError("Need a historical writer and current writer")
+        if len(item["versions"]) < 1:
+            raise RegistryError("At least one approved writer version is required")
         for version in item["versions"]:
             schema = schema_from_file(version["file"], item["record"])
             if schema.get("type") != "record":

@@ -32,9 +32,15 @@ public record OutboxMessage(UUID eventId, String aggregateType, UUID aggregateId
     }
 
     public static OutboxMessage readingProgress(ReadingProgressChangedEvent event) {
+        return readingProgress(event, false);
+    }
+
+    /** Kafka wire routing is stored at enqueue, never recomputed by a new relay version. */
+    public static OutboxMessage readingProgress(ReadingProgressChangedEvent event, boolean avro) {
         return new OutboxMessage(event.eventId(), "BOOK_PROGRESS", event.bookProgressId(),
-                event.revision(), "ReadingProgressChangedEvent", KafkaTopics.READING_PROGRESS,
-                event.bookProgressId().toString(), event);
+                event.revision(), "ReadingProgressChangedEvent",
+                avro ? KafkaTopics.READING_PROGRESS_AVRO : KafkaTopics.READING_PROGRESS,
+                event.bookProgressId().toString(), event, avro ? "AVRO" : "JSON", 1);
     }
 
     public static OutboxMessage book(BookChangedEvent event) {

@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -42,7 +41,6 @@ class DefineBookStatusHandlerTest {
     @org.mockito.Spy
     private ReadingProgressEventFactory eventFactory = new ReadingProgressEventFactory();
 
-    @InjectMocks
     private DefineBookStatusHandler handler;
 
     private UUID userId;
@@ -51,6 +49,7 @@ class DefineBookStatusHandlerTest {
 
     @BeforeEach
     void setUp() {
+        handler = new DefineBookStatusHandler(defineBookStatusUseCase, outboxWriter, eventFactory);
         bookProgressId = UUID.randomUUID();
         userId = UUID.randomUUID();
         bookId = UUID.randomUUID();

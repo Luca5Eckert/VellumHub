@@ -27,21 +27,45 @@ public class KafkaOutboxTransport {
     );
     private final KafkaTemplate<String, Object> kafka;
     private final BookAvroPublisher avro;
+    private final ReadingProgressAvroPublisher readingAvro;
     private final JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
 
     @Autowired
-    public KafkaOutboxTransport(KafkaTemplate<String, Object> kafka, BookAvroPublisher avro) {
+    public KafkaOutboxTransport(KafkaTemplate<String, Object> kafka,
+            BookAvroPublisher avro, ReadingProgressAvroPublisher readingAvro) {
         this.kafka = kafka;
         this.avro = avro;
+        this.readingAvro = readingAvro;
+    }
+    /** Compatibility constructor for existing Book integration tests. */
+    public KafkaOutboxTransport(KafkaTemplate<String, Object> kafka, BookAvroPublisher avro) {
+        this(kafka, avro, null);
     }
     /** Kept for existing JSON-only tests. */
     public KafkaOutboxTransport(KafkaTemplate<String, Object> kafka) {
         this.kafka = kafka;
         this.avro = null;
+        this.readingAvro = null;
     }
 
     public CompletableFuture<SendResult<String, Object>> send(OutboxRecord record) {
         if ("AVRO".equals(record.wireFormat())) {
+            if ("ReadingProgressChangedEvent".equals(record.eventType())) {
+                if (!KafkaTopics.READING_PROGRESS_AVRO.equals(record.topic()) ||
+                        record.payloadSchemaVersion() != 1)
+                    throw new IllegalArgumentException("Unsupported Reading Progress Avro route");
+                if (readingAvro == null) throw new IllegalStateException("Reading Progress Avro publisher unavailable");
+                try {
+                    ReadingProgressChangedEvent event =
+                            mapper.readValue(record.payload(), ReadingProgressChangedEvent.class);
+                    if (!record.eventId().equals(event.eventId()) ||
+                            !record.messageKey().equals(event.bookProgressId().toString()))
+                        throw new IllegalArgumentException("Reading Progress Outbox identity mismatch");
+                    return readingAvro.send(record.topic(), record.messageKey(), event);
+                } catch (JsonProcessingException ex) {
+                    throw new IllegalArgumentException("Invalid Reading Progress Outbox JSONB", ex);
+                }
+            }
             if (!"BookChangedEvent".equals(record.eventType()) ||
                     !KafkaTopics.BOOK_EVENTS_AVRO.equals(record.topic()) ||
                     record.payloadSchemaVersion() != 1)
