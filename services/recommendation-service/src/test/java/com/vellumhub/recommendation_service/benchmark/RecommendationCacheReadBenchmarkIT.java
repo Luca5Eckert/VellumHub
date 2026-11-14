@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -69,6 +70,7 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
     @Autowired JdbcTemplate jdbc;
     @Autowired MockMvc mvc;
     @Autowired StringRedisTemplate redis;
+    @Autowired MeterRegistry meterRegistry;
     private final ObjectMapper json = new ObjectMapper();
 
     @BeforeEach
@@ -110,7 +112,16 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
                     redis.getConnectionFactory().getConnection().serverCommands().flushDb();
                     List<UUID> users = workload(scenario, operations);
                     // Warm-up is never included in the measured samples.
-                    for (int i = 0; i < Math.min(30, users.size()); i++) request(users.get(i));
+                    if ("cold".equals(scenario)) {
+                        // Warm the JVM/HTTP/DB path without pre-populating measured keys.
+                        for (int i = 0; i < 30; i++) request(id("user", USERS - 1));
+                    } else {
+                        for (int i = 0; i < Math.min(30, users.size()); i++) request(users.get(i));
+                    }
+                    double hitsBefore = cacheCount("hit");
+                    double missesBefore = cacheCount("miss");
+                    double errorsBefore = cacheCount("error");
+                    double bypassBefore = cacheCount("bypass");
                     List<Double> latencies = Collections.synchronizedList(new ArrayList<>());
                     long start = System.nanoTime();
                     try (var pool = Executors.newFixedThreadPool(concurrency)) {
@@ -136,6 +147,10 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
                     row.put("p95_ms", percentile(latencies, .95));
                     row.put("p99_ms", percentile(latencies, .99));
                     row.put("throughput_requests_per_sec", latencies.size() * 1_000_000_000.0 / elapsed);
+                    row.put("cache_hits", cacheCount("hit") - hitsBefore);
+                    row.put("cache_misses", cacheCount("miss") - missesBefore);
+                    row.put("cache_errors", cacheCount("error") - errorsBefore);
+                    row.put("cache_bypass", cacheCount("bypass") - bypassBefore);
                     row.put("latencies_ms", latencies); // raw, no real user IDs or tokens
                     summaries.add(row);
                     assertThat(latencies).hasSize(operations);
@@ -143,7 +158,7 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
             }
         }
         String sha = System.getProperty("benchmark.commitSha", System.getenv().getOrDefault("GITHUB_SHA", "local"));
-        Path dir = Path.of("services/recommendation-service/target/cache-benchmark", sha);
+        Path dir = Path.of("target/cache-benchmark", sha);
         Files.createDirectories(dir);
         String mode = cacheEnabled ? "on" : "off";
         json.writerWithDefaultPrettyPrinter().writeValue(dir.resolve(mode + ".json").toFile(),
@@ -152,6 +167,14 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
                         "dataset", "120 deterministic books / 420 profile vectors, seed 360036",
                         "notes", "MockMvc authenticated HTTP, PostgreSQL pgvector + Redis Testcontainers; no production SLA. Warmup excluded.",
                         "measurements", summaries));
+    }
+
+    private double cacheCount(String result) {
+        var counter = meterRegistry.find("vellumhub.cache.requests")
+                .tag("cache", "recommendations")
+                .tag("result", result)
+                .counter();
+        return counter == null ? 0.0 : counter.count();
     }
 
     private List<UUID> workload(String scenario, int operations) {
