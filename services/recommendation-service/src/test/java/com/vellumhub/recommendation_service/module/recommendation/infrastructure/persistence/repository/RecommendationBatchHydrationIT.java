@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * IDs have already been ranked/paginated by PostgreSQL; this is page hydration only.
  */
 @Tag("distributed-benchmark")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 class RecommendationBatchHydrationIT extends DistributedIntegrationTestSupport {
     @Autowired JdbcTemplate jdbc;
     @Autowired RecommendationRepositoryJpa repository;
