@@ -1,6 +1,11 @@
 package com.vellumhub.recommendation_service.module.reading_progress.infrastructure.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.specific.SpecificRecord;
 import com.vellumhub.kafka.avro.ReadingProgressAvroMapper;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.kafka.contracts.KafkaTopics;
@@ -107,6 +112,14 @@ class ReadingProgressAvroRecommendationDistributedTest extends DistributedIntegr
                     .untilAsserted(() -> assertThat(
                             profiles.findById(user).orElseThrow().getTotalEngagementScore())
                             .isEqualTo(score));
+            // Compatible v2 writer bytes (extra defaulted field) resolve through Registry,
+            // while the deployed v1 specific reader must update the same UserProfile path.
+            UUID v2Progress=UUID.randomUUID(),v2User=UUID.randomUUID();
+            assertThat(profiles.findById(v2User)).isEmpty();
+            sendCompatibleV2(producer,fact(v2Progress,v2User,book,0,
+                    ReadingProgressChangedEvent.Kind.CREATED));
+            checkpoint(v2Progress,0);
+            assertThat(profiles.findById(v2User)).isPresent();
             var gap=fact(progress,user,book,2,ReadingProgressChangedEvent.Kind.UPDATED);
             send(producer,gap);
             var dead=dlt.awaitRecord(dltTopic,progress.toString(),Duration.ofSeconds(30),Duration.ofMillis(200));
@@ -131,6 +144,39 @@ class ReadingProgressAvroRecommendationDistributedTest extends DistributedIntegr
             ReadingProgressChangedEvent.Kind kind) {
         return new ReadingProgressChangedEvent(UUID.randomUUID(),Instant.now(),progress,user,book,
                 "READING",Math.max(0,(int)revision-1),Math.max(0,(int)revision+1),revision,kind);
+    }
+
+
+    /** Register a real compatible v2 writer and send its GenericRecord through the actual Kafka listener. */
+    private static void sendCompatibleV2(KafkaProducer<String,Object> producer,
+            ReadingProgressChangedEvent fact) throws Exception {
+        SpecificRecord v1=(SpecificRecord)ReadingProgressAvroMapper.toAvro(fact);
+        ObjectNode evolved=(ObjectNode)JSON.readTree(v1.getSchema().toString());
+        var added=JSON.createObjectNode();
+        added.put("name","contractNote");
+        var alternatives=JSON.createArrayNode();
+        alternatives.add("null");
+        alternatives.add("string");
+        added.set("type",alternatives);
+        added.putNull("default");
+        ((ArrayNode)evolved.get("fields")).add(added);
+        Schema v2=new Schema.Parser().parse(evolved.toString());
+        String subject=KafkaTopics.READING_PROGRESS_AVRO+"-"+v2.getFullName();
+        String id=URLEncoder.encode(subject,StandardCharsets.UTF_8);
+        var http=HttpClient.newHttpClient();
+        String body=JSON.writeValueAsString(Map.of("schemaType","AVRO",
+                "schema",JSON.writeValueAsString(JSON.readTree(v2.toString()))));
+        var response=http.send(HttpRequest.newBuilder(URI.create(registryUrl()+"/subjects/"+id+"/versions"))
+                        .header("Content-Type","application/vnd.schemaregistry.v1+json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body)).build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertThat(response.statusCode()).as("v1 -> v2 registration: "+response.body()).isEqualTo(200);
+        var wire=new GenericData.Record(v2);
+        for(Schema.Field field:v1.getSchema().getFields())
+            wire.put(field.name(),v1.get(field.pos()));
+        wire.put("contractNote","compatible-v2");
+        producer.send(new ProducerRecord<>(KafkaTopics.READING_PROGRESS_AVRO,
+                fact.bookProgressId().toString(),wire)).get(15,TimeUnit.SECONDS);
     }
 
     private static KafkaProducer<String,Object> producer() {

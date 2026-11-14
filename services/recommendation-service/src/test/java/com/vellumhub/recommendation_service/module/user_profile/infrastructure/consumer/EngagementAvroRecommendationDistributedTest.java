@@ -1,6 +1,11 @@
 package com.vellumhub.recommendation_service.module.user_profile.infrastructure.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.specific.SpecificRecord;
 import com.vellumhub.kafka.avro.EngagementAvroMapper;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.kafka.contracts.KafkaTopics;
@@ -134,6 +139,22 @@ class EngagementAvroRecommendationDistributedTest extends DistributedIntegration
             assertThat(jdbc.queryForObject("SELECT count(*) FROM processed_engagement_events WHERE event_id=?",
                     Long.class,deleted.eventId())).isEqualTo(1L);
 
+            // Real v2 Avro schema IDs are resolved into the deployed v1 generated reader.
+            UUID v2RatingUser=UUID.randomUUID(),v2ReactionUser=UUID.randomUUID();
+            assertThat(profiles.findById(v2RatingUser)).isEmpty();
+            var ratingV2=new RatingCreatedEvent(UUID.randomUUID(),Instant.now(),820005L,
+                    v2RatingUser,book,4,0L);
+            sendCompatibleV2(producer,KafkaTopics.ENGAGEMENT_RATINGS_AVRO,v2RatingUser,ratingV2);
+            checkpoint("RATING",820005L,0L);
+            assertThat(profiles.findById(v2RatingUser)).isPresent();
+
+            assertThat(profiles.findById(v2ReactionUser)).isEmpty();
+            var reactionV2=new ReactionChangedEvent(UUID.randomUUID(),Instant.now(),
+                    820006L,v2ReactionUser,book,null,"POSITIVE","POSITIVE",0L);
+            sendCompatibleV2(producer,KafkaTopics.ENGAGEMENT_REACTIONS_AVRO,v2ReactionUser,reactionV2);
+            checkpoint("REACTION",820006L,0L);
+            assertThat(profiles.findById(v2ReactionUser)).isPresent();
+
             var gap=new RatingUpdatedEvent(UUID.randomUUID(),Instant.now(),ratingId,
                     user,book,2,1,false,4L);
             send(producer,KafkaTopics.ENGAGEMENT_RATINGS_AVRO,user,gap);
@@ -156,6 +177,37 @@ class EngagementAvroRecommendationDistributedTest extends DistributedIntegration
                 .atMost(Duration.ofSeconds(25)).untilAsserted(() -> assertThat(
                         jdbc.queryForObject("SELECT last_revision FROM engagement_event_offsets WHERE aggregate_type=? AND aggregate_id=?",
                                 Long.class,aggregate,Long.toString(id))).isEqualTo(revision));
+    }
+
+    /** Compatible v2 GenericRecord bytes must update the original v1 consumer's read model. */
+    private static void sendCompatibleV2(KafkaProducer<String,Object> producer,
+            String topic,UUID user,Object fact) throws Exception {
+        SpecificRecord v1=(SpecificRecord)EngagementAvroMapper.toAvro(fact);
+        ObjectNode evolved=(ObjectNode)JSON.readTree(v1.getSchema().toString());
+        var added=JSON.createObjectNode();
+        added.put("name","contractNote");
+        var alternatives=JSON.createArrayNode();
+        alternatives.add("null");
+        alternatives.add("string");
+        added.set("type",alternatives);
+        added.putNull("default");
+        ((ArrayNode)evolved.get("fields")).add(added);
+        Schema v2=new Schema.Parser().parse(evolved.toString());
+        String subject=topic+"-"+v2.getFullName();
+        String id=URLEncoder.encode(subject,StandardCharsets.UTF_8);
+        String body=JSON.writeValueAsString(Map.of("schemaType","AVRO",
+                "schema",JSON.writeValueAsString(JSON.readTree(v2.toString()))));
+        var response=HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create(url()+"/subjects/"+id+"/versions"))
+                    .header("Content-Type","application/vnd.schemaregistry.v1+json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body)).build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertThat(response.statusCode()).as("v1 -> v2 registration: "+response.body()).isEqualTo(200);
+        var wire=new GenericData.Record(v2);
+        for(Schema.Field field:v1.getSchema().getFields())
+            wire.put(field.name(),v1.get(field.pos()));
+        wire.put("contractNote","compatible-v2");
+        producer.send(new ProducerRecord<>(topic,user.toString(),wire)).get(15,TimeUnit.SECONDS);
     }
 
     private static KafkaProducer<String,Object> producer() {
