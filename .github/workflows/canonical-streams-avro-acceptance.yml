@@ -1,0 +1,68 @@
+name: Canonical streams Avro real consumer acceptance
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/canonical-streams-avro-acceptance.yml'
+      - 'lib/kafka-avro-contracts/**'
+      - 'lib/kafka-contracts/**'
+      - 'lib/distributed-test-support/**'
+      - 'services/catalog-service/**'
+      - 'services/engagement-service/**'
+      - 'services/recommendation-service/**'
+      - 'infra/schema-registry/**'
+      - 'integration-tests/schema-evolution-poc/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/canonical-streams-avro-acceptance.yml'
+      - 'lib/kafka-avro-contracts/**'
+      - 'services/engagement-service/**'
+      - 'services/recommendation-service/**'
+
+permissions: {contents: read}
+
+concurrency:
+  group: canonical-avro-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  distributed-consumers:
+    name: ${{ matrix.stream }} / ${{ matrix.service }} (Kafka, PostgreSQL, Registry)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - stream: reading-avro-e2e
+            service: engagement-service
+          - stream: reading-avro-e2e
+            service: recommendation-service
+          - stream: engagement-avro-e2e
+            service: engagement-service
+          - stream: engagement-avro-e2e
+            service: recommendation-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21', cache: maven}
+      - name: Ensure Docker services are available
+        run: |
+          docker info
+          docker pull confluentinc/cp-kafka:7.5.0
+          docker pull apicurio/apicurio-registry:3.1.7
+      - name: Assert actual Kafka Avro listener, SQL projection and checkpoint
+        run: >-
+          mvn -B -ntp -pl services/${{ matrix.service }} -am
+          -Dgroups=${{ matrix.stream }}
+          -Dsurefire.failIfNoSpecifiedTests=false test
+      - name: Preserve per-stream distributed test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-avro-${{ matrix.stream }}-${{ matrix.service }}-${{ github.sha }}
+          path: |
+            services/${{ matrix.service }}/target/surefire-reports/
+            lib/kafka-avro-contracts/target/surefire-reports/
+          if-no-files-found: error
+          retention-days: 21
