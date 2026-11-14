@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
-      BENCHMARK_PROFILE: ${{ github.event_name == 'pull_request' && 'smoke' || inputs.profile || 'reference' }}
+      BENCHMARK_PROFILE: ${{ github.event_name == 'pull_request' && 'smoke' || inputs.profile == 'stress' && 'smoke' || inputs.profile || 'reference' }}
       # One focused reference-load investigation on #367; other PRs retain smoke.
       CACHE_BENCHMARK_PROFILE: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 367 && 'reference' || github.event_name == 'pull_request' && 'smoke' || inputs.profile || 'reference' }}
     steps:
