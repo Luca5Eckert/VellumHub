@@ -18,6 +18,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,6 +39,8 @@ class RecommendationResponseRedisIT {
     private StringRedisTemplate redis;
     private RecommendationResponseCache first;
     private RecommendationResponseCache second;
+    private SimpleMeterRegistry firstRegistry;
+    private SimpleMeterRegistry secondRegistry;
 
     @BeforeEach
     void setUp() {
@@ -43,10 +50,10 @@ class RecommendationResponseRedisIT {
         factory.afterPropertiesSet();
         redis = new StringRedisTemplate(factory);
         redis.getConnectionFactory().getConnection().serverCommands().flushDb();
-        first = new RecommendationResponseCache(redis,
-                new SimpleMeterRegistry(), true, 45, 100);
-        second = new RecommendationResponseCache(redis,
-                new SimpleMeterRegistry(), true, 45, 100);
+        firstRegistry = new SimpleMeterRegistry();
+        secondRegistry = new SimpleMeterRegistry();
+        first = new RecommendationResponseCache(redis, firstRegistry, true, 45, 100);
+        second = new RecommendationResponseCache(redis, secondRegistry, true, 45, 100);
     }
 
     @AfterEach
@@ -85,6 +92,90 @@ class RecommendationResponseRedisIT {
         assertThat(first.read(user, 10, 0, () -> oldBooks)).isEqualTo(newBooks);
         first.invalidateAllAfterCommit();
         assertThat(second.read(user, 10, 0, () -> oldBooks)).isEqualTo(oldBooks);
+    }
+
+    @Test
+    void thirtyTwoSimultaneousMissesUseOneDatabaseLoaderPerReplica() throws Exception {
+        UUID user = UUID.randomUUID();
+        List<RecommendationResponse> expected = response("Single flight");
+        AtomicInteger loads = new AtomicInteger();
+        CountDownLatch leaderStarted = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        Supplier<List<RecommendationResponse>> loader = () -> {
+            loads.incrementAndGet();
+            leaderStarted.countDown();
+            try {
+                if (!release.await(15, TimeUnit.SECONDS)) throw new IllegalStateException("timeout");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(e);
+            }
+            return expected;
+        };
+        try (var pool = Executors.newFixedThreadPool(32)) {
+            java.util.List<Future<List<RecommendationResponse>>> futures = new java.util.ArrayList<>();
+            futures.add(pool.submit(() -> first.read(user, 10, 0, loader)));
+            assertThat(leaderStarted.await(10, TimeUnit.SECONDS)).isTrue();
+            for (int i = 1; i < 32; i++) {
+                futures.add(pool.submit(() -> first.read(user, 10, 0, loader)));
+            }
+            try {
+                waitForFollowers(firstRegistry, 31);
+            } finally {
+                release.countDown();
+            }
+            for (var future : futures) assertThat(future.get(15, TimeUnit.SECONDS)).isEqualTo(expected);
+        }
+        assertThat(loads.get()).as("One ranked SQL read must serve 32 local requests").isEqualTo(1);
+    }
+
+    @Test
+    void twoReplicasBoundConcurrentMissesToOneLeaderEach() throws Exception {
+        UUID user = UUID.randomUUID();
+        List<RecommendationResponse> expected = response("Two replica burst");
+        AtomicInteger loads = new AtomicInteger();
+        CountDownLatch bothStarted = new CountDownLatch(2);
+        CountDownLatch release = new CountDownLatch(1);
+        Supplier<List<RecommendationResponse>> loader = () -> {
+            loads.incrementAndGet();
+            bothStarted.countDown();
+            try {
+                if (!release.await(15, TimeUnit.SECONDS)) throw new IllegalStateException("timeout");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(e);
+            }
+            return expected;
+        };
+        try (var pool = Executors.newFixedThreadPool(32)) {
+            java.util.List<Future<List<RecommendationResponse>>> futures = new java.util.ArrayList<>();
+            futures.add(pool.submit(() -> first.read(user, 10, 0, loader)));
+            futures.add(pool.submit(() -> second.read(user, 10, 0, loader)));
+            assertThat(bothStarted.await(10, TimeUnit.SECONDS)).isTrue();
+            for (int i = 0; i < 15; i++) {
+                futures.add(pool.submit(() -> first.read(user, 10, 0, loader)));
+                futures.add(pool.submit(() -> second.read(user, 10, 0, loader)));
+            }
+            try {
+                waitForFollowers(firstRegistry, 15);
+                waitForFollowers(secondRegistry, 15);
+            } finally {
+                release.countDown();
+            }
+            for (var future : futures) assertThat(future.get(15, TimeUnit.SECONDS)).isEqualTo(expected);
+        }
+        assertThat(loads.get()).as("Two independent pods can each lead one miss").isEqualTo(2);
+    }
+
+    private void waitForFollowers(SimpleMeterRegistry registry, int expected) throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (System.nanoTime() < deadline) {
+            var counter = registry.find("vellumhub.cache.singleflight.events")
+                    .tag("cache", "recommendations").tag("result", "waiting").counter();
+            if (counter != null && counter.count() >= expected) return;
+            Thread.sleep(10);
+        }
+        throw new AssertionError("Expected " + expected + " concurrent cache followers");
     }
 
 }
