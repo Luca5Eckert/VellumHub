@@ -139,7 +139,7 @@ class RecommendationCacheFreshnessIT extends DistributedIntegrationTestSupport {
         jdbc.update("insert into book_features (book_id, embedding, popularity_score, last_updated) values (?, cast(? as vector), ?, now())",
                 bookId, vector.toString(), popularity);
         jdbc.update("insert into recommendations (book_id, title, description, release_year, cover_url, author) values (?, ?, ?, ?, ?, ?)",
-                bookId, title, "Cache freshness fixture", 2026, null, "Benchmark");
+                bookId, title, "Cache freshness fixture", 2026, "https://example.test/cache/" + bookId + ".jpg", "Benchmark");
     }
 
     private UUID id(String name) {
