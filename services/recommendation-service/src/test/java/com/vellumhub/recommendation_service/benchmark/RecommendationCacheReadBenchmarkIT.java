@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -194,6 +196,7 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
                     summaries.add(row);
                     assertThat(latencies).hasSize(operations);
                 }
+                summaries.add(measureStampede(concurrency, repetition));
             }
         }
         String sha = System.getProperty("benchmark.commitSha", System.getenv().getOrDefault("GITHUB_SHA", "local"));
@@ -206,6 +209,65 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
                         "dataset", "120 deterministic books / 420 profile vectors, seed 360036",
                         "notes", "MockMvc authenticated HTTP, PostgreSQL pgvector + Redis Testcontainers; SQL statements from Hibernate statistics, process CPU/GC plus aggregate Redis stages. Not a network HTTP benchmark or production SLA. Warmup excluded.",
                         "measurements", summaries));
+    }
+
+    /** Uncached concurrent requests for ONE user expose stampede amplification on MISS. */
+    private Map<String, Object> measureStampede(int concurrency, int repetition) throws Exception {
+        redis.getConnectionFactory().getConnection().serverCommands().flushDb();
+        UUID hotUser = id("user", USERS - 2);
+        // Warm Spring/JPA without warming this user's cache key.
+        for (int i = 0; i < 30; i++) request(id("user", USERS - 1));
+
+        var sqlStats = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        long sqlBefore = sqlStats.getPrepareStatementCount();
+        double hitsBefore = cacheCount("hit"), missesBefore = cacheCount("miss");
+        double generationBefore = timerMillis("generation");
+        double getBefore = timerMillis("get"), putBefore = timerMillis("put");
+        double rankerBefore = rankingMillis();
+        long startCpu = processCpuNanos();
+        CountDownLatch ready = new CountDownLatch(concurrency);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Double> latency = new ArrayList<>();
+        long elapsedStart = System.nanoTime();
+        try (var pool = Executors.newFixedThreadPool(concurrency)) {
+            List<Future<Double>> futures = new ArrayList<>();
+            for (int i = 0; i < concurrency; i++) {
+                futures.add(pool.submit(() -> {
+                    ready.countDown();
+                    if (!start.await(20, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("Stampede worker barrier timed out");
+                    }
+                    long startRead = System.nanoTime();
+                    request(hotUser);
+                    return (System.nanoTime() - startRead) / 1e6;
+                }));
+            }
+            assertThat(ready.await(20, TimeUnit.SECONDS)).isTrue();
+            elapsedStart = System.nanoTime();
+            start.countDown();
+            for (Future<Double> future : futures) latency.add(future.get(2, TimeUnit.MINUTES));
+        }
+        long elapsedNanos = System.nanoTime() - elapsedStart;
+        latency.sort(Double::compare);
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("scenario", "stampede");
+        row.put("concurrency", concurrency);
+        row.put("repeat", repetition);
+        row.put("requests", concurrency);
+        row.put("p50_ms", percentile(latency, .5));
+        row.put("p95_ms", percentile(latency, .95));
+        row.put("p99_ms", percentile(latency, .99));
+        row.put("throughput_requests_per_sec", concurrency * 1e9 / elapsedNanos);
+        row.put("cache_hits", cacheCount("hit") - hitsBefore);
+        row.put("cache_misses", cacheCount("miss") - missesBefore);
+        row.put("cache_generation_total_ms", timerMillis("generation") - generationBefore);
+        row.put("cache_get_total_ms", timerMillis("get") - getBefore);
+        row.put("cache_put_total_ms", timerMillis("put") - putBefore);
+        row.put("db_ranking_total_ms", rankingMillis() - rankerBefore);
+        row.put("sql_prepared_statements", sqlStats.getPrepareStatementCount() - sqlBefore);
+        row.put("process_cpu_ms", startCpu < 0 ? -1.0 : (processCpuNanos() - startCpu) / 1e6);
+        row.put("latencies_ms", latency);
+        return row;
     }
 
     private double timerMillis(String operation) {
