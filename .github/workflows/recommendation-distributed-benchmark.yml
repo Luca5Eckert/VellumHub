@@ -50,6 +50,13 @@ jobs:
           docker pull confluentinc/cp-kafka:7.5.0
           docker pull redis:7.4-alpine
 
+      - name: Focused cache and ranked read unit tests
+        run: >-
+          mvn -B -ntp -pl services/recommendation-service -am
+          -Dtest=RecommendationResponseCacheTest,GetRecommendationsUseCaseTest
+          -Dsurefire.failIfNoSpecifiedTests=false
+          test
+
       # Keep the two distributed suites in separate Maven processes. Both suites own
       # static Testcontainers/Spring test state and use the production Kafka consumer
       # group; running them in one Surefire JVM allows lifecycle/state interference.
