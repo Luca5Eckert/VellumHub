@@ -15,6 +15,12 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
@@ -36,6 +42,10 @@ public class RecommendationResponseCache {
     // random generation cannot expose an old response even when a key survives.
     private static final Duration USER_GENERATION_TTL = Duration.ofDays(1);
     private static final TypeReference<List<RecommendationResponse>> RESPONSES = new TypeReference<>() {};
+    // One in-flight database calculation per versioned key per application replica.
+    // Bound the coordinator to avoid a large number of waiting requests consuming memory.
+    private static final int MAX_IN_FLIGHT_KEYS = 512;
+    private static final long MAX_FOLLOWER_WAIT_MS = 1_500L;
 
     private final StringRedisTemplate redis;
     private final ObjectMapper json = new ObjectMapper();
@@ -43,6 +53,8 @@ public class RecommendationResponseCache {
     private final boolean enabled;
     private final long ttlSeconds;
     private final int maxLimit;
+    private final ConcurrentHashMap<String, CompletableFuture<List<RecommendationResponse>>> inFlight = new ConcurrentHashMap<>();
+    private final Semaphore inFlightPermits = new Semaphore(MAX_IN_FLIGHT_KEYS);
 
     public RecommendationResponseCache(
             StringRedisTemplate redis,
@@ -105,32 +117,102 @@ public class RecommendationResponseCache {
                 key = null; // Do not attempt to populate after a failed lookup.
             }
 
-            List<RecommendationResponse> fresh = loader.get();
-            if (key != null && fresh != null && !fresh.isEmpty()) {
-                try {
-                    // Epochs are embedded in the response key. If a commit
-                    // changes either generation during the DB read, this put
-                    // can write ONLY the now-unreachable old key, never the
-                    // new current key. Re-reading both epochs here adds two
-                    // sequential Redis RTTs but does not strengthen freshness.
-                    String payload = json.writeValueAsString(fresh);
-                    String destination = key;
-                    timed("put", () -> {
-                        redis.opsForValue().set(destination, payload, ttl());
-                        return null;
-                    });
-                } catch (RuntimeException | JsonProcessingException redisError) {
-                    operationFailure("put");
-                    // Redis/serialization never changes the correct source-of-truth response.
-                }
-            }
-            return fresh;
+            // A cold burst used to execute the same pgvector + JPA query once per
+            // request. Coalesce misses for the same versioned response key locally.
+            return key == null ? loader.get() : loadOnce(key, loader);
         } finally {
             serving.stop(Timer.builder("vellumhub.recommendation.serving.duration")
                     .tag("result", outcome)
                     .publishPercentileHistogram()
                     .register(registry));
         }
+    }
+
+    /**
+     * A single leader loads the database while concurrent readers await its
+     * immutable DTO result. No background task or extra worker thread is created.
+     * The key includes both epochs, so invalidation cannot attach new requests
+     * to a stale in-flight load.
+     *
+     * This is per-JVM coalescing. Multiple replicas can each have one leader;
+     * the feature's operational documentation states this explicit bound.
+     */
+    private List<RecommendationResponse> loadOnce(
+            String key, Supplier<List<RecommendationResponse>> loader) {
+        CompletableFuture<List<RecommendationResponse>> existing = inFlight.get(key);
+        if (existing != null) {
+            return await(existing, loader);
+        }
+        if (!inFlightPermits.tryAcquire()) {
+            coalescing("capacity");
+            return loadAndStore(key, loader);
+        }
+        CompletableFuture<List<RecommendationResponse>> own = new CompletableFuture<>();
+        existing = inFlight.putIfAbsent(key, own);
+        if (existing != null) {
+            inFlightPermits.release();
+            return await(existing, loader);
+        }
+        coalescing("leader");
+        try {
+            List<RecommendationResponse> response = loadAndStore(key, loader);
+            own.complete(response);
+            return response;
+        } catch (RuntimeException | Error failure) {
+            own.completeExceptionally(failure);
+            throw failure;
+        } finally {
+            inFlight.remove(key, own);
+            inFlightPermits.release();
+        }
+    }
+
+    private List<RecommendationResponse> await(
+            CompletableFuture<List<RecommendationResponse>> pending,
+            Supplier<List<RecommendationResponse>> loader) {
+        try {
+            List<RecommendationResponse> result = pending.get(MAX_FOLLOWER_WAIT_MS, TimeUnit.MILLISECONDS);
+            coalescing("joined");
+            return result;
+        } catch (TimeoutException timedOut) {
+            // Never queue indefinitely behind a deadlocked or very slow leader.
+            coalescing("timeout");
+            return loader.get();
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            coalescing("interrupted");
+            return loader.get();
+        } catch (ExecutionException failed) {
+            coalescing("failure");
+            Throwable cause = failed.getCause();
+            if (cause instanceof RuntimeException runtime) throw runtime;
+            if (cause instanceof Error error) throw error;
+            throw new IllegalStateException("Recommendation loader failed", cause);
+        }
+    }
+
+    private List<RecommendationResponse> loadAndStore(
+            String key, Supplier<List<RecommendationResponse>> loader) {
+        List<RecommendationResponse> fresh = loader.get();
+        if (fresh != null && !fresh.isEmpty()) {
+            try {
+                // A slow writer can only populate the epoch it started with;
+                // subsequent reads use a different key after invalidation.
+                String payload = json.writeValueAsString(fresh);
+                timed("put", () -> {
+                    redis.opsForValue().set(key, payload, ttl());
+                    return null;
+                });
+            } catch (RuntimeException | JsonProcessingException redisError) {
+                operationFailure("put"); // Fail open to database result.
+            }
+        }
+        return fresh;
+    }
+
+    private void coalescing(String result) {
+        registry.counter("vellumhub.cache.singleflight.events",
+                "cache", "recommendations", "result", result).increment();
     }
 
     /**
