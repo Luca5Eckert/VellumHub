@@ -309,10 +309,9 @@ class RecommendationCacheReadBenchmarkIT extends DistributedIntegrationTestSuppo
         // in task scheduling without depending on runner p95.
         if (Boolean.parseBoolean(System.getProperty("cache.benchmark.enabled", "false"))
                 && concurrency >= 8) {
-            assertThat((Number) row.get("sql_prepared_statements"))
-                    .extracting(Number::longValue)
+            assertThat(((Number) row.get("sql_prepared_statements")).longValue())
                     .as("single-flight should keep burst SQL bounded")
-                    .satisfies(count -> assertThat(count).isLessThanOrEqualTo(6L));
+                    .isLessThanOrEqualTo(6L);
         }
         return row;
     }
