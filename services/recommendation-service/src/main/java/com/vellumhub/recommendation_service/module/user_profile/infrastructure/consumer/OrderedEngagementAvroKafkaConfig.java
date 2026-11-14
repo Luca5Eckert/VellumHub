@@ -17,7 +17,7 @@ import java.util.HashMap;
 @Configuration(proxyBeanMethods=false)
 public class OrderedEngagementAvroKafkaConfig {
     @Bean
-    EngagementAvroDecoder engagementAvroDecoder(@Value("${app.engagement.avro.registry-url}") String url) {
+    EngagementAvroDecoder engagementAvroDecoder(@Value("${app.engagement.avro.registry-url:http://127.0.0.1:18081/apis/ccompat/v7}") String url) {
         return new EngagementAvroDecoder(url);
     }
 
