@@ -1,0 +1,44 @@
+{
+  "type": "record",
+  "name": "RatingCreatedEvent",
+  "namespace": "com.vellumhub.kafka.avro.engagement",
+  "doc": "Canonical Engagement event; topic-specific subject and immutable event identity.",
+  "fields": [
+    {
+      "name": "eventId",
+      "type": "string"
+    },
+    {
+      "name": "occurredAt",
+      "type": "string"
+    },
+    {
+      "name": "ratingId",
+      "type": "long"
+    },
+    {
+      "name": "userId",
+      "type": "string"
+    },
+    {
+      "name": "bookId",
+      "type": "string"
+    },
+    {
+      "name": "stars",
+      "type": "int"
+    },
+    {
+      "name": "revision",
+      "type": "long"
+    },
+    {
+      "name": "contractNote",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "type": "record",
+  "name": "ReactionChangedEvent",
+  "namespace": "com.vellumhub.kafka.avro.engagement",
+  "doc": "Canonical Engagement event; topic-specific subject and immutable event identity.",
+  "fields": [
+    {
+      "name": "eventId",
+      "type": "string"
+    },
+    {
+      "name": "occurredAt",
+      "type": "string"
+    },
+    {
+      "name": "reactionId",
+      "type": "long"
+    },
+    {
+      "name": "userId",
+      "type": "string"
+    },
+    {
+      "name": "bookId",
+      "type": "string"
+    },
+    {
+      "name": "oldTypeReaction",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "newTypeReaction",
+      "type": "string"
+    },
+    {
+      "name": "typeReaction",
+      "type": "string"
+    },
+    {
+      "name": "revision",
+      "type": "long"
+    }
+  ]
+}

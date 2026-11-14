@@ -32,9 +32,23 @@ class EngagementEventProcessorTest {
         UUID user=UUID.randomUUID(),book=UUID.randomUUID();
         when(jdbc.queryForObject(anyString(),eq(Long.class),any(),any())).thenReturn(0L);
         var fact=new RatingCreatedEvent(UUID.randomUUID(),Instant.now(),42L,user,book,5,0L);
+        when(jdbc.queryForObject(contains("processed_engagement_events"),eq(Integer.class),
+                any(),any(),any())).thenReturn(1);
         assertThat(processor.apply(fact)).isEqualTo(EventProcessingOutcome.DUPLICATE);
         verifyNoInteractions(rating,deletion,reaction);
         verify(jdbc,never()).update(contains("processed_engagement_events"),any(),any(),any(),any());
+    }
+
+    @Test void aDifferentIdentityAtAlreadyCommittedRevisionIsNotAValidDuplicate() {
+        UUID user=UUID.randomUUID(),book=UUID.randomUUID();
+        when(jdbc.queryForObject(anyString(),eq(Long.class),any(),any())).thenReturn(0L);
+        when(jdbc.queryForObject(contains("processed_engagement_events"),eq(Integer.class),
+                any(),any(),any())).thenReturn(0);
+        var conflicting=new RatingCreatedEvent(UUID.randomUUID(),Instant.now(),42L,user,book,5,0L);
+        assertThatThrownBy(() -> processor.apply(conflicting))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("revision collision");
+        verifyNoInteractions(rating,deletion,reaction);
     }
 
     @Test void reusedEventIdCannotAcknowledgeAnUnappliedRevision() {

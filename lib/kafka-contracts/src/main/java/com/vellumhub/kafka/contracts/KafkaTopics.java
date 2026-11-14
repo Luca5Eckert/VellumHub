@@ -13,7 +13,9 @@ public final class KafkaTopics {
 
     /** Bounded-context streams contain immutable facts, not commands. */
     public static final String ENGAGEMENT_RATINGS = "engagement.ratings.v1";
+    public static final String ENGAGEMENT_RATINGS_AVRO = "engagement.ratings.v1.avro";
     public static final String ENGAGEMENT_REACTIONS = "engagement.reactions.v1";
+    public static final String ENGAGEMENT_REACTIONS_AVRO = "engagement.reactions.v1.avro";
 
     public static final String CREATED_RATING = "created-rating";
     public static final String UPDATED_RATING = "updated-rating";

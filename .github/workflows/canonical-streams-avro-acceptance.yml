@@ -38,6 +38,10 @@ jobs:
             service: engagement-service
           - stream: reading-avro-e2e
             service: recommendation-service
+          - stream: engagement-avro-e2e
+            service: engagement-service
+          - stream: engagement-avro-e2e
+            service: recommendation-service
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4

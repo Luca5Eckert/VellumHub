@@ -10,6 +10,8 @@ public final class KafkaConsumerGroups {
     public static final String RECOMMENDATION_SERVICE = "recommendation-service";
     public static final String RECOMMENDATION_BOOK_AVRO = "recommendation-service-book-avro";
     public static final String RECOMMENDATION_READING_PROGRESS_AVRO = "recommendation-service-reading-progress-avro";
+    public static final String RECOMMENDATION_RATINGS_AVRO = "recommendation-service-ratings-avro";
+    public static final String RECOMMENDATION_REACTIONS_AVRO = "recommendation-service-reactions-avro";
     public static final String RECOMMENDATION_SERVICE_DLT = "recommendation-service-dlt-group";
     public static final String RECOMMENDATION_USER_PROFILE = "recommendation_service_group";
     public static final String RECOMMENDATION_GROUP = "recommendation-group";

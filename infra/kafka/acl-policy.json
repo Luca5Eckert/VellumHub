@@ -31,7 +31,9 @@
       "engagement.reactions.v1",
       "created-rating",
       "updated-rating",
-      "user-reaction-changed"
+      "user-reaction-changed",
+      "engagement.ratings.v1.avro",
+      "engagement.reactions.v1.avro"
     ],
     "subscribe": [
       "book-events",
@@ -79,7 +81,9 @@
       "updated-reading-progress",
       "user-reaction-changed",
       "book-events.avro",
-      "reading-progress-events.avro"
+      "reading-progress-events.avro",
+      "engagement.ratings.v1.avro",
+      "engagement.reactions.v1.avro"
     ],
     "legacy_retry": [
       "created-book",
@@ -98,7 +102,9 @@
       "engagement.ratings.v1",
       "engagement.reactions.v1",
       "book-events.avro",
-      "reading-progress-events.avro"
+      "reading-progress-events.avro",
+      "engagement.ratings.v1.avro",
+      "engagement.reactions.v1.avro"
     ],
     "groups": [
       "recommendation-service",
@@ -106,7 +112,9 @@
       "recommendation_service_group",
       "recommendation-group",
       "recommendation-service-book-avro",
-      "recommendation-service-reading-progress-avro"
+      "recommendation-service-reading-progress-avro",
+      "recommendation-service-ratings-avro",
+      "recommendation-service-reactions-avro"
     ]
   }
 }
