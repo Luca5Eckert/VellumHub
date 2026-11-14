@@ -152,8 +152,14 @@ class ReadingProgressAvroRecommendationDistributedTest extends DistributedIntegr
             ReadingProgressChangedEvent fact) throws Exception {
         SpecificRecord v1=(SpecificRecord)ReadingProgressAvroMapper.toAvro(fact);
         ObjectNode evolved=(ObjectNode)JSON.readTree(v1.getSchema().toString());
-        ((ArrayNode)evolved.get("fields")).add(JSON.readTree(
-                "{\\"name\\":\\"contractNote\\",\\"type\\":[\\"null\\",\\"string\\"],\\"default\\":null}"));
+        var added=JSON.createObjectNode();
+        added.put("name","contractNote");
+        var alternatives=JSON.createArrayNode();
+        alternatives.add("null");
+        alternatives.add("string");
+        added.set("type",alternatives);
+        added.putNull("default");
+        ((ArrayNode)evolved.get("fields")).add(added);
         Schema v2=new Schema.Parser().parse(evolved.toString());
         String subject=KafkaTopics.READING_PROGRESS_AVRO+"-"+v2.getFullName();
         String id=URLEncoder.encode(subject,StandardCharsets.UTF_8);
