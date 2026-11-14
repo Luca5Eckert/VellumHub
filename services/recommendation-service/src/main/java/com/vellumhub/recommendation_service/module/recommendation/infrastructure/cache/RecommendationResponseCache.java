@@ -84,9 +84,13 @@ public class RecommendationResponseCache {
                 if (cached != null) {
                     try {
                         List<RecommendationResponse> response = json.readValue(cached, RESPONSES);
-                        outcome = "hit";
-                        request("hit");
-                        return response;
+                        if (response != null) {
+                            outcome = "hit";
+                            request("hit");
+                            return response;
+                        }
+                        // JSON literal null is not a valid recommendation list.
+                        timed("delete", () -> { redis.delete(lookupKey); return null; });
                     } catch (JsonProcessingException invalidValue) {
                         // Corrupt/old payload is never returned. Version keys allow safe roll-forward.
                         timed("delete", () -> { redis.delete(lookupKey); return null; });
