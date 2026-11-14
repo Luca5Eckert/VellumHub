@@ -17,7 +17,7 @@ Redis is deliberately not used for event checkpoints, uniqueness, JWT/sessions, 
 - Changing Book metadata, creating or deleting a Book, or recomputing a Book projection invalidates the **global** generation in the repository adapter.
 - Saving a UserProfile after preferences/rating/reaction/reading-progress processing invalidates the **user's** generation in the adapter. The existing canonical JSON/Avro and legacy consumers call these repositories; duplicates guarded by checkpoints do not reach the save path. Some zero-adjustment/no-op saves may conservatively invalidate; this is an overhead, not a correctness failure.
 - Under an active Spring transaction, invalidation registers `afterCommit`. Rollback does not invalidate. Without an outer transaction, the Spring Data repository call returns after its own transaction, and invalidation follows it.
-- A slow request with generation `g` cannot populate a key for generation `g+1`. The application checks versions before writing, and the versioned key remains isolated even if invalidation races after that check. An **already in-flight** response can still be stale; this is not linearizable caching.
+- A slow request with generation `g` cannot populate a key for generation `g+1`. The response key contains both immutable generation tokens: a delayed write can only populate the unreachable **old key**, never a newer generation. Re-reading generations before each write would add network roundtrips without preventing an already in-flight stale response. An **already in-flight** response can still be stale; this is not linearizable caching.
 - If Redis fails **after DB commit but before generation bump**, old responses can remain visible for at most the response TTL. A failed cache operation never rolls back a committed Kafka/DB effect; an alert/incident response is necessary if invalidation errors occur.
 
 ## Runtime and isolation
@@ -54,7 +54,7 @@ The existing `Recommendation distributed benchmark` workflow runs:
 1. Original event→projection and read-autonomy benchmark (AFF-REC-009).
 2. Original event→visible ranking freshness (AFF-OPS-010).
 3. Additional Redis Testcontainers integration and a **pre-warmed cache before Kafka rating** freshness check, including unauthenticated HTTP rejection.
-4. A/B `OFF` and `ON` with a deterministic PostgreSQL/pgvector catalog (120 books, 420 user profiles), authenticated MockMvc GET, and scenarios cold, warm, mixed. Each mode runs in a distinct Maven process with same commit/runner/fixtures. PR uses `smoke`; `workflow_dispatch` supports `reference` with 3 repetitions at concurrency 1/8/32.
+4. A/B `OFF` and `ON` with a deterministic PostgreSQL/pgvector catalog (600 books, 900 user profiles), authenticated MockMvc GET, and scenarios cold, warm, mixed. Each mode runs in a distinct Maven process with same commit/runner/fixtures. PR uses `smoke`; `workflow_dispatch` supports `reference` with 3 repetitions at concurrency 1/8/32 (500 requests per scenario), plus hot-key stampede; the dedicated PR #367 reference run covers cold, warm, 80/20 and 95/5 cache mixes.
 
 Manual reference run (requires Docker, real Testcontainers and same SHA in separate runs):
 
@@ -89,3 +89,11 @@ Files `services/recommendation-service/target/cache-benchmark/<sha>/off.json` an
 - No benchmark exists yet that proves a production gain, no synthetic throughput may be presented as production, and deployment requires separate review/authorization.
 
 Owner issue: [#36](https://github.com/Luca5Eckert/VellumHub/issues/36); Catalog caching is tracked separately by [#366](https://github.com/Luca5Eckert/VellumHub/issues/366).
+
+## Diagnostics of cold misses — 14 November 2026
+
+The first reference measurement (head `68f3d67`, [GitHub Actions #43639474560](https://github.com/Luca5Eckert/VellumHub/actions/runs/43639474560)) with 600 books, 900 users and three independent 500-request repetitions per scenario revealed that an uncached response issues **12 prepared SQL statements**. This is consistent with a rank query, metadata hydration and lazy genre collection reads (N+1 candidate; confirm SQL categories before changing fetch behavior). Cache HIT bypasses all 12 SQL statements; MISS preserves all SQL work and adds synchronous Redis GET/SET roundtrips.
+
+The original cache implementation performed two sequential generation GETs, a payload GET, two additional generation GETs after SQL and a response SET (plus SETNX for first-seen users). Because both generations are part of the immutable response key, those two post-SQL GETs are unnecessary for invalidation safety. A subsequent patch uses MGET for both generations and removes this redundant reread: hot HIT uses 2 Redis network roundtrips, an existing-version MISS 3, and a first-use user may require an extra SETNX. This is a performance **hypothesis under evaluation**; compare the post-change reference benchmark before claiming improvement.
+
+Note that reference SQL counts use Hibernate statistics, and CPU/GC and Redis timings are diagnostics from a GitHub-hosted MockMvc integration run, **not** capacity or external-network HTTP performance.
