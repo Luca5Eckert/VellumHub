@@ -88,6 +88,17 @@ class RecommendationResponseCacheTest {
     }
 
     @Test
+    void missUsesBatchedGenerationLookupAndDoesNotRecheckAfterDatabase() {
+        UUID user = UUID.randomUUID();
+        var books = response("Miss");
+        cache.read(user, 10, 0, () -> books);
+        verify(values, times(1)).multiGet(anyCollection());
+        verify(values, times(1)).set(anyString(), anyString(), any(Duration.class));
+        cache.read(user, 10, 0, () -> response("Should be HIT"));
+        verify(values, times(2)).multiGet(anyCollection());
+    }
+
+    @Test
     void usersAndPagesNeverShareResponses() {
         UUID alice = UUID.randomUUID(), bob = UUID.randomUUID();
         List<RecommendationResponse> a = response("Alice");
