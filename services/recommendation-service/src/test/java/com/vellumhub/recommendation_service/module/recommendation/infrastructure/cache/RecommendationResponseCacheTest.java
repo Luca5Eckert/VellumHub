@@ -165,7 +165,7 @@ class RecommendationResponseCacheTest {
 
     @Test
     void redisOutageBypassesCacheAndDoesNotFailHealthyRead() {
-        when(values.get(anyString())).thenThrow(new IllegalStateException("Redis down"));
+        when(values.multiGet(anyCollection())).thenThrow(new IllegalStateException("Redis down"));
         UUID user = UUID.randomUUID();
         List<RecommendationResponse> expected = response("DB");
         assertThat(cache.read(user, 10, 0, () -> expected)).isEqualTo(expected);
