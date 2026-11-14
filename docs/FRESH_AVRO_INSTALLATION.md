@@ -32,7 +32,7 @@ O bootstrap executa, em ordem:
 1. Valida a interpolação de **ambos** os arquivos Compose, flags de writers/listeners, manifesto e configuração Auth; recusa volumes/containers preexistentes nos projetos.
 2. Inicia apenas Kafka/Zookeeper da stack principal (cria a rede de apps).
 3. Inicia Registry e PostgreSQL em **outro** projeto Compose, com rede compartilhada declarada por `infra/compose/schema-registry-app-network.yaml`; continua independente para `down` e preserva a vinculação após recreação.
-4. Aguarda a API, publica schemas aprovados somente no Registry local e verifica policies, versões e IDs.
+4. Aguarda a API e provisiona explicitamente os quatro tópicos Avro no Kafka local (3 partições, fator de replicação 1); publica schemas aprovados somente no Registry local e verifica policies, versões e IDs.
 5. Somente após isso inicia os aplicativos com `infra/compose/avro-fresh.yaml`, aguarda healthchecks e verifica os IDs mais uma vez.
 
 Em caso de interrupção de uma **instalação comprovadamente nova**, corrija o erro e use `--resume`; esta opção não confere que os volumes são novos. Nunca use `--resume` em uma instalação existente para 'ativar Avro'. Não execute `down -v` se desejar preservar Kafka, Outbox ou schemas.
@@ -62,7 +62,7 @@ kubectl -n vellumhub rollout status deployment/engagement-service --timeout=10m
 kubectl -n vellumhub rollout status deployment/recommendation-service --timeout=10m
 ```
 
-Os arquivos Kustomize antigos `local` e `prod` **não foram alterados**. Em AWS/staging/produção, primeiro é necessário escolher endpoints de Kafka/DB, provisionar Registry persistente com OIDC/roles e TLS, garantir autorização de **leitura de schema** para produtores/consumidores, registrar schemas por workflow aprovado e criar overlay ambiental protegido. Os clientes Avro atuais usam URL sem suporte explícito a bearer token OIDC; **não declare que o overlay de produção com OIDC já funciona** nem use esta configuração local insegura em produção. Esse requisito é separado da #365 e não autoriza credenciais no Git.
+Os arquivos Kustomize antigos `local` e `prod` **não foram alterados**. Em AWS/staging/produção, primeiro é necessário provisionar os quatro tópicos Avro com partições, retenção e fator de replicação compatíveis com o cluster, escolher endpoints de Kafka/DB, provisionar Registry persistente com OIDC/roles e TLS, garantir autorização de **leitura de schema** para produtores/consumidores, registrar schemas por workflow aprovado e criar overlay ambiental protegido. Os clientes Avro atuais usam URL sem suporte explícito a bearer token OIDC; **não declare que o overlay de produção com OIDC já funciona** nem use esta configuração local insegura em produção. Esse requisito é separado da #365 e não autoriza credenciais no Git.
 
 ## Evidência e limites
 

@@ -22,6 +22,10 @@ REGISTRY = [
     "-f", "infra/compose/schema-registry-app-network.yaml",
 ]
 REGISTRY_URL = "http://schema-registry:8080/apis/ccompat/v7"
+# Contract manifest is the source of truth for the four dedicated Avro topics.
+AVRO_TOPICS = sorted({entry["topic"] for entry in json.loads(
+    (ROOT / "infra/schema-registry/contracts.json").read_text(encoding="utf-8")
+)["subjects"]})
 REQUIRED = {
     "catalog-service": {
         "BOOK_EVENTS_WIRE_FORMAT": "avro",
@@ -138,6 +142,14 @@ def main():
         run(REGISTRY + ["up", "-d", "--wait"])
         run([sys.executable, "tools/schema_registry/wait_ready.py",
              "http://127.0.0.1:18081/apis/ccompat/v7/subjects"])
+        # No dependency on Kafka auto.create.topics.enable or a first producer send.
+        # This local single-broker stack uses replication factor one by design.
+        for topic in AVRO_TOPICS:
+            command = MAIN + ["exec", "-T", "kafka", "kafka-topics",
+                              "--bootstrap-server", "kafka:29092"]
+            run(command + ["--create", "--if-not-exists", "--topic", topic,
+                           "--partitions", "3", "--replication-factor", "1"])
+            run(command + ["--describe", "--topic", topic])
         with tempfile.TemporaryDirectory(prefix="vellum-schema-") as temp:
             state = str(Path(temp) / "registry-ids.json")
             run([sys.executable, "tools/schema_registry/registry_gate.py", "publish",

@@ -7,7 +7,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/schema_registry"))
-from bootstrap_fresh import REQUIRED, REGISTRY_URL, BootstrapError, verify_config
+from bootstrap_fresh import REQUIRED, REGISTRY_URL, AVRO_TOPICS, BootstrapError, verify_config
 
 
 class FreshInstallTest(unittest.TestCase):
@@ -29,6 +29,12 @@ class FreshInstallTest(unittest.TestCase):
                     self.assertEqual(REGISTRY_URL, val)
         env = config["services"]["recommendation-service"]["environment"]
         self.assertEqual("true", env["KAFKA_LEGACY_CONSUMERS_ENABLED"])
+
+    def test_local_bootstrap_uses_only_manifest_approved_avro_topics(self):
+        subjects = self.read_yaml("infra/schema-registry/contracts.json")["subjects"]
+        self.assertEqual(sorted({item["topic"] for item in subjects}), AVRO_TOPICS)
+        self.assertEqual(4, len(AVRO_TOPICS))
+        self.assertTrue(all(topic.endswith(".avro") for topic in AVRO_TOPICS))
 
     def test_composed_configuration_rejects_missing_or_json_route(self):
         current = {"services": {name: {"environment": dict(values)} for name, values in REQUIRED.items()}}
