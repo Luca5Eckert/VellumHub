@@ -40,7 +40,7 @@ public class SpringRecommendationRepositoryAdapter implements RecommendationRepo
 
     @Override
     public List<Recommendation> findAllById(List<UUID> booksId) {
-        return recommendationRepositoryJpa.findAllById(booksId);
+        return booksId.isEmpty() ? List.of() : recommendationRepositoryJpa.findPageWithGenres(booksId);
     }
 
 }
