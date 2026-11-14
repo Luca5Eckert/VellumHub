@@ -49,7 +49,7 @@ class RecommendationResponseCacheTest {
             return null;
         }).when(values).set(anyString(), anyString(), any(Duration.class));
         when(redis.delete(anyString())).thenAnswer(call -> store.remove(call.getArgument(0)) != null);
-        cache = new RecommendationResponseCache(redis, new ObjectMapper(), registry, true, 45, 100);
+        cache = new RecommendationResponseCache(redis, registry, true, 45, 100);
     }
 
     @AfterEach
@@ -159,7 +159,7 @@ class RecommendationResponseCacheTest {
     @Test
     void disabledCacheDoesNotTouchRedisAndDoesNotAlterReadSemantics() {
         RecommendationResponseCache disabled = new RecommendationResponseCache(
-                redis, new ObjectMapper(), registry, false, 45, 100);
+                redis, registry, false, 45, 100);
         List<RecommendationResponse> books = response("DB");
         assertThat(disabled.read(UUID.randomUUID(), -1, -1, () -> books)).isEqualTo(books);
         verify(redis, never()).delete(anyString());
