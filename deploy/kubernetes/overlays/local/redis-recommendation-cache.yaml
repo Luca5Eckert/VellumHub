@@ -9,11 +9,11 @@ spec:
   ports: [{name: redis, port: 6379, targetPort: redis}]
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata: {name: redis-recommendation-cache}
 spec:
   replicas: 1
-  strategy: {type: Recreate}
+  serviceName: redis-recommendation-cache
   selector: {matchLabels: {app: redis-recommendation-cache}}
   template:
     metadata: {labels: {app: redis-recommendation-cache}}
