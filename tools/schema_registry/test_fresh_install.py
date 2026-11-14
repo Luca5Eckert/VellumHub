@@ -53,11 +53,9 @@ class FreshInstallTest(unittest.TestCase):
         self.assertIn("../local", overlay["resources"])
         self.assertNotIn("../../schema-registry/overlays/local", overlay["resources"])
         for service in REQUIRED:
-            patch = self.read_yaml(f"deploy/kubernetes/overlays/local-avro-fresh/{service.split('-')[0]}.yaml")
-            self.assertEqual(service, patch["metadata"]["name"])
-            containers = patch["spec"]["template"]["spec"]["containers"]
-            self.assertEqual(service, containers[0]["name"])
-            env = {e["name"]: e["value"] for e in containers[0]["env"]}
+            patch = self.read_yaml(f"deploy/kubernetes/overlays/local-avro-fresh/{service.split('-')[0]}.json")
+            env = {e["value"]["name"]: e["value"]["value"] for e in patch}
+            self.assertTrue(all(e["op"] == "add" and e["path"] == "/spec/template/spec/containers/0/env/-" for e in patch))
             for key, value in REQUIRED[service].items():
                 self.assertEqual(value, env[key], (service, key))
         self.assertNotIn("schema-registry", self.read_yaml(

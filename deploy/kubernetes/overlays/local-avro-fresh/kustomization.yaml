@@ -1,10 +1,13 @@
-# For a NEW Kind environment only. Provision/approve the SEPARATE local Registry first.
+# A NEW Kind install; Registry is applied and approved separately before this overlay.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: vellumhub
 resources:
   - ../local
 patches:
-  - path: catalog.yaml
-  - path: engagement.yaml
-  - path: recommendation.yaml
+  - target: {group: apps, version: v1, kind: Deployment, name: catalog-service}
+    path: catalog.json
+  - target: {group: apps, version: v1, kind: Deployment, name: engagement-service}
+    path: engagement.json
+  - target: {group: apps, version: v1, kind: Deployment, name: recommendation-service}
+    path: recommendation.json

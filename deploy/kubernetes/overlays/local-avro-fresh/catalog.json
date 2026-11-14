@@ -1,0 +1,34 @@
+[
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "BOOK_EVENTS_WIRE_FORMAT",
+      "value": "avro"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "READING_PROGRESS_EVENTS_WIRE_FORMAT",
+      "value": "avro"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "BOOK_AVRO_REGISTRY_URL",
+      "value": "http://schema-registry:8080/apis/ccompat/v7"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "READING_PROGRESS_AVRO_REGISTRY_URL",
+      "value": "http://schema-registry:8080/apis/ccompat/v7"
+    }
+  }
+]
