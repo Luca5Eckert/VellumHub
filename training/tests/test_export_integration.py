@@ -9,6 +9,20 @@ import pytest
 from vellumhub_training.exporter.config import DatabaseConfig
 from vellumhub_training.exporter.export import export_dataset
 
+def _flyway_version(path: Path) -> tuple[int, ...]:
+    """Use numeric Flyway ordering: V10 must follow V9, not precede V1."""
+    version = path.name.split("__", 1)[0].removeprefix("V")
+    return tuple(int(part) for part in version.replace(".", "_").split("_"))
+
+
+def test_migration_version_order_handles_double_digit_versions():
+    names = ["V10__engagement_avro.sql", "V1__baseline.sql", "V9__quarantine.sql"]
+    ordered = sorted((Path(name) for name in names), key=_flyway_version)
+    assert [path.name for path in ordered] == [
+        "V1__baseline.sql", "V9__quarantine.sql", "V10__engagement_avro.sql"
+    ]
+
+
 
 @pytest.mark.integration
 def test_actual_schemas_export_facts_without_promoting_history(tmp_path):
@@ -27,7 +41,7 @@ def test_actual_schemas_export_facts_without_promoting_history(tmp_path):
                 admin.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
                 admin.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
                 migrations = root / "services" / f"{name}-service/src/main/resources/db/migration"
-                for path in sorted(migrations.glob("V*.sql")):
+                for path in sorted(migrations.glob("V*.sql"), key=_flyway_version):
                     admin.execute(path.read_text())
                 configs[name] = DatabaseConfig(psycopg.conninfo.make_conninfo(dsn, options=f"-csearch_path={schema}"))
             book, other, user, progress, event = (uuid4() for _ in range(5))
