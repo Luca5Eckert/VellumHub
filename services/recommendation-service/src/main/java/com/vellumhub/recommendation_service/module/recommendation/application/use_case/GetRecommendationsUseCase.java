@@ -10,6 +10,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 @Component
@@ -45,7 +49,12 @@ public class GetRecommendationsUseCase {
                 booksId = bookFeatureRepository.findMostPopularMedias(command.limit(), command.offset());
             }
 
-            List<Recommendation> recommendations = recommendationRepository.findAllById(booksId);
+            // JpaRepository.findAllById does not guarantee the requested ranking order.
+            List<Recommendation> loaded = recommendationRepository.findAllById(booksId);
+            Map<UUID, Recommendation> byId = loaded == null ? Map.of() : loaded.stream()
+                    .collect(Collectors.toMap(Recommendation::getBookId, Function.identity(), (first, ignored) -> first));
+            List<Recommendation> recommendations = booksId.stream()
+                    .map(byId::get).filter(java.util.Objects::nonNull).toList();
 
             if (recommendations == null || recommendations.isEmpty()) {
                 metrics.recordBusinessCounter(VellumHubMetrics.RECOMMENDATION_EMPTY_RESULTS, "recommendation_generation", "empty");
