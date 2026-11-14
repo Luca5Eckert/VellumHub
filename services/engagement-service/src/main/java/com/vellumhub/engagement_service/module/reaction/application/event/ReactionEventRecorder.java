@@ -8,6 +8,8 @@ import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.engagement.ReactionChangedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import java.util.UUID;
 
 /** Records the persisted reaction transition, never a request to modify Recommendation. */
@@ -15,7 +17,16 @@ import java.util.UUID;
 @Component
 public class ReactionEventRecorder {
     private final OutboxWriter outbox;
-    public ReactionEventRecorder(OutboxWriter outbox){this.outbox=outbox;}
+    private final boolean avro;
+    @Autowired
+    public ReactionEventRecorder(OutboxWriter outbox,
+            @Value("${app.engagement.reactions.wire-format:json}") String format) {
+        this.outbox=outbox;
+        if (!"json".equalsIgnoreCase(format) && !"avro".equalsIgnoreCase(format))
+            throw new IllegalArgumentException("Unknown Reaction wire format");
+        this.avro="avro".equalsIgnoreCase(format);
+    }
+    public ReactionEventRecorder(OutboxWriter outbox) { this(outbox,"json"); }
     public void changed(Reaction reaction,TypeReaction previous) {
         var event=new ReactionChangedEvent(UUID.randomUUID(),
                 previous==null?reaction.getCreatedAt():reaction.getUpdatedAt(),
@@ -23,8 +34,9 @@ public class ReactionEventRecorder {
                 previous==null?null:previous.name(),reaction.getTypeReaction().name(),
                 reaction.getTypeReaction().name(),reaction.getVersion());
         outbox.append(new OutboxMessage(event.eventId(),"REACTION",reaction.getId().toString(),
-                reaction.getVersion(),"ReactionChangedEvent",KafkaTopics.ENGAGEMENT_REACTIONS,
-                reaction.getUserId().toString(),event));
+                reaction.getVersion(),"ReactionChangedEvent",
+                avro ? KafkaTopics.ENGAGEMENT_REACTIONS_AVRO : KafkaTopics.ENGAGEMENT_REACTIONS,
+                reaction.getUserId().toString(),event,avro ? "AVRO" : "JSON",1));
         log.debug("operation=engagement_event_enqueued eventId={} reactionId={} revision={}",
                 event.eventId(),event.reactionId(),event.revision());
     }

@@ -8,6 +8,8 @@ import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.engagement.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -16,7 +18,17 @@ import java.util.UUID;
 @Component
 public class RatingEventRecorder {
     private final OutboxWriter outbox;
-    public RatingEventRecorder(OutboxWriter outbox){this.outbox=outbox;}
+    private final boolean avro;
+
+    @Autowired
+    public RatingEventRecorder(OutboxWriter outbox,
+            @Value("${app.engagement.ratings.wire-format:json}") String format) {
+        this.outbox=outbox;
+        if (!"json".equalsIgnoreCase(format) && !"avro".equalsIgnoreCase(format))
+            throw new IllegalArgumentException("Unknown Rating wire format");
+        this.avro="avro".equalsIgnoreCase(format);
+    }
+    public RatingEventRecorder(OutboxWriter outbox) { this(outbox,"json"); }
 
     public void created(Rating rating) {
         var event=new RatingCreatedEvent(UUID.randomUUID(),Instant.now(),
@@ -38,7 +50,8 @@ public class RatingEventRecorder {
     }
     private void append(Rating rating,UUID id,long revision,String kind,Object event) {
         outbox.append(new OutboxMessage(id,"RATING",rating.getId().toString(),revision,kind,
-                KafkaTopics.ENGAGEMENT_RATINGS,rating.getUserId().toString(),event));
+                avro ? KafkaTopics.ENGAGEMENT_RATINGS_AVRO : KafkaTopics.ENGAGEMENT_RATINGS,
+                rating.getUserId().toString(),event,avro ? "AVRO" : "JSON",1));
         log.debug("operation=engagement_event_enqueued eventId={} kind={} ratingId={} revision={}",
                 id,kind,rating.getId(),revision);
     }
