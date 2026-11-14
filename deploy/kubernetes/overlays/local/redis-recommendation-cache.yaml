@@ -1,0 +1,29 @@
+# Disposable, isolated Redis cache for Recommendation. The Gateway rate limiter
+# remains on its original redis Service. Memory policy avoids evicting generation
+# markers independently of their response values.
+apiVersion: v1
+kind: Service
+metadata: {name: redis-recommendation-cache}
+spec:
+  selector: {app: redis-recommendation-cache}
+  ports: [{name: redis, port: 6379, targetPort: redis}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: redis-recommendation-cache}
+spec:
+  replicas: 1
+  serviceName: redis-recommendation-cache
+  selector: {matchLabels: {app: redis-recommendation-cache}}
+  template:
+    metadata: {labels: {app: redis-recommendation-cache}}
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          args: [redis-server, --save, "", --appendonly, "no", --maxmemory, 128mb, --maxmemory-policy, noeviction]
+          ports: [{name: redis, containerPort: 6379}]
+          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: 5}
+          livenessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: 15}
+          resources: {requests: {cpu: 25m, memory: 48Mi}, limits: {cpu: 250m, memory: 256Mi}}
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}

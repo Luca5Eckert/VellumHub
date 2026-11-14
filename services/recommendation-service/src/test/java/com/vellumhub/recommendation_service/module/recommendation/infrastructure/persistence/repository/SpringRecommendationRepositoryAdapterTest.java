@@ -1,6 +1,7 @@
 package com.vellumhub.recommendation_service.module.recommendation.infrastructure.persistence.repository;
 
 import com.vellumhub.recommendation_service.module.recommendation.domain.model.Recommendation;
+import com.vellumhub.recommendation_service.module.recommendation.infrastructure.cache.RecommendationResponseCache;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +21,9 @@ class SpringRecommendationRepositoryAdapterTest {
 
     @Mock
     private RecommendationRepositoryJpa recommendationRepositoryJpa;
+
+    @Mock
+    private RecommendationResponseCache cache;
 
     @InjectMocks
     private SpringRecommendationRepositoryAdapter adapter;
@@ -45,6 +49,7 @@ class SpringRecommendationRepositoryAdapterTest {
         adapter.save(rec);
 
         verify(recommendationRepositoryJpa, times(1)).save(rec);
+        verify(cache).invalidateAllAfterCommit();
     }
 
     @Test
@@ -79,10 +84,11 @@ class SpringRecommendationRepositoryAdapterTest {
         adapter.deleteById(bookId);
 
         verify(recommendationRepositoryJpa, times(1)).deleteById(bookId);
+        verify(cache).invalidateAllAfterCommit();
     }
 
     @Test
-    @DisplayName("Should delegate findAllById to JPA repository and return list")
+    @DisplayName("Should hydrate genres in one page query")
     void shouldDelegateFindAllById() {
         UUID bookId1 = UUID.randomUUID();
         UUID bookId2 = UUID.randomUUID();
@@ -91,22 +97,29 @@ class SpringRecommendationRepositoryAdapterTest {
                 buildRecommendation(bookId1),
                 buildRecommendation(bookId2)
         );
-        when(recommendationRepositoryJpa.findAllById(ids)).thenReturn(recommendations);
+        when(recommendationRepositoryJpa.findPageWithGenres(ids)).thenReturn(recommendations);
 
         List<Recommendation> result = adapter.findAllById(ids);
 
         assertThat(result).hasSize(2);
-        verify(recommendationRepositoryJpa).findAllById(ids);
+        verify(recommendationRepositoryJpa).findPageWithGenres(ids);
     }
 
     @Test
     @DisplayName("Should return empty list when no recommendations found for given ids")
     void shouldReturnEmptyListWhenNoRecommendationsFound() {
         List<UUID> ids = List.of(UUID.randomUUID());
-        when(recommendationRepositoryJpa.findAllById(ids)).thenReturn(List.of());
+        when(recommendationRepositoryJpa.findPageWithGenres(ids)).thenReturn(List.of());
 
         List<Recommendation> result = adapter.findAllById(ids);
 
         assertThat(result).isEmpty();
+        verify(recommendationRepositoryJpa).findPageWithGenres(ids);
+    }
+
+    @Test
+    void emptyRankedPageSkipsJpaLookup() {
+        assertThat(adapter.findAllById(List.of())).isEmpty();
+        verifyNoInteractions(recommendationRepositoryJpa);
     }
 }

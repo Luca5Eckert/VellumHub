@@ -58,7 +58,7 @@ class GetRecommendationsUseCaseTest {
         when(requester.getUserId()).thenReturn(userId);
         GetRecommendationsCommand command = new GetRecommendationsCommand(userId, 10, 0);
         List<UUID> userBookIds = List.of(UUID.randomUUID(), UUID.randomUUID());
-        Recommendation recommendation = createRecommendation("User Discovery");
+        Recommendation recommendation = createRecommendation(userBookIds.getFirst(), "User Discovery");
 
         when(bookFeatureRepository.findAllByUserId(userId, 10, 0)).thenReturn(userBookIds);
         when(recommendationRepository.findAllById(userBookIds)).thenReturn(List.of(recommendation));
@@ -85,7 +85,7 @@ class GetRecommendationsUseCaseTest {
         when(requester.getUserId()).thenReturn(userId);
         GetRecommendationsCommand command = new GetRecommendationsCommand(userId, 5, 0);
         List<UUID> popularBookIds = List.of(UUID.randomUUID());
-        Recommendation popularRec = createRecommendation("Popular Choice");
+        Recommendation popularRec = createRecommendation(popularBookIds.getFirst(), "Popular Choice");
 
         when(bookFeatureRepository.findAllByUserId(userId, 5, 0)).thenReturn(Collections.emptyList());
         when(bookFeatureRepository.findMostPopularMedias(5, 0)).thenReturn(popularBookIds);
@@ -124,9 +124,27 @@ class GetRecommendationsUseCaseTest {
         assertThat(recommendationGenerationTimerCount("empty")).isEqualTo(1L);
     }
 
-    private Recommendation createRecommendation(String title) {
+    @Test
+    @DisplayName("Ranking order survives out-of-order JPA hydration")
+    void preservesRankingOrderWhenJpaReturnsUnsortedRows() {
+        UUID user = UUID.randomUUID();
+        UUID firstId = UUID.randomUUID(), secondId = UUID.randomUUID();
+        List<UUID> ranked = List.of(firstId, secondId);
+        Recommendation first = createRecommendation(firstId, "First");
+        Recommendation second = createRecommendation(secondId, "Second");
+
+        when(requester.getUserId()).thenReturn(user);
+        when(bookFeatureRepository.findAllByUserId(user, 2, 0)).thenReturn(ranked);
+        when(recommendationRepository.findAllById(ranked)).thenReturn(List.of(second, first));
+
+        assertThat(getRecommendationsUseCase.execute(new GetRecommendationsCommand(user, 2, 0)))
+                .extracting(Recommendation::getBookId)
+                .containsExactly(firstId, secondId);
+    }
+
+    private Recommendation createRecommendation(UUID bookId, String title) {
         return new Recommendation(
-                UUID.randomUUID(),
+                bookId,
                 title,
                 "Description",
                 2024,

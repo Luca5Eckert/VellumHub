@@ -5,6 +5,9 @@ import com.vellumhub.recommendation_service.module.recommendation.application.us
 import com.vellumhub.recommendation_service.module.recommendation.domain.model.Recommendation;
 import com.vellumhub.recommendation_service.module.recommendation.presentation.dto.RecommendationResponse;
 import com.vellumhub.recommendation_service.module.recommendation.presentation.mapper.RecommendationMapper;
+import com.vellumhub.recommendation_service.module.recommendation.infrastructure.cache.RecommendationResponseCache;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import com.vellumhub.recommendation_service.share.provider.UserAuthenticationProvider;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -52,7 +55,8 @@ class RecommendationControllerTest {
                 userAuthenticationProvider,
                 mapper,
                 getRecommendationsUseCase,
-                new VellumHubMetrics(meterRegistry)
+                new VellumHubMetrics(meterRegistry),
+                new RecommendationResponseCache(mock(StringRedisTemplate.class), meterRegistry, false, 45, 100)
         );
     }
 

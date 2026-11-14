@@ -6,6 +6,9 @@ data:
   CORS_ALLOWED_ORIGINS: https://api.example.com
   # Production supplies these endpoints via an environment-specific overlay.
   SPRING_DATA_REDIS_HOST: redis.example.internal
+  # Keep disabled until a managed Redis with isolated ACL/memory policy and benchmark is approved.
+  RECOMMENDATION_CACHE_ENABLED: "false"
+  RECOMMENDATION_CACHE_REDIS_HOST: redis-cache.example.internal
   KAFKA_BOOTSTRAP_SERVERS: kafka.example.internal:9093
   KAFKA_SECURITY_PROTOCOL: SASL_SSL
   KAFKA_SASL_MECHANISM: PLAIN

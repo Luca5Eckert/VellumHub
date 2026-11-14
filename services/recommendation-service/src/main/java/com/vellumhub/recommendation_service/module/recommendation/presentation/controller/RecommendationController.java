@@ -1,6 +1,7 @@
 package com.vellumhub.recommendation_service.module.recommendation.presentation.controller;
 
 import com.vellumhub.recommendation_service.module.recommendation.presentation.dto.RecommendationResponse;
+import com.vellumhub.recommendation_service.module.recommendation.infrastructure.cache.RecommendationResponseCache;
 import com.vellumhub.recommendation_service.module.recommendation.presentation.mapper.RecommendationMapper;
 import com.vellumhub.recommendation_service.module.recommendation.application.use_case.GetRecommendationsUseCase;
 import com.vellumhub.recommendation_service.module.recommendation.application.command.GetRecommendationsCommand;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,12 +35,15 @@ public class RecommendationController {
 
     private final GetRecommendationsUseCase getRecommendationsUseCase;
     private final VellumHubMetrics metrics;
+    private final RecommendationResponseCache cache;
 
-    public RecommendationController(UserAuthenticationProvider userAuthenticationProvider, RecommendationMapper mapper, GetRecommendationsUseCase getRecommendationsUseCase, VellumHubMetrics metrics) {
+    @Autowired
+    public RecommendationController(UserAuthenticationProvider userAuthenticationProvider, RecommendationMapper mapper, GetRecommendationsUseCase getRecommendationsUseCase, VellumHubMetrics metrics, RecommendationResponseCache cache) {
         this.userAuthenticationProvider = userAuthenticationProvider;
         this.mapper = mapper;
         this.getRecommendationsUseCase = getRecommendationsUseCase;
         this.metrics = metrics;
+        this.cache = cache;
     }
     /**
      * Returns recommendations for the authenticated user.
@@ -68,10 +73,8 @@ public class RecommendationController {
                 offset
         );
 
-        var recommendations = getRecommendationsUseCase.execute(command);
-        var response = recommendations.stream()
-                .map(mapper::toResponse)
-                .toList();
+        var response = cache.read(userId, limit, offset, () -> getRecommendationsUseCase.execute(command)
+                .stream().map(mapper::toResponse).toList());
 
         metrics.recordBusinessCounter(VellumHubMetrics.RECOMMENDATIONS_REQUESTED, "recommendation_request", "success");
         return ResponseEntity.ok(response);

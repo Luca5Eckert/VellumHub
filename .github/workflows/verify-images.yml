@@ -33,6 +33,19 @@ jobs:
         run: mvn -B -ntp -DexcludedGroups=distributed clean verify
 
 
+      # The reactor can emit extensive log output; publish focused XML diagnostics
+      # only on failure instead of expanding mandatory CI checks.
+      - name: Upload reactor test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reactor-junit-failure-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            **/target/surefire-reports/*.xml
+            **/target/failsafe-reports/*.xml
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Generate reactor AFF evidence
         if: always()
         run: python3 tools/architecture/generate_evidence.py --profile reactor --sha ${{ github.event.pull_request.head.sha || github.sha }}

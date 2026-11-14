@@ -61,6 +61,8 @@ VellumHub applies [Data on the Outside versus Data on the Inside](https://queue.
 
 The platform has **six independently deployable services**: Auth, Gateway, User, Catalog, Engagement, and Recommendation. Auth and the four domain services own separate PostgreSQL databases; Gateway uses Redis for rate limiting.
 
+**Proposed cache experiment (#36):** Recommendation now has an opt-in Redis response-cache implementation behind a disabled-by-default feature flag. It has no verified performance gain or production deployment yet. See [cache operations and benchmark](docs/RECOMMENDATION_REDIS_CACHE.md) for consistency, rollback and comparison instructions. Catalog caching remains [#366](https://github.com/Luca5Eckert/VellumHub/issues/366).
+
 ## Measured Recommendation Behavior
 
 The architecture deliberately accepts asynchronous convergence between service boundaries so the recommendation query path can stay local. The trade-off is measured directly rather than inferred from component timings.

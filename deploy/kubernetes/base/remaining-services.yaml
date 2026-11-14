@@ -58,6 +58,11 @@ spec:
             - {name: SPRING_PROFILES_ACTIVE, value: prod}
             - {name: SERVER_PORT, value: "8080"}
             - {name: SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING, value: "true"}
+            - {name: RECOMMENDATION_CACHE_ENABLED, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: RECOMMENDATION_CACHE_ENABLED}}}
+            - {name: RECOMMENDATION_CACHE_REDIS_HOST, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: RECOMMENDATION_CACHE_REDIS_HOST}}}
+            - {name: RECOMMENDATION_CACHE_REDIS_PORT, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: RECOMMENDATION_CACHE_REDIS_PORT}}}
+            - {name: RECOMMENDATION_CACHE_TTL_SECONDS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: RECOMMENDATION_CACHE_TTL_SECONDS}}}
+            - {name: RECOMMENDATION_CACHE_REDIS_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: REDIS_RECOMMENDATION_PASSWORD, optional: true}}}
             - {name: SPRING_DATASOURCE_URL, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: RECOMMENDATION_DATASOURCE_URL}}}
             - {name: KAFKA_BOOTSTRAP_SERVERS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_BOOTSTRAP_SERVERS}}}
             - {name: KAFKA_SECURITY_PROTOCOL, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_SECURITY_PROTOCOL}}}

@@ -4,6 +4,7 @@ namespace: vellumhub
 resources:
   - ../../base
   - infrastructure.yaml
+  - redis-recommendation-cache.yaml
   - databases.yaml
 patches:
   - path: local-patches.yaml
