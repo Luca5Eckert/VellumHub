@@ -182,6 +182,17 @@ class RecommendationResponseCacheTest {
     }
 
     @Test
+    void jsonNullCannotBeServedAsAValidCacheHit() {
+        UUID user = UUID.randomUUID();
+        cache.read(user, 10, 0, () -> response("First"));
+        String payloadKey = store.keySet().stream().filter(key -> key.contains(":limit:10:offset:0:"))
+                .findFirst().orElseThrow();
+        store.put(payloadKey, "null");
+        List<RecommendationResponse> updated = response("After");
+        assertThat(cache.read(user, 10, 0, () -> updated)).isEqualTo(updated);
+    }
+
+    @Test
     void emptyResponsesAndErrorsAreNotCached() {
         UUID user = UUID.randomUUID();
         assertThat(cache.read(user, 10, 0, List::of)).isEmpty();
