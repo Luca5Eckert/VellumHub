@@ -112,7 +112,7 @@ class CatalogCacheReadBenchmarkIT {
                         new SimpleGrantedAuthority("SCOPE_catalog:read"));
     }
 
-    private int get(String endpoint) {
+    private int readEndpoint(String endpoint) {
         try {
             return http.perform(get(endpoint).with(reader())).andReturn().getResponse().getStatus();
         } catch (Exception e) {
@@ -135,8 +135,8 @@ class CatalogCacheReadBenchmarkIT {
 
     private void warmHotKeys() {
         for (int i = 2001; i <= 2010; i++) {
-            assertThat(get("/books/" + bookId(i))).isEqualTo(200);
-            assertThat(get("/books?pageNumber=" + (i - 1) + "&pageSize=1")).isEqualTo(200);
+            assertThat(readEndpoint("/books/" + bookId(i))).isEqualTo(200);
+            assertThat(readEndpoint("/books?pageNumber=" + (i - 1) + "&pageSize=1")).isEqualTo(200);
         }
     }
 
@@ -175,7 +175,7 @@ class CatalogCacheReadBenchmarkIT {
                             final int idx = i;
                             futures.add(executor.submit(() -> {
                                 long t = System.nanoTime();
-                                int status = get(endpoint(scenario, idx));
+                                int status = readEndpoint(endpoint(scenario, idx));
                                 nanos[idx] = System.nanoTime() - t;
                                 if (status != 200) errors.incrementAndGet();
                             }));
