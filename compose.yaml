@@ -367,6 +367,7 @@ services:
       JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: catalog-service
       CATALOG_CACHE_ENABLED: ${CATALOG_CACHE_ENABLED:-true}
+      CATALOG_CACHE_INVALIDATION_ENABLED: ${CATALOG_CACHE_INVALIDATION_ENABLED:-true}
       CATALOG_CACHE_REDIS_HOST: redis-recommendation-cache
       CATALOG_CACHE_REDIS_PORT: "6379"
       CATALOG_CACHE_DETAIL_TTL_SECONDS: ${CATALOG_CACHE_DETAIL_TTL_SECONDS:-300}
@@ -388,8 +389,7 @@ services:
     depends_on:
       postgres-catalog:
         condition: service_healthy
-      redis-recommendation-cache:
-        condition: service_healthy
+      # Cache is optional; Catalog must start when Redis is down.
       kafka:
         condition: service_healthy
     healthcheck:
@@ -568,8 +568,7 @@ services:
     depends_on:
       postgres-recommendation:
         condition: service_healthy
-      redis-recommendation-cache:
-        condition: service_healthy
+      # Cache is optional; Recommendation must start when Redis is down.
       kafka:
         condition: service_healthy
     healthcheck:

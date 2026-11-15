@@ -10,6 +10,7 @@ data:
   RECOMMENDATION_CACHE_ENABLED: "false"
   # No verified provisioned domain Redis/credentials in production; keep gates closed.
   CATALOG_CACHE_ENABLED: "false"
+  CATALOG_CACHE_INVALIDATION_ENABLED: "false"
   CATALOG_CACHE_REDIS_HOST: redis-cache.example.internal
   RECOMMENDATION_CACHE_REDIS_HOST: redis-cache.example.internal
   KAFKA_BOOTSTRAP_SERVERS: kafka.example.internal:9093
