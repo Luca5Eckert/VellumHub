@@ -17,6 +17,12 @@ spec:
           env: &jdbcKafkaEnv
             - {name: SPRING_PROFILES_ACTIVE, value: prod}
             - {name: SERVER_PORT, value: "8080"}
+            - {name: CATALOG_CACHE_ENABLED, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CATALOG_CACHE_ENABLED}}}
+            - {name: CATALOG_CACHE_REDIS_HOST, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CATALOG_CACHE_REDIS_HOST}}}
+            - {name: CATALOG_CACHE_REDIS_PORT, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CATALOG_CACHE_REDIS_PORT}}}
+            - {name: CATALOG_CACHE_DETAIL_TTL_SECONDS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CATALOG_CACHE_DETAIL_TTL_SECONDS}}}
+            - {name: CATALOG_CACHE_PAGE_TTL_SECONDS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CATALOG_CACHE_PAGE_TTL_SECONDS}}}
+            - {name: CATALOG_CACHE_REDIS_PASSWORD, valueFrom: {secretKeyRef: {name: vellumhub-secrets, key: REDIS_CATALOG_PASSWORD, optional: true}}}
             - {name: SPRING_DATASOURCE_URL, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: CATALOG_DATASOURCE_URL}}}
             - {name: KAFKA_BOOTSTRAP_SERVERS, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_BOOTSTRAP_SERVERS}}}
             - {name: KAFKA_SECURITY_PROTOCOL, valueFrom: {configMapKeyRef: {name: vellumhub-config, key: KAFKA_SECURITY_PROTOCOL}}}
