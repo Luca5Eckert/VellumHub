@@ -16,6 +16,8 @@ The central engineering problem is **serving recommendations without depending o
 
 **Engineering evidence:** Controlled distributed runs measured sub-0.8 s p95 interaction-to-visible ranking and 60/60 successful recommendation reads with User, Catalog, and Engagement unavailable. Transactional Outbox and idempotent consumers protect canonical Book, Reading Progress, Rating, and Reaction streams.
 
+**Architecture atlas:** [C4 views, six service codes, sequences and state machines](docs/architecture/README.md) · [HTML diagram explorer](docs/architecture/architecture-explorer.html). Markdown is the canonical source for agents and humans.
+
 **Explore:** [Measured behavior](#measured-recommendation-behavior) · [Architecture](#architecture) · [Authentication](#authentication-and-authorization) · [API documentation](#explore-the-api) · [Run locally](#run-locally) · [Quality](#verification-strategy) · [Observability](#observability-and-operational-feedback) · [Roadmap](#current-status-and-roadmap)
 
 ---
@@ -61,7 +63,7 @@ VellumHub applies [Data on the Outside versus Data on the Inside](https://queue.
 
 The platform has **six independently deployable services**: Auth, Gateway, User, Catalog, Engagement, and Recommendation. Auth and the four domain services own separate PostgreSQL databases; Gateway uses Redis for rate limiting.
 
-**Domain read-cache rollout:** Recommendation's Redis DTO cache is implemented ([#36](https://github.com/Luca5Eckert/VellumHub/issues/36), [PR #367](https://github.com/Luca5Eckert/VellumHub/pull/367)), measured using a [72k-request controlled A/B](docs/RECOMMENDATION_REDIS_CACHE.md) with gains in hot/high-concurrency scenarios but regressions on cold reads. Catalog's independent detail/page Redis cache is implemented in [PR #369](https://github.com/Luca5Eckert/VellumHub/pull/369) (issue [#366](https://github.com/Luca5Eckert/VellumHub/issues/366)), with its own [PostgreSQL+Redis benchmark and runbook](docs/CATALOG_REDIS_CACHE.md). Both caches are **enabled in local Compose and local Kind**, isolated from Gateway rate limiting; application defaults and the unprovisioned production overlay remain **OFF**. Neither PR merge nor CI results constitute a production rollout.
+**Domain read-cache status:** Recommendation ([#36](https://github.com/Luca5Eckert/VellumHub/issues/36), [PR #367](https://github.com/Luca5Eckert/VellumHub/pull/367)) and Catalog ([#366](https://github.com/Luca5Eckert/VellumHub/issues/366), [PRs #369](https://github.com/Luca5Eckert/VellumHub/pull/369) and [#370](https://github.com/Luca5Eckert/VellumHub/pull/370)) implement Redis DTO cache-aside. Catalog hardening added bounded DB fallback, safe phased invalidation, key/memory protections and real signed-JWT HTTP tests. The [72k authenticated OFF/ON Catalog run](https://github.com/Luca5Eckert/VellumHub/actions/runs/43666479401) passed with equivalent responses: warm/c32 p95 44.89→10.35 ms, mixed80/c32 40.76→19.67 ms, cold/c8 8.10→13.41 ms (**regression**). These are CI/Testcontainers measurements, **not** production throughput. Both caches are **ON in local Compose/Kind configuration**, isolated from Gateway rate limiting; application defaults and the unprovisioned production overlay are **OFF**. See [C4 + cache sequence](docs/architecture/flows/catalog-cache.md), [Catalog runbook](docs/CATALOG_REDIS_CACHE.md) and [Recommendation evidence](docs/RECOMMENDATION_REDIS_CACHE.md).
 
 ## Measured Recommendation Behavior
 
@@ -114,6 +116,8 @@ Delivery remains at-least-once, not exactly-once transport. Transactional Outbox
 The 70% semantic / 30% popularity weighting began as a heuristic to avoid trapping users entirely inside their current preference bubble. The controlled evaluation later showed semantic-only outperforming the combined ranker on the reference dataset. The weight was intentionally **not** retuned on that same dataset and then presented as an unbiased improvement; tuning belongs in a separate validation experiment.
 
 ## Architecture
+
+The source-linked [C4 context](docs/architecture/diagrams/c4-context.md), [C4 containers](docs/architecture/diagrams/c4-containers.md), [Catalog L3 components](docs/architecture/diagrams/c4-catalog-components.md), [coded service registry](docs/architecture/services/README.md), [sequences](docs/architecture/README.md) and [state machines](docs/architecture/states/outbox-delivery.md) form the canonical architecture knowledge base. The diagram below is a compact overview.
 
 Domain API requests enter through the reactive Gateway. OAuth/OIDC login goes directly to Auth, the platform's identity authority. Each domain API independently validates Auth-issued access tokens. Kafka carries cross-domain facts into service-owned projections.
 
@@ -473,7 +477,8 @@ The base Kubernetes ingress exposes Gateway API routes. Auth browser endpoints r
 
 | Topic | Guide |
 |---|---|
-| Service setup and responsibilities | [Service READMEs](services) |
+| C4 context/containers/components, service codes, sequences and state machines | [Architecture knowledge base](docs/architecture/README.md) · [HTML explorer](docs/architecture/architecture-explorer.html) |
+| Service setup and responsibilities | [Service registry](docs/architecture/services/README.md) · [Service READMEs](services) |
 | Identity, credentials, Google and sessions | [Auth Service](services/auth-service/README.md) |
 | Client scopes, roles and endpoint policies | [OAuth scopes and RBAC](docs/SECURITY_SCOPES_RBAC.md) |
 | Signing keys, JWKS and token validation | [JWT/JWKS runbook](docs/SECURITY_JWKS_RFC9068.md) |

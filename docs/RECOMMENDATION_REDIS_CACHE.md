@@ -1,6 +1,6 @@
 # Recommendation Redis response cache — #36
 
-**Status:** implementation under review, opt-in only; no production activation or proven latency improvement. The baseline architecture stays unchanged until a controlled comparison justifies enabling the feature.
+**Status (repository, 15 November 2026):** implementation merged in [PR #367](https://github.com/Luca5Eckert/VellumHub/pull/367); [issue #36](https://github.com/Luca5Eckert/VellumHub/issues/36) closed. The controlled [72,000-request A/B](https://github.com/Luca5Eckert/VellumHub/actions/runs/43650750262) and real Redis/Kafka tests passed, with workload-dependent gains in hot/high-concurrency scenarios and regressions on cold reads. **Not activated in production**; application default OFF, local Compose/Kind ON. [VH-REC](architecture/services/recommendation.md) · [C4 containers](architecture/diagrams/c4-containers.md) · [feedback sequence](architecture/flows/recommendation-feedback.md).
 
 ## Purpose and scope
 
@@ -46,7 +46,7 @@ The Redis health indicator is disabled because the cache is optional; JVM livene
 - Also collect PostgreSQL query counters / slow SQL, HTTP request duration/error rate, JVM CPU/GC/heap, Redis memory/evictions, Kafka lag, and event→visible-ranking freshness. These are not interchangeable measures.
 - Metric tags never contain username, user UUID, book ID, token, ISBN, request hash or raw Redis key. Logs should also avoid payload/keys. Cache hit ratio is `hit/(hit+miss)`; bypass and errors must be separately reported.
 
-**No numeric improvement is claimed.** A warm-cache HIT should avoid the ranker, but a production-scale mix or cold path may be slower because of Redis network cost. Respect the [existing baseline and freshness harness](../services/recommendation-service/benchmark/README.md).
+**Measurement scope:** the [72k reference](https://github.com/Luca5Eckert/VellumHub/actions/runs/43650750262) supports gains under hot keys and regressions under cold loads; **no production improvement or SLA is claimed**. Real traffic may differ due to Redis RTT and access distribution. Follow the [baseline and freshness harness](../services/recommendation-service/benchmark/README.md).
 
 ## Verification and evidence
 
@@ -86,9 +86,9 @@ Files `services/recommendation-service/target/cache-benchmark/<sha>/off.json` an
 - The current implementation coalesces simultaneous MISSes for each versioned response key **within one JVM**, with an upper limit of 512 in-flight keys and a bounded 5-second follower wait. Distinct service replicas can independently lead one MISS per key; there is deliberately no distributed mutex or new Redis roundtrip on ordinary cold reads.
 - Failed post-commit Redis invalidation is observable but not durably retried. Staleness is bounded by the configured response TTL, not guaranteed zero.
 - User generation metadata grows only with recently cached users (24h expiry); global metadata is constant-size. Redis should be kept isolated from the rate-limiting workload.
-- No benchmark exists yet that proves a production gain, no synthetic throughput may be presented as production, and deployment requires separate review/authorization.
+- The completed 72k Testcontainers/MockMvc benchmark does **not** prove a production gain; do not present synthetic throughput as production. Production TLS/ACLs, canary, hit ratio and rollback require separate authorization.
 
-Owner issue: [#36](https://github.com/Luca5Eckert/VellumHub/issues/36); Catalog caching is tracked separately by [#366](https://github.com/Luca5Eckert/VellumHub/issues/366).
+Owner issue: [#36](https://github.com/Luca5Eckert/VellumHub/issues/36), completed via PR #367. Catalog [#366](https://github.com/Luca5Eckert/VellumHub/issues/366) also closed; hardening merged in [PR #370](https://github.com/Luca5Eckert/VellumHub/pull/370).
 
 ## Diagnostics of cold misses — 14 November 2026
 
