@@ -24,7 +24,8 @@ public class BookAvroPublisher implements AutoCloseable {
     @Autowired
     public BookAvroPublisher(ProducerFactory<String, Object> currentProducer,
             @Value("${app.book.avro.registry-url:}") String registryUrl,
-            @Value("${app.book.events.wire-format:json}") String wireFormat) {
+            @Value("${app.book.events.wire-format:json}") String wireFormat,
+            @Value("${app.book.avro.schema-id:}") String approvedSchemaId) {
         if (!"json".equalsIgnoreCase(wireFormat) && !"avro".equalsIgnoreCase(wireFormat))
             throw new IllegalArgumentException("Invalid Book event wire format");
         if ("avro".equalsIgnoreCase(wireFormat) && (registryUrl == null || registryUrl.isBlank()))
@@ -42,9 +43,24 @@ public class BookAvroPublisher implements AutoCloseable {
         options.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         options.put("schema.registry.url", registryUrl == null ? "" : registryUrl);
         options.put("auto.register.schemas", false);
-        // Resolve the generated writer against its Git-approved registered schema.
-        // Do not silently adopt a newer subject revision during a rolling deployment.
-        options.put("use.latest.version", false);
+        // Generated SpecificRecord can differ from the preregistered AVSC representation.
+        // Existing installations use the latest approved subject with strict compatibility.
+        // A release may instead pin the verified ID returned by registry_gate.py.
+        if (approvedSchemaId != null && !approvedSchemaId.isBlank()) {
+            final int schemaId;
+            try { schemaId = Integer.parseInt(approvedSchemaId); }
+            catch (NumberFormatException ex) {
+                throw new IllegalArgumentException("Invalid approved Book Avro schema ID", ex);
+            }
+            if (schemaId <= 0)
+                throw new IllegalArgumentException("Approved Book Avro schema ID must be positive");
+            options.put("use.schema.id", schemaId);
+            options.put("id.compatibility.strict", true);
+            options.put("use.latest.version", false);
+        } else {
+            options.put("use.latest.version", true);
+            options.put("latest.compatibility.strict", true);
+        }
         options.put("avro.remove.java.properties", true);
         options.put("value.subject.name.strategy",
                 "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy");
@@ -53,7 +69,19 @@ public class BookAvroPublisher implements AutoCloseable {
     }
     /** Explicit-URL constructor for tests and opt-in integrations. */
     public BookAvroPublisher(ProducerFactory<String, Object> currentProducer, String registryUrl) {
-        this(currentProducer, registryUrl, "avro");
+        this(currentProducer, registryUrl, "avro", "");
+    }
+
+    /** Opt-in fixed schema ID from a verified Registry release. */
+    public BookAvroPublisher(ProducerFactory<String, Object> currentProducer,
+            String registryUrl, int schemaId) {
+        this(currentProducer, registryUrl, "avro", String.valueOf(schemaId));
+    }
+
+    /** Direct configuration entrypoint for focused tests. */
+    BookAvroPublisher(ProducerFactory<String, Object> currentProducer,
+            String registryUrl, String wireFormat) {
+        this(currentProducer, registryUrl, wireFormat, "");
     }
 
     public CompletableFuture<SendResult<String, Object>> send(

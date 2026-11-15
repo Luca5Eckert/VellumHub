@@ -20,6 +20,15 @@ class BookAvroPublisherConfigurationTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test void rejectsInvalidApprovedSchemaIds() {
+        when(producer.getConfigurationProperties()).thenReturn(Map.of());
+        assertThatThrownBy(() -> new BookAvroPublisher(producer, "http://registry:8080", "avro", "bad"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("schema ID");
+        assertThatThrownBy(() -> new BookAvroPublisher(producer, "http://registry:8080", 0))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     @Test void jsonOnlyStartupDoesNotRequireUnusedRegistry() {
         when(producer.getConfigurationProperties()).thenReturn(Map.of());
         assertThatCode(() -> {

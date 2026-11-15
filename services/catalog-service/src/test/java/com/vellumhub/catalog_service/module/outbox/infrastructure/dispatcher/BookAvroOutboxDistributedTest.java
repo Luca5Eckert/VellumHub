@@ -81,7 +81,7 @@ class BookAvroOutboxDistributedTest extends KafkaIntegrationTestSupport {
         config.put("spring.json.type.mapping",
                 "book_changed_event:com.vellumhub.kafka.contracts.book.BookChangedEvent");
         var factory = new DefaultKafkaProducerFactory<String, Object>(config);
-        var avro = new BookAvroPublisher(factory, registryUrl);
+        var avro = new BookAvroPublisher(factory, registryUrl, schemaId);
         try {
             new JdbcOutboxWriter(jdbc).append(OutboxMessage.book(event, true));
             var sender = new KafkaOutboxTransport(new KafkaTemplate<>(factory), avro);
