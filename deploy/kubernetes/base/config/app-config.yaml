@@ -19,6 +19,12 @@ data:
   RECOMMENDATION_CACHE_REDIS_HOST: redis-recommendation-cache
   RECOMMENDATION_CACHE_REDIS_PORT: "6379"
   RECOMMENDATION_CACHE_TTL_SECONDS: "45"
+  # Both domain caches share the isolated cache Redis, never the rate limiter.
+  CATALOG_CACHE_ENABLED: "false"
+  CATALOG_CACHE_REDIS_HOST: redis-recommendation-cache
+  CATALOG_CACHE_REDIS_PORT: "6379"
+  CATALOG_CACHE_DETAIL_TTL_SECONDS: "300"
+  CATALOG_CACHE_PAGE_TTL_SECONDS: "45"
   KAFKA_BOOTSTRAP_SERVERS: kafka:9092
   # Development-only local broker; production overlay must switch to SASL_SSL.
   KAFKA_SECURITY_PROTOCOL: PLAINTEXT
