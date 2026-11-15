@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookWritesFrozenException;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
+import com.vellumhub.catalog_service.module.book.infrastructure.cache.BookReadCache;
+import org.junit.jupiter.api.BeforeEach;
+import java.util.function.Supplier;
+import static org.mockito.Mockito.when;
 import com.vellumhub.catalog_service.module.book.presentation.controller.BookController;
 import com.vellumhub.catalog_service.share.security.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
@@ -43,6 +47,17 @@ class BookControllerTest {
 
     @MockitoBean
     private BookService bookService;
+
+    @MockitoBean
+    private BookReadCache cache;
+
+    @BeforeEach
+    void bypassCacheForControllerContractTests() {
+        when(cache.detail(any(UUID.class), any())).thenAnswer(call ->
+                ((Supplier<?>) call.getArgument(1)).get());
+        when(cache.page(org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(), any()))
+                .thenAnswer(call -> ((Supplier<?>) call.getArgument(2)).get());
+    }
 
     @MockitoBean
     private JpaMetamodelMappingContext jpaMetamodelMappingContext;
