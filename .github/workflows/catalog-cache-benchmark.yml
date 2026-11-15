@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
-      PROFILE: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 369 && 'reference' || github.event_name == 'pull_request' && 'smoke' || inputs.profile || 'reference' }}
+      PROFILE: ${{ github.event_name == 'pull_request' && 'reference' || inputs.profile || 'reference' }}
       SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
@@ -48,10 +48,36 @@ jobs:
       - name: Real Redis invalidation, stale-fill and two-instance tests
         run: >-
           mvn -B -ntp -pl services/catalog-service -am
-          -Dtest=BookReadCacheRedisIT
+          -Dtest=BookReadCacheRedisIT,BookReadCacheNoEvictionIT
           -Dsurefire.failIfNoSpecifiedTests=false
           -Dgroups=distributed
           test
+      - name: Real Catalog contexts, DB rollback and Redis-absent startup
+        run: >-
+          mvn -B -ntp -pl services/catalog-service -am
+          -Dtest=CatalogCacheTwoContextsIT,CatalogCacheRedisOutageBootIT,CatalogCacheNetworkHttpIT
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dgroups=catalog-cache-e2e
+          test
+      - name: Compose optional Redis dependencies sanity gate
+        shell: bash
+        run: |
+          # compose.yaml also references a literal .env service env_file; supply
+          # only non-secret test placeholders (never commit this generated file).
+          cp .env.example .env
+          trap 'rm -f .env' EXIT
+          docker compose --env-file .env.example config --format json > /tmp/cache-compose.json
+          python3 - <<'PY'
+          import json
+          data=json.load(open('/tmp/cache-compose.json'))['services']
+          for name in ('catalog-service','recommendation-service'):
+              deps=data[name].get('depends_on',{})
+              assert 'redis-recommendation-cache' not in deps, (name,deps)
+          catalog=data['catalog-service']['environment']
+          assert catalog['CATALOG_CACHE_ENABLED'].lower()=='true'
+          assert catalog['CATALOG_CACHE_INVALIDATION_ENABLED'].lower()=='true'
+          print("Cache optional in Compose; local read+writer flags enabled")
+          PY
       - name: Baseline OFF (real PostgreSQL + Redis + authenticated MockMvc)
         run: >-
           mvn -B -ntp -pl services/catalog-service -am
@@ -85,9 +111,17 @@ jobs:
           assert off['profile']==on['profile']==os.environ['PROFILE']
           assert off['request_count']==on['request_count']
           assert len(off['rows'])==len(on['rows'])
+          assert 'explain_first_page' in off and 'explain_genres' in off
           for mode in (off,on):
               assert all(row['errors']==0 for row in mode['rows'])
-          print('Catalog A/B evidence:',off['request_count']+on['request_count'],'GETs')
+              assert all(row['cpu_worker_ns'] is not None for row in mode['rows'])
+              assert all(row['peak_hikari_active_sampled'] >= 0 for row in mode['rows'])
+              assert all(row['gc_collections'] >= 0 for row in mode['rows'])
+              assert all(row['response_hash_sum'] > 0 for row in mode['rows'])
+          for a,b in zip(off['rows'],on['rows']):
+              assert (a['scenario'],a['concurrency'],a['rep']) == (b['scenario'],b['concurrency'],b['rep'])
+              assert a['response_hash_sum'] == b['response_hash_sum'], "Cache changed response content"
+          print('Catalog A/B verified same-response evidence:',off['request_count']+on['request_count'],'GETs')
           PY
       - name: Archive raw benchmark evidence and JUnit results
         if: always()

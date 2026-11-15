@@ -5,6 +5,7 @@ import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundEx
 import com.vellumhub.catalog_service.module.book.domain.exception.BookWritesFrozenException;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
 import com.vellumhub.catalog_service.module.book.infrastructure.cache.BookReadCache;
+import com.vellumhub.catalog_service.module.book.infrastructure.cache.CacheLoadOverloadedException;
 import org.junit.jupiter.api.BeforeEach;
 import java.util.function.Supplier;
 import static org.mockito.Mockito.when;
@@ -84,6 +85,19 @@ class BookControllerTest {
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Retry-After", "5"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value(503));
+    }
+
+    @Test
+    void readBulkheadReturnsExplicit503WithRetryAfter() throws Exception {
+        UUID id = UUID.randomUUID();
+        org.mockito.Mockito.doThrow(new CacheLoadOverloadedException("Capacity exhausted"))
+                .when(cache).detail(org.mockito.ArgumentMatchers.eq(id), any());
+        mockMvc.perform(get("/books/" + id).with(userJwt()))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .header().string("Retry-After", "1"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.status").value(503));
     }
 
     @Test

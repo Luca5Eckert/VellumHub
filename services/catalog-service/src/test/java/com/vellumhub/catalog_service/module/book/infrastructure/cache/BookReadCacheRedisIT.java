@@ -36,7 +36,9 @@ class BookReadCacheRedisIT {
                     "--maxmemory", "128mb", "--maxmemory-policy", "noeviction");
 
     private LettuceConnectionFactory factory;
+    private LettuceConnectionFactory secondFactory;
     private StringRedisTemplate redis;
+    private StringRedisTemplate secondRedis;
     private BookReadCache first;
     private BookReadCache second;
     private SimpleMeterRegistry registry;
@@ -47,14 +49,19 @@ class BookReadCacheRedisIT {
                 new RedisStandaloneConfiguration(REDIS.getHost(), REDIS.getMappedPort(6379)));
         factory.afterPropertiesSet();
         redis = new StringRedisTemplate(factory);
+        secondFactory = new LettuceConnectionFactory(
+                new RedisStandaloneConfiguration(REDIS.getHost(), REDIS.getMappedPort(6379)));
+        secondFactory.afterPropertiesSet();
+        secondRedis = new StringRedisTemplate(secondFactory);
         redis.getConnectionFactory().getConnection().serverCommands().flushDb();
         registry = new SimpleMeterRegistry();
         first = new BookReadCache(redis, registry, true, 300, 45);
-        second = new BookReadCache(redis, new SimpleMeterRegistry(), true, 300, 45);
+        second = new BookReadCache(secondRedis, new SimpleMeterRegistry(), true, 300, 45);
     }
 
     @AfterEach
     void tearDown() {
+        secondFactory.destroy();
         factory.destroy();
         registry.close();
     }
@@ -63,6 +70,20 @@ class BookReadCacheRedisIT {
         return new GetBookResponse(id, title, "Description", 2024, "https://example.test/cover.jpg",
                 "Author", "9780000000000", 240, "Publisher", List.of("Sci-Fi", "Fantasy"),
                 Instant.parse("2026-01-01T00:00:00Z"), Instant.parse("2026-02-01T00:00:00Z"));
+    }
+
+    @Test
+    void absentIdsDoNotAllocatePerUuidRedisGenerationKeys() {
+        // A client may probe arbitrary authenticated IDs that return 404.
+        // Never let those probes allocate persistent Redis generation markers.
+        for (int i = 0; i < 60; i++) {
+            assertThat(first.detail(UUID.randomUUID(), () -> null)).isNull();
+        }
+        assertThat(redis.keys("vellumhub:catalog:response:v1:book-generation:*")).isEmpty();
+        UUID changed = UUID.randomUUID();
+        second.invalidateAfterCommit(changed);
+        assertThat(redis.keys("vellumhub:catalog:response:v1:book-generation:*"))
+                .hasSize(1);
     }
 
     @Test
@@ -184,5 +205,103 @@ class BookReadCacheRedisIT {
         assertThrows(IllegalStateException.class, () ->
                 first.detail(id, () -> { throw new IllegalStateException("not found"); }));
         assertThat(first.detail(id, () -> book(id, "Found")).title()).isEqualTo("Found");
+    }
+
+    @Test
+    void phasedRolloutReadOffWriterStillInvalidatesActiveReader() {
+        UUID id = UUID.randomUUID();
+        BookReadCache writerReadOff = new BookReadCache(secondRedis, new SimpleMeterRegistry(),
+                false, true, 300, 45);
+        GetBookResponse oldBook = book(id, "Before"), newBook = book(id, "Committed");
+
+        assertThat(first.detail(id, () -> oldBook)).isEqualTo(oldBook);
+        assertThat(first.page(0, 10, () -> List.of(oldBook))).containsExactly(oldBook);
+        assertThat(writerReadOff.detail(id, () -> newBook)).isEqualTo(newBook);
+        writerReadOff.invalidateAfterCommit(id);
+
+        assertThat(first.detail(id, () -> newBook)).isEqualTo(newBook);
+        assertThat(first.page(0, 10, () -> List.of(newBook))).containsExactly(newBook);
+        assertThat(registry.counter("vellumhub.catalog.cache.events",
+                "cache", "books", "result", "miss").count()).isGreaterThanOrEqualTo(4);
+    }
+
+    @Test
+    void ttlExpiryAndVolatileRedisRestartCannotResurrectPreviousPayload() throws Exception {
+        UUID id = UUID.randomUUID();
+        BookReadCache shortTtl = new BookReadCache(redis, registry, true, 1, 1);
+        GetBookResponse oldBook = book(id, "Old");
+        GetBookResponse fresh = book(id, "Fresh");
+
+        assertThat(shortTtl.detail(id, () -> oldBook)).isEqualTo(oldBook);
+        assertThat(shortTtl.detail(id, () -> fresh)).isEqualTo(oldBook);
+        Thread.sleep(1300); // Real Redis key expiry with TTL=1, not a mocked clock.
+        assertThat(shortTtl.detail(id, () -> fresh)).isEqualTo(fresh);
+
+        // Equivalent to cache-only Redis being restarted with no persistence.
+        redis.getConnectionFactory().getConnection().serverCommands().flushDb();
+        var restarted = new BookReadCache(secondRedis, new SimpleMeterRegistry(), true, 1, 1);
+        assertThat(restarted.detail(id, () -> oldBook)).isEqualTo(oldBook);
+        restarted.invalidateAfterCommit(id);
+        assertThat(shortTtl.detail(id, () -> fresh)).isEqualTo(fresh);
+    }
+
+    @Test
+    void slowCoalescedLeaderFailsFollowersWithoutAmplifyingSqlWork() throws Exception {
+        UUID id = UUID.randomUUID();
+        CountDownLatch started = new CountDownLatch(1), release = new CountDownLatch(1);
+        AtomicInteger dbLoads = new AtomicInteger();
+        GetBookResponse result = book(id, "Leader");
+
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var leader = pool.submit(() -> first.detail(id, () -> {
+                dbLoads.incrementAndGet();
+                started.countDown();
+                try {
+                    if (!release.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("Leader timeout");
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+                return result;
+            }));
+            assertThat(started.await(5, TimeUnit.SECONDS)).isTrue();
+            var follower = pool.submit(() -> first.detail(id, () -> {
+                dbLoads.incrementAndGet();
+                throw new AssertionError("Follower must not run a duplicate database read");
+            }));
+            try {
+                assertThat(org.assertj.core.api.Assertions.catchThrowable(() -> follower.get(8, TimeUnit.SECONDS)))
+                        .isInstanceOf(java.util.concurrent.ExecutionException.class)
+                        .hasCauseInstanceOf(CacheLoadOverloadedException.class);
+                assertThat(dbLoads.get()).isEqualTo(1);
+            } finally {
+                release.countDown();
+            }
+            assertThat(leader.get(10, TimeUnit.SECONDS)).isEqualTo(result);
+        }
+        assertThat(registry.counter("vellumhub.catalog.cache.events",
+                "cache", "books", "result", "timeout").count()).isEqualTo(1);
+    }
+
+    @Test
+    void redisConnectionRefusedFallsBackToHealthyDatabase() {
+        // Independent real Lettuce network connection to a known-unreachable
+        // local port, not Mockito intercepting opsForValue().
+        var config = new RedisStandaloneConfiguration("127.0.0.1", 1);
+        var lettuceConfig = org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration
+                .builder().commandTimeout(java.time.Duration.ofMillis(150)).build();
+        var offlineFactory = new LettuceConnectionFactory(config, lettuceConfig);
+        offlineFactory.afterPropertiesSet();
+        try {
+            var offline = new BookReadCache(new StringRedisTemplate(offlineFactory),
+                    new SimpleMeterRegistry(), true, 300, 45);
+            UUID id = UUID.randomUUID();
+            assertThat(offline.detail(id, () -> book(id, "From PostgreSQL")).title())
+                    .isEqualTo("From PostgreSQL");
+            assertThat(offline.page(0, 10, () -> List.of(book(id, "Fallback"))))
+                    .hasSize(1);
+        } finally {
+            offlineFactory.destroy();
+        }
     }
 }

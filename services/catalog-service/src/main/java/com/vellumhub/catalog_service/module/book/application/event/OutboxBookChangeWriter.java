@@ -1,7 +1,7 @@
 package com.vellumhub.catalog_service.module.book.application.event;
 
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
-import com.vellumhub.catalog_service.module.book.infrastructure.cache.BookReadCache;
+import com.vellumhub.catalog_service.module.book.domain.port.BookCacheInvalidationPort;
 import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
 import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import com.vellumhub.catalog_service.module.book.domain.port.BookWriteGate;
@@ -20,10 +20,10 @@ public class OutboxBookChangeWriter implements BookChangeWriter {
     private final OutboxWriter outbox;
     private final boolean avro;
     private final BookWriteGate writeGate;
-    private final BookReadCache cache;
+    private final BookCacheInvalidationPort cache;
     @Autowired
     public OutboxBookChangeWriter(BookEventFactory events, OutboxWriter outbox,
-            BookWriteGate writeGate, BookReadCache cache,
+            BookWriteGate writeGate, BookCacheInvalidationPort cache,
             @Value("${app.book.events.wire-format:json}") String wireFormat) {
         this.events = events;
         this.outbox = outbox;

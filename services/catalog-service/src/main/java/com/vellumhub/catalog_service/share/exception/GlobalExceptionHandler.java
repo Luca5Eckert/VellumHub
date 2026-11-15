@@ -1,6 +1,7 @@
 package com.vellumhub.catalog_service.share.exception;
 
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
+import com.vellumhub.catalog_service.module.book.infrastructure.cache.CacheLoadOverloadedException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookWritesFrozenException;
 import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
 import com.vellumhub.catalog_service.module.book_list.domain.exception.MembershipBookListDomainException;
@@ -139,6 +140,18 @@ public class GlobalExceptionHandler {
                 .status(status.value()).error("Book List Error").message(ex.getMessage())
                 .details(List.of("Book list business rule violation"))
                 .path(request.getRequestURI()).timestamp(Instant.now()).build());
+    }
+
+    @ExceptionHandler(CacheLoadOverloadedException.class)
+    public ResponseEntity<ApiResponseError> handleCatalogCacheOverloaded(
+            CacheLoadOverloadedException ex, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
+        return ResponseEntity.status(status).header("Retry-After", "1")
+                .body(ApiResponseError.builder()
+                        .status(status.value()).error("Service Unavailable")
+                        .message(ex.getMessage())
+                        .details(List.of("Catalog read capacity temporarily exhausted"))
+                        .path(request.getRequestURI()).timestamp(Instant.now()).build());
     }
 
     @ExceptionHandler(BookWritesFrozenException.class)
