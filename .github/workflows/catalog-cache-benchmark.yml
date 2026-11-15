@@ -16,6 +16,11 @@ on:
         type: choice
         options: [smoke, reference, stress]
 
+# A newer PR commit supersedes its earlier, costly A/B runs.
+concurrency:
+  group: catalog-cache-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
