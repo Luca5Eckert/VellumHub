@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>VellumHub · Architecture explorer</title>
+<style>
+  :root { font-family: system-ui, -apple-system, Segoe UI, sans-serif; color-scheme: light dark; }
+  body { margin: 0; background: Canvas; color: CanvasText; }
+  header { padding: 2.2rem max(1.5rem, calc((100vw - 1080px)/2)); border-bottom: 1px solid color-mix(in srgb, CanvasText 15%, transparent); }
+  .eyebrow { font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; opacity: .65; }
+  h1 { font-size: clamp(1.65rem,3vw,2.5rem); line-height: 1.18; margin: .45rem 0 .7rem; }
+  .intro { max-width: 68ch; line-height: 1.55; opacity: .78; }
+  main { max-width: 1080px; padding: 1.5rem; margin: 0 auto 5rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; margin-bottom: 1rem; }
+  label { font-size: .9rem; font-weight: 600; }
+  select, button { border: 1px solid color-mix(in srgb,CanvasText 25%,transparent); background: Canvas; color: CanvasText; border-radius: .6rem; padding: .6rem .8rem; font: inherit; cursor: pointer; }
+  select { flex: 1; max-width: 640px; min-width: 245px; }
+  button:hover { background: color-mix(in srgb,CanvasText 6%,Canvas); }
+  a { color: inherit; text-underline-offset: 3px; }
+  .panel { border: 1px solid color-mix(in srgb,CanvasText 17%,transparent); border-radius: 1rem; overflow: hidden; }
+  .panelhead { display: flex; gap: .7rem; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: .9rem 1.15rem; border-bottom: 1px solid color-mix(in srgb,CanvasText 13%,transparent); }
+  .panelhead strong { font-size: .95rem; }
+  #visual { padding: 1.5rem; overflow: auto; min-height: 360px; background: color-mix(in srgb,Canvas 97%,CanvasText); }
+  #visual svg { max-width: none !important; height: auto; min-width: 700px; }
+  #visual pre { white-space: pre; font-size: .82rem; overflow: auto; }
+  #status { padding: .65rem 1.1rem; font-size: .84rem; opacity: .72; }
+  h2 { margin: 2.4rem 0 1rem; font-size: 1.35rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .93rem; }
+  th, td { padding: .85rem .6rem; text-align: left; border-bottom: 1px solid color-mix(in srgb,CanvasText 13%,transparent); }
+  th { font-size: .77rem; text-transform: uppercase; letter-spacing: .07em; }
+  code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .92em; }
+  .note { margin-top: 1.2rem; font-size: .85rem; line-height: 1.6; opacity: .75; max-width: 88ch; }
+  :focus-visible { outline: 3px solid #3b82f6; outline-offset: 2px; }
+  @media (max-width:700px) { #visual{padding:.65rem;} th,td{padding:.65rem .3rem;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">VellumHub / Engineering knowledge base</div>
+  <h1>Architecture explorer</h1>
+  <p class="intro">Context, container and component C4 views, message sequences and verified state machines. Every diagram is loaded from its canonical Markdown file—there is no second copy of the model to maintain.</p>
+  <a href="README.md">Architecture index</a> · <a href="../../README.md">Repository README</a>
+</header>
+<main>
+  <div class="controls">
+    <label for="diagram">Diagram</label>
+    <select id="diagram" aria-label="Choose architecture diagram"></select>
+    <a id="source" href="diagrams/c4-context.md">View Markdown source</a>
+    <button id="refresh" type="button">Reload</button>
+  </div>
+  <section class="panel" aria-labelledby="currentTitle">
+    <div class="panelhead"><strong id="currentTitle">Loading diagram</strong><span id="origin">Canonical: Markdown</span></div>
+    <div id="visual" role="img" aria-label="Selected engineering diagram" aria-live="polite"><p>Loading…</p></div>
+    <div id="status" role="status">Mermaid renderer loads from a public CDN; Markdown source always remains available.</div>
+  </section>
+  <h2>Services and stable codes</h2>
+  <table><thead><tr><th>Code</th><th>Slug</th><th>Responsibility / owned store</th></tr></thead><tbody id="services"></tbody></table>
+  <p class="note">This local documentation viewer does not contact application APIs or require credentials. It needs a local HTTP server (from the repository root: <code>python3 -m http.server 8000</code>) because browsers restrict <code>file://</code> fetch. Diagram graphics require network access to the pinned Mermaid package; if unavailable, the source is shown in plaintext. C4 diagrams are logical code-level architecture, not infrastructure deployment proof. Cache runs locally but production flags remain OFF.</p>
+</main>
+<script type="module">
+const pages = [
+  ["C4 L1 · System context", "diagrams/c4-context.md"],
+  ["C4 L2 · Containers and data", "diagrams/c4-containers.md"],
+  ["C4 L3 · Catalog components", "diagrams/c4-catalog-components.md"],
+  ["Sequence · Auth registration", "flows/identity-onboarding.md"],
+  ["Sequence · Book / Outbox / Kafka", "flows/book-outbox.md"],
+  ["Sequence · Recommendation feedback", "flows/recommendation-feedback.md"],
+  ["Sequence · Catalog cache", "flows/catalog-cache.md"],
+  ["State · Outbox delivery", "states/outbox-delivery.md"],
+  ["State · Catalog cache rollout", "states/cache-rollout.md"]
+];
+const select = document.getElementById("diagram");
+const visual = document.getElementById("visual");
+const status = document.getElementById("status");
+const source = document.getElementById("source");
+const title = document.getElementById("currentTitle");
+for (const item of pages) {
+  const opt=document.createElement("option");
+  opt.value=item[1]; opt.textContent=item[0]; select.append(opt);
+}
+let mermaidPromise;
+let renderId=0;
+function renderer() {
+  if (!mermaidPromise) {
+    mermaidPromise=import("https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs")
+      .then(module=>{ const api=module.default; api.initialize({startOnLoad:false,securityLevel:"strict",theme:"neutral",flowchart:{useMaxWidth:false}});return api; });
+  }
+  return mermaidPromise;
+}
+async function show() {
+  const path=select.value, label=select.selectedOptions[0].textContent;
+  title.textContent=label;
+  source.href=path;
+  visual.replaceChildren();
+  status.textContent="Reading Markdown source…";
+  try {
+    const response=await fetch(path);
+    if(!response.ok)throw Error("Unable to read "+path+" (HTTP "+response.status+")");
+    const markdown=await response.text();
+    const match=markdown.match(/```mermaid\s*([\s\S]*?)```/);
+    if (!match) throw Error("No Mermaid block in "+path);
+    const code=match[1].trim();
+    try {
+      status.textContent="Rendering canonical Mermaid block…";
+      const engine=await renderer();
+      const svg=(await engine.render("vellumhub-doc-"+(++renderId),code)).svg;
+      visual.innerHTML=svg;
+      status.textContent="Rendered from "+path+" · diagram code stays in Markdown";
+    } catch(error) {
+      const pre=document.createElement("pre");
+      pre.textContent=code; visual.replaceChildren(pre);
+      status.textContent="Graphical renderer unavailable; showing original Mermaid source ("+error.message+").";
+    }
+  } catch(error) {
+    visual.textContent=error.message;
+    status.textContent="Use a local HTTP server and follow the Markdown source link.";
+  }
+}
+function meta(text,key) {
+  const front=text.startsWith("---\n") ? text.split("\n---\n",1)[0] : text;
+  const match=front.match(new RegExp("^"+key+":\\s*(.+)$","m"));
+  return match ? match[1].replace(/^["']|["']$/g,"") : "";
+}
+async function serviceTable() {
+  const ids=["auth","gateway","user","catalog","engagement","recommendation"];
+  const tbody=document.getElementById("services");
+  await Promise.all(ids.map(async slug=>{
+    const response=await fetch("services/"+slug+".md");
+    if(!response.ok)throw Error("Missing "+slug+" service card");
+    const text=await response.text();
+    return {slug,code:meta(text,"code"),store:meta(text,"data_store")};
+  })).then(records=>{
+    for(const item of records) {
+      const tr=document.createElement("tr");
+      const code=document.createElement("td");code.textContent=item.code;
+      const service=document.createElement("td");const a=document.createElement("a");
+      a.href="services/"+item.slug+".md";a.textContent=item.slug;service.append(a);
+      const store=document.createElement("td");store.textContent=item.store;
+      tr.append(code,service,store);tbody.append(tr);
+    }
+  }).catch(error=>{tbody.textContent="Service cards could not load: "+error.message;});
+}
+select.addEventListener("change",show);
+document.getElementById("refresh").addEventListener("click",show);
+show(); serviceTable();
+</script>
+</body>
+</html>
