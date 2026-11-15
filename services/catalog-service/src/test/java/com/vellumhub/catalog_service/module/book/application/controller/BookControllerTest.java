@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookWritesFrozenException;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
+import com.vellumhub.catalog_service.module.book.infrastructure.cache.BookReadCache;
+import org.junit.jupiter.api.BeforeEach;
+import java.util.function.Supplier;
+import static org.mockito.Mockito.when;
 import com.vellumhub.catalog_service.module.book.presentation.controller.BookController;
 import com.vellumhub.catalog_service.share.security.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +49,17 @@ class BookControllerTest {
     private BookService bookService;
 
     @MockitoBean
+    private BookReadCache cache;
+
+    @BeforeEach
+    void bypassCacheForControllerContractTests() {
+        when(cache.detail(any(UUID.class), any())).thenAnswer(call ->
+                ((Supplier<?>) call.getArgument(1)).get());
+        when(cache.page(org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(), any()))
+                .thenAnswer(call -> ((Supplier<?>) call.getArgument(2)).get());
+    }
+
+    @MockitoBean
     private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
     private static RequestPostProcessor adminJwt() {
@@ -69,6 +84,29 @@ class BookControllerTest {
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Retry-After", "5"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value(503));
+    }
+
+    @Test
+    void missingJwtNeverReachesBookCache() throws Exception {
+        UUID id = UUID.randomUUID();
+        mockMvc.perform(get("/books/" + id)).andExpect(status().isUnauthorized());
+        org.mockito.Mockito.verify(cache, org.mockito.Mockito.never()).detail(any(UUID.class), any());
+        org.mockito.Mockito.verify(cache, org.mockito.Mockito.never()).page(
+                org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(), any());
+    }
+
+    @Test
+    void wrongScopeNeverReachesBookCacheEvenWhenResponseMayBeWarm() throws Exception {
+        UUID id = UUID.randomUUID();
+        var writeOnly = jwt().jwt(token -> token.claim("grant_type", "authorization_code"))
+                .authorities(new SimpleGrantedAuthority("ROLE_USER"),
+                        new SimpleGrantedAuthority("SCOPE_catalog:write"));
+        mockMvc.perform(get("/books/" + id).with(writeOnly)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/books?pageNumber=0&pageSize=10").with(writeOnly))
+                .andExpect(status().isForbidden());
+        org.mockito.Mockito.verify(cache, org.mockito.Mockito.never()).detail(any(UUID.class), any());
+        org.mockito.Mockito.verify(cache, org.mockito.Mockito.never()).page(
+                org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(), any());
     }
 
     @Nested

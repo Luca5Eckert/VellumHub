@@ -70,6 +70,9 @@ class GetAllBooksHandlerTest {
         PageRequest capturedPageRequest = pageRequestCaptor.getValue();
         assertEquals(0, capturedPageRequest.getPageNumber());
         assertEquals(10, capturedPageRequest.getPageSize());
+        assertEquals(java.util.List.of("createdAt", "id"),
+                capturedPageRequest.getSort().stream().map(org.springframework.data.domain.Sort.Order::getProperty).toList());
+        assertTrue(capturedPageRequest.getSort().stream().allMatch(org.springframework.data.domain.Sort.Order::isAscending));
     }
 
     @Test

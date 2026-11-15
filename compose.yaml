@@ -366,6 +366,11 @@ services:
       SERVER_PORT: 8080
       JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: catalog-service
+      CATALOG_CACHE_ENABLED: ${CATALOG_CACHE_ENABLED:-true}
+      CATALOG_CACHE_REDIS_HOST: redis-recommendation-cache
+      CATALOG_CACHE_REDIS_PORT: "6379"
+      CATALOG_CACHE_DETAIL_TTL_SECONDS: ${CATALOG_CACHE_DETAIL_TTL_SECONDS:-300}
+      CATALOG_CACHE_PAGE_TTL_SECONDS: ${CATALOG_CACHE_PAGE_TTL_SECONDS:-45}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-catalog:5432/catalog_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_CATALOG_USER:?POSTGRES_CATALOG_USER required}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_CATALOG_PASSWORD:?POSTGRES_CATALOG_PASSWORD required}
@@ -382,6 +387,8 @@ services:
       - vellum-network
     depends_on:
       postgres-catalog:
+        condition: service_healthy
+      redis-recommendation-cache:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -540,7 +547,7 @@ services:
       SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
       JAVA_TOOL_OPTIONS: "${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -javaagent:/app/opentelemetry-javaagent.jar}"
       OTEL_SERVICE_NAME: recommendation-service
-      RECOMMENDATION_CACHE_ENABLED: ${RECOMMENDATION_CACHE_ENABLED:-false}
+      RECOMMENDATION_CACHE_ENABLED: ${RECOMMENDATION_CACHE_ENABLED:-true}
       RECOMMENDATION_CACHE_REDIS_HOST: redis-recommendation-cache
       RECOMMENDATION_CACHE_REDIS_PORT: "6379"
       RECOMMENDATION_CACHE_TTL_SECONDS: ${RECOMMENDATION_CACHE_TTL_SECONDS:-45}
@@ -560,6 +567,8 @@ services:
       - vellum-network
     depends_on:
       postgres-recommendation:
+        condition: service_healthy
+      redis-recommendation-cache:
         condition: service_healthy
       kafka:
         condition: service_healthy

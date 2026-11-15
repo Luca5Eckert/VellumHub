@@ -5,6 +5,7 @@ import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,7 +20,8 @@ public class GetAllBooksHandler {
     public Page<Book> execute(PageBook pageMedia){
         PageRequest pageRequest = PageRequest.of(
                 pageMedia.pageNumber(),
-                pageMedia.pageSize()
+                pageMedia.pageSize(),
+                Sort.by(Sort.Direction.ASC, "createdAt", "id")
         );
 
         return bookRepository.findAll(pageRequest);

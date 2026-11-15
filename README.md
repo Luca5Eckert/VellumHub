@@ -61,7 +61,7 @@ VellumHub applies [Data on the Outside versus Data on the Inside](https://queue.
 
 The platform has **six independently deployable services**: Auth, Gateway, User, Catalog, Engagement, and Recommendation. Auth and the four domain services own separate PostgreSQL databases; Gateway uses Redis for rate limiting.
 
-**Proposed cache experiment (#36):** Recommendation now has an opt-in Redis response-cache implementation behind a disabled-by-default feature flag. It has no verified performance gain or production deployment yet. See [cache operations and benchmark](docs/RECOMMENDATION_REDIS_CACHE.md) for consistency, rollback and comparison instructions. Catalog caching remains [#366](https://github.com/Luca5Eckert/VellumHub/issues/366).
+**Domain read-cache rollout:** Recommendation's Redis DTO cache is implemented ([#36](https://github.com/Luca5Eckert/VellumHub/issues/36), [PR #367](https://github.com/Luca5Eckert/VellumHub/pull/367)), measured using a [72k-request controlled A/B](docs/RECOMMENDATION_REDIS_CACHE.md) with gains in hot/high-concurrency scenarios but regressions on cold reads. Catalog's independent detail/page Redis cache is implemented in [PR #369](https://github.com/Luca5Eckert/VellumHub/pull/369) (issue [#366](https://github.com/Luca5Eckert/VellumHub/issues/366)), with its own [PostgreSQL+Redis benchmark and runbook](docs/CATALOG_REDIS_CACHE.md). Both caches are **enabled in local Compose and local Kind**, isolated from Gateway rate limiting; application defaults and the unprovisioned production overlay remain **OFF**. Neither PR merge nor CI results constitute a production rollout.
 
 ## Measured Recommendation Behavior
 

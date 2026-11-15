@@ -6,6 +6,8 @@ import com.vellumhub.catalog_service.module.book.presentation.dto.GetBookRespons
 import com.vellumhub.catalog_service.module.book.presentation.dto.Recommendation;
 import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequest;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
+import com.vellumhub.catalog_service.module.book.infrastructure.cache.BookReadCache;
+import com.vellumhub.catalog_service.module.book.presentation.dto.PageBook;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,9 +39,11 @@ import java.util.concurrent.TimeUnit;
 public class BookController {
 
     private final BookService bookService;
+    private final BookReadCache cache;
 
-    public BookController(BookService bookService) {
+    public BookController(BookService bookService, BookReadCache cache) {
         this.bookService = bookService;
+        this.cache = cache;
     }
 
     @PostMapping
@@ -102,7 +106,7 @@ public class BookController {
             @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
     })
     public ResponseEntity<GetBookResponse> getById(@Parameter(description = "Book ID") @PathVariable UUID id) {
-        GetBookResponse bookResponse = bookService.get(id);
+        GetBookResponse bookResponse = cache.detail(id, () -> bookService.get(id));
 
         return ResponseEntity.ok(bookResponse);
     }
@@ -119,7 +123,10 @@ public class BookController {
             @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize
     ) {
-        List<GetBookResponse> bookResponseList = bookService.getAll(pageNumber, pageSize);
+        // Normalizing first guarantees that cache keys match the actual JPA query.
+        PageBook page = new PageBook(pageSize, pageNumber);
+        List<GetBookResponse> bookResponseList = cache.page(page.pageNumber(), page.pageSize(),
+                () -> bookService.getAll(page.pageNumber(), page.pageSize()));
 
         return ResponseEntity.ok(bookResponseList);
     }

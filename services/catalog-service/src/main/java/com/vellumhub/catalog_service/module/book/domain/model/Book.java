@@ -3,6 +3,7 @@ package com.vellumhub.catalog_service.module.book.domain.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.annotation.CreatedDate;
@@ -66,7 +67,9 @@ public class Book {
 
     private Instant deletedAt;
 
+    // Batch-load genres for a page rather than executing an N+1 query per book.
     @ManyToMany
+    @BatchSize(size = 50)
     @JoinTable(
             name = "book_genre_id",
             joinColumns = @JoinColumn(name = "book_id"),

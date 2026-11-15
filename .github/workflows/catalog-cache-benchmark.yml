@@ -1,0 +1,101 @@
+name: Catalog Redis cache benchmark
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/catalog-service/src/main/**'
+      - 'services/catalog-service/src/test/**'
+      - '.github/workflows/catalog-cache-benchmark.yml'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Catalog Redis benchmark profile
+        required: true
+        default: reference
+        type: choice
+        options: [smoke, reference, stress]
+
+# A newer PR commit supersedes its earlier, costly A/B runs.
+concurrency:
+  group: catalog-cache-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  catalog-redis-cache-ab:
+    name: Catalog Redis A/B and integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      PROFILE: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 369 && 'reference' || github.event_name == 'pull_request' && 'smoke' || inputs.profile || 'reference' }}
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Docker availability and Testcontainers image prefetch
+        run: |
+          docker info
+          docker pull postgres:15-alpine
+          docker pull redis:7.4-alpine
+          docker pull testcontainers/ryuk:0.11.0
+      - name: Real Redis invalidation, stale-fill and two-instance tests
+        run: >-
+          mvn -B -ntp -pl services/catalog-service -am
+          -Dtest=BookReadCacheRedisIT
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dgroups=distributed
+          test
+      - name: Baseline OFF (real PostgreSQL + Redis + authenticated MockMvc)
+        run: >-
+          mvn -B -ntp -pl services/catalog-service -am
+          -Dtest=CatalogCacheReadBenchmarkIT
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dgroups=catalog-cache-benchmark
+          -Dcatalog.cache.benchmark.enabled=false
+          -Dcatalog.benchmark.profile=${{ env.PROFILE }}
+          -Dcatalog.benchmark.commitSha=${{ env.SOURCE_SHA }}
+          test
+      - name: Cache ON (same data, code and runner category)
+        run: >-
+          mvn -B -ntp -pl services/catalog-service -am
+          -Dtest=CatalogCacheReadBenchmarkIT
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dgroups=catalog-cache-benchmark
+          -Dcatalog.cache.benchmark.enabled=true
+          -Dcatalog.benchmark.profile=${{ env.PROFILE }}
+          -Dcatalog.benchmark.commitSha=${{ env.SOURCE_SHA }}
+          test
+      - name: Validate report completeness and both A/B modes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          root=pathlib.Path('services/catalog-service/target/catalog-cache-benchmark')/os.environ['SOURCE_SHA']
+          off=json.loads((root/'off.json').read_text())
+          on=json.loads((root/'on.json').read_text())
+          assert off['enabled'] is False and on['enabled'] is True
+          assert off['commit_sha']==on['commit_sha']==os.environ['SOURCE_SHA']
+          assert off['profile']==on['profile']==os.environ['PROFILE']
+          assert off['request_count']==on['request_count']
+          assert len(off['rows'])==len(on['rows'])
+          for mode in (off,on):
+              assert all(row['errors']==0 for row in mode['rows'])
+          print('Catalog A/B evidence:',off['request_count']+on['request_count'],'GETs')
+          PY
+      - name: Archive raw benchmark evidence and JUnit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-cache-ab-${{ env.PROFILE }}-${{ env.SOURCE_SHA }}
+          path: |
+            services/catalog-service/target/catalog-cache-benchmark/
+            services/catalog-service/target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 30
