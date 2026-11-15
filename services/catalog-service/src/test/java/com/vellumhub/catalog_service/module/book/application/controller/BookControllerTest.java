@@ -86,6 +86,29 @@ class BookControllerTest {
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value(503));
     }
 
+    @Test
+    void missingJwtNeverReachesBookCache() throws Exception {
+        UUID id = UUID.randomUUID();
+        mockMvc.perform(get("/books/" + id)).andExpect(status().isUnauthorized());
+        org.mockito.Mockito.verify(cache, org.mockito.Mockito.never()).detail(any(UUID.class), any());
+        org.mockito.Mockito.verify(cache, org.mockito.Mockito.never()).page(
+                org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(), any());
+    }
+
+    @Test
+    void wrongScopeNeverReachesBookCacheEvenWhenResponseMayBeWarm() throws Exception {
+        UUID id = UUID.randomUUID();
+        var writeOnly = jwt().jwt(token -> token.claim("grant_type", "authorization_code"))
+                .authorities(new SimpleGrantedAuthority("ROLE_USER"),
+                        new SimpleGrantedAuthority("SCOPE_catalog:write"));
+        mockMvc.perform(get("/books/" + id).with(writeOnly)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/books?pageNumber=0&pageSize=10").with(writeOnly))
+                .andExpect(status().isForbidden());
+        org.mockito.Mockito.verify(cache, org.mockito.Mockito.never()).detail(any(UUID.class), any());
+        org.mockito.Mockito.verify(cache, org.mockito.Mockito.never()).page(
+                org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(), any());
+    }
+
     @Nested
     @DisplayName("Security - POST /books requires ADMIN role")
     class SecurityTests {
