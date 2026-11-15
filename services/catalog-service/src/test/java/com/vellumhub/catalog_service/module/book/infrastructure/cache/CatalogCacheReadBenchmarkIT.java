@@ -61,6 +61,13 @@ class CatalogCacheReadBenchmarkIT {
             .withCommand("redis-server", "--appendonly", "no", "--save", "",
                     "--maxmemory", "128mb", "--maxmemory-policy", "noeviction");
 
+    // Start containers before Spring evaluates DynamicPropertySource suppliers.
+    // PER_CLASS JUnit lifecycle alone does not guarantee mapped ports at context creation.
+    static {
+        POSTGRES.start();
+        REDIS.start();
+    }
+
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry r) {
         r.add("spring.datasource.url", POSTGRES::getJdbcUrl);
