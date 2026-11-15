@@ -45,6 +45,27 @@ SELECT consumer_group,source_topic,source_partition,source_offset,status
 
 The SQL is not itself a reconciliation: compare complete per-Book revisions and materialized data to Catalog, including deleted/inactive books. Use Kafka's consumer-group CLI to capture **per-partition** group lag and end offsets, not only a total count. Preserve logs and snapshots without raw message payloads, PII or Registry credentials.
 
+## Approved schema ID and producer release
+
+For Book publications the Catalog producer **does not auto-register** contracts.
+When `BOOK_EVENTS_WIRE_FORMAT=avro`, the Registry URL is mandatory (do not rely on a
+localhost fallback in application configuration). The default serializer mode
+uses `use.latest.version=true` with `latest.compatibility.strict=true`,
+because generated `SpecificRecord` AVSC representations may not match the
+Git-preregistered writer byte-for-byte. This mode is suitable only for a subject
+whose new versions are exclusively published by the protected governance job.
+
+**Recommended for controlled Book releases:** after
+`registry_gate.py publish --approved` and `verify --approved`, take the Book
+subject ID from the verified output and set `BOOK_AVRO_SCHEMA_ID` on every
+Catalog replica before enabling Avro. The producer then uses
+`use.schema.id` and `id.compatibility.strict=true`; it will not select a
+later subject revision implicitly. Never copy a numeric schema ID from another
+environment: verify the subject/version/ID association against the target
+Registry. Missing or invalid IDs must prevent the cutover; retain JSON and do
+not unfreeze writers. An absent optional ID retains the existing compatibility-
+checked latest behavior for local labs and existing integrations.
+
 ## Preparation (Catalog still publishes JSON)
 
 1. Render the separate existing Kustomizations and create the Registry Secret and topic/ACLs before starting applications. Kustomize overlays are in `deploy/kubernetes/overlays/local` (applications) and `deploy/kubernetes/schema-registry/overlays/local` (Registry). They must be deployed in the expected order and with valid local DB/secrets. Staged values are **operator-reviewed commands**, not a GitOps controller:

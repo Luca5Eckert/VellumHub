@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 public interface OutboxStore {
     Optional<OutboxRecord> claimNext(Duration lease);
-    void published(UUID eventId, UUID claimToken);
+    boolean published(UUID eventId, UUID claimToken);
     void failed(UUID eventId, UUID claimToken, String error, Duration delay);
     long pendingCount();
 }

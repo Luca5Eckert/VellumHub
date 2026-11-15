@@ -80,11 +80,11 @@ class JdbcOutboxStoreDistributedTest {
         assertThat(recovered.eventId()).isEqualTo(first.eventId());
         assertThat(recovered.claimToken()).isNotEqualTo(first.claimToken());
 
-        store.published(first.eventId(), first.claimToken());
+        assertThat(store.published(first.eventId(), first.claimToken())).isFalse();
         assertThat(jdbc.queryForObject("SELECT status FROM outbox_events WHERE event_id=?",
                 String.class, first.eventId())).isEqualTo("IN_FLIGHT");
 
-        store.published(recovered.eventId(), recovered.claimToken());
+        assertThat(store.published(recovered.eventId(), recovered.claimToken())).isTrue();
         assertThat(jdbc.queryForObject("SELECT status FROM outbox_events WHERE event_id=?",
                 String.class, recovered.eventId())).isEqualTo("PUBLISHED");
     }
