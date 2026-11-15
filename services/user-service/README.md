@@ -1,6 +1,8 @@
 # User Service
 
-**SEC-16 migration context:** This branch makes User profile-only and moves authentication, credentials and JWT signing exclusively to Auth. The earlier merged OIDC work (#334 and prerequisites) verified an opt-in integration path before this backend cutover. PR #336 remains subject to validation and has not established production deployment; no real frontend or user-data migration is needed.
+[Architecture card · VH-USR](../../docs/architecture/services/user.md) · [C4 containers](../../docs/architecture/diagrams/c4-containers.md) · [All service codes](../../docs/architecture/services/README.md).
+
+**Current contract:** User owns profiles and preferences, **not** login, credentials, signing keys or OAuth. Auth is the canonical issuer; earlier User-as-issuer notes are historical. No production deployment is implied by the repository state.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.x-green)](https://spring.io/projects/spring-boot)
@@ -8,108 +10,61 @@
 [![Kafka](https://img.shields.io/badge/Kafka-producer-black)](https://kafka.apache.org/)
 [![OpenAPI](https://img.shields.io/badge/OpenAPI-Springdoc-brightgreen)](https://springdoc.org/)
 
-The User Service exists to own identity, authentication, user profiles, and the first preference signal used to bootstrap recommendations.
+The User Service owns profiles, preferences and cold-start facts; Auth owns identity and authentication.
 
-It is the system of record for who the user is. It is not the system of record for books, ratings, reactions, or recommendation rankings.
+User is authoritative for profile data only. It is not authoritative for credentials, books, ratings, reactions or recommendation rankings.
 
-## Why This Service Exists
+## Why this service exists
 
-- Register users and authenticate them with email/password or Google token flow.
-- Issue JWTs consumed by the gateway and downstream services.
-- Own user records and user preference data.
-- Publish `created-user-preference` so recommendation can build a cold-start profile vector.
+- Store profiles and preferences keyed by Auth's canonical user UUID.
+- Provision profiles idempotently through a private Auth-to-User call.
+- Publish `created-user-preference` for recommendation cold start.
+- Verify Auth-issued access tokens; never sign one.
 
-## What It Owns
+## Ownership and boundaries
 
-| Concern | Owned here |
-|---|---|
-| Authentication | Register, login, Google login, token issuing |
-| User profile | User CRUD and `/users/me` lookup |
-| User preferences | Genres and free-text `about` seed data |
-| Recommendation bootstrap | Kafka publication of user preference event |
-| Database | `user_db` |
+| Domain | Canonical owner |
+| --- | --- |
+| OAuth/OIDC, Google, credentials, sessions and JWT issuance | [VH-AUT Auth](../../docs/architecture/services/auth.md) |
+| Profiles and preferences | VH-USR (this service) |
+| Profile database | `user_db` |
+| Reading, book catalog, feedback and ranking | Catalog, Engagement and Recommendation |
 
-## What It Does Not Own
-
-- Book catalog data.
-- Ratings, reactions, or reading progress.
-- Recommendation ranking or vector search.
-- Gateway-level routing or rate limiting.
-
-## Domain Modules
+## Domain modules
 
 | Module | Responsibility |
-|---|---|
-| `auth` | Register/login flows, Google token verification, JWT generation |
-| `user` | User CRUD, user lookup, and authenticated profile endpoint |
-| `user_preference` | Preference aggregate, persistence, and Kafka publication |
+| --- | --- |
+| `user` | Profile CRUD, ownership, private idempotent provisioning |
+| `user_preference` | Genre preferences, persistence, preference Kafka fact |
 
-## HTTP API Surface
+## HTTP API surface
 
-Base paths:
-
-- `/auth`
-- `/users`
-
-Representative endpoints:
+The current [UserController](src/main/java/com/vellumhub/user_service/module/user/application/controller/UserController.java) exposes:
 
 ```http
-POST   /auth/register
-POST   /auth/login
-POST   /auth/google
-POST   /auth/google/link    (JWT + current local password + Google ID token)
-DELETE /auth/google/link    (JWT + current local password)
-
-POST   /users
-GET    /users
-GET    /users/{id}
-PUT    /users/{id}
-DELETE /users/{id}
 GET    /users/me
+GET    /users/{id}
+GET    /users               (ADMIN)
+PUT    /users/{id}          (ADMIN)
+DELETE /users/{id}          (ADMIN)
 ```
 
-Through the gateway, these routes are exposed under:
+Gateway prefix: `/api/v1/users/**`. **There is no User-backed `/api/v1/auth/**` route** in the current Gateway configuration. Register/login/oauth with Auth directly.
 
-```http
-/api/v1/auth/**
-/api/v1/users/**
-```
+The [profile-provisioning adapter](src/main/java/com/vellumhub/user_service/module/user/infrastructure/provisioning/ProfileProvisioningController.java) can expose `POST /internal/identity/profiles` when configured. It validates the private Auth shared secret, the UUIDv7 subject and the profile payload, and recognizes idempotent retries. The private route is **not forwarded by Gateway**.
 
-## Event Contract
+## Event contract and security
 
-Produced topic:
+| Topic | Producer | Consumer |
+| --- | --- | --- |
+| `created-user-preference` | User preferences | Recommendation cold-start projection |
 
-| Topic | Trigger | Consumer |
-|---|---|---|
-| `created-user-preference` | User preference creation/update during onboarding | `recommendation-service` |
+User verifies signed Auth access tokens using the Auth JWKS and enforces per-user ownership plus scopes/roles. It contains no active `auth` module that signs tokens and does not store credentials in User PostgreSQL.
 
-Recommendation consumes this topic to create or adjust `user_profiles` for cold-start recommendations. The shared payload and topic contract live in `lib/kafka-contracts`.
+## Data ownership
 
-## Authentication Model
+Primary database: `user_db` for profiles and preferences. Other services consume the preference fact asynchronously; they do not join `user_db`. Auth stores canonical identities, OAuth grants and passwords in a separate database.
 
-The User Service is the **only JWT signer** in issue #163. It reads an RSA private key (unencrypted PKCS#8 PEM) and, as a resource server, reads the matching public key (X.509 PEM). The gateway and business services receive **only the public key**. All JWTs use RS256; HS256 JWTs are rejected after cutover.
-
-| Setting | Meaning |
-|---|---|
-| `JWT_PRIVATE_KEY_LOCATION` | Spring Resource URI of the private RSA signing key; User Service only |
-| `JWT_PUBLIC_KEY_LOCATION` | Spring Resource URI of the public RSA verification key; all five services |
-| `JWT_EXPIRATION_MS` | JWT lifetime in milliseconds (unchanged in #163) |
-| `GOOGLE_CLIENT_ID` | Google ID token audience/client ID (unchanged) |
-
-In Docker Compose, configure host paths `JWT_PRIVATE_KEY_PATH` and `JWT_PUBLIC_KEY_PATH` in `.env`; read-only mounts map them into the containers. Never commit the private key, place it in a ConfigMap, or provide it to other services. For key generation, Kubernetes provisioning, coordinated rollout, rollback, and troubleshooting, see [RS256 operations](../../docs/SECURITY_RS256.md).
-
-## Data Ownership
-
-Primary database: `user_db`.
-
-Main persisted concepts:
-
-- users;
-- roles;
-- authentication-facing user details;
-- user preference data used by recommendation bootstrap.
-
-Other services should treat this service as the source of truth for user identity and consume preference bootstrap data through Kafka, not through shared tables.
 
 ## Observability and API Docs
 

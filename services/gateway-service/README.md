@@ -1,6 +1,8 @@
 # Gateway Service
 
-**SEC-16 migration context:** Merged OIDC integration work (#334 and its prerequisites) validated Auth-issued tokens on an opt-in path. PR #336 changes the default Gateway/Resource Server issuer to Auth and removes legacy User authentication routes. This is not yet evidence of a production rollout; there is no real frontend or production user data to migrate.
+[Architecture card · VH-GTW](../../docs/architecture/services/gateway.md) · [C4 containers](../../docs/architecture/diagrams/c4-containers.md) · [All service codes](../../docs/architecture/services/README.md).
+
+**Current contract:** the Gateway routes domain APIs; OAuth login, PKCE and token issuance go directly to Auth. A merged code topology is not a production rollout.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.x-green)](https://spring.io/projects/spring-boot)
@@ -25,7 +27,7 @@ It is intentionally thin. It owns traffic policy and API documentation discovery
 
 | Concern | Owned here |
 |---|---|
-| Public route prefixes | `/api/v1/auth`, `/api/v1/users`, `/api/v1/catalog`, `/api/v1/engagement`, `/api/v1/recommendations` |
+| Public route prefixes | `/api/v1/users`, `/api/v1/catalog`, `/api/v1/engagement`, `/api/v1/recommendations` (OAuth goes directly to Auth) |
 | Edge authentication | JWT validation for protected gateway routes |
 | Rate limiting | Redis-backed request quotas by IP or user context |
 | Reactive proxying | Spring Cloud Gateway WebFlux route forwarding |
@@ -50,7 +52,6 @@ Configured in `src/main/resources/application.yml`.
 
 | Route ID | Public prefix | Downstream service | Strip prefix |
 |---|---|---|---:|
-| `auth` | `/api/v1/auth/**` | `user-service` | 2 |
 | `user` | `/api/v1/users/**` | `user-service` | 2 |
 | `catalogs` | `/api/v1/catalog/**` | `catalog-service` | 3 |
 | `engagements` | `/api/v1/engagement/**` | `engagement-service` | 3 |
@@ -85,17 +86,12 @@ Open `http://localhost:8080/docs` and choose the service from the Swagger UI sel
 
 | Route group | Authentication | Replenish rate | Burst capacity | Key strategy |
 |---|---|---:|---:|---|
-| Auth/User flows | Auth routes public, user routes protected | 5 | 10 | IP |
+| User profile requests | Protected; Auth login is not a Gateway route | 5 | 10 | IP |
 | Catalog/Engagement | Protected | 30 | 60 | User, principal, then IP |
 | Recommendations | Protected | 20 | 40 | User, principal, then IP |
 | API documentation | Public for local/development inspection | — | — | — |
 
-JWT settings:
-
-- Algorithm: RSASSA-PKCS1-v1_5 with SHA-256 (JWT `RS256`), explicitly allowlisted in Nimbus.
-- Spring Resource property: `jwt.public-key-location` (from `JWT_PUBLIC_KEY_LOCATION`).
-- Verification uses only a mounted X.509 PEM **public key**. No signing key, shared HMAC secret, JWKS URL, or synchronous issuer call is required.
-- HS256 tokens are rejected. See [RS256 operations](../../docs/SECURITY_RS256.md).
+JWT contract: Auth signs RS256 `at+jwt` bearer tokens; Gateway and Resource Servers independently verify the signing key via Auth JWKS, issuer, audience and scopes/roles. The Gateway does not issue tokens or proxy the OAuth authorization/token endpoints. The prior PEM-only User-issuer instructions belong to the historical RS256 transition. See [Auth/JWKS](../../docs/SECURITY_JWKS_RFC9068.md) and [VH-AUT](../../docs/architecture/services/auth.md).
 
 The public documentation surface is intentionally limited to `/docs`, `/docs/**`, `/swagger-ui/**`, and the Swagger bootstrap endpoint `/v3/api-docs/swagger-config`. Business routes keep their existing authentication policy.
 
@@ -103,7 +99,7 @@ The public documentation surface is intentionally limited to `/docs`, `/docs/**`
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `USER_SERVICE_URL` | User/auth target, including OpenAPI proxy | `http://user-service:8080` |
+| `USER_SERVICE_URL` | User profile target and OpenAPI proxy (not Auth) | `http://user-service:8080` |
 | `CATALOG_SERVICE_URL` | Catalog target, including OpenAPI proxy | `http://catalog-service:8080` |
 | `ENGAGEMENT_SERVICE_URL` | Engagement target, including OpenAPI proxy | `http://engagement-service:8080` |
 | `RECOMMENDATION_SERVICE_URL` | Recommendation target, including OpenAPI proxy | `http://recommendation-service:8080` |

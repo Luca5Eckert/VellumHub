@@ -1,6 +1,8 @@
 # Catalog Service
 
-**SEC-16 (#317, PR #336):** The default backend runtime in this branch validates Auth-issued access tokens, replacing the earlier opt-in OIDC integration path. Production rollout and full integration checks are not yet confirmed; no frontend migration is required for this service.
+[Architecture card · VH-CAT](../../docs/architecture/services/catalog.md) · [C4 containers](../../docs/architecture/diagrams/c4-containers.md) · [All service codes](../../docs/architecture/services/README.md).
+
+**Current contract:** this is a Resource Server verifying Auth-issued JWTs. Auth, not User, is the identity authority; the repository implementation is not proof of a production rollout.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x-green)](https://spring.io/projects/spring-boot)
