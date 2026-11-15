@@ -46,12 +46,12 @@ public class JdbcOutboxStore implements OutboxStore {
             token, Math.max(1L, lease.toSeconds()));
     }
     @Override @Transactional
-    public void published(UUID eventId, UUID token) {
-        jdbc.update("""
+    public boolean published(UUID eventId, UUID token) {
+        return jdbc.update("""
             UPDATE outbox_events SET status='PUBLISHED', published_at=now(),
                 claim_token=NULL, lease_until=NULL, last_error=NULL
             WHERE event_id=? AND claim_token=? AND status='IN_FLIGHT'
-            """, eventId, token);
+            """, eventId, token) == 1;
     }
     @Override @Transactional
     public void failed(UUID eventId, UUID token, String error, Duration delay) {
