@@ -1,6 +1,7 @@
 package com.vellumhub.catalog_service.module.book.application.event;
 
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.infrastructure.cache.BookReadCache;
 import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
 import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import com.vellumhub.catalog_service.module.book.domain.port.BookWriteGate;
@@ -19,25 +20,33 @@ public class OutboxBookChangeWriter implements BookChangeWriter {
     private final OutboxWriter outbox;
     private final boolean avro;
     private final BookWriteGate writeGate;
+    private final BookReadCache cache;
     @Autowired
     public OutboxBookChangeWriter(BookEventFactory events, OutboxWriter outbox,
-            BookWriteGate writeGate, @Value("${app.book.events.wire-format:json}") String wireFormat) {
+            BookWriteGate writeGate, BookReadCache cache,
+            @Value("${app.book.events.wire-format:json}") String wireFormat) {
         this.events = events;
         this.outbox = outbox;
         this.writeGate = writeGate;
+        this.cache = cache;
         if (!"json".equalsIgnoreCase(wireFormat) && !"avro".equalsIgnoreCase(wireFormat))
             throw new IllegalArgumentException("Invalid Book wire format; expected json or avro");
         this.avro = "avro".equalsIgnoreCase(wireFormat);
     }
-    /** Source compatibility for Book application tests. */
+    /** Source compatibility for existing Book application and outbox tests. */
+    public OutboxBookChangeWriter(BookEventFactory events, OutboxWriter outbox,
+            BookWriteGate writeGate, String wireFormat) {
+        this(events, outbox, writeGate, null, wireFormat);
+    }
     public OutboxBookChangeWriter(BookEventFactory events, OutboxWriter outbox) {
-        this(events, outbox, () -> {}, "json");
+        this(events, outbox, () -> {}, null, "json");
     }
     @Override
     public void record(Book book, BookChangeKind kind) {
         writeGate.requireWritable();
         var event = events.changed(book, kind);
         outbox.append(OutboxMessage.book(event, avro));
+        if (cache != null) cache.invalidateAfterCommit(book.getId());
         log.debug("operation=book_outbox_enqueued, bookId={}, eventId={}, kind={}, revision={}",
                 book.getId(), event.eventId(), kind, event.revision());
     }
