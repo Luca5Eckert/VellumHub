@@ -16,7 +16,7 @@ The central engineering problem is **serving recommendations without depending o
 
 **Engineering evidence:** Controlled distributed runs measured sub-0.8 s p95 interaction-to-visible ranking and 60/60 successful recommendation reads with User, Catalog, and Engagement unavailable. Transactional Outbox and idempotent consumers protect canonical Book, Reading Progress, Rating, and Reaction streams.
 
-**Architecture atlas:** [C4 views, six service codes, sequences and state machines](docs/architecture/README.md) · [HTML diagram explorer](docs/architecture/architecture-explorer.html). Markdown is the canonical source for agents and humans.
+**Architecture at a glance:** [C4/service boundaries and key flows](docs/architecture/README.md) · [diagram explorer](docs/architecture/architecture-explorer.html). Source code and versioned contracts define runtime behavior; these pages summarize it.
 
 **Explore:** [Measured behavior](#measured-recommendation-behavior) · [Architecture](#architecture) · [Authentication](#authentication-and-authorization) · [API documentation](#explore-the-api) · [Run locally](#run-locally) · [Quality](#verification-strategy) · [Observability](#observability-and-operational-feedback) · [Roadmap](#current-status-and-roadmap)
 
@@ -88,32 +88,9 @@ These measurements are controlled CI/Testcontainers and offline-evaluation evide
 
 ## Architectural trade-offs
 
-The architecture is intentionally distributed because the domains do not have the same workload. Catalog is predominantly read-heavy, identity has different access patterns, and Recommendation benefits from independent scaling and a low-latency serving path. Auth and the domain services therefore own persistence independently, while Gateway handles the public API boundary.
+The project favors Kafka-carried facts and local read models over request-time fan-out, accepting eventual consistency and the costs of idempotent event delivery. Catalog owns current reading progress; Engagement builds derived history. The 70/30 recommendation weighting is a documented heuristic, **not** a proven universally optimal formula.
 
-### Event collaboration over orchestration
-
-Kafka is the collaboration backbone. Producers publish facts; consumers decide what those facts mean locally. That avoids a central orchestrator knowing every downstream process, at the cost of harder causal tracing, asynchronous failure modes, and stronger observability requirements.
-
-### Local projections over batch refresh or request-time fan-out
-
-Recommendation considered two simpler alternatives:
-
-- periodic/bulk refresh, which would concentrate compute into batches and leave user signals stale between windows;
-- synchronous fetch/fan-out, which would put upstream latency and availability directly on the recommendation request path.
-
-Kafka-fed local projections accept duplicated state and bounded eventual consistency instead. The benchmark above measures the price and payoff of that decision.
-
-### Read-your-write where eventual consistency would be visible
-
-Current reading progress remains canonical in Catalog. Engagement receives the same progress facts asynchronously to preserve chronological history. This deliberately puts eventual consistency on the derived history rather than on the value a user just wrote and expects to read back immediately.
-
-### Durability according to consequence
-
-Delivery remains at-least-once, not exactly-once transport. Transactional Outbox and downstream checkpoints add writes, storage, indexes and contention; those costs were accepted for state transitions whose loss or duplicate application would be consequential. Other future event types may require different guarantees.
-
-### Exploration versus relevance in the 70/30 ranker
-
-The 70% semantic / 30% popularity weighting began as a heuristic to avoid trapping users entirely inside their current preference bubble. The controlled evaluation later showed semantic-only outperforming the combined ranker on the reference dataset. The weight was intentionally **not** retuned on that same dataset and then presented as an unbiased improvement; tuning belongs in a separate validation experiment.
+Implementation details: [architecture overview](docs/architecture/README.md), [event contracts](docs/BOOK_EVENTS.md), [consumer consistency](docs/CONSUMER_IDEMPOTENCY.md). Plans, alternatives and detailed reasoning are maintained separately from this public project overview.
 
 ## Architecture
 
@@ -207,64 +184,21 @@ Reading-progress events follow the same integration style. Catalog owns the curr
 
 ## Recommendation Engine
 
-The recommendation service runs its embedding and ranking path inside the JVM. It consumes catalog and interaction events and maintains three local projections:
+Recommendation builds independent PostgreSQL + pgvector projections from Kafka facts. Embeddings use 384-dimensional vectors; HNSW retrieves candidates and the ranking pipeline applies semantic/popularity weighting with a popularity fallback. The GET path serves from local state, without synchronous calls to Catalog, User or Engagement.
 
-| Projection | Purpose |
-|---|---|
-| `book_features` | Normalized `vector(384)` representation and popularity state |
-| `user_profiles` | Preference vector, interaction history, and engagement score per user |
-| `recommendations` | Denormalized response data used without synchronous catalog calls |
-
-The ranking pipeline is:
-
-1. LangChain4j's `AllMiniLmL6V2EmbeddingModel` produces 384-dimensional embeddings.
-2. Book and user vectors are L2-normalized for cosine comparison.
-3. A pgvector HNSW index retrieves an approximate candidate pool of 200 books.
-4. Books already present in the user's interaction history are removed.
-5. Remaining candidates are re-ranked using 70% semantic similarity and 30% popularity.
-6. Users without a profile receive a popularity-based fallback.
-
-The serving path evolved from an external Python ML sidecar to in-process JVM embeddings and pgvector. The distributed benchmark separates projection/freshness latency from recommendation read latency; offline evaluation measures ranking quality independently.
+See [Recommendation service](services/recommendation-service/README.md), [service contract](docs/architecture/services/recommendation.md) and [measured behavior](#measured-recommendation-behavior).
 
 ## Event Collaboration and Local Projections
 
-`lib/kafka-contracts` is the canonical source for topic names, JSON type aliases, consumer groups, and cross-service payloads.
+Catalog owns Book and Reading Progress; Engagement owns ratings and reactions; User owns preferences. Each publishes integration facts through Kafka to independently maintained projections. Canonical streams use Outbox and consumer idempotency; legacy listeners have separate compatibility constraints.
 
-The services collaborate through facts rather than remote commands. A producer announces a completed domain change; each consumer decides how to project it locally. For example, Catalog does not tell Recommendation how to rank a book and Engagement does not tell it how to update a user vector.
-
-| Canonical topic | Producer | Consumer purpose |
-|---|---|---|
-| `book-events` | Catalog | Maintain Recommendation features/metadata and Engagement book snapshots across create, update and delete |
-| `reading-progress-events` | Catalog | Replicate progress history and update the recommendation profile |
-| `engagement.ratings.v1` | Engagement | Learn from rating creation, update and deletion |
-| `engagement.reactions.v1` | Engagement | Learn from reaction changes |
-| `created-user-preference` | User | Seed the cold-start user profile |
-
-Book events carry full public snapshots when appropriate; interaction events carry the narrower user, book and signal data required by their consumers. This lets downstream services project local state without fetching the source aggregate.
-
-Canonical Outbox streams use event IDs, aggregate revisions and transactional consumer checkpoints. Legacy topics/listeners remain for compatibility and regression fixtures; they must not be treated as interchangeable delivery paths for the same mutation. Legacy retry-topic flows and ordered canonical streams have different recovery policies: a poison event in an ordered stream can block its partition.
-
-[Book contracts](docs/BOOK_EVENTS.md) · [Engagement contracts](docs/ENGAGEMENT_EVENTS.md) · [Consumer idempotency](docs/CONSUMER_IDEMPOTENCY.md)
+Contracts: [Book](docs/BOOK_EVENTS.md), [Engagement](docs/ENGAGEMENT_EVENTS.md), [consumer checkpoints](docs/CONSUMER_IDEMPOTENCY.md) and [event flow](docs/architecture/flows/book-outbox.md).
 
 ## Reliability and Data Consistency
 
-VellumHub makes its current guarantees and remaining boundaries explicit:
+PostgreSQL remains canonical per domain. Catalog and Engagement use transactional Outbox for selected state changes; downstream consumers checkpoint canonical events for idempotent application. This is **at-least-once delivery with eventual consistency**, not globally exactly-once processing or Event Sourcing.
 
-- **Database ownership:** no service reads or writes another service's application tables.
-- **Event-carried state transfer:** consumers build local models from the state carried by integration events.
-- **Shared contracts:** producers and consumers compile against the same event payloads and identifiers.
-- **Schema evolution:** Flyway owns PostgreSQL schemas, including pgvector extensions and HNSW indexes.
-- **Retry and recovery:** Kafka retry topics and DLT routing are centralized in engagement and recommendation.
-- **Defense in depth:** downstream services validate JWTs after traffic passes through the gateway.
-- **Real-boundary verification:** Testcontainers exercises Kafka delivery, retry/DLT, Flyway, PostgreSQL, pgvector, projection persistence, and the authenticated recommendation serving path.
-
-The distributed benchmark extends the earlier `created-book` pilot by measuring both projection convergence and the user-visible recommendation effect. It uses real Kafka, real PostgreSQL/pgvector, real Flyway migrations, the production rating consumer/profile update path, production ranking SQL, and the authenticated `/recommendations` endpoint. Deterministic fixture embeddings keep model inference outside the architectural freshness boundary.
-
-**Implemented, with operational limits:** Catalog persists Book and Reading Progress state with Outbox records in the same PostgreSQL transaction; downstream projections check aggregate revision and deduplicate applied effects. Engagement now persists Rating/Reaction facts to its Outbox and Recommendation records event IDs/revisions for those signals. See [Book facts](docs/BOOK_EVENTS.md) and [Engagement facts](docs/ENGAGEMENT_EVENTS.md) for contracts and rollout sequence.
-
-**Not yet established:** full production cutover, safe DLT replay for every stream, globally exactly-once behavior or a production SLA. Strict retry can block a partition on a poison event. The [distributed testing guide](docs/DISTRIBUTED_TESTING.md) explains tested boundaries.
-
-This is not Event Sourcing: PostgreSQL tables remain the systems of record and Kafka carries integration events between services. Nor is every event full-state replication—the payload is shaped around what downstream collaborators need.
+Verification uses real-boundary tests where Kafka, PostgreSQL/Flyway and pgvector semantics matter. Production cutover, DLT replay safety and production SLAs are not demonstrated by CI alone. See [distributed testing](docs/DISTRIBUTED_TESTING.md), [Outbox states](docs/architecture/states/outbox-delivery.md) and [operations](docs/OPERATIONS.md).
 
 ## Explore the API
 
@@ -459,15 +393,7 @@ The base Kubernetes ingress exposes Gateway API routes. Auth browser endpoints r
 
 ## Design Principles
 
-- **Contain complexity:** keep abstractions and ownership explicit to reduce cognitive load and change amplification.
-- **Close feedback loops:** combine tests, CI architecture fitness functions and measured runtime signals in small, reproducible steps.
-- **Investigate before optimizing:** latency, errors, JVM pressure and event lag should inform cache, query and recovery decisions.
-- **Own data at the domain boundary:** databases are private implementation details of their services.
-- **Replicate for autonomy:** use local projections when critical queries would otherwise require synchronous fan-out.
-- **Centralize contracts, not domains:** Kafka payloads are shared; business models and persistence remain service-owned.
-- **Test real failure boundaries:** use Kafka and PostgreSQL when delivery, transaction, migration, extension, retry, convergence, or serving-autonomy semantics matter.
-- **Keep claims auditable:** separate implemented guarantees from roadmap intentions and report repeated benchmark ranges when run-to-run variance is material.
-- **Deliver immutable state through Git:** deployments reference exact versions instead of mutable `latest` tags.
+Keep domain ownership and contracts explicit; prefer independent reads when they materially improve resilience; validate failure modes at real boundaries; report results with reproducible evidence. Code, contracts and CI establish repository behavior—not production deployment. The [architecture index](docs/architecture/README.md) summarizes the implemented topology.
 
 ## Offline Training Data
 
