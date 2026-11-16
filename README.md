@@ -18,6 +18,8 @@ The central engineering problem is **serving recommendations without depending o
 
 **Engineering evidence:** Controlled distributed runs measured sub-0.8 s p95 interaction-to-visible ranking and 60/60 successful recommendation reads with User, Catalog, and Engagement unavailable. Transactional Outbox and idempotent consumers protect canonical Book, Reading Progress, Rating, and Reaction streams.
 
+**Architecture at a glance:** [C4/service boundaries and key flows](docs/architecture/README.md) · [diagram explorer](docs/architecture/architecture-explorer.html). Source code and versioned contracts define runtime behavior; these pages summarize it.
+
 **Explore:** [Measured behavior](#measured-recommendation-behavior) · [Architecture](#architecture) · [Authentication](#authentication-and-authorization) · [API documentation](#explore-the-api) · [Run locally](#run-locally) · [Quality](#verification-strategy) · [Observability](#observability-and-operational-feedback) · [Roadmap](#current-status-and-roadmap)
 
 ---
@@ -49,21 +51,9 @@ A user's actions form one connected product journey:
 
 ## Event-Driven Architecture at a Glance
 
-VellumHub applies [Data on the Outside versus Data on the Inside](https://queue.acm.org/detail.cfm?id=3415014) at service boundaries and uses [Event-Carried State Transfer](https://martinfowler.com/articles/201701-event-driven.html) where a consumer needs source data to work autonomously.
+Six Java services (Auth, Gateway, User, Catalog, Engagement, Recommendation) own distinct responsibilities; five have separate PostgreSQL databases. Kafka delivers domain facts and Recommendation reads local projections rather than synchronously calling upstream services. Redis is isolated by role: Gateway rate limiting versus optional domain caches.
 
-| Architectural concern | VellumHub's approach |
-|---|---|
-| Data on the inside | Each domain owns a private PostgreSQL database, its mutable current state, business invariants, and local transaction boundary. |
-| Events on the outside | Services publish versioned integration facts through Kafka; producers announce committed changes rather than issuing commands to consumers. |
-| Event collaboration | User, Catalog, and Engagement publish what happened; Engagement and Recommendation decide independently how those facts affect their own models. |
-| Local projections | Book snapshots, reading history, book features, user vectors, and recommendation response data are materialized where they are consumed. |
-| Query autonomy | Recommendation and replicated engagement flows read local tables instead of synchronously joining or calling the source services. |
-| Consistency model | A service is transactionally consistent inside its boundary; projections across boundaries converge asynchronously. |
-| Failure model | Selected Catalog and Engagement mutations now use transactional Outbox, per-aggregate ordering and durable consumer checkpoints; full DLT replay and rollout verification remain open. |
-
-The platform has **six independently deployable services**: Auth, Gateway, User, Catalog, Engagement, and Recommendation. Auth and the four domain services own separate PostgreSQL databases; Gateway uses Redis for rate limiting.
-
-**Domain read-cache rollout:** Recommendation's Redis DTO cache is implemented ([#36](https://github.com/Luca5Eckert/VellumHub/issues/36), [PR #367](https://github.com/Luca5Eckert/VellumHub/pull/367)), measured using a [72k-request controlled A/B](docs/RECOMMENDATION_REDIS_CACHE.md) with gains in hot/high-concurrency scenarios but regressions on cold reads. Catalog's independent detail/page Redis cache is implemented in [PR #369](https://github.com/Luca5Eckert/VellumHub/pull/369) (issue [#366](https://github.com/Luca5Eckert/VellumHub/issues/366)), with its own [PostgreSQL+Redis benchmark and runbook](docs/CATALOG_REDIS_CACHE.md). Both caches are **enabled in local Compose and local Kind**, isolated from Gateway rate limiting; application defaults and the unprovisioned production overlay remain **OFF**. Neither PR merge nor CI results constitute a production rollout.
+**Redis result:** local Compose/Kind caches ON; application defaults and production overlay OFF. The controlled [Catalog A/B benchmark](https://github.com/Luca5Eckert/VellumHub/actions/runs/43666479401) found warm/c32 p95 **44.89→10.35 ms**, but cold/c8 **8.10→13.41 ms (regression)**. These are CI measurements, not production throughput. [Architecture](docs/architecture/README.md) · [Cache runbook](docs/CATALOG_REDIS_CACHE.md).
 
 ## Measured Recommendation Behavior
 
@@ -88,34 +78,13 @@ These measurements are controlled CI/Testcontainers and offline-evaluation evide
 
 ## Architectural trade-offs
 
-The architecture is intentionally distributed because the domains do not have the same workload. Catalog is predominantly read-heavy, identity has different access patterns, and Recommendation benefits from independent scaling and a low-latency serving path. Auth and the domain services therefore own persistence independently, while Gateway handles the public API boundary.
+The project favors Kafka-carried facts and local read models over request-time fan-out, accepting eventual consistency and the costs of idempotent event delivery. Catalog owns current reading progress; Engagement builds derived history. The 70/30 recommendation weighting is a documented heuristic, **not** a proven universally optimal formula.
 
-### Event collaboration over orchestration
-
-Kafka is the collaboration backbone. Producers publish facts; consumers decide what those facts mean locally. That avoids a central orchestrator knowing every downstream process, at the cost of harder causal tracing, asynchronous failure modes, and stronger observability requirements.
-
-### Local projections over batch refresh or request-time fan-out
-
-Recommendation considered two simpler alternatives:
-
-- periodic/bulk refresh, which would concentrate compute into batches and leave user signals stale between windows;
-- synchronous fetch/fan-out, which would put upstream latency and availability directly on the recommendation request path.
-
-Kafka-fed local projections accept duplicated state and bounded eventual consistency instead. The benchmark above measures the price and payoff of that decision.
-
-### Read-your-write where eventual consistency would be visible
-
-Current reading progress remains canonical in Catalog. Engagement receives the same progress facts asynchronously to preserve chronological history. This deliberately puts eventual consistency on the derived history rather than on the value a user just wrote and expects to read back immediately.
-
-### Durability according to consequence
-
-Delivery remains at-least-once, not exactly-once transport. Transactional Outbox and downstream checkpoints add writes, storage, indexes and contention; those costs were accepted for state transitions whose loss or duplicate application would be consequential. Other future event types may require different guarantees.
-
-### Exploration versus relevance in the 70/30 ranker
-
-The 70% semantic / 30% popularity weighting began as a heuristic to avoid trapping users entirely inside their current preference bubble. The controlled evaluation later showed semantic-only outperforming the combined ranker on the reference dataset. The weight was intentionally **not** retuned on that same dataset and then presented as an unbiased improvement; tuning belongs in a separate validation experiment.
+Implementation details: [architecture overview](docs/architecture/README.md), [event contracts](docs/BOOK_EVENTS.md), [consumer consistency](docs/CONSUMER_IDEMPOTENCY.md). Plans, alternatives and detailed reasoning are maintained separately from this public project overview.
 
 ## Architecture
+
+The source-linked [C4 context](docs/architecture/diagrams/c4-context.md), [C4 containers](docs/architecture/diagrams/c4-containers.md), [Catalog L3 components](docs/architecture/diagrams/c4-catalog-components.md), [coded service registry](docs/architecture/services/README.md), [sequences](docs/architecture/README.md) and [state machines](docs/architecture/states/outbox-delivery.md) form the canonical architecture knowledge base. The diagram below is a compact overview.
 
 Domain API requests enter through the reactive Gateway. OAuth/OIDC login goes directly to Auth, the platform's identity authority. Each domain API independently validates Auth-issued access tokens. Kafka carries cross-domain facts into service-owned projections.
 
@@ -164,105 +133,33 @@ flowchart TB
 
 ## Authentication and Authorization
 
-Auth implements OAuth 2.0/OIDC Authorization Code + PKCE S256 using Spring Authorization Server. It authenticates local accounts with Argon2id or federates Google, resolves a stable UUIDv7 identity, and provisions User with profile data only. External identities are bound by verified `(issuer, subject)`; matching email addresses do not automatically link accounts.
+Auth issues RS256 `at+jwt` OAuth2/OIDC tokens and owns identities, Argon2id credentials, PKCE, federated Google bindings and sessions. Gateway routes domain APIs. Each Resource Server validates JWT and enforces scope, role and resource ownership independently. Production Google/HTTPS integrations require separate environmental validation.
 
-API access tokens are RS256-signed JWTs with `typ=at+jwt`. Gateway and the four domain APIs validate issuer, audience, lifetime, type and signing key through Auth's JWKS. Only Auth holds the private key. Gateway forwards a verified bearer; APIs authorize locally without consulting Auth/User on every domain request.
-
-Each protected domain operation requires an explicit OAuth scope and its USER/ADMIN role. For example, a token limited to `user:read` can read User endpoints but cannot read Catalog. ADMIN does not imply scopes, and machine grants cannot impersonate a human on these routes. Ownership and resource-specific rules remain separate from scope checks.
-
-Spring Session JDBC persists Auth browser sessions, with a 30-minute idle timeout and a 12-hour absolute lifetime by default. Logout ends the current session; an already-issued API token remains valid until expiry and verifier clock skew. Public PKCE clients have no refresh-token grant in the current configuration.
-
-[Scope/endpoint matrix and client configuration](docs/SECURITY_SCOPES_RBAC.md) · [Auth setup and ownership](services/auth-service/README.md) · [JWT/JWKS operations](docs/SECURITY_JWKS_RFC9068.md) · [Google and session runbook](docs/SECURITY_OIDC_LOTE3.md)
+[Auth](services/auth-service/README.md) · [OAuth scopes/RBAC](docs/SECURITY_SCOPES_RBAC.md) · [JWKS](docs/SECURITY_JWKS_RFC9068.md).
 
 ## End-to-End Journeys
 
-### From registration to a useful cold start
+Auth provisions the User profile; User preferences seed Recommendation cold start. Catalog owns current reading progress and sends committed facts through its Outbox. Engagement emits rating/reaction facts; Recommendation updates local features and serves reads without synchronous domain calls.
 
-After Auth creates the identity and provisions its profile, User manages genre preferences and publishes `created-user-preference` when they are created. The recommendation service converts those preferences into a normalized profile vector, allowing relevant results before ratings or reading history exists.
-
-### From reader feedback to a refined profile
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant G as Gateway
-    participant E as Engagement
-    participant K as Kafka
-    participant R as Recommendation
-
-    U->>G: Rate or react to a book
-    G->>E: Authenticated request
-    E->>E: Persist interaction and Outbox fact
-    E->>K: Outbox relay publishes committed fact
-    K->>R: Deliver event
-    R->>R: Update normalized user vector
-    U->>G: Request recommendations
-    G->>R: Authenticated request
-    R-->>U: Locally ranked books
-```
-
-Reading-progress events follow the same integration style. Catalog owns the current state, while engagement preserves progress history and recommendation treats progress as another learning signal.
+[Onboarding](docs/architecture/flows/identity-onboarding.md) · [Book/Outbox](docs/architecture/flows/book-outbox.md) · [Feedback and ranking](docs/architecture/flows/recommendation-feedback.md).
 
 ## Recommendation Engine
 
-The recommendation service runs its embedding and ranking path inside the JVM. It consumes catalog and interaction events and maintains three local projections:
+Recommendation builds independent PostgreSQL + pgvector projections from Kafka facts. Embeddings use 384-dimensional vectors; HNSW retrieves candidates and the ranking pipeline applies semantic/popularity weighting with a popularity fallback. The GET path serves from local state, without synchronous calls to Catalog, User or Engagement.
 
-| Projection | Purpose |
-|---|---|
-| `book_features` | Normalized `vector(384)` representation and popularity state |
-| `user_profiles` | Preference vector, interaction history, and engagement score per user |
-| `recommendations` | Denormalized response data used without synchronous catalog calls |
-
-The ranking pipeline is:
-
-1. LangChain4j's `AllMiniLmL6V2EmbeddingModel` produces 384-dimensional embeddings.
-2. Book and user vectors are L2-normalized for cosine comparison.
-3. A pgvector HNSW index retrieves an approximate candidate pool of 200 books.
-4. Books already present in the user's interaction history are removed.
-5. Remaining candidates are re-ranked using 70% semantic similarity and 30% popularity.
-6. Users without a profile receive a popularity-based fallback.
-
-The serving path evolved from an external Python ML sidecar to in-process JVM embeddings and pgvector. The distributed benchmark separates projection/freshness latency from recommendation read latency; offline evaluation measures ranking quality independently.
+See [Recommendation service](services/recommendation-service/README.md), [service contract](docs/architecture/services/recommendation.md) and [measured behavior](#measured-recommendation-behavior).
 
 ## Event Collaboration and Local Projections
 
-`lib/kafka-contracts` is the canonical source for topic names, JSON type aliases, consumer groups, and cross-service payloads.
+Catalog owns Book and Reading Progress; Engagement owns ratings and reactions; User owns preferences. Each publishes integration facts through Kafka to independently maintained projections. Canonical streams use Outbox and consumer idempotency; legacy listeners have separate compatibility constraints.
 
-The services collaborate through facts rather than remote commands. A producer announces a completed domain change; each consumer decides how to project it locally. For example, Catalog does not tell Recommendation how to rank a book and Engagement does not tell it how to update a user vector.
-
-| Canonical topic | Producer | Consumer purpose |
-|---|---|---|
-| `book-events` | Catalog | Maintain Recommendation features/metadata and Engagement book snapshots across create, update and delete |
-| `reading-progress-events` | Catalog | Replicate progress history and update the recommendation profile |
-| `engagement.ratings.v1` | Engagement | Learn from rating creation, update and deletion |
-| `engagement.reactions.v1` | Engagement | Learn from reaction changes |
-| `created-user-preference` | User | Seed the cold-start user profile |
-
-Book events carry full public snapshots when appropriate; interaction events carry the narrower user, book and signal data required by their consumers. This lets downstream services project local state without fetching the source aggregate.
-
-Canonical Outbox streams use event IDs, aggregate revisions and transactional consumer checkpoints. Legacy topics/listeners remain for compatibility and regression fixtures; they must not be treated as interchangeable delivery paths for the same mutation. Legacy retry-topic flows and ordered canonical streams have different recovery policies: a poison event in an ordered stream can block its partition.
-
-[Book contracts](docs/BOOK_EVENTS.md) · [Engagement contracts](docs/ENGAGEMENT_EVENTS.md) · [Consumer idempotency](docs/CONSUMER_IDEMPOTENCY.md)
+Contracts: [Book](docs/BOOK_EVENTS.md), [Engagement](docs/ENGAGEMENT_EVENTS.md), [consumer checkpoints](docs/CONSUMER_IDEMPOTENCY.md) and [event flow](docs/architecture/flows/book-outbox.md).
 
 ## Reliability and Data Consistency
 
-VellumHub makes its current guarantees and remaining boundaries explicit:
+PostgreSQL remains canonical per domain. Catalog and Engagement use transactional Outbox for selected state changes; downstream consumers checkpoint canonical events for idempotent application. This is **at-least-once delivery with eventual consistency**, not globally exactly-once processing or Event Sourcing.
 
-- **Database ownership:** no service reads or writes another service's application tables.
-- **Event-carried state transfer:** consumers build local models from the state carried by integration events.
-- **Shared contracts:** producers and consumers compile against the same event payloads and identifiers.
-- **Schema evolution:** Flyway owns PostgreSQL schemas, including pgvector extensions and HNSW indexes.
-- **Retry and recovery:** Kafka retry topics and DLT routing are centralized in engagement and recommendation.
-- **Defense in depth:** downstream services validate JWTs after traffic passes through the gateway.
-- **Real-boundary verification:** Testcontainers exercises Kafka delivery, retry/DLT, Flyway, PostgreSQL, pgvector, projection persistence, and the authenticated recommendation serving path.
-
-The distributed benchmark extends the earlier `created-book` pilot by measuring both projection convergence and the user-visible recommendation effect. It uses real Kafka, real PostgreSQL/pgvector, real Flyway migrations, the production rating consumer/profile update path, production ranking SQL, and the authenticated `/recommendations` endpoint. Deterministic fixture embeddings keep model inference outside the architectural freshness boundary.
-
-**Implemented, with operational limits:** Catalog persists Book and Reading Progress state with Outbox records in the same PostgreSQL transaction; downstream projections check aggregate revision and deduplicate applied effects. Engagement now persists Rating/Reaction facts to its Outbox and Recommendation records event IDs/revisions for those signals. See [Book facts](docs/BOOK_EVENTS.md) and [Engagement facts](docs/ENGAGEMENT_EVENTS.md) for contracts and rollout sequence.
-
-**Not yet established:** full production cutover, safe DLT replay for every stream, globally exactly-once behavior or a production SLA. Strict retry can block a partition on a poison event. The [distributed testing guide](docs/DISTRIBUTED_TESTING.md) explains tested boundaries.
-
-This is not Event Sourcing: PostgreSQL tables remain the systems of record and Kafka carries integration events between services. Nor is every event full-state replication—the payload is shaped around what downstream collaborators need.
+Verification uses real-boundary tests where Kafka, PostgreSQL/Flyway and pgvector semantics matter. Production cutover, DLT replay safety and production SLAs are not demonstrated by CI alone. See [distributed testing](docs/DISTRIBUTED_TESTING.md), [Outbox states](docs/architecture/states/outbox-delivery.md) and [operations](docs/OPERATIONS.md).
 
 ## Explore the API
 
@@ -352,88 +249,28 @@ For service-specific configuration and standalone execution, use the README insi
 
 ## Verification Strategy
 
-The test portfolio uses the narrowest boundary capable of proving each behavior:
-
-| Level | What it protects |
-|---|---|
-| Domain and application tests | Business rules, state transitions, ranking signals, and errors |
-| Controller and mapper tests | HTTP status, request/response mapping, authentication context, and delegation |
-| Repository and migration tests | JPA adapters, Flyway, PostgreSQL constraints, pgvector, and HNSW indexes |
-| Distributed integration tests | Real Kafka serialization, listener execution, transactions, retry/DLT, projections, convergence, read autonomy, and recommendation freshness |
-| Configuration and smoke checks | Gateway/OpenAPI drift, Compose topology, health, and service communication |
-
-Architecture fitness functions add ArchUnit package/cycle checks, Maven Enforcer service-isolation checks, database ownership checks and distributed behavior assertions. CI publishes a per-commit evidence catalog with the results actually executed.
+Domain/controller tests, PostgreSQL/Flyway/pgvector verification, distributed Kafka/Testcontainers E2E, architecture fitness checks, security workflows and CodeQL protect implemented boundaries. CI produces run-specific evidence; passing workflows does not prove deployment or a production SLA.
 
 ```bash
-python3 -m unittest discover -s tools/architecture -p 'test_*.py' -v
+python3 tools/architecture/validate_docs.py
 python3 tools/architecture/check_service_boundaries.py
 python3 tools/architecture/check_database_ownership.py
-```
-
-Run the reactor verification (repository/migration tests require Docker even when the `distributed` group is excluded):
-
-```bash
 mvn -B -ntp -DexcludedGroups=distributed clean verify
 ```
 
-Run cross-service E2E separately:
-
-```bash
-mvn -B -ntp -Pdistributed-e2e -pl integration-tests/distributed-e2e -am \
-  -Dgroups=distributed test
-```
-
-Run the Recommendation distributed suites with Docker available. Keep the two benchmark suites in separate Maven processes so each distributed Spring/Testcontainers lifecycle remains isolated:
-
-```bash
-mvn -B -ntp -pl services/recommendation-service -am \
-  -Dtest=DistributedRecommendationBenchmarkIT \
-  -Dsurefire.failIfNoSpecifiedTests=false \
-  -Dgroups=distributed-benchmark \
-  -Dbenchmark.profile=reference \
-  test
-
-mvn -B -ntp -pl services/recommendation-service -am \
-  -Dtest=RecommendationFreshnessBenchmarkIT \
-  -Dsurefire.failIfNoSpecifiedTests=false \
-  -Dgroups=distributed-benchmark \
-  -Dbenchmark.profile=reference \
-  test
-```
-
-CI separates reactor, distributed E2E, OIDC/security, architecture fitness, Postman, CodeQL and image validation. Recommendation benchmarks upload raw evidence; machine-dependent latency percentiles are not treated as universal performance gates.
-
-[Testing guide](docs/DISTRIBUTED_TESTING.md) · [Architecture fitness functions and evidence](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md) · [Benchmark reproduction](services/recommendation-service/benchmark/README.md)
+[Testing and E2E](docs/DISTRIBUTED_TESTING.md) · [Recommendation benchmark reproduction](services/recommendation-service/benchmark/README.md).
 
 ## Observability and Operational Feedback
 
-The local observability profile connects **Prometheus, Grafana Alloy, Loki, Tempo and Grafana** to explain HTTP failures, JVM/database pressure, Kafka lag and projection convergence.
+The local observability profile uses Prometheus, Grafana Alloy, Loki, Tempo and Grafana for metrics, logs, traces, Kafka lag and recommendation health. Ingestion completeness, Auth parity and sensitive-data filtering have separate validation requirements.
 
-| Signal | Collection path | Current coverage |
-|---|---|---|
-| Metrics | Actuator/Micrometer → Prometheus → Grafana | All six services; Auth uses private management port `9001` |
-| Logs | Docker discovery → Alloy → Loki | All six services are discovered; Gateway/domain services configure structured JSON, while Auth's logging configuration still needs parity |
-| Traces | OpenTelemetry Java Agent → Alloy → Tempo | Agent bundled in all six images; Auth does not enable it by default |
-
-The Java Agent does not duplicate metrics export. Loki labels stay low-cardinality (service, level and environment); correlation IDs and trace context stay in log bodies. Alloy forwards bodies without redaction, so credential/payload filtering remains an application responsibility.
-
-Five provisioned dashboards cover platform overview, gateway/HTTP, JVM/database, Kafka flow and recommendation health. Versioned alerts link to incident runbooks. HTTP/recommendation histogram buckets support latency analysis, and missing series remain visible as No data. End-to-end ingestion, sensitive-data checks and Kafka trace continuity are tracked through #214.
-
-[Observability guide](docs/OBSERVABILITY.md) · [Incident runbooks](docs/OBSERVABILITY_RUNBOOKS.md) · [Architecture fitness functions](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md)
+[Observability](docs/OBSERVABILITY.md) · [Runbooks](docs/OBSERVABILITY_RUNBOOKS.md).
 
 ## Delivery
 
-The repository defines a Git-based delivery path:
+GitHub Actions verifies builds, contracts, security and images. Kustomize/Argo CD describe Git-based deployment using immutable image versions. Production Kafka, PostgreSQL, Redis, secrets and Auth HTTPS ingress require their own managed configuration; this repository does not establish a live production deployment.
 
-1. GitHub Actions verifies code, migrations, distributed behavior, images, and vulnerabilities.
-2. A successful verification on a push to `main` publishes each service image to GHCR with an immutable commit-SHA tag and a convenience `main` tag.
-3. Kustomize overlays define local and production runtime differences.
-4. Argo CD observes the desired image version declared in Git and reconciles the cluster.
-5. Rollback reverts the version change and reconciles the previous desired state.
-
-The base Kubernetes ingress exposes Gateway API routes. Auth browser endpoints require an environment-specific HTTPS route matching the configured issuer. Application containers run as non-root, drop Linux capabilities, declare resource boundaries, and expose liveness/readiness probes. Production databases, Kafka, Redis, and secrets are external interfaces rather than workloads owned by the application manifests.
-
-[CI/CD configuration](docs/CI_CD.md) · [Operations](docs/OPERATIONS.md) · [Database migrations](docs/DATABASE_MIGRATIONS.md) · [Kubernetes and GitOps](deploy/kubernetes/README.md)
+[CI/CD](docs/CI_CD.md) · [Operations](docs/OPERATIONS.md) · [Kubernetes](deploy/kubernetes/README.md).
 
 ## Current Status and Roadmap
 
@@ -457,15 +294,7 @@ The base Kubernetes ingress exposes Gateway API routes. Auth browser endpoints r
 
 ## Design Principles
 
-- **Contain complexity:** keep abstractions and ownership explicit to reduce cognitive load and change amplification.
-- **Close feedback loops:** combine tests, CI architecture fitness functions and measured runtime signals in small, reproducible steps.
-- **Investigate before optimizing:** latency, errors, JVM pressure and event lag should inform cache, query and recovery decisions.
-- **Own data at the domain boundary:** databases are private implementation details of their services.
-- **Replicate for autonomy:** use local projections when critical queries would otherwise require synchronous fan-out.
-- **Centralize contracts, not domains:** Kafka payloads are shared; business models and persistence remain service-owned.
-- **Test real failure boundaries:** use Kafka and PostgreSQL when delivery, transaction, migration, extension, retry, convergence, or serving-autonomy semantics matter.
-- **Keep claims auditable:** separate implemented guarantees from roadmap intentions and report repeated benchmark ranges when run-to-run variance is material.
-- **Deliver immutable state through Git:** deployments reference exact versions instead of mutable `latest` tags.
+Keep domain ownership and contracts explicit; prefer independent reads when they materially improve resilience; validate failure modes at real boundaries; report results with reproducible evidence. Code, contracts and CI establish repository behavior—not production deployment. The [architecture index](docs/architecture/README.md) summarizes the implemented topology.
 
 ## Offline Training Data
 
@@ -473,33 +302,13 @@ The base Kubernetes ingress exposes Gateway API routes. Auth browser endpoints r
 
 ## Documentation
 
-| Topic | Guide |
-|---|---|
-| Service setup and responsibilities | [Service READMEs](services) |
-| Identity, credentials, Google and sessions | [Auth Service](services/auth-service/README.md) |
-| Client scopes, roles and endpoint policies | [OAuth scopes and RBAC](docs/SECURITY_SCOPES_RBAC.md) |
-| Signing keys, JWKS and token validation | [JWT/JWKS runbook](docs/SECURITY_JWKS_RFC9068.md) |
-| Event payloads, ordering and projection recovery | [Book events](docs/BOOK_EVENTS.md), [Engagement events](docs/ENGAGEMENT_EVENTS.md), [Idempotency](docs/CONSUMER_IDEMPOTENCY.md) |
-| Correctness, failure boundaries and evidence | [Distributed testing](docs/DISTRIBUTED_TESTING.md), [Fitness functions](docs/ARCHITECTURE_FITNESS_FUNCTIONS.md) |
-| Recommendation measurements and reproduction | [Distributed benchmark](services/recommendation-service/benchmark/README.md), [Offline quality evaluation](services/recommendation-service/evaluation/README.md) |
-| Metrics, logs, traces and incident response | [Observability](docs/OBSERVABILITY.md), [Runbooks](docs/OBSERVABILITY_RUNBOOKS.md) |
-| Deployment and operations | [CI/CD](docs/CI_CD.md), [Operations](docs/OPERATIONS.md), [Kubernetes](deploy/kubernetes/README.md) |
-| API exploration and request workflows | [OpenAPI](docs/api-documentation.md), [Postman](postman/README.md) |
+| Need | Reference |
+| --- | --- |
+| Architecture and service ownership | [Architecture overview](docs/architecture/README.md) · [Service registry](docs/architecture/services/README.md) |
+| OAuth and API exploration | [Auth](services/auth-service/README.md) · [Scopes/RBAC](docs/SECURITY_SCOPES_RBAC.md) · [Postman](postman/README.md) |
+| Event contracts and consistency | [Book](docs/BOOK_EVENTS.md) · [Engagement](docs/ENGAGEMENT_EVENTS.md) · [Idempotency](docs/CONSUMER_IDEMPOTENCY.md) |
+| Tests and reproducible measurements | [Distributed testing](docs/DISTRIBUTED_TESTING.md) · [Benchmark](services/recommendation-service/benchmark/README.md) · [Offline quality](services/recommendation-service/evaluation/README.md) |
+| Operation and delivery | [Operations](docs/OPERATIONS.md) · [Observability](docs/OBSERVABILITY.md) · [Kubernetes](deploy/kubernetes/README.md) |
+| Security hardening | [SEC-12 ownership](docs/SECURITY_OWNERSHIP_SEC12.md) · [SEC-14 Kafka identities](docs/KAFKA_SERVICE_IDENTITIES_SEC14.md) |
 
-
-### SEC-12: per-user Engagement and Recommendation authorization
-
-Engagement now hides non-owned ratings and reactions and disambiguates public
-book-rating reads as `GET /rating/books/{bookId}`. Recommendation checks that
-its query identity matches the authenticated subject without adding cross-service
-fan-out. The full contract, HTTP decisions and rollback steps are documented
-in [SEC-12](docs/SECURITY_OWNERSHIP_SEC12.md).
-
-
-### Kafka service identities (SEC-14)
-
-Kafka clients use separate service principals with broker ACLs for exact
-streams, retry/DLT and consumer groups; they do **not** forward HTTP bearer
-credentials. The production Kubernetes overlay requires SASL_SSL and managed
-secrets. The authenticated local Compose overlay and CI negative ACL tests are
-in [SEC-14](docs/KAFKA_SERVICE_IDENTITIES_SEC14.md).
+Detailed decision history, alternatives, personal engineering plans and dated experiments are maintained in the Obsidian Vault. This public README focuses on implemented capabilities, code structure, results and reproduction.

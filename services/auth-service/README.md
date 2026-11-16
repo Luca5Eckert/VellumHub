@@ -1,6 +1,8 @@
 # Auth Service — canonical Authorization Server
 
-**SEC-16 historical context:** Merged PRs #330, #331 and #334 established the Authorization Server, OIDC integration and federated/session capabilities before this cutover. The previous opt-in topology still depended on User as the default issuer; PR #336 promotes Auth into the standard runtime. This is a branch implementation awaiting its final checks, not a confirmed production rollout. No frontend or production-user migration is needed.
+[Architecture card · VH-AUT](../../docs/architecture/services/auth.md) · [C4 containers](../../docs/architecture/diagrams/c4-containers.md) · [All service codes](../../docs/architecture/services/README.md).
+
+**Current contract:** Auth is the sole identity and access-token issuer, implemented in the repository. Earlier SEC-16/POC configurations are migration history, not alternative runtime issuers. Live Google/HTTPS/proxy rollout requires separate verification.
 
 The Auth Service is VellumHub's single authentication and identity authority and the only issuer/JWKS source for API access tokens. It is part of the default Maven reactor, Compose runtime and Kubernetes topology.
 
