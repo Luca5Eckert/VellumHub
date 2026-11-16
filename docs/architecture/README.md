@@ -14,45 +14,23 @@ related:
   - vh-cache-rollout
 ---
 
-# VellumHub — architecture knowledge base
+# VellumHub — architecture at a glance
 
-**Start here.** This is a navigable architecture map, not an alternative source of truth for runtime behavior. Code, contracts and CI are authoritative; the diagrams describe the repository's implemented topology and explicitly distinguish deployment from implementation. VellumHub is an event-driven social reading platform with **six Java deployables**, Auth-owned identity, service-owned PostgreSQL data, Kafka integration facts and optional domain Redis caches.
+**Purpose:** a compact, code-backed view of the architecture implemented in this repository. Source code, API/Kafka contracts, migrations and tests are authoritative for runtime behavior; these Markdown diagrams are explanatory snapshots, not evidence of deployment.
 
-## Navigate by level
+**Implemented shape:** six Java deployables (Auth, Gateway, User, Catalog, Engagement, Recommendation); five service-owned PostgreSQL databases; Kafka integration facts; a dedicated Gateway Redis limiter and optional domain response-cache Redis. Auth issues access tokens; Gateway routes APIs; Recommendation reads local projections.
 
-| Level / view | Diagram | Purpose |
+| View | Reference | What it shows |
 | --- | --- | --- |
-| C4 L1 — context | [System context](diagrams/c4-context.md) | Who uses VellumHub; which external systems it depends on |
-| C4 L2 — containers | [Application and data containers](diagrams/c4-containers.md) | Six services, owned stores, Kafka and isolated Redis |
-| C4 L3 — components | [Catalog and Outbox](diagrams/c4-catalog-components.md) | Request → cache → repository and mutation → Outbox boundaries |
-| Ownership | [Service catalog](services/README.md) | Stable codes, slugs, contracts and sources per deployable |
-| Sequence | [Auth registration](flows/identity-onboarding.md) | Pending identity, idempotent User provisioning, login boundaries |
-| Sequence | [Book fact propagation](flows/book-outbox.md) | Canonical Book commit, relay, Kafka, consumer checkpoints |
-| Sequence | [Feedback → ranking](flows/recommendation-feedback.md) | Engagement writes and locally served recommendations |
-| Sequence | [Catalog cache-aside](flows/catalog-cache.md) | Authorized HIT/MISS, generation and after-commit invalidation |
-| State machine | [Outbox delivery](states/outbox-delivery.md) | Real persisted PENDING / IN_FLIGHT / PUBLISHED transitions |
-| State machine | [Cache rollout flags](states/cache-rollout.md) | Operational two-phase activation, explicit rollback |
-| Visualization | [HTML diagram explorer](architecture-explorer.html) | Optional browser renderer of **these same Markdown Mermaid blocks** |
-| Convention | [Documentation contract](CONTRIBUTING.md) | Machine-readable frontmatter, naming, validation and lifecycle |
+| System boundary | [C4 L1](diagrams/c4-context.md) | Users and external dependencies |
+| Service ownership | [C4 L2](diagrams/c4-containers.md) · [service registry](services/README.md) | Deployables, data and messages |
+| Catalog internals | [C4 L3](diagrams/c4-catalog-components.md) | Read cache, writes and Outbox |
+| Registration | [Auth → User](flows/identity-onboarding.md) | Identity and idempotent provisioning |
+| Event delivery | [Book → Kafka](flows/book-outbox.md) · [Outbox states](states/outbox-delivery.md) | Local commit and delayed delivery |
+| Read models | [Feedback → ranking](flows/recommendation-feedback.md) | Autonomous Recommendation reads |
+| Cache | [Cache-aside](flows/catalog-cache.md) · [rollout states](states/cache-rollout.md) | Optional reads and staged invalidation |
+| Browse | [HTML explorer](architecture-explorer.html) | Diagrams rendered from these Markdown files |
 
-## Entity and link contract
+**Operational distinction:** Compose/Kind locally enable domain caches; application defaults and the unprovisioned production overlay remain OFF. GitHub Actions and synthetic benchmarks validate only their stated environments. See [Catalog operations](../CATALOG_REDIS_CACHE.md), [Recommendation cache](../RECOMMENDATION_REDIS_CACHE.md) and [deployment](../../deploy/kubernetes/README.md).
 
-Every service has a stable **`code`** such as `VH-CAT` and a filesystem-safe **`slug`** such as `catalog`. Diagram pages have a globally stable `id` (`vh-c4-containers`). YAML frontmatter stores `type`, `status`, `related`, and source ownership; ordinary Markdown links connect the same pages for humans, Obsidian and LLM agents. A relationship in frontmatter **never replaces** an explicit link or evidence in prose. Use the `id` as a stable retrieval key and the relative file path as the actual navigation target.
-
-```text
-docs/architecture/
-├── README.md                  # entrypoint + graph
-├── CONTRIBUTING.md            # metadata/schema and maintenance
-├── services/README.md         # service registry
-├── services/{auth,gateway,user,catalog,engagement,recommendation}.md
-├── diagrams/{c4-context,c4-containers,c4-catalog-components}.md
-├── flows/{identity-onboarding,book-outbox,recommendation-feedback,catalog-cache}.md
-├── states/{outbox-delivery,cache-rollout}.md
-└── architecture-explorer.html # optional Markdown-backed renderer
-```
-
-**Facts vs evidence:** all six deployables and their code paths exist. A green GitHub workflow is a controlled verification, **not** evidence of deployment or actual production latency. Cache reads are **ON in local Compose/Kind configuration, OFF in the production overlay**. Kafka legacy consumers and Schema Registry migration have separate cutover conditions. For deployment details see [Kubernetes](../../deploy/kubernetes/README.md) and [operations](../OPERATIONS.md).
-
-**Follow an edge:** [VH-AUT](services/auth.md) → [VH-USR](services/user.md) for private profile provisioning; [VH-CAT](services/catalog.md) → [Kafka](flows/book-outbox.md) → [VH-ENG](services/engagement.md) / [VH-REC](services/recommendation.md) for asynchronous facts. [VH-GTW](services/gateway.md) owns the external API edge but does not own authentication issuance or domain data.
-
-**Source docs:** [README](../../README.md) · [Book contract](../BOOK_EVENTS.md) · [Engagement facts](../ENGAGEMENT_EVENTS.md) · [Consumer checkpoints](../CONSUMER_IDEMPOTENCY.md) · [Catalog Redis](../CATALOG_REDIS_CACHE.md) · [Recommendation Redis](../RECOMMENDATION_REDIS_CACHE.md) · [OAuth/RBAC](../SECURITY_SCOPES_RBAC.md).
+Service identifiers (`VH-AUT`, `VH-GTW`, `VH-USR`, `VH-CAT`, `VH-ENG`, `VH-REC`) are stable navigational labels. Use [documentation conventions](CONTRIBUTING.md) when changing topology. This repository presents the **current implementation and results**; detailed decision history, alternatives, plans and dated experiments are maintained in the engineering Vault.
