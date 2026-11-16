@@ -1,0 +1,11 @@
+# LOCAL Kind only: replicate the standard local overlay's removal of default-deny
+# without Kustomize strategic $patch: delete (which crashes kubectl v1.31).
+# Never carry this unrestricted policy to staging or production.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: local-avro-fresh-allow-all}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress: [{}]
+  egress: [{}]

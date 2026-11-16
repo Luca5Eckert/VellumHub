@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - 'infra/compose/schema-registry.yaml'
+      - 'infra/compose/schema-registry-app-network.yaml'
+      - 'infra/compose/avro-fresh.yaml'
+      - 'deploy/kubernetes/overlays/local-avro-fresh/**'
+      - '.env.example'
       - 'deploy/kubernetes/schema-registry/**'
       - 'infra/schema-registry/**'
       - 'lib/kafka-avro-contracts/**'
@@ -14,6 +18,10 @@ on:
     branches: [main]
     paths:
       - 'infra/compose/schema-registry.yaml'
+      - 'infra/compose/schema-registry-app-network.yaml'
+      - 'infra/compose/avro-fresh.yaml'
+      - 'deploy/kubernetes/overlays/local-avro-fresh/**'
+      - '.env.example'
       - 'deploy/kubernetes/schema-registry/**'
       - 'infra/schema-registry/**'
       - 'lib/kafka-avro-contracts/**'
@@ -51,6 +59,15 @@ jobs:
           kubectl kustomize deploy/kubernetes/schema-registry/overlays/local > /tmp/registry-local.yaml
           kubectl kustomize deploy/kubernetes/schema-registry/overlays/prod > /tmp/registry-prod.yaml
           python3 tools/schema_registry/validate_manifests.py /tmp/registry-local.yaml /tmp/registry-prod.yaml
+      - name: Verify fresh Compose and Kind Avro configuration
+        env:
+          REGISTRY_DB_PASSWORD: ci-fixture-not-a-production-secret
+        run: |
+          cp .env.example .env
+          docker compose --project-directory . -f infra/compose/schema-registry.yaml -f infra/compose/schema-registry-app-network.yaml config --quiet
+          python3 tools/schema_registry/bootstrap_fresh.py --check
+          kubectl kustomize deploy/kubernetes/overlays/local-avro-fresh > /tmp/vellumhub-fresh-avro.yaml
+          python3 tools/schema_registry/validate_fresh_render.py /tmp/vellumhub-fresh-avro.yaml
       - name: Distributed Kafka + SQL-backed Registry integration tests
         run: mvn -B -ntp -Pschema-poc -pl integration-tests/schema-evolution-poc -am clean test
       - name: Generate disposable SQL credential

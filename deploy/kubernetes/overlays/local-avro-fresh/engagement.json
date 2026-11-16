@@ -1,0 +1,58 @@
+[
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "BOOK_AVRO_CONSUMER_ENABLED",
+      "value": "true"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "READING_PROGRESS_AVRO_CONSUMER_ENABLED",
+      "value": "true"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "ENGAGEMENT_RATINGS_WIRE_FORMAT",
+      "value": "avro"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "ENGAGEMENT_REACTIONS_WIRE_FORMAT",
+      "value": "avro"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "BOOK_AVRO_REGISTRY_URL",
+      "value": "http://schema-registry:8080/apis/ccompat/v7"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "READING_PROGRESS_AVRO_REGISTRY_URL",
+      "value": "http://schema-registry:8080/apis/ccompat/v7"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "ENGAGEMENT_AVRO_REGISTRY_URL",
+      "value": "http://schema-registry:8080/apis/ccompat/v7"
+    }
+  }
+]
