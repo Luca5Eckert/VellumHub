@@ -1,29 +1,28 @@
 ---
 name: backend-testing
-description: Select meaningful Java/Spring tests with JUnit, Mockito and Testcontainers, aligned to the repository's existing validation commands.
+description: Choose, write and run meaningful VellumHub Java tests — JUnit 5, Mockito, Spring MVC slices, ArchUnit and Testcontainers 1.21.4 with real PostgreSQL, Kafka and Schema Registry — and report honestly what ran. Use it for any behaviour change, bug reproduction, refactor that needs a safety net, flaky or failing test, or when deciding which Maven command proves a change, including requests like "add tests", "is this covered?" or "why does mvn test fail locally?".
 ---
 
-# backend-testing
+# Backend testing (VellumHub)
 
-## Trigger
-Any backend behavior change, bug reproduction, contract change or reliability/quality regression.
+A test is evidence only if it asserts an observable outcome at the boundary where the behaviour lives, and only if it actually ran. Mocks prove wiring, not delivery.
 
-## Test selection
-- Pure domain logic: fast unit tests for invariant, input partition and boundary values.
-- HTTP/security: Spring MVC slice or actual web integration for status, DTO validation, anonymous/denied cases and security filters.
-- Persistence: PostgreSQL integration for constraints, transactions, locking, migration and SQL semantics.
-- Messaging: broker-backed integration for duplicate delivery, malformed payload, retry, DLT and ordering assumptions.
-- Multi-service behavior: explicit distributed E2E only for critical boundaries. Do not mistake mocks for end-to-end proof.
+## Pick the boundary
+- **Domain rules:** fast unit tests over input partitions and edges (for example the `BookList` permission matrix).
+- **HTTP and security:** MVC slice or web integration for status codes, validation, anonymous/denied/foreign-resource cases and the error body (`GlobalExceptionHandler*Test`, including the leak tests).
+- **Persistence:** real PostgreSQL for constraints, locking, transactions, migrations and SQL dialect.
+- **Messaging:** broker-backed tests for duplicates, malformed payloads, retry/DLT and ordering (`ConsumerIdempotencyDistributedTest`, outbox `*DistributedTest`).
+- **Cross-service:** `-Pdistributed-e2e`, only for critical paths.
 
-## Execution discipline
-1. Read existing test libraries and versions. Both personal projects currently pin Testcontainers 1.21.4; do not copy Testcontainers 2.x APIs blindly.
-2. Create a regression test that fails before the fix when practical. Keep clocks, randomness, retries and fixture datasets deterministic.
-3. Run focused tests, then the project's canonical verification; for Docker-dependent suites, report unavailable/skipped tests as gaps.
-4. Coverage is diagnostic, not proof of behavior. Preserve repository-specific JaCoCo minimums and architecture guards instead of imposing a generic percentage.
-5. Report exact commands, commit SHA, tests run/skipped and negative cases not covered.
+## Discipline
+1. Read existing test utilities and versions first. Testcontainers is pinned at 1.21.4 (`testcontainers.version`); its 2.x APIs differ.
+2. When fixing a bug, write the failing test first when practical. For refactors, add characterization tests for the paths you restructure (for example `case … when` branches) so the refactor is observable.
+3. Keep clocks, randomness, retries and fixtures deterministic.
+4. Run focused tests, then `./mvnw -B verify`. Default runs include Docker-backed suites (`*DistributedTest`, `*PostgresIntegrationTest`, `*PostgresTest`, `*IT`); without Docker they **error** (`Could not find a valid Docker environment`) instead of skipping. Report them as an environment gap, separately from product failures.
+5. Python structural checks: `python -m unittest discover -s tools/architecture -p "test_*.py"`.
+6. Coverage is a diagnostic, not proof. Keep existing JaCoCo floors and architecture guards rather than inventing a percentage.
 
-## Done
-Expected behavior is asserted at the correct boundary, with reproducible pass/fail evidence.
+## Output
+Commands, SHA, tests run/failed/skipped/errored per module, negative cases covered and those left uncovered.
 
-## Reference
-Adapted from https://github.com/github/awesome-copilot/tree/main/skills/spring-boot-testing/SKILL.md, https://github.com/github/awesome-copilot/tree/main/skills/java-junit/SKILL.md and https://github.com/github/awesome-copilot/tree/main/skills/java-testcontainers/SKILL.md.
+Adapted from github/awesome-copilot `spring-boot-testing`, `java-junit` and `java-testcontainers`.

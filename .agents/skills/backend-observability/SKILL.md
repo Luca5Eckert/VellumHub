@@ -1,24 +1,22 @@
 ---
 name: backend-observability
-description: Define and validate useful OpenTelemetry logs, metrics and traces for backend changes without inventing SLOs or measurements.
+description: Add or review VellumHub telemetry — OpenTelemetry traces through the Java agent and Alloy/Tempo, Micrometer/Prometheus metrics and alert rules, structured logs in Loki — so a request or Kafka flow can be investigated without leaking personal data. Use it when instrumenting a new HTTP or event path, adding a metric, counter or alert, investigating latency or error rates, or reviewing log statements, label cardinality or Prometheus rules.
 ---
 
-# backend-observability
+# Backend observability (VellumHub)
 
-## Trigger
-New request/event flow, troubleshooting, latency/availability work, instrumentation or telemetry pipeline changes.
+Instrument for the questions an on-call engineer will ask, not for completeness. Every signal costs storage and attention, and a careless label or log line can leak user data.
 
 ## Procedure
-1. Identify the user operation, service/component name, error modes and investigation questions before adding signals.
-2. Propagate trace context across HTTP and message boundaries; instrument spans at meaningful boundaries, without over-instrumentation.
-3. Use RED metrics where appropriate (rate, errors, duration), and saturation/resource signals when justified. Define units, histogram aggregation and bounded label cardinality.
-4. Preserve trace_id/span_id in structured logs, with privacy-safe redaction and stable field names. Never add account IDs or credentials as high-cardinality metric labels.
-5. Check collector/exporter protocol compatibility, backpressure, filtering, sampling and failure to deliver telemetry; a dashboard does not prove end-to-end collection.
-6. For performance changes, record baseline, environment, test data, load, repetitions and p50/p95/p99 as applicable; compare like with like.
-7. Add regression checks for telemetry contract or documented operational queries when possible.
+1. Name the operation, service, failure modes and the questions to answer before adding signals.
+2. Propagate trace context across HTTP and Kafka; span meaningful boundaries only. Kafka producer-to-consumer correlation through auto-instrumentation is best-effort.
+3. Use RED metrics (rate, errors, duration) plus saturation where justified. Define units and histograms, keep label values bounded: topic, consumer group, outcome or category, never user IDs, e-mails, tokens or raw addresses. Existing names follow `vellumhub.*` (for example `vellumhub.kafka.recovery.quarantined`).
+4. Logs keep `trace_id`/`span_id`, stable keys (`operation=… topic=…`) and no secrets or personal values. Database exception messages count as personal data because they contain the conflicting values.
+5. Alerts need a runbook link that exists in the repo (for example `services/auth-service/README.md#alerts`) and should state the first checks to make.
+6. A dashboard is not proof of end-to-end collection; verify the collector path, sampling and what happens when telemetry delivery fails.
+7. Performance comparisons need baseline, environment, data, load, repetitions and p50/p95/p99.
 
 ## Output
-Signal -> purpose -> emitter -> validation path -> remaining unknowns.
+Signal → purpose → emitter → validation path → open questions.
 
-## Reference
-Adapted from https://github.com/github/awesome-copilot/tree/main/skills/spring-observability/SKILL.md.
+Adapted from github/awesome-copilot `spring-observability`.
