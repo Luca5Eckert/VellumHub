@@ -81,5 +81,35 @@ class EngagementEventProcessorTest {
             .hasMessageContaining("Missing engagement cutover baseline");
         verifyNoInteractions(rating,deletion,reaction);
     }
+
+    @Test void reviewOnlyUpdateAdvancesCheckpointWithoutWeightDelta() {
+        UUID user=UUID.randomUUID(),book=UUID.randomUUID();
+        when(jdbc.queryForObject(anyString(),eq(Long.class),any(),any())).thenReturn(2L);
+        when(jdbc.update(anyString(),any(),any(),any(),any())).thenReturn(1);
+        var fact=new RatingUpdatedEvent(UUID.randomUUID(),Instant.now(),42L,user,book,4,4,true,3L);
+
+        assertThat(processor.apply(fact)).isEqualTo(EventProcessingOutcome.APPLIED);
+
+        verifyNoInteractions(rating,deletion,reaction);
+        verify(jdbc).update(contains("engagement_event_offsets SET last_revision"),eq(3L),eq("RATING"),eq("42"),eq(2L));
+    }
+
+    @Test void starChangeAppliesWeightDelta() {
+        UUID user=UUID.randomUUID(),book=UUID.randomUUID();
+        when(jdbc.queryForObject(anyString(),eq(Long.class),any(),any())).thenReturn(2L);
+        when(jdbc.update(anyString(),any(),any(),any(),any())).thenReturn(1);
+        var fact=new RatingUpdatedEvent(UUID.randomUUID(),Instant.now(),42L,user,book,2,5,false,3L);
+
+        assertThat(processor.apply(fact)).isEqualTo(EventProcessingOutcome.APPLIED);
+
+        verify(rating).executeStrict(argThat(command -> command.oldStars()==2 && command.newStars()==5));
+        verifyNoInteractions(deletion,reaction);
+    }
+
+    @Test void unsupportedFactIsRejectedBeforeAnyDatabaseWork() {
+        assertThatThrownBy(()->processor.apply("not an engagement fact"))
+            .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unsupported engagement fact");
+        verifyNoInteractions(jdbc,rating,deletion,reaction);
+    }
 }
 
