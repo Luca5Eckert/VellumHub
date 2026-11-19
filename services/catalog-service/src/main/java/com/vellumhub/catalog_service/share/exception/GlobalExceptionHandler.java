@@ -15,6 +15,7 @@ import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookP
 import com.vellumhub.catalog_service.module.book_request.domain.exception.BookRequestDomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +41,8 @@ import java.util.Objects;
  * Maps exceptions to the stable {@link ApiResponseError} contract.
  *
  * <p>Each handler only declares status, error label, message and detail; the envelope
- * (path, timestamp, headers) is assembled by the private helpers at the bottom.</p>
+ * (path, timestamp, headers) is assembled by the private helpers at the bottom. Database and
+ * parser internals are logged server-side and never returned to the client.</p>
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -157,15 +160,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponseError> handleDataIntegrityViolationException(
             DataIntegrityViolationException ex, HttpServletRequest request) {
+        logger.warn("Data integrity violation on path {}: {}", request.getRequestURI(),
+                integrityViolationSummary(ex));
         return respond(HttpStatus.CONFLICT, "Data Integrity Error", "Database constraint violation",
-                Objects.requireNonNull(ex.getMostSpecificCause().getMessage()), request);
+                "Database constraint violation", request);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponseError> handleHttpMessageNotReadableException(
             HttpMessageNotReadableException ex, HttpServletRequest request) {
+        logger.debug("Unreadable request body on path {}: {}", request.getRequestURI(), ex.getMessage());
         return respond(HttpStatus.BAD_REQUEST, "Malformed Request",
-                "Required request body is missing or invalid", ex.getLocalizedMessage(), request);
+                "Required request body is missing or invalid", "The request body could not be parsed", request);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -195,6 +201,22 @@ public class GlobalExceptionHandler {
         logger.error("Unexpected error on path {}: ", request.getRequestURI(), ex);
         return respond(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
                 "An unexpected error occurred on the server side", "Please contact technical support", request);
+    }
+
+    /**
+     * Identifies the violated rule without logging the database message, which for
+     * PostgreSQL contains the conflicting values (for example an e-mail address).
+     */
+    static String integrityViolationSummary(DataIntegrityViolationException ex) {
+        for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException violation && violation.getConstraintName() != null) {
+                return "constraint=" + violation.getConstraintName();
+            }
+            if (cause instanceof SQLException sql && sql.getSQLState() != null) {
+                return "sqlState=" + sql.getSQLState();
+            }
+        }
+        return "cause=" + ex.getMostSpecificCause().getClass().getSimpleName();
     }
 
     private static ResponseEntity<ApiResponseError> respond(
