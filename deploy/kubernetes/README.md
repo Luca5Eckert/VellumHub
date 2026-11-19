@@ -132,9 +132,9 @@ CI updates only the SHA/digest in an overlay `images` block. It receives no clus
 The resource baseline is intentionally modest: gateway/user 512Mi request, catalog/engagement 640Mi, recommendation 1Gi because its embedding model has higher startup and heap demand. These are starting measurements for local operation, not production sizing; tune from JVM/container metrics before enabling HPA. HPA is deferred until Metrics Server and a measured baseline exist.
 
 
-### Security JWT/JWKS transition (#304, #305)
+### JWT verification
 
-In draft PR #321, JWT verifiers fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. Only `auth-service` signs access tokens and exposes the trusted JWKS; Gateway and domain services are Resource Servers. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [JWKS runbook](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
+JWT verifiers fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, UUID subject, `client_id`, `jti`, issued/expiry times and signature; unknown kids fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30. Only `auth-service` mounts the signing key (one active key; rotation is not implemented). See the [authorization sequence](../../docs/architecture/flows/api-request-authorization.md).
 
 
 ### SEC-14 Kafka authorization

@@ -135,7 +135,7 @@ flowchart TB
 
 Auth issues RS256 `at+jwt` OAuth2/OIDC tokens and owns identities, Argon2id credentials, PKCE, federated Google bindings and sessions. Gateway routes domain APIs. Each Resource Server validates JWT and enforces scope, role and resource ownership independently. Production Google/HTTPS integrations require separate environmental validation.
 
-[Auth](services/auth-service/README.md) · [OAuth scopes/RBAC](docs/SECURITY_SCOPES_RBAC.md) · [JWKS](docs/SECURITY_JWKS_RFC9068.md).
+[Auth](services/auth-service/README.md) · [OAuth scopes/RBAC](docs/SECURITY_SCOPES_RBAC.md) · [Authorization sequence](docs/architecture/flows/api-request-authorization.md) · [Google federation](docs/architecture/flows/google-federation.md).
 
 ## End-to-End Journeys
 
@@ -221,7 +221,7 @@ docker compose ps
 
 Keep the key pair outside Git. `.env.example` sets `VELLUM_AUTH_KEY_DIR=./.local/auth-keys` and a loopback issuer for local development. Auth is the only service that mounts the private key. Google federation is optional and requires its own provider configuration.
 
-For an automated disposable login/PKCE exercise, run `bash infra/scripts/security/run_oidc_lote2_e2e.sh`; it creates test keys and credentials, starts the integration topology, validates the flows, and removes its volumes afterward. Use it in a separate disposable checkout/environment, not alongside a stack whose local data you want to retain. See [Auth configuration](services/auth-service/README.md) and [the integration runbook](docs/SECURITY_OIDC_LOTE2.md).
+For an automated disposable login/PKCE exercise, run `bash infra/scripts/security/run_oidc_lote2_e2e.sh`; it creates test keys and credentials, starts the integration topology, validates the flows, and removes its volumes afterward. Use it in a separate disposable checkout/environment, not alongside a stack whose local data you want to retain. See [Auth configuration](services/auth-service/README.md).
 
 ### Local entry points
 
@@ -309,6 +309,6 @@ Keep domain ownership and contracts explicit; prefer independent reads when they
 | Event contracts and consistency | [Book](docs/BOOK_EVENTS.md) · [Engagement](docs/ENGAGEMENT_EVENTS.md) · [Idempotency](docs/CONSUMER_IDEMPOTENCY.md) |
 | Tests and reproducible measurements | [Distributed testing](docs/DISTRIBUTED_TESTING.md) · [Benchmark](services/recommendation-service/benchmark/README.md) · [Offline quality](services/recommendation-service/evaluation/README.md) |
 | Operation and delivery | [Operations](docs/OPERATIONS.md) · [Observability](docs/OBSERVABILITY.md) · [Kubernetes](deploy/kubernetes/README.md) |
-| Security hardening | [SEC-12 ownership](docs/SECURITY_OWNERSHIP_SEC12.md) · [SEC-14 Kafka identities](docs/KAFKA_SERVICE_IDENTITIES_SEC14.md) |
+| Security | [Authorization sequence](docs/architecture/flows/api-request-authorization.md) · [Identity states](docs/architecture/states/auth-identity-lifecycle.md) · [Kafka identities](docs/KAFKA_SERVICE_IDENTITIES_SEC14.md) |
 
 Detailed decision history, alternatives, personal engineering plans and dated experiments are maintained in the Obsidian Vault. This public README focuses on implemented capabilities, code structure, results and reproduction.

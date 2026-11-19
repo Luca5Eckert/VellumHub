@@ -22,7 +22,7 @@ sequenceDiagram
     participant R as VH-REC projection
     Reader->>G: Authorized Book mutation
     G->>C: Relay bearer request
-    C->>DB: BEGIN; persist Book revision + Outbox event
+    C->>DB: BEGIN, persist Book revision + Outbox event
     DB-->>C: COMMIT
     C->>C: afterCommit bump Catalog cache generations (best effort)
     C-->>Reader: HTTP success = local commit only
@@ -34,7 +34,7 @@ sequenceDiagram
             K-->>X: ACK
             X->>DB: Mark PUBLISHED using matching claim token
         else Broker failure / timeout
-            X->>DB: Backoff; return to PENDING
+            X->>DB: Backoff, return to PENDING
         end
     end
     par Consumer projections
@@ -42,7 +42,7 @@ sequenceDiagram
         E->>E: Check offset/processed state in transaction
     and
         K->>R: Book event, id/revision
-        R->>R: Check id/revision; update local features
+        R->>R: Check id/revision, update local features
     end
     Note over E,R: Consumers may lag. No global transaction or exactly-once claim.
 ```

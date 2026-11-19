@@ -91,7 +91,7 @@ Open `http://localhost:8080/docs` and choose the service from the Swagger UI sel
 | Recommendations | Protected | 20 | 40 | User, principal, then IP |
 | API documentation | Public for local/development inspection | — | — | — |
 
-JWT contract: Auth signs RS256 `at+jwt` bearer tokens; Gateway and Resource Servers independently verify the signing key via Auth JWKS, issuer, audience and scopes/roles. The Gateway does not issue tokens or proxy the OAuth authorization/token endpoints. The prior PEM-only User-issuer instructions belong to the historical RS256 transition. See [Auth/JWKS](../../docs/SECURITY_JWKS_RFC9068.md) and [VH-AUT](../../docs/architecture/services/auth.md).
+JWT contract: Auth signs RS256 `at+jwt` bearer tokens; Gateway and Resource Servers independently verify the signing key via Auth JWKS, issuer, audience and scopes/roles. The Gateway does not issue tokens or proxy the OAuth authorization/token endpoints. See the [authorization sequence](../../docs/architecture/flows/api-request-authorization.md) and [VH-AUT](../../docs/architecture/services/auth.md).
 
 The public documentation surface is intentionally limited to `/docs`, `/docs/**`, `/swagger-ui/**`, and the Swagger bootstrap endpoint `/v3/api-docs/swagger-config`. Business routes keep their existing authentication policy.
 
@@ -166,19 +166,6 @@ When a domain service is run directly, its own `/swagger-ui/index.html` and `/v3
 
 For platform topology and cross-service flows, see the [root README](../../README.md). For the complete API documentation flow, see [API Documentation](../../docs/api-documentation.md).
 
-## SEC-01 HTTP security baseline
+## Verified bearer relay
 
-The API remains JWT bearer-based; issue #163 migrates the signature to RS256 with independent public-key validation on this branch (coordinated cutover required). Service security continues to validate tokens independently of the Gateway. Swagger/OpenAPI is opt-in through `VELLUM_DOCS_ENABLED=true` in local Compose; default deployment configuration denies documentation. Health and Prometheus remain unauthenticated at the service HTTP layer for **internal** probe/scrape traffic, so network and Ingress must keep these ports private. CORS uses explicit `CORS_ALLOWED_ORIGINS` and preserves credentialed browser requests for compatibility. JWT Bearer remains the authenticator; any future cookie-session authentication requires separate CSRF review. See [SEC-01 HTTP boundary contract](../../docs/SECURITY_HTTP_BOUNDARY.md) for policy matrix, tests and rollback.
-
-The Gateway no longer exposes the legacy User `/api/v1/auth/*` routes. Client-supplied identity headers are removed before forwarding, and only a bearer already validated by Spring Security is relayed downstream. `VELLUM_TRUSTED_PROXY_CIDRS` (comma-separated CIDRs; empty by default) must list only reverse proxies that append verified X-Forwarded-For hops. The Redis quota values are unchanged; the default without a trusted proxy uses the TCP peer address. The application logs Gateway at INFO rather than TRACE by default.
-
-
-### Security JWT/JWKS transition (#304, #305)
-
-Gateway and every domain Resource Server validate only RS256 access tokens issued by `auth-service`, using `JWT_JWKS_URI=http://auth-service:9000/oauth2/jwks` inside the runtime network plus the configured issuer/audience. Unknown `kid`, invalid signature/type/issuer/audience and malformed identity claims fail closed. Only Auth owns signing material; User, Catalog, Engagement, Recommendation and Gateway hold no private JWT key and perform no per-request identity lookup. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
-
-## SEC-09 — Verified bearer relay (opt-in issuer change)
-
-`VerifiedBearerRelayFilter` removes untrusted incoming Authorization headers and forwards only the access token from a validated `JwtAuthenticationToken`, never an ID Token or forwarded username. Public legacy login routes do not receive Authorization. SecurityChain verifies RS256 JWKS, issuer, audience and RFC 9068 type before Gateway filtering. Internal provisioning paths are denied and not routed.
-
-The default Compose runtime uses `auth-service` as the single issuer/JWKS source. `infra/compose/oidc-local.yaml` is retained only as a local regression harness for the PKCE/OIDC flow; it is no longer the activation mechanism and there is no legacy or dual-issuer fallback.
+`VerifiedBearerRelayFilter` drops any incoming Authorization header and forwards only the access token of an already validated `JwtAuthenticationToken`; ID tokens are never relayed. Client identity headers (`X-User-*`, `X-Roles`, …) are stripped, `/api/v1/internal/**` is denied, and `VELLUM_TRUSTED_PROXY_CIDRS` (empty by default ⇒ TCP peer) must list only proxies that append verified `X-Forwarded-For` hops. Full request path: [authorization sequence](../../docs/architecture/flows/api-request-authorization.md).

@@ -206,10 +206,10 @@ To generate a minimal gateway span:
 curl http://localhost:8080/actuator/health
 ```
 
-To generate a gateway-to-service trace, call one of the public gateway routes, for example:
+To generate a cross-service trace, register an identity in Auth (local Compose enables registration); Auth then provisions the profile in User. Gateway routes under `/api/v1/**` require an Auth access token ([authorization sequence](architecture/flows/api-request-authorization.md)).
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
+curl -X POST http://localhost:9000/v1/identity/register \
   -H "Content-Type: application/json" \
   -d '{"name":"OTel Local","email":"otel-local@example.com","password":"StrongPass123!"}'
 ```

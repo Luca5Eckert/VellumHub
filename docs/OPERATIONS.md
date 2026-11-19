@@ -12,7 +12,7 @@ Each application service is deployed as an immutable Java 21 container image. Im
 
 ## Configuration and health
 
-Production configuration is external. The RSA public verification key must be mounted in all services; the private PKCS#8 signing key must be mounted only in the User Service. Supply database credentials, Kafka bootstrap servers, user-service Google client ID, CORS origins and JWT expiration via deployment configuration. See [RS256 key management](SECURITY_RS256.md). Flyway owns schema evolution in production and Hibernate validates rather than changes the schema.
+Production configuration is external. The private PKCS#8 signing key and its public key are mounted only in `auth-service`; every other service verifies tokens through `JWT_JWKS_URI`. Supply database credentials, Kafka bootstrap servers, the Auth Google client (when federation is enabled), CORS origins and token lifetimes via deployment configuration. See [authorization sequence](architecture/flows/api-request-authorization.md). Flyway owns schema evolution in production and Hibernate validates rather than changes the schema.
 
 Every service exposes these unauthenticated operational endpoints:
 

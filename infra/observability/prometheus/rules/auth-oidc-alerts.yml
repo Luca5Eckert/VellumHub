@@ -8,7 +8,7 @@ groups:
           severity: P1
         annotations:
           summary: "OIDC Auth is unavailable to Prometheus"
-          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/SECURITY_OIDC_LOTE3.md#operational-policy"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/services/auth-service/README.md#alerts"
       - alert: AuthAuthenticationThrottled
         expr: sum(increase(vellum_auth_attempts_total{outcome="throttled"}[5m])) > 10
         for: 2m
@@ -16,7 +16,7 @@ groups:
           severity: P2
         annotations:
           summary: "Authentication attempts repeatedly exceed the shared limit"
-          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/SECURITY_OIDC_LOTE3.md#operational-policy"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/services/auth-service/README.md#alerts"
       - alert: AuthFederationResolutionFailures
         expr: sum(increase(vellum_auth_federation_total{outcome="rejected"}[5m])) > 10
         for: 2m
@@ -24,4 +24,4 @@ groups:
           severity: P2
         annotations:
           summary: "Repeated Google identity resolution failures"
-          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/SECURITY_OIDC_LOTE3.md#operational-policy"
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/services/auth-service/README.md#alerts"

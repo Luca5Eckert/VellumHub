@@ -19,7 +19,7 @@ stateDiagram-v2
     state "INVALIDATING: read=false / invalidate=true" as INVALIDATING
     state "ACTIVE: read=true / invalidate=true" as ACTIVE
     OFF --> INVALIDATING: Deploy all writer replicas with new invalidation code
-    INVALIDATING --> ACTIVE: Confirm all writers upgraded; canary readers gradually
+    INVALIDATING --> ACTIVE: Confirm all writers upgraded, canary readers gradually
     ACTIVE --> INVALIDATING: Disable reads in every pod (rollback first)
     INVALIDATING --> OFF: Disable invalidation after all readers are OFF
     note right of ACTIVE

@@ -28,11 +28,13 @@ mvn -B verify
 mvn -B -Pdistributed-e2e verify
 ```
 
-The default reactor has six deployable services and three shared libraries; `integration-tests/distributed-e2e` remains opt-in. The Python static checks have negative fixtures and a GitHub Actions workflow. The Maven Enforcer plugin in the five domain/gateway service POMs resolves and checks transitive dependencies at `validate`; only deployable-to-deployable artifacts are banned. Shared `lib/kafka-contracts` and test support remain available.
+The default reactor has six deployable services and four shared libraries (`kafka-contracts`, `kafka-avro-contracts`, `jwt-security`, `distributed-test-support`); `integration-tests/distributed-e2e` remains opt-in. The Python static checks have negative fixtures and a GitHub Actions workflow. The Maven Enforcer plugin in the five domain/gateway service POMs resolves and checks transitive dependencies at `validate`; only deployable-to-deployable artifacts are banned. Shared `lib/kafka-contracts` and test support remain available.
 
 ### AFF-STR-001 and AFF-STR-002
 
 ArchUnit remains test-scoped in the five domain/gateway modules; Auth is covered by the deployable dependency and database-ownership checks. The domain boundary rule prohibits domain -> infrastructure/adapter/controller dependencies. The module rule checks slice cycles. Non-applicable package layouts use JUnit assumptions, so skipped tests do not claim coverage. Catalog also includes negative fixtures for forbidden dependencies and cycles.
+
+Catalog additionally forbids `..application.handler..` -> `..presentation..`: use-case handlers take application commands (for example `UpdateBookCommand`) and return domain or application types (`BookCover`), while the `BookService` facade maps HTTP DTOs. A negative fixture proves the rule fails on a handler that accepts a DTO. Other services do not yet assert this slice.
 
 A real historical cycle `book -> book_request -> book` was discovered by CI and the Book handlers were refactored to use their own domain exception instead of an exception from BookRequest. This changes the exception type for invalid genres, while preserving existing BookDomainException handling.
 
@@ -65,7 +67,7 @@ sequenceDiagram
     P->>K: publish
     K-->>P: ACK
     alt PUBLISHED marking fails
-      Note over P,DB: Event remains IN_FLIGHT; lease may expire
+      Note over P,DB: Event remains IN_FLIGHT, lease may expire
       P->>DB: reclaim with new fencing token
       P->>K: republish same event ID
     end
@@ -156,7 +158,7 @@ until the PR checks finish.
 
 - **AFF-REC-009** — the #283 distributed Recommendation benchmark creates books by real Kafka events, materializes user profiles, and asserts authenticated GET responses contain only expected local projection IDs and titles. A loopback HTTP-503 canary records all calls to the configured test User/Catalog/Engagement endpoints: even swallowed failures increment the count, and **zero** calls is an invariant. A Recommendation serving-path ArchUnit test blocks known synchronous HTTP client dependencies. The canary is bounded to configured endpoints; extending the stack requires extending the instrumented coverage. New upstream events are not guaranteed during producer failure.
 - **AFF-OPS-010** — the benchmark retains separate measurements for event-to-projection (publish to local row observed) and event-to-visible-ranking (publish to first authenticated ranking change). Raw events, seed, warmups, environment and commit metadata remain under the existing #283 report directory. Reference p50/p95/p99 and throughput are **not** gates on hosted runner hardware; smoke gates only semantic invariants.
-- **AFF-RES-011** — per-flow degradation is catalogued against existing outbox, retry/DLT, revision-gap and checkpoint behavior. Replay and quarantine claims require their own tested evidence. No universal replay or global exactly-once claim.
+- **AFF-RES-011** — per-flow degradation is catalogued against existing outbox, retry/DLT, revision-gap and checkpoint behavior. Replay and quarantine claims require their own tested evidence. No universal replay or global exactly-once claim. Engagement and Recommendation keep separate copies of `OrderedKafkaRecovery`; `tools/architecture/test_ordered_recovery_parity.py` fails if they drift beyond package and service name.
 
 ### Catalog and CI execution evidence
 

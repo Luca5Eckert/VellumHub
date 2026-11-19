@@ -33,7 +33,7 @@ docker compose --project-directory . -f infra/compose/tests/auth-poc.yaml --prof
 
 The Auth PoC additionally requires its local RSA keys, run-as UID/GID and
 fixture credentials before execution. See
-`docs/SECURITY_OIDC_LOTE2.md` and the `auth-poc.yml` workflow.
+`services/auth-service/README.md` and the `auth-poc.yml` workflow.
 
 **Data safety:** the Registry retains explicit project name
 `vellumhub-schema-registry`, network `vellumhub-schema-registry-net`

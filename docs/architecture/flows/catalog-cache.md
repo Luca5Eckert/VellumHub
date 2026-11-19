@@ -27,7 +27,7 @@ sequenceDiagram
     else Authorized
         S->>H: Continue
         H->>C: detail(id) / page(params)
-        C->>Redis: Read generation; read versioned JSON key
+        C->>Redis: Read generation, read versioned JSON key
         alt Valid HIT
             Redis-->>C: DTO
             C-->>Client: 200 response
