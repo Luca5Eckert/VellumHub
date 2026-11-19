@@ -222,7 +222,7 @@
       "adr": "ADR-018",
       "guide": "docs/ARCHITECTURE_FITNESS_FUNCTIONS.md",
       "exceptions": [],
-      "baseline": "Recovery runbook #272; two service-specific fail-closed configuration tests plus architecture inventory",
+      "baseline": "Recovery runbook #272; two service-specific fail-closed configuration tests, architecture inventory and a static parity check (tools/architecture/test_ordered_recovery_parity.py) that fails when the two service copies drift",
       "cost": "medium",
       "cadence": "relevant PR",
       "limitations": [
