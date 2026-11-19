@@ -130,72 +130,76 @@ public class BookList {
     }
 
     public boolean canAddMember(UUID userId) {
-        if(userOwner.equals(userId)) return true;
-        if(type == TypeBookList.PRIVATE) return false;
-
-        return isAdmin(userId);
+        return canManageContent(userId);
     }
 
     public boolean canDeleteMember(UUID userId) {
-        if(userOwner.equals(userId)) return true;
-        if(type == TypeBookList.PRIVATE) return false;
-
-        return isAdmin(userId);
+        return canManageContent(userId);
     }
 
     public void deleteMember(UUID userId) {
-        if(userId.equals(userOwner)) throw new BookListDomainException("Owner can't be removed from the book list");
+        if (userId.equals(userOwner)) throw new BookListDomainException("Owner can't be removed from the book list");
 
         memberships.removeIf(m -> m.getUserId().equals(userId));
     }
 
-    public boolean canUpdateRole(UUID user) {
-        if(userOwner.equals(user)) return true;
-        if(type == TypeBookList.PRIVATE) return false;
-
-        return isAdmin(user);
+    public boolean canUpdateRole(UUID userId) {
+        return canManageContent(userId);
     }
 
     /**
-     * Checks if the user has permission to update the book list.
-     * @param userId The unique identifier of the user for whom the permission check is being performed.
-     * @return a boolean value indicating whether the user has permission to update the book list.
+     * Checks if the user may change the books contained in this list.
+     *
+     * @param userId the user performing the operation
+     * @return {@code true} if the user may add or remove books
      */
-    public boolean canUpdateList(UUID userId){
-        if(userOwner.equals(userId)) return true;
-        if(type == TypeBookList.PRIVATE) return false;
-
-        return isAdmin(userId);
+    public boolean canUpdateList(UUID userId) {
+        return canManageContent(userId);
     }
+
     /**
      * Adds a book to the book list.
      *
-     * @param book The book to be added to the book list.
-     * @param userId The unique identifier of the user attempting to add the book to the book list.
-     * @throws BookListDomainException if the book already exists in the book list.
+     * @param book   the book to add
+     * @param userId the user attempting to add the book
+     * @throws BookListPermissionDeniedException if the user cannot update the list
+     * @throws BookListDomainException           if the book already exists in the list
      */
     public void addBook(Book book, UUID userId) {
-        if(!this.canUpdateList(userId)) throw new BookListPermissionDeniedException();
-        if(this.containsBook(book)) throw new BookListDomainException("Book already exists in the book list");
+        if (!canUpdateList(userId)) throw new BookListPermissionDeniedException();
+        if (containsBook(book)) throw new BookListDomainException("Book already exists in the book list");
 
-        this.books.add(book);
+        books.add(book);
     }
 
     /**
      * Removes a book from the book list.
-     * @param book The book to be removed from the book list.
-     * @return true if the book was successfully removed, false if the book was not found in the book list.
+     *
+     * @param book   the book to remove
+     * @param userId the user attempting to remove the book
+     * @throws BookListPermissionDeniedException if the user cannot update the list
+     * @throws BookListDomainException           if the book is not in the list
      */
-    private boolean containsBook(Book book) {
-        return this.books.stream()
-                .anyMatch(b -> b.getId().equals(book.getId()));
+    public void removeBook(Book book, UUID userId) {
+        if (!canUpdateList(userId)) throw new BookListPermissionDeniedException();
+        if (!containsBook(book)) throw new BookListDomainException("Book not found in the book list");
+
+        books.removeIf(b -> b.getId().equals(book.getId()));
     }
 
-    public void removeBook(Book book, UUID userId) {
-        if(!this.canUpdateList(userId)) throw new BookListPermissionDeniedException();
-        if(!this.containsBook(book)) throw new BookListDomainException("Book not found in the book list");
+    private boolean containsBook(Book book) {
+        return books.stream().anyMatch(b -> b.getId().equals(book.getId()));
+    }
 
-        this.books.removeIf(b -> b.getId().equals(book.getId()));
+    /**
+     * Shared rule for membership and content management: the owner always may;
+     * on non-private lists, ADMIN members may as well.
+     */
+    private boolean canManageContent(UUID userId) {
+        if (userOwner.equals(userId)) return true;
+        if (type == TypeBookList.PRIVATE) return false;
+
+        return isAdmin(userId);
     }
 }
 

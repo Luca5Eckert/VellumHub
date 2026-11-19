@@ -47,9 +47,6 @@ public class BookListSpecificationProvider {
         };
     }
 
-
-
-
     /**
      * Applies case-insensitive partial match predicates for {@code title} and
      * {@code description} fields when present in the filter.
@@ -181,8 +178,8 @@ public class BookListSpecificationProvider {
     }
 
     /**
-     * Applies an {@code IN} predicate on the {@code userOwner} field when
-     * {@link BookListFilter#userOwnerList()} is provided.
+     * Applies an equality predicate on the {@code userOwner} field when
+     * {@link BookListFilter#userOwnerList()} (a single owner ID) is provided.
      *
      * <p>This predicate is combined with other filters (including visibility rules)
      * using {@code AND} semantics.</p>
