@@ -1,7 +1,7 @@
 package com.vellumhub.catalog_service.module.book.domain.handler;
 
 import com.vellumhub.catalog_service.module.book.application.handler.get.GetBookCoversBulkHandler;
-import com.vellumhub.catalog_service.module.book.presentation.dto.BookCoverResponse;
+import com.vellumhub.catalog_service.module.book.application.handler.get.BookCover;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookCoverStorage;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
@@ -74,7 +74,7 @@ class GetBookCoversBulkHandlerTest {
             given(bookCoverStorage.load("cover1.png")).willReturn(Optional.of(resource1));
             given(bookCoverStorage.load("cover2.jpg")).willReturn(Optional.of(resource2));
 
-            List<BookCoverResponse> results = getBookCoversBulkHandler.execute(Arrays.asList(bookId1, bookId2));
+            List<BookCover> results = getBookCoversBulkHandler.execute(Arrays.asList(bookId1, bookId2));
 
             assertThat(results).hasSize(2);
             assertThat(results.get(0).bookId()).isEqualTo(bookId1);
@@ -95,7 +95,7 @@ class GetBookCoversBulkHandlerTest {
             given(book.getCoverUrl()).willReturn(null);
             given(bookRepository.findAllById(List.of(bookId))).willReturn(List.of(book));
 
-            List<BookCoverResponse> results = getBookCoversBulkHandler.execute(List.of(bookId));
+            List<BookCover> results = getBookCoversBulkHandler.execute(List.of(bookId));
 
             assertThat(results).hasSize(1);
             assertThat(results.get(0).bookId()).isEqualTo(bookId);
@@ -114,7 +114,7 @@ class GetBookCoversBulkHandlerTest {
             given(bookRepository.findAllById(List.of(bookId))).willReturn(List.of(book));
             given(bookCoverStorage.load("missing.png")).willReturn(Optional.empty());
 
-            List<BookCoverResponse> results = getBookCoversBulkHandler.execute(List.of(bookId));
+            List<BookCover> results = getBookCoversBulkHandler.execute(List.of(bookId));
 
             assertThat(results).hasSize(1);
             assertThat(results.get(0).bookId()).isEqualTo(bookId);
@@ -127,7 +127,7 @@ class GetBookCoversBulkHandlerTest {
         void shouldReturnEmptyListForEmptyInput() {
             given(bookRepository.findAllById(List.of())).willReturn(List.of());
 
-            List<BookCoverResponse> results = getBookCoversBulkHandler.execute(List.of());
+            List<BookCover> results = getBookCoversBulkHandler.execute(List.of());
 
             assertThat(results).isEmpty();
         }

@@ -7,7 +7,7 @@ import com.vellumhub.catalog_service.module.book.presentation.dto.Recommendation
 import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequest;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
 import com.vellumhub.catalog_service.module.book.infrastructure.cache.BookReadCache;
-import com.vellumhub.catalog_service.module.book.presentation.dto.PageBook;
+import com.vellumhub.catalog_service.module.book.application.query.PageBook;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

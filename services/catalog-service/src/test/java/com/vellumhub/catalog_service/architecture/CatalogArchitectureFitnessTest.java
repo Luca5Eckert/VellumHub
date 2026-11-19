@@ -51,6 +51,34 @@ class CatalogArchitectureFitnessTest {
                 .allowEmptyShould(false);
         rule.check(production);
     }
+    /**
+     * AFF-STR-001 (application slice): use-case handlers receive application commands and
+     * return domain or application types, never HTTP DTOs. Facades such as BookService
+     * map between the two and are intentionally outside this rule.
+     */
+    @Test
+    void applicationHandlersMustNotDependOnPresentation() {
+        JavaClasses production = new ClassFileImporter()
+                .withImportOption(new ImportOption.DoNotIncludeTests())
+                .importPackages(ROOT);
+        handlersMustNotDependOnPresentation().check(production);
+    }
+
+    @Test
+    void negativeFixtureRejectsHandlerPresentationDependency() {
+        JavaClasses fixtures = new ClassFileImporter().importPackages(
+                ROOT + ".architecture.fixtures");
+        org.junit.jupiter.api.Assertions.assertThrows(AssertionError.class,
+                () -> handlersMustNotDependOnPresentation().check(fixtures),
+                "AFF-STR-001 must detect a handler that accepts a presentation DTO");
+    }
+
+    private static ArchRule handlersMustNotDependOnPresentation() {
+        return noClasses().that().resideInAPackage("..application.handler..")
+                .should().dependOnClassesThat().resideInAPackage("..presentation..")
+                .allowEmptyShould(false);
+    }
+
     @Test
     void negativeFixtureRejectsDomainInfrastructureDependency() {
         JavaClasses fixtures = new ClassFileImporter().importPackages(

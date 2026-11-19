@@ -1,6 +1,5 @@
 package com.vellumhub.catalog_service.module.book.application.handler.get;
 
-import com.vellumhub.catalog_service.module.book.presentation.dto.BookCoverResponse;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookCoverStorage;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
@@ -40,33 +39,33 @@ public class GetBookCoversBulkHandler {
      * Returns Base64 encoded image data for each book.
      *
      * @param bookIds list of book IDs to retrieve covers for
-     * @return list of BookCoverResponse with cover data (or empty responses for books without covers)
+     * @return list of covers (or empty responses for books without covers)
      */
-    public List<BookCoverResponse> execute(List<UUID> bookIds) {
+    public List<BookCover> execute(List<UUID> bookIds) {
         List<Book> books = bookRepository.findAllById(bookIds);
-        List<BookCoverResponse> responses = new ArrayList<>();
+        List<BookCover> responses = new ArrayList<>();
 
         for (Book book : books) {
-            BookCoverResponse response = loadCoverForBook(book);
+            BookCover response = loadCoverForBook(book);
             responses.add(response);
         }
 
         return responses;
     }
 
-    private BookCoverResponse loadCoverForBook(Book book) {
+    private BookCover loadCoverForBook(Book book) {
         String coverUrl = book.getCoverUrl();
         if (coverUrl == null || coverUrl.isBlank()) {
-            return BookCoverResponse.empty(book.getId());
+            return BookCover.empty(book.getId());
         }
 
         String filename = extractFilename(coverUrl);
         return bookCoverStorage.load(filename)
                 .map(resource -> createCoverResponse(book.getId(), resource, filename))
-                .orElse(BookCoverResponse.empty(book.getId()));
+                .orElse(BookCover.empty(book.getId()));
     }
 
-    private BookCoverResponse createCoverResponse(UUID bookId, Resource resource, String filename) {
+    private BookCover createCoverResponse(UUID bookId, Resource resource, String filename) {
         try {
             byte[] bytes = resource.getInputStream().readAllBytes();
             String base64Data = Base64.getEncoder().encodeToString(bytes);
@@ -74,10 +73,10 @@ public class GetBookCoversBulkHandler {
                     .map(MediaType::toString)
                     .orElse("application/octet-stream");
 
-            return new BookCoverResponse(bookId, base64Data, contentType);
+            return new BookCover(bookId, base64Data, contentType);
         } catch (IOException e) {
             log.warn("Failed to load cover for book {}: {}", bookId, e.getMessage());
-            return BookCoverResponse.empty(bookId);
+            return BookCover.empty(bookId);
         }
     }
 

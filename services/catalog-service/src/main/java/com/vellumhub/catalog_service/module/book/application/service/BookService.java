@@ -1,18 +1,26 @@
 package com.vellumhub.catalog_service.module.book.application.service;
 
 import com.vellumhub.catalog_service.module.book.application.command.CreateBookCommand;
+import com.vellumhub.catalog_service.module.book.application.command.UpdateBookCommand;
 import com.vellumhub.catalog_service.module.book.application.handler.DeleteBookHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.UploadBookCoverHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.create.CreateBookHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.create.CreateBookWithIsbnHandler;
-import com.vellumhub.catalog_service.module.book.application.handler.get.*;
+import com.vellumhub.catalog_service.module.book.application.handler.get.GetAllBooksHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.get.GetBookCoverHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.get.GetBookCoversBulkHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.get.GetBookHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.get.GetBooksByIdsHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.update.UpdateBookHandler;
-import com.vellumhub.catalog_service.module.book.presentation.dto.*;
-import com.vellumhub.catalog_service.module.book.presentation.mapper.BookMapper;
+import com.vellumhub.catalog_service.module.book.application.query.PageBook;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
-import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.presentation.dto.BookCoverResponse;
+import com.vellumhub.catalog_service.module.book.presentation.dto.CreateBookRequest;
+import com.vellumhub.catalog_service.module.book.presentation.dto.GetBookResponse;
+import com.vellumhub.catalog_service.module.book.presentation.dto.Recommendation;
+import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequest;
+import com.vellumhub.catalog_service.module.book.presentation.mapper.BookMapper;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,23 +29,37 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Facade used by {@code BookController}: translates HTTP DTOs into application commands and
+ * maps domain results back to response DTOs. Handlers never see presentation types.
+ */
 @Service
 public class BookService {
 
     private final CreateBookHandler createBookHandler;
+    private final CreateBookWithIsbnHandler createBookWithIsbnHandler;
     private final DeleteBookHandler deleteBookHandler;
     private final GetBookHandler getBookHandler;
     private final GetAllBooksHandler getAllBooksHandler;
-    private final UpdateBookHandler updateBookHandler;
     private final GetBooksByIdsHandler getBooksByIdsHandler;
+    private final UpdateBookHandler updateBookHandler;
     private final UploadBookCoverHandler uploadBookCoverHandler;
     private final GetBookCoverHandler getBookCoverHandler;
     private final GetBookCoversBulkHandler getBookCoversBulkHandler;
-    private final CreateBookWithIsbnHandler createBookWithIsbnHandler;
-
     private final BookMapper bookMapper;
 
-    public BookService(CreateBookHandler createBookHandler, DeleteBookHandler deleteBookHandler, GetBookHandler getBookHandler, GetAllBooksHandler getAllBooksHandler, UpdateBookHandler updateBookHandler, GetBooksByIdsHandler getBooksByIdsHandler, UploadBookCoverHandler uploadBookCoverHandler, GetBookCoverHandler getBookCoverHandler, GetBookCoversBulkHandler getBookCoversBulkHandler, CreateBookWithIsbnHandler createBookWithIsbnHandler, BookMapper bookMapper) {
+    public BookService(
+            CreateBookHandler createBookHandler,
+            DeleteBookHandler deleteBookHandler,
+            GetBookHandler getBookHandler,
+            GetAllBooksHandler getAllBooksHandler,
+            UpdateBookHandler updateBookHandler,
+            GetBooksByIdsHandler getBooksByIdsHandler,
+            UploadBookCoverHandler uploadBookCoverHandler,
+            GetBookCoverHandler getBookCoverHandler,
+            GetBookCoversBulkHandler getBookCoversBulkHandler,
+            CreateBookWithIsbnHandler createBookWithIsbnHandler,
+            BookMapper bookMapper) {
         this.createBookHandler = createBookHandler;
         this.deleteBookHandler = deleteBookHandler;
         this.getBookHandler = getBookHandler;
@@ -51,12 +73,8 @@ public class BookService {
         this.bookMapper = bookMapper;
     }
 
-    /**
-     * Creates a new book in the catalog.
-     * @param request the details of the book to be created
-     */
     public void create(CreateBookRequest request) {
-        CreateBookCommand command = new CreateBookCommand(
+        createBookHandler.execute(new CreateBookCommand(
                 request.title(),
                 request.description(),
                 request.releaseYear(),
@@ -66,9 +84,11 @@ public class BookService {
                 request.publisher(),
                 request.coverUrl(),
                 request.genres() != null ? new HashSet<>(request.genres()) : new HashSet<>()
-        );
+        ));
+    }
 
-        createBookHandler.execute(command);
+    public UUID createByIsbn(String isbn) {
+        return createBookWithIsbnHandler.handle(isbn);
     }
 
     public void delete(UUID bookId) {
@@ -76,28 +96,34 @@ public class BookService {
     }
 
     public GetBookResponse get(UUID bookId) {
-        Book book = getBookHandler.execute(bookId);
-
-        return bookMapper.toGetResponse(book);
+        return bookMapper.toGetResponse(getBookHandler.execute(bookId));
     }
 
     public List<GetBookResponse> getAll(int pageNumber, int pageSize) {
-        PageBook pageBook = new PageBook(pageSize, pageNumber);
-
-        Page<Book> bookPage = getAllBooksHandler.execute(pageBook);
-
-        return bookPage.stream().map(bookMapper::toGetResponse).toList();
+        return getAllBooksHandler.execute(new PageBook(pageSize, pageNumber))
+                .stream()
+                .map(bookMapper::toGetResponse)
+                .toList();
     }
-
-    public void update(UUID bookId, UpdateBookRequest updateBookRequest) {
-        updateBookHandler.execute(bookId, updateBookRequest);
-    }
-
 
     public List<Recommendation> getByIds(List<UUID> bookIds) {
-        List<Book> bookList = getBooksByIdsHandler.execute(bookIds);
+        return getBooksByIdsHandler.execute(bookIds).stream()
+                .map(bookMapper::toFeatureResponse)
+                .toList();
+    }
 
-        return bookList.stream().map(bookMapper::toFeatureResponse).toList();
+    public void update(UUID bookId, UpdateBookRequest request) {
+        updateBookHandler.execute(bookId, new UpdateBookCommand(
+                request.title(),
+                request.description(),
+                request.releaseYear(),
+                request.coverUrl(),
+                request.author(),
+                request.isbn(),
+                request.pageCount(),
+                request.publisher(),
+                request.genres()
+        ));
     }
 
     public String uploadCover(UUID bookId, MultipartFile file) {
@@ -117,28 +143,17 @@ public class BookService {
         }
     }
 
-    /**
-     * Retrieves the cover image for a book by its ID.
-     *
-     * @param bookId the ID of the book
-     * @return the cover image as a Resource
-     */
     public Resource getBookCover(UUID bookId) {
         return getBookCoverHandler.execute(bookId);
     }
 
     /**
-     * Retrieves cover images for multiple books in a single operation.
-     * Solves N+1 problem when fetching covers for recommendations.
-     *
-     * @param bookIds list of book IDs to retrieve covers for
-     * @return list of BookCoverResponse with Base64 encoded cover data
+     * Retrieves cover images for multiple books in one call, avoiding N+1 requests from
+     * recommendation and list views.
      */
     public List<BookCoverResponse> getBookCoversBulk(List<UUID> bookIds) {
-        return getBookCoversBulkHandler.execute(bookIds);
-    }
-
-    public UUID createByIsbn(String isbn) {
-        return createBookWithIsbnHandler.handle(isbn);
+        return getBookCoversBulkHandler.execute(bookIds).stream()
+                .map(cover -> new BookCoverResponse(cover.bookId(), cover.coverData(), cover.contentType()))
+                .toList();
     }
 }

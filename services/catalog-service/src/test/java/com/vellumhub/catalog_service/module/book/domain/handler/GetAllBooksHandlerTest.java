@@ -1,7 +1,7 @@
 package com.vellumhub.catalog_service.module.book.domain.handler;
 
 import com.vellumhub.catalog_service.module.book.application.handler.get.GetAllBooksHandler;
-import com.vellumhub.catalog_service.module.book.presentation.dto.PageBook;
+import com.vellumhub.catalog_service.module.book.application.query.PageBook;
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
