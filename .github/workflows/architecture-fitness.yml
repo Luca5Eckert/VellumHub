@@ -53,7 +53,7 @@ jobs:
       - name: Run five service architecture suites
         if: success() || failure()
         run: >-
-          mvn -B
+          bash tools/ci/retry_dependency_resolution.sh mvn -B
           -pl services/catalog-service,services/engagement-service,services/user-service,services/recommendation-service,services/gateway-service
           -am
           -Dtest='*ArchitectureFitnessTest'
@@ -79,7 +79,7 @@ jobs:
 
       - name: Run canonical wire compatibility fixtures
         if: success() || failure()
-        run: mvn -B -f lib/kafka-contracts/pom.xml test
+        run: bash tools/ci/retry_dependency_resolution.sh mvn -B -f lib/kafka-contracts/pom.xml test
 
       - name: Validate contract AFF evidence
         if: always()
