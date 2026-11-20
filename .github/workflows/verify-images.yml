@@ -32,7 +32,7 @@ jobs:
       - name: Confirm Docker for Testcontainers
         run: docker info
       - name: Verify reactor and non-distributed integration tests
-        run: mvn -B -ntp -DexcludedGroups=distributed clean verify
+        run: bash tools/ci/retry_dependency_resolution.sh mvn -B -ntp -DexcludedGroups=distributed clean verify
 
 
       # The reactor can emit extensive log output; publish focused XML diagnostics
