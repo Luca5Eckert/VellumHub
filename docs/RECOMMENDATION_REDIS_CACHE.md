@@ -1,6 +1,6 @@
-# Recommendation Redis response cache — #36
+# Recommendation Redis response cache
 
-**Status (repository, 15 November 2026):** implementation merged in [PR #367](https://github.com/Luca5Eckert/VellumHub/pull/367); [issue #36](https://github.com/Luca5Eckert/VellumHub/issues/36) closed. The controlled [72,000-request A/B](https://github.com/Luca5Eckert/VellumHub/actions/runs/43650750262) and real Redis/Kafka tests passed, with workload-dependent gains in hot/high-concurrency scenarios and regressions on cold reads. **Not activated in production**; application default OFF, local Compose/Kind ON. [VH-REC](architecture/services/recommendation.md) · [C4 containers](architecture/diagrams/c4-containers.md) · [feedback sequence](architecture/flows/recommendation-feedback.md).
+**Status:** application default OFF, local Compose/Kind ON, not activated in production. [VH-REC](architecture/services/recommendation.md) · [C4 containers](architecture/diagrams/c4-containers.md) · [feedback sequence](architecture/flows/recommendation-feedback.md) · [cache rollout states](architecture/states/cache-rollout.md).
 
 ## Purpose and scope
 
@@ -54,7 +54,7 @@ The existing `Recommendation distributed benchmark` workflow runs:
 1. Original event→projection and read-autonomy benchmark (AFF-REC-009).
 2. Original event→visible ranking freshness (AFF-OPS-010).
 3. Additional Redis Testcontainers integration and a **pre-warmed cache before Kafka rating** freshness check, including unauthenticated HTTP rejection.
-4. A/B `OFF` and `ON` with a deterministic PostgreSQL/pgvector catalog (600 books, 400/1400/3500 deterministic user profiles depending on profile), authenticated MockMvc GET, and scenarios cold, warm, mixed. Each mode runs in a distinct Maven process with same commit/runner/fixtures. PR uses `smoke`; `workflow_dispatch` supports `reference` with 3 repetitions at concurrency 1/8/32 (1,000 requests per scenario), plus hot-key stampede; the dedicated PR #367 reference run covers cold, warm, 80/20 and 95/5 cache mixes.
+4. A/B `OFF` and `ON` with a deterministic PostgreSQL/pgvector catalog (600 books, 400/1400/3500 deterministic user profiles depending on profile), authenticated MockMvc GET, and scenarios cold, warm, mixed. Each mode runs in a distinct Maven process with same commit/runner/fixtures. PR uses `smoke`; `workflow_dispatch` supports `reference` with 3 repetitions at concurrency 1/8/32 (1,000 requests per scenario), plus hot-key stampede; the reference run covers cold, warm, 80/20 and 95/5 cache mixes.
 
 Manual reference run (requires Docker, real Testcontainers and same SHA in separate runs):
 
@@ -83,73 +83,9 @@ Files `services/recommendation-service/target/cache-benchmark/<sha>/off.json` an
 
 ### Known limits
 
+- Hydration of a ranked page uses one fetch-join query (`findPageWithGenres`) instead of lazy genre loads; `RecommendationBatchHydrationIT` asserts a single SQL statement for ten books.
+
 - The current implementation coalesces simultaneous MISSes for each versioned response key **within one JVM**, with an upper limit of 512 in-flight keys and a bounded 5-second follower wait. Distinct service replicas can independently lead one MISS per key; there is deliberately no distributed mutex or new Redis roundtrip on ordinary cold reads.
 - Failed post-commit Redis invalidation is observable but not durably retried. Staleness is bounded by the configured response TTL, not guaranteed zero.
 - User generation metadata grows only with recently cached users (24h expiry); global metadata is constant-size. Redis should be kept isolated from the rate-limiting workload.
 - The completed 72k Testcontainers/MockMvc benchmark does **not** prove a production gain; do not present synthetic throughput as production. Production TLS/ACLs, canary, hit ratio and rollback require separate authorization.
-
-Owner issue: [#36](https://github.com/Luca5Eckert/VellumHub/issues/36), completed via PR #367. Catalog [#366](https://github.com/Luca5Eckert/VellumHub/issues/366) also closed; hardening merged in [PR #370](https://github.com/Luca5Eckert/VellumHub/pull/370).
-
-## Diagnostics of cold misses — 14 November 2026
-
-The first reference measurement (head `68f3d67`, [GitHub Actions #43639474560](https://github.com/Luca5Eckert/VellumHub/actions/runs/43639474560)) with 600 books, 900 users and three independent 500-request repetitions per scenario revealed that an uncached response issues **12 prepared SQL statements**. This is consistent with a rank query, metadata hydration and lazy genre collection reads (N+1 candidate; confirm SQL categories before changing fetch behavior). Cache HIT bypasses all 12 SQL statements; MISS preserves all SQL work and adds synchronous Redis GET/SET roundtrips.
-
-The original cache implementation performed two sequential generation GETs, a payload GET, two additional generation GETs after SQL and a response SET (plus SETNX for first-seen users). Because both generations are part of the immutable response key, those two post-SQL GETs are unnecessary for invalidation safety. A subsequent patch uses MGET for both generations and removes this redundant reread: hot HIT uses 2 Redis network roundtrips, an existing-version MISS 3, and a first-use user may require an extra SETNX. This is a performance **hypothesis under evaluation**; compare the post-change reference benchmark before claiming improvement.
-
-Note that reference SQL counts use Hibernate statistics, and CPU/GC and Redis timings are diagnostics from a GitHub-hosted MockMvc integration run, **not** capacity or external-network HTTP performance.
-
-
-### Repeated reference after generation MGET — intervention on #36
-
-The optimized revision `753c8e80506318b6f0817df1294aa5d530befc04` passed the [same reference job #43640098145](https://github.com/Luca5Eckert/VellumHub/actions/runs/43640098145). This keeps dataset, ranker, profile, scenarios, three repetitions and concurrency settings identical to the previous run. **Different CI processes and host scheduling can still introduce run-to-run variability**; therefore, compare the stage-level evidence and not just a single p95.
-
-Medians of the three within-run p95 measurements (milliseconds):
-
-| Scenario | Concurrency | Original OFF / ON | Optimized OFF / ON |
-| --- | ---: | ---: | ---: |
-| Cold, 0% HIT | 1 | 3.82 / 6.78 | 3.77 / 6.66 |
-| Cold, 0% HIT | 8 | 13.61 / 20.46 | 14.98 / 22.26 |
-| Warm, 100% HIT | 8 | 16.54 / 3.11 | 11.43 / 4.79 |
-| Mixed, 80% HIT | 8 | 14.80 / 20.84 | 14.31 / 16.68 |
-| Mixed, 95% HIT | 8 | 14.02 / 8.43 | 14.84 / 8.65 |
-| Mixed, 80% HIT | 32 | 55.75 / 35.92 | 53.04 / 35.79 |
-| Hot-key stampede | 32 | 23.27 / 35.36 | 16.44 / 29.82 |
-
-The **MGET intervention reduced total Redis generation-access time** for 500 mixed80/c8 requests from 1,219.70 to 698.80 ms (approximately 43%). Their cache-enabled p95 dropped 20.84→16.68 ms; the optimized OFF baseline nevertheless remains faster at 14.31 ms. Under mixed95/c8, optimized cache p95 was 8.65 ms against 14.84 ms OFF. At cold c8, optimized cache remains markedly slower (22.26 against 14.98 ms). These are workload-specific samples, not production SLAs or a guarantee of a 20% improvement across all traffic.
-
-**Stampede evidence:** 32 synchronized requests for the same empty cache key produced 32 misses and **384 SQL statements** both before and after MGET, so the patch does not perform single-flight. That is a separate performance problem under concurrent bursts.
-
-**Decision:** retain the feature flag `RECOMMENDATION_CACHE_ENABLED=false` and the PR in draft. Before activation, measure actual key reuse in a representative environment, investigate the existing 12-statement read (likely JPA lazy `@ElementCollection` N+1), and separately evaluate a bounded single-flight strategy under multi-replica tests. Optimize SQL regardless of whether Redis is retained. Do not conflate “a HIT is fast” with “mixed p95 improves.”
-
-
-## Corrective intervention: genre N+1 and bounded single-flight (PR #367)
-
-**Status:** submitted for CI validation; do not claim a measured improvement or enable the feature until the new SHA's JSON evidence is inspected. This intervention follows the reference findings above.
-
-### SQL hydration (N+1)
-
-The original `findAllById` loaded `Recommendation` entities but left `@ElementCollection genres` lazy; mapping a ranked page of ten DTOs could require ten additional SQL statements. The adapter now calls `findPageWithGenres(ids)`, a dedicated `select distinct r from Recommendation r left join fetch r.genres where r.bookId in :ids`. It retrieves a ranked **page already selected by pgvector**, not a paginated collection fetch join. `GetRecommendationsUseCase` still reorders the hydrated entities by their original ranking IDs, handles missing book IDs, and produces the same DTO shape.
-
-The new `RecommendationBatchHydrationIT` uses real PostgreSQL via Testcontainers with **ten books, two genre rows per book**, asserts all 20 genres are available outside a persistence context and uses Hibernate statistics to require **exactly one SQL statement for hydration**. This eliminates the N+1 independently of cache activation. A typical request with rank query plus hydration should need approximately two SQL statements; confirm in the reference artifacts, and distinguish this expected count from measured numbers.
-
-### Hot-key concurrent MISSes
-
-`RecommendationResponseCache` coalesces simultaneous MISSes by the full versioned key using a `ConcurrentHashMap<String, CompletableFuture<List<RecommendationResponse>>>`. One leader invokes the ranker and populates Redis; other threads in **the same JVM** share the result. This avoids a distributed lock roundtrip on every miss. A semaphore limits the coordinator to 512 in-flight keys; waiters time out after five seconds and fall back to PostgreSQL rather than hanging indefinitely. Failed leaders propagate their error and remove the in-flight entry. `vellumhub.cache.singleflight.events` measures `leader`, `waiting`, `joined`, `timeout`, `capacity`, etc., with no user IDs in metric labels.
-
-The in-flight key contains global/user generation tokens. A commit that invalidates an epoch sends new requests to a new key, without attaching them to a stale pending load. **Multiple replicas can each have a leader for the same key**; the limit is generally one computation *per replica*, not a global exactly-once guarantee. Two-real-client integration tests explicitly distinguish these semantics. Distributed locking is not silently claimed, nor added until production replica count and contention justify its additional RTTs and failure semantics.
-
-### Stronger load and performance evidence
-
-Each run is paired OFF/ON on the same SHA, Testcontainers versions, JVM/runner class, deterministic books and genuine cold/mixed user keys. Individual raw request times, p50/p95/p99, hit/miss, DB SQL prepared statements, ranker duration, Redis generation/get/put duration, CPU, GC, Redis memory deltas and coalescing counters are included.
-
-| Profile | Requests per scenario, per repetition | Repetitions | Concurrency | Total OFF+ON measured scenario requests |
-| --- | ---: | ---: | --- | ---: |
-| `smoke` | 120 | 1 | 1, 8 | 1,920 |
-| `reference` (PR #367) | 1,000 | 3 | 1, 8, 32 | 72,000 |
-| `stress` (opt-in dispatch) | 3,000 | 3 | 8, 32, 64 | 216,000 |
-
-The four cache mixes are `cold` (0%), `warm` (100%), `mixed80` (80%), and `mixed95` (95%). A separate synchronized hot-key stampede is measured for each concurrency/repetition with a SQL-budget assertion when Redis is enabled. The cold workload no longer cycles through fewer profile keys than its request count. Fixture population is sized to the profile (400/1,400/3,500 users; 600 books with two genres each).
-
-Benchmark durations depend on the CI runner and 90-minute job timeout. Only **reference** is automatically selected for the focused PR #367; `stress` is opt-in via the existing workflow's `workflow_dispatch`. These are in-process authenticated MockMvc requests with real PostgreSQL/Redis, **not** independent HTTP network-level load tests, nor evidence of production hit ratio.
-
-**Go/no-go:** the feature stays disabled by default until the current commit passes N+1/Redis/Kafka/CI checks and a representative workload shows acceptable p95/p99, CPU/SQL costs and freshness. If mixed80 remains slower, the appropriate engineering decision may still be **NO-GO**, even after eliminating N+1 and stampede.

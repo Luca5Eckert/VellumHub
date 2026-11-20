@@ -1,8 +1,6 @@
 package com.vellumhub.catalog_service.module.book.presentation.dto;
 
-import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 
-import java.util.List;
 import java.util.Set;
 
 public record UpdateBookRequest(

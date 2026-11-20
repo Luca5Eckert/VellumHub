@@ -12,6 +12,12 @@ related:
   - vh-c4-catalog-components
   - vh-outbox-delivery
   - vh-cache-rollout
+  - vh-api-request-authorization
+  - vh-google-federation
+  - vh-auth-identity-lifecycle
+  - vh-ordered-consumer
+  - vh-kafka-quarantine
+  - vh-event-wire-format
 ---
 
 # VellumHub — architecture at a glance
@@ -25,9 +31,12 @@ related:
 | System boundary | [C4 L1](diagrams/c4-context.md) | Users and external dependencies |
 | Service ownership | [C4 L2](diagrams/c4-containers.md) · [service registry](services/README.md) | Deployables, data and messages |
 | Catalog internals | [C4 L3](diagrams/c4-catalog-components.md) | Read cache, writes and Outbox |
-| Registration | [Auth → User](flows/identity-onboarding.md) | Identity and idempotent provisioning |
+| Registration | [Auth → User](flows/identity-onboarding.md) · [Identity states](states/auth-identity-lifecycle.md) | Identity and idempotent provisioning |
+| API security | [Request authorization](flows/api-request-authorization.md) · [Google federation](flows/google-federation.md) | JWT, scopes, ownership, rate limits; Google login and link |
 | Event delivery | [Book → Kafka](flows/book-outbox.md) · [Outbox states](states/outbox-delivery.md) | Local commit and delayed delivery |
 | Read models | [Feedback → ranking](flows/recommendation-feedback.md) | Autonomous Recommendation reads |
+| Ordered consumers | [Checkpoint and retry](flows/ordered-consumer.md) · [Quarantine states](states/kafka-quarantine.md) | Revision order, duplicates, DLT and replay |
+| Wire format | [JSON → Avro states](states/event-wire-format.md) | Per-stream cutover and rollback |
 | Cache | [Cache-aside](flows/catalog-cache.md) · [rollout states](states/cache-rollout.md) | Optional reads and staged invalidation |
 | Browse | [HTML explorer](architecture-explorer.html) | Diagrams rendered from these Markdown files |
 

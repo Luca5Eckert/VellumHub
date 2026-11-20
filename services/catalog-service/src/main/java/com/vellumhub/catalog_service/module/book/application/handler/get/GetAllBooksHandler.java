@@ -1,6 +1,6 @@
 package com.vellumhub.catalog_service.module.book.application.handler.get;
 
-import com.vellumhub.catalog_service.module.book.presentation.dto.PageBook;
+import com.vellumhub.catalog_service.module.book.application.query.PageBook;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import org.springframework.data.domain.Page;
@@ -17,10 +17,10 @@ public class GetAllBooksHandler {
         this.bookRepository = bookRepository;
     }
 
-    public Page<Book> execute(PageBook pageMedia){
+    public Page<Book> execute(PageBook page){
         PageRequest pageRequest = PageRequest.of(
-                pageMedia.pageNumber(),
-                pageMedia.pageSize(),
+                page.pageNumber(),
+                page.pageSize(),
                 Sort.by(Sort.Direction.ASC, "createdAt", "id")
         );
 

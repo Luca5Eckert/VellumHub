@@ -121,7 +121,7 @@ oldTypeReaction = null
 newTypeReaction = typeReaction
 ```
 
-Legacy events do not have `eventId`, `occurredAt`, or `reactionId`. Canonical consumption under #200 uses `processed_engagement_events` and per-aggregate revisions. Old messages without stable identity/revision cannot be made replay-safe by fabricating an event ID; those listeners are gated by `KAFKA_LEGACY_CONSUMERS_ENABLED` and must be drained before disabling. See [Consumer Idempotency](CONSUMER_IDEMPOTENCY.md).
+Legacy events do not have `eventId`, `occurredAt`, or `reactionId`. Canonical consumption uses `processed_engagement_events` and per-aggregate revisions. Old messages without stable identity/revision cannot be made replay-safe by fabricating an event ID; those listeners are gated by `KAFKA_LEGACY_CONSUMERS_ENABLED` and must be drained before disabling. See [Consumer Idempotency](CONSUMER_IDEMPOTENCY.md).
 
 A missing local book feature now fails consumption so the existing retry/DLT pipeline can retain the event. A successful acknowledgement must not discard a delta that later transitions depend on. Retry exhaustion still requires operational recovery; this change does not implement safe replay.
 
@@ -129,8 +129,10 @@ A missing local book feature now fails consumption so the existing retry/DLT pip
 
 This contract makes the event self-contained but does not provide atomic publication or idempotent consumption by itself.
 
-- transactional outbox for Engagement belongs to #202;
-- idempotent canonical Recommendation consumers are implemented under #200 (production rollout must be verified);
-- retry, DLT, and safe replay belong to #272.
+- the canonical stream `engagement.reactions.v1` is published through the Engagement transactional outbox;
+- canonical Recommendation consumers are idempotent per reaction revision ([Consumer Idempotency](CONSUMER_IDEMPOTENCY.md));
+- exhausted records are quarantined and resumed from the original offset ([Kafka Recovery Runbook](KAFKA_RECOVERY_RUNBOOK.md)).
+
+The legacy `user-reaction-changed` topic is still published directly through `KafkaTemplate` without those guarantees.
 
 This separation keeps lifecycle semantics independent from delivery mechanics.

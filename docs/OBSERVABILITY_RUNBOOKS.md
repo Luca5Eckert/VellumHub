@@ -160,7 +160,6 @@ curl http://localhost:12345/-/ready
 
 **Escalate When:** Loki receives no logs from any service, Alloy cannot access Docker socket, or labels are missing after a logging configuration change.
 
-
-## Ordered Kafka Partition Blocked (#272)
+## Ordered Kafka Partition Blocked
 
 Check `vellumhub_kafka_recovery_quarantined_total` and `operation=kafka_quarantined`. Identify the source topic, partition, offset and affected service. Do not reset committed offsets or publish a DLT copy at the end of an ordered topic. Follow the [Kafka Recovery Runbook](KAFKA_RECOVERY_RUNBOOK.md): fix the dependency, inspect the quarantine, request audited replay, restart only the affected service, and confirm the original offset was applied before later revisions.

@@ -82,7 +82,7 @@ Canonical versioned topics:
 | `reading-progress-events` | Catalog | User progress delta via `reading_progress_offsets` and `processed_events` |
 | `engagement.ratings.v1` | Engagement | Rating lifecycle via `engagement_event_offsets` / `processed_engagement_events` |
 | `engagement.reactions.v1` | Engagement | Reaction transitions via the same Engagement checkpoints |
-| `created-user-preference` | User | Cold-start user preference updates (outside #200's canonical versioned streams) |
+| `created-user-preference` | User | Cold-start user preference updates (legacy topic, outside the canonical versioned streams) |
 
 Older topics (`created/updated/deleted-book`, `created/updated-reading-progress`, `created/updated-rating` and `user-reaction-changed`) have compatibility listeners. They do not share the canonical checkpoint guarantees; keep them only during a coordinated migration and disable them with `KAFKA_LEGACY_CONSUMERS_ENABLED=false` after draining. The current default is `true` to preserve pre-cutover behavior. See [Consumer Idempotency](../../docs/CONSUMER_IDEMPOTENCY.md) before enabling the canonical writers.
 
@@ -90,7 +90,7 @@ Rating updates within the same rating category produce a zero adjustment and lea
 
 See [Reaction Lifecycle Kafka Contracts](../../docs/REACTION_EVENT_CONTRACTS.md) for the enriched reaction payload, legacy compatibility, and delivery-guarantee boundary.
 
-Legacy retry/DLT handling is configured in `share/kafka/config/KafkaRetryConfig`. Canonical ordered consumers use blocking retries until the operational retry/DLT/replay policy is implemented in #272.
+Legacy retry/DLT handling is configured in `share/kafka/config/KafkaRetryConfig`. Canonical ordered consumers retry with a bounded back-off and then quarantine the record, publish a diagnostic DLT copy and pause the partition ([sequence](../../docs/architecture/flows/ordered-consumer.md), [quarantine states](../../docs/architecture/states/kafka-quarantine.md)).
 
 ## Vector Pipeline and Ranking
 
@@ -175,7 +175,7 @@ docker info
 mvn -pl services/recommendation-service -am -Dgroups=distributed test
 ```
 
-The distributed suite covers the legacy `created-book` retry/DLT boundary, rating and reaction lifecycle tests, and the canonical #200 idempotency scenarios (replay, concurrency, rollback and real Kafka redelivery).
+The distributed suite covers the legacy `created-book` retry/DLT boundary, rating and reaction lifecycle tests, and the canonical idempotency scenarios (replay, concurrency, rollback and real Kafka redelivery).
 
 See [Distributed Integration Testing](../../docs/DISTRIBUTED_TESTING.md) for infrastructure boundaries, CI budget, extension rules, and the planned E2E boundary.
 
@@ -188,49 +188,17 @@ intermediate publisher or synchronous dependency. `eventId`/`occurredAt` enrich 
 without changing profile weights. Canonical consumers fail and retry when required BookFeature data is missing; legacy consumers may still warn and skip during migration.
 
 The separate [offline exporter](../../training/README.md) reads canonical Catalog state and
-Engagement feedback/history into versioned facts for #193. Replicated history never substitutes
+Engagement feedback/history into versioned facts for offline model training. Replicated history never substitutes
 for current Catalog state. This is distinct from the synthetic evaluation harness.
 
 
-## Ordered Kafka failure recovery (#272)
+## Ordered Kafka failure recovery
 
 Canonical Book/Reading Progress/Rating/Reaction consumers use bounded retries, service-scoped DLT copies and a persistent PostgreSQL quarantine. Source offsets stay uncommitted when a revision cannot be applied. On recovery, an operator requests original-offset replay and restarts the affected consumer service; the listener marks the quarantine resolved after the record succeeds. Consult [Kafka Recovery Runbook](../../docs/KAFKA_RECOVERY_RUNBOOK.md) for the CLI, audit trail, replay safety and deployment requirements. Legacy DLT replay remains restricted where a stable event identity is unavailable.
 
-## SEC-01 HTTP security baseline
+## Security
 
-The API remains JWT bearer-based; issue #163 migrates the signature to RS256 with independent public-key validation on this branch (coordinated cutover required). Service security continues to validate tokens independently of the Gateway. Swagger/OpenAPI is opt-in through `VELLUM_DOCS_ENABLED=true` in local Compose; default deployment configuration denies documentation. Health and Prometheus remain unauthenticated at the service HTTP layer for **internal** probe/scrape traffic, so network and Ingress must keep these ports private. CORS uses explicit `CORS_ALLOWED_ORIGINS` and preserves credentialed browser requests for compatibility. JWT Bearer remains the authenticator; any future cookie-session authentication requires separate CSRF review. See [SEC-01 HTTP boundary contract](../../docs/SECURITY_HTTP_BOUNDARY.md) for policy matrix, tests and rollback.
+Auth is the only issuer. This service validates RS256 `at+jwt` access tokens locally against `JWT_JWKS_URI` (issuer, audience, `typ`, `kid`; `JWT_CLOCK_SKEW_SECONDS` defaults to 30) and never calls Auth or User per request. Each operation needs an explicit OAuth scope plus the USER/ADMIN role ([scope matrix](../../docs/SECURITY_SCOPES_RBAC.md)); ADMIN never implies scopes. Swagger is opt-in (`VELLUM_DOCS_ENABLED`), and health/Prometheus endpoints must stay on the private network. Request path: [authorization sequence](../../docs/architecture/flows/api-request-authorization.md).
 
-## RS256 public-key validation (issue #163)
-
-This service validates RS256 access tokens through the configured Auth JWKS URI. The decoder explicitly accepts only RS256; invalid, altered, expired, wrong-key, and legacy HS256 bearer JWTs are rejected. It does not hold `JWT_PRIVATE_KEY_LOCATION` and does not contact the User Service for every request. The existing `roles` mapping, resource ownership checks, and HTTP contracts are unchanged. The signing key is owned only by `auth-service`. [Provisioning and coordinated cutover](../../docs/SECURITY_RS256.md).
-
-
-### Security JWT/JWKS transition (#304, #305)
-
-PR #321 (merged) introduced JWT verifiers that fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. Only `auth-service` signs access tokens and exposes the trusted JWKS; this service is a Resource Server only. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
-
-## SEC-10 — explicit OAuth capabilities
-
-Domain HTTP operations require an Auth-issued human access token with an explicit
-scope and the required USER/ADMIN role. ADMIN never implies scopes, and machine
-grants cannot impersonate a human. See [the endpoint matrix, configuration and
-rollback guide](../../docs/SECURITY_SCOPES_RBAC.md). OpenAPI documents each scope.
-Fresh tokens must request the relevant capabilities; `openid profile` alone is
-insufficient. Ownership rules remain separate.
-
-
-### SEC-12: recommendation ownership
-
-`GET /recommendations` derives the user exclusively from the verified JWT
-subject. The use case revalidates this context before local read-model/vector
-queries; no per-request User/Catalog/Engagement call is introduced. See
-[SEC-12 ownership matrix](../../docs/SECURITY_OWNERSHIP_SEC12.md).
-
-
-### SEC-14 Kafka principal and read-model isolation
-
-Recommendation authenticates to Kafka as `recommendation_service`; it can
-consume approved Book, Progress, ratings and reactions streams. Only its own
-retry/DLT producers have scoped write grants. Kafka authorization does not
-add HTTP calls or change the local materialized recommendation read model.
-See [SEC-14](../../docs/KAFKA_SERVICE_IDENTITIES_SEC14.md).
+- **Ownership:** `GET /recommendations` takes the user only from the verified JWT `sub`; there is no client-chosen user ID and no call to User/Catalog/Engagement on the read path.
+- **Kafka identity:** `recommendation_service` consumes Book, Progress, ratings and reactions and writes only its own retry/DLT topics ([Kafka identities](../../docs/KAFKA_SERVICE_IDENTITIES.md)). Ordered recovery: [sequence](../../docs/architecture/flows/ordered-consumer.md) · [quarantine states](../../docs/architecture/states/kafka-quarantine.md).

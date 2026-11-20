@@ -1,6 +1,6 @@
-# Issue #348 — Apicurio Schema Registry: escolha e operação
+# Schema Registry (Apicurio) — operation
 
-Stage: implementation branch. Acceptance requires CI green on its exact SHA, code review and manual verification. The Registry is not deployed to production.
+The Registry is not deployed to production; local Compose, Kind and CI use the configurations below.
 
 ## Storage decision and boundaries
 
@@ -8,7 +8,7 @@ Choose Apicurio Registry 3.1.7, SQL storage backed by PostgreSQL. KafkaSQL was c
 
 The dedicated PostgreSQL *container* is for local Compose, Kind and CI. A production PostgreSQL instance may be shared at infrastructure level, but the Registry must own its own logical database, credentials, backup policy and quota. Never share application-domain tables or database credentials.
 
-The pilot #347 proved the Confluent ccompat v7 API on Apicurio with TopicRecordNameStrategy, BACKWARD_TRANSITIVE, auto.register.schemas=false and avro.remove.java.properties=true. The approved initial subject belongs to the future topic book-events.avro, not to the existing JSON book-events topic. Issue #349 owns topic creation, Outbox migration and consumers.
+Clients use the Confluent ccompat v7 API on Apicurio with TopicRecordNameStrategy, BACKWARD_TRANSITIVE, auto.register.schemas=false and avro.remove.java.properties=true ([schema evolution tests](SCHEMA_EVOLUTION_TESTS.md)). Approved subjects belong to the dedicated `*.avro` topics, never to the JSON topics ([wire format states](architecture/states/event-wire-format.md)).
 
 ## Compose: independent activation, isolated project and network
 
@@ -63,7 +63,6 @@ The production workflow schema-registry-publish.yml is manual, main-only, requir
 - Real Testcontainers Kafka + PostgreSQL + Apicurio prove a generated Avro writer, Registry restart with stable IDs, cold consumer of pre-restart bytes and failed new-serializer schema lookup during a Registry outage.
 - Compose CI reuses the versioned manifest, rejects a transitive-incompatible schema, proves stability of IDs over two process restarts, and rejects unexpected versions.
 - A real ephemeral Kind job applies the optional local overlay and checks StatefulSet/Deployment readiness and the Registry API; the static Kustomize gate checks both local and production rendering.
-- A passing test for a test-only serializer is not proof that the production Catalog Outbox fails safely: that real relay integration belongs to #349.
 - No claims of production deployment, exactly-once delivery, no downtime, measured throughput or configured stable-role ACLs are made without separate evidence.
 
-Sources: Apicurio 3.1 configuration reference https://www.apicur.io/registry/docs/apicurio-registry/3.1.x/getting-started/assembly-config-reference.html ; KafkaSQL topic requirements https://www.apicur.io/registry/docs/apicurio-registry/3.1.x/getting-started/assembly-deploying-registry-operator.html ; #347 pilot https://github.com/Luca5Eckert/VellumHub/pull/351 ; #348 tracker https://github.com/Luca5Eckert/VellumHub/issues/348 .
+Sources: Apicurio 3.1 configuration reference https://www.apicur.io/registry/docs/apicurio-registry/3.1.x/getting-started/assembly-config-reference.html ; KafkaSQL topic requirements https://www.apicur.io/registry/docs/apicurio-registry/3.1.x/getting-started/assembly-deploying-registry-operator.html .

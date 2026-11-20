@@ -1,28 +1,23 @@
 ---
 name: event-driven-reliability
-description: Review Kafka event contracts, transactional outbox, projections and consumers for correct failure and recovery behavior.
+description: Design or review VellumHub Kafka flows — transactional outbox producers, ordered consumers with per-aggregate revision checkpoints, duplicate and gap handling, retry/DLT quarantine and replay, read-model projections, JSON and Avro contracts with Schema Registry, and JSON→Avro cutovers. Use it whenever code under outbox, kafka, consumer, book_event, EngagementEventProcessor or lib/kafka-*contracts changes, a new stream or event field is added, a consumer misbehaves, or someone asks about delivery guarantees, ordering or replays.
 ---
 
-# event-driven-reliability
+# Event-driven reliability (VellumHub)
 
-## Trigger
-VellumHub Kafka producers/consumers, schema evolution, transactional outbox, retry/DLT, projections, distributed reads or a new stream.
+Kafka here is at-least-once. Correctness comes from the database: outbox rows written in the business transaction, and consumers that commit projection, processed-event record and checkpoint together. Reason about each failure window explicitly instead of trusting a delivery option.
 
 ## Procedure
-1. Read actual service ownership, affected ADRs, contract module, issue and architecture-fitness tests. Identify producer, consumer, record key, schema and database transaction.
-2. Make the invariant explicit: durable business change + publication intent, delivery semantics, message ordering scope, replay/idempotency and allowed staleness.
-3. Analyze failure windows separately: DB rollback, committed outbox but unpublished event, broker unavailable, ACK ambiguity, consumer crash after DB commit, duplicate delivery, poison pill, revision gap and schema incompatibility.
-4. Require transactional deduplication/checkpoint or idempotent upsert where the domain demands it. Do not claim exactly-once effects because Kafka has delivery options.
-5. Validate schema evolution with frozen compatibility fixtures; track consumer rollout before breaking producer change. Avoid an unjustified registry/format migration.
-6. Prefer PostgreSQL + broker-backed Testcontainers for distributed failure proofs. Reuse the project's supported versions and existing suites.
-7. Validate static fitness checks and affected modules; run opt-in distributed E2E when relevant and available. Report skipped Docker coverage explicitly.
-8. Observe lag, retries, outbox age, DLT volume, freshness and error rate with controlled cardinality; do not invent SLAs.
-
-## Specific project entry
-Read docs/ARCHITECTURE_FITNESS_FUNCTIONS.md, docs/architecture/, tools/architecture/ and service-specific tests before editing.
+1. Identify producer, topic, key, schema, consumer group, projection and the transaction on each side. Read the diagrams first: `docs/architecture/flows/book-outbox.md`, `states/outbox-delivery.md`, `flows/ordered-consumer.md`, `states/kafka-quarantine.md`, `states/event-wire-format.md`.
+2. State the invariant: what must commit atomically, ordering scope (per aggregate), replay and idempotency key, allowed staleness.
+3. Walk the failure windows: DB rollback; committed outbox not yet published; broker down; lost ACK (duplicate publish); consumer crash after DB commit; duplicate delivery; poison record; revision gap; incompatible schema.
+4. Ordered consumers lock the checkpoint, treat `revision <= last` as duplicate (same event ID) or collision (different ID), and require `revision == last + 1`; a BASELINE may only seed an empty checkpoint. Keep that rule in a named method and keep its messages stable, because operators search logs for them.
+5. Exhausted records go to `OrderedKafkaRecovery`: diagnostic DLT copy, `kafka_consumer_quarantine` = BLOCKED, partition paused, original offset uncommitted. Engagement and Recommendation hold identical copies guarded by `tools/architecture/test_ordered_recovery_parity.py`; change both or neither. Never re-append DLT records to an ordered topic.
+6. Schemas: Avro in `lib/kafka-avro-contracts` under BACKWARD_TRANSITIVE Registry subjects, JSON records and wire fixtures in `lib/kafka-contracts`. Producers resolve schemas and never auto-register. JSON is still the default wire format; switching a stream follows the per-stream cutover runbooks (`docs/*_AVRO_CUTOVER_RUNBOOK.md`). Every outbox row stamps an immutable `wire_format`.
+7. Prove distributed behaviour with PostgreSQL + Kafka Testcontainers, and report skipped Docker coverage explicitly.
+8. Observe lag, retries, outbox age, quarantine and DLT volume with bounded label cardinality; do not invent SLAs.
 
 ## Output
-Event invariant/failure matrix -> evidence for each consumer -> compatibility/recovery gaps.
+Invariant and failure-window matrix, evidence per consumer, compatibility and recovery gaps.
 
-## Reference
-Original project specialization based on the VellumHub architecture and event-driven engineering practices.
+Original project specialization based on the VellumHub architecture.

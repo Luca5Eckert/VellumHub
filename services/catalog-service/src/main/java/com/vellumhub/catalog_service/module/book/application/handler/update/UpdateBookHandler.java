@@ -9,7 +9,7 @@ import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
 import com.vellumhub.catalog_service.module.book.application.event.BookEventFactory;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
-import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequest;
+import com.vellumhub.catalog_service.module.book.application.command.UpdateBookCommand;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,29 +41,29 @@ public class UpdateBookHandler {
     }
 
     /**
-     * Update an existing book with the provided information. Only non-null fields in the request will be updated.
+     * Update an existing book with the provided information. Only provided fields in the command will be updated.
      * @param bookId The ID of the book to update.
-     * @param request The request containing the new information for the book.
+     * @param command The command containing the new information for the book.
      */
     @Transactional
-    public void execute(UUID bookId, UpdateBookRequest request) {
+    public void execute(UUID bookId, UpdateBookCommand command) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(BookNotFoundException::new);
 
-        verifyIfBookAlreadyExists(book, request);
+        verifyIfBookAlreadyExists(book, command);
 
         var before = events.snapshot(book);
-        Set<Genre> resolvedGenres = request.genres() == null ? null : ensureGenresAreValid(request.genres());
+        Set<Genre> resolvedGenres = command.genres() == null ? null : ensureGenresAreValid(command.genres());
 
         book.update(
-                request.title(),
-                request.description(),
-                request.coverUrl(),
-                request.releaseYear(),
-                request.author(),
-                request.isbn(),
-                request.pageCount(),
-                request.publisher(),
+                command.title(),
+                command.description(),
+                command.coverUrl(),
+                command.releaseYear(),
+                command.author(),
+                command.isbn(),
+                command.pageCount(),
+                command.publisher(),
                 resolvedGenres
         );
 
@@ -96,19 +96,19 @@ public class UpdateBookHandler {
     }
 
 
-    private void verifyIfBookAlreadyExists(Book book, UpdateBookRequest request) {
-        boolean titleChanged = request.title() != null && !request.title().isBlank()
-                && !request.title().equals(book.getTitle());
-        boolean authorChanged = request.author() != null && !request.author().isBlank()
-                && !request.author().equals(book.getAuthor());
-        boolean isbnChanged = request.isbn() != null && !request.isbn().isBlank()
-                && !request.isbn().equals(book.getIsbn());
+    private void verifyIfBookAlreadyExists(Book book, UpdateBookCommand command) {
+        boolean titleChanged = command.title() != null && !command.title().isBlank()
+                && !command.title().equals(book.getTitle());
+        boolean authorChanged = command.author() != null && !command.author().isBlank()
+                && !command.author().equals(book.getAuthor());
+        boolean isbnChanged = command.isbn() != null && !command.isbn().isBlank()
+                && !command.isbn().equals(book.getIsbn());
 
         if (!titleChanged && !authorChanged && !isbnChanged) return;
 
-        String effectiveTitle = titleChanged ? request.title() : book.getTitle();
-        String effectiveAuthor = authorChanged ? request.author() : book.getAuthor();
-        String effectiveIsbn = isbnChanged ? request.isbn() : book.getIsbn();
+        String effectiveTitle = titleChanged ? command.title() : book.getTitle();
+        String effectiveAuthor = authorChanged ? command.author() : book.getAuthor();
+        String effectiveIsbn = isbnChanged ? command.isbn() : book.getIsbn();
         if (bookRepository.existByTitleAndAuthorAndIsbn(effectiveTitle, effectiveAuthor, effectiveIsbn)) {
             throw new InvalidBookException("Book with the same title, author and ISBN already exists.");
         }

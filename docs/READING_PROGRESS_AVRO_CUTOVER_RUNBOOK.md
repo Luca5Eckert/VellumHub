@@ -1,4 +1,6 @@
-# Reading Progress JSON → Avro cutover (#350)
+# Reading Progress JSON → Avro cutover
+
+State machine: [wire format per stream](architecture/states/event-wire-format.md).
 
 Status: implementation in progress; **not evidence of a production migration**.
 
@@ -7,7 +9,7 @@ Status: implementation in progress; **not evidence of a production migration**.
 - Legacy topic: `reading-progress-events`. Avro-only topic: `reading-progress-events.avro`.
 - Kafka key: `bookProgressId.toString()`. Keep the partition count stable and record actual per-key partition assignments before switching.
 - Writer: `com.vellumhub.kafka.avro.readingprogress.ReadingProgressChangedEvent`.
-- Registry: Apicurio ccompat v7, TopicRecordNameStrategy, BACKWARD_TRANSITIVE, `auto.register.schemas=false`; register the Git-approved contract through the controlled #348 workflow before enabling writers.
+- Registry: Apicurio ccompat v7, TopicRecordNameStrategy, BACKWARD_TRANSITIVE, `auto.register.schemas=false`; register the Git-approved contract through the controlled `schema-registry-publish.yml` workflow before enabling writers.
 - Catalog JSONB Outbox retains per-row `wire_format` and `payload_schema_version`; neither changes after enqueue. V5 adds a second explicit Avro route, not another Outbox.
 - Engagement ReadingSessionEntry and Recommendation UserProfile use their **existing** transactional Reading Progress checkpoint use cases. Never create a second projection or reset checkpoints.
 - DLT is diagnostic and preserves raw Avro; replay must seek the **original Kafka offset** after clearing its partition block.

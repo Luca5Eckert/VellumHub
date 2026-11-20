@@ -2,7 +2,7 @@
 
 [Architecture card · VH-AUT](../../docs/architecture/services/auth.md) · [C4 containers](../../docs/architecture/diagrams/c4-containers.md) · [All service codes](../../docs/architecture/services/README.md).
 
-**Current contract:** Auth is the sole identity and access-token issuer, implemented in the repository. Earlier SEC-16/POC configurations are migration history, not alternative runtime issuers. Live Google/HTTPS/proxy rollout requires separate verification.
+**Current contract:** Auth is the sole identity and access-token issuer, implemented in the repository. Live Google/HTTPS/proxy rollout requires separate verification.
 
 The Auth Service is VellumHub's single authentication and identity authority and the only issuer/JWKS source for API access tokens. It is part of the default Maven reactor, Compose runtime and Kubernetes topology.
 
@@ -83,7 +83,32 @@ Default runtime topology:
 - Prometheus scrapes the Auth management endpoint;
 - Alloy collects Auth logs.
 
-The historical `infra/compose/tests/auth-poc.yaml`, Lote 2 and Lote 3 files are retained only as regression harnesses. They are no longer activation switches for the authentication architecture.
+`infra/compose/tests/auth-poc.yaml`, `infra/compose/oidc-local.yaml` and `infra/compose/google-federation.yaml` are regression harnesses only, not activation switches for the authentication architecture.
+
+## Local Google federation
+
+Diagram: [Google sign-in and link sequence](../../docs/architecture/flows/google-federation.md). Register the loopback redirect URI `http://127.0.0.1:9000/login/oauth2/code/google` on a Google *Web application* client and supply secrets outside Git:
+
+```sh
+export VELLUM_GOOGLE_CLIENT_ID='<Google OIDC client ID>'
+export VELLUM_GOOGLE_CLIENT_SECRET='<Google OIDC client secret>'
+export VELLUM_AUTH_DB_PASSWORD='<local DB password>'
+export VELLUM_INTERNAL_PROVISION_KEY='<random 32+ character key>'
+sh infra/scripts/security/generate_auth_poc_keys.sh
+docker compose -f compose.yaml -f infra/compose/oidc-local.yaml -f infra/compose/google-federation.yaml --profile oidc-lote2 up --build
+```
+
+Never use loopback HTTP settings on a shared host. Behind HTTPS, verify forwarded-header trust, issuer/callback equality and Secure/HttpOnly/SameSite cookies.
+
+## Alerts
+
+Prometheus scrapes Auth on the private management port 9001 (`infra/observability/prometheus/rules/auth-oidc-alerts.yml`).
+
+- **AuthOidcUnavailable:** check Auth health, database connectivity and recent deploys.
+- **AuthAuthenticationThrottled:** the shared PostgreSQL window allows 20 attempts per minute per remote address (`vellum.auth.attempts-per-minute`). Tell abuse apart from shared NAT before changing it; it uses the servlet remote address, never an untrusted forwarded header.
+- **AuthFederationResolutionFailures:** check Google reachability, client ID/issuer configuration and User provisioning. The counter only covers resolution after protocol validation.
+
+For a compromised account, deactivate the Auth identity; its sessions end immediately, while issued JWTs remain valid until `exp` (no token blacklist).
 
 ## Verification
 
@@ -98,7 +123,7 @@ The full pull-request gate also runs the reactor, architecture fitness functions
 
 Do not infer production rollout from CI. Live Google credentials, HTTPS/proxy/cookie behavior and any real-client deployment remain environment-specific evidence.
 
-## SEC-10 — explicit OAuth capabilities
+## OAuth capabilities
 
 Domain HTTP operations require an Auth-issued human access token with an explicit
 scope and the required USER/ADMIN role. ADMIN never implies scopes, and machine

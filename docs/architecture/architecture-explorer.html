@@ -65,11 +65,17 @@ const pages = [
   ["C4 L2 · Containers and data", "diagrams/c4-containers.md"],
   ["C4 L3 · Catalog components", "diagrams/c4-catalog-components.md"],
   ["Sequence · Auth registration", "flows/identity-onboarding.md"],
+  ["Sequence · API request authorization", "flows/api-request-authorization.md"],
+  ["Sequence · Google federation", "flows/google-federation.md"],
   ["Sequence · Book / Outbox / Kafka", "flows/book-outbox.md"],
   ["Sequence · Recommendation feedback", "flows/recommendation-feedback.md"],
   ["Sequence · Catalog cache", "flows/catalog-cache.md"],
+  ["Sequence · Ordered Kafka consumer", "flows/ordered-consumer.md"],
   ["State · Outbox delivery", "states/outbox-delivery.md"],
-  ["State · Catalog cache rollout", "states/cache-rollout.md"]
+  ["State · Catalog cache rollout", "states/cache-rollout.md"],
+  ["State · Auth identity lifecycle", "states/auth-identity-lifecycle.md"],
+  ["State · Kafka quarantine", "states/kafka-quarantine.md"],
+  ["State · Event wire format", "states/event-wire-format.md"]
 ];
 const select = document.getElementById("diagram");
 const visual = document.getElementById("visual");

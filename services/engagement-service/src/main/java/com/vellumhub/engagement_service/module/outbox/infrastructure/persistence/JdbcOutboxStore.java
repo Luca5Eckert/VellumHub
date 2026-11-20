@@ -3,8 +3,10 @@ package com.vellumhub.engagement_service.module.outbox.infrastructure.persistenc
 import com.vellumhub.engagement_service.module.outbox.application.model.OutboxRecord;
 import com.vellumhub.engagement_service.module.outbox.application.port.OutboxStore;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,12 +14,33 @@ import java.util.UUID;
 /** SKIP LOCKED work claims, per-aggregate revision fence, and lease-token fencing. */
 @Repository
 public class JdbcOutboxStore implements OutboxStore {
-    private final JdbcTemplate jdbc;
-    public JdbcOutboxStore(JdbcTemplate jdbc) { this.jdbc=jdbc; }
 
-    @Override @Transactional
+    private static final int MAX_ERROR_LENGTH = 1000;
+
+    private static final ResultSetExtractor<Optional<OutboxRecord>> FIRST_CLAIMED = rs -> rs.next()
+            ? Optional.of(new OutboxRecord(
+                    rs.getObject("event_id", UUID.class),
+                    rs.getObject("claim_token", UUID.class),
+                    rs.getString("aggregate_type"),
+                    rs.getString("event_type"),
+                    rs.getString("topic"),
+                    rs.getString("message_key"),
+                    rs.getString("payload_text"),
+                    rs.getInt("attempts"),
+                    rs.getString("wire_format"),
+                    rs.getInt("payload_schema_version")))
+            : Optional.empty();
+
+    private final JdbcTemplate jdbc;
+
+    public JdbcOutboxStore(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    @Override
+    @Transactional
     public Optional<OutboxRecord> claimNext(Duration lease) {
-        UUID token=UUID.randomUUID();
+        UUID token = UUID.randomUUID();
         return jdbc.query("""
           WITH candidate AS (
             SELECT e.event_id FROM outbox_events e
@@ -40,34 +63,38 @@ public class JdbcOutboxStore implements OutboxStore {
           RETURNING e.event_id,e.claim_token,e.aggregate_type,e.event_type,
                     e.topic,e.message_key,e.payload::text AS payload_text,e.attempts,
                     e.wire_format,e.payload_schema_version
-          """,rs->rs.next()?Optional.of(new OutboxRecord(
-                    rs.getObject("event_id",UUID.class),rs.getObject("claim_token",UUID.class),
-                    rs.getString("aggregate_type"),rs.getString("event_type"),
-                    rs.getString("topic"),rs.getString("message_key"),
-                    rs.getString("payload_text"),rs.getInt("attempts"),
-                    rs.getString("wire_format"),rs.getInt("payload_schema_version"))):Optional.empty(),
-                token,Math.max(1L,lease.toSeconds()));
+          """, FIRST_CLAIMED, token, atLeastOneSecond(lease));
     }
-    @Override @Transactional
+
+    @Override
+    @Transactional
     public boolean published(UUID id, UUID token) {
         return jdbc.update("""
             UPDATE outbox_events SET status='PUBLISHED',published_at=now(),
                 claim_token=NULL,lease_until=NULL,last_error=NULL
             WHERE event_id=? AND claim_token=? AND status='IN_FLIGHT'
-            """,id,token)==1;
+            """, id, token) == 1;
     }
-    @Override @Transactional
-    public void failed(UUID id,UUID token,String error,Duration delay) {
-        String safe=error==null?"unknown":error.substring(0,Math.min(1000,error.length()));
+
+    @Override
+    @Transactional
+    public void failed(UUID id, UUID token, String error, Duration delay) {
+        String safe = error == null ? "unknown" : error.substring(0, Math.min(MAX_ERROR_LENGTH, error.length()));
         jdbc.update("""
             UPDATE outbox_events SET status='PENDING',claim_token=NULL,lease_until=NULL,
                 last_error=?,next_attempt_at=now() + (? * interval '1 second')
             WHERE event_id=? AND claim_token=? AND status='IN_FLIGHT'
-            """,safe,Math.max(1L,delay.toSeconds()),id,token);
+            """, safe, atLeastOneSecond(delay), id, token);
     }
-    @Override public long pendingCount() {
-        Long count=jdbc.queryForObject("SELECT count(*) FROM outbox_events WHERE status <> 'PUBLISHED'",Long.class);
-        return count==null?0:count;
+
+    @Override
+    public long pendingCount() {
+        Long count = jdbc.queryForObject("SELECT count(*) FROM outbox_events WHERE status <> 'PUBLISHED'", Long.class);
+        return count == null ? 0 : count;
+    }
+
+    private static long atLeastOneSecond(Duration duration) {
+        return Math.max(1L, duration.toSeconds());
     }
 }
 

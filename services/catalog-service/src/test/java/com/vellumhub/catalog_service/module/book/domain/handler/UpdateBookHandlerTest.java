@@ -10,7 +10,7 @@ import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import com.vellumhub.catalog_service.module.book.domain.port.BookRepository;
 import com.vellumhub.catalog_service.module.book.domain.port.GenreRepository;
-import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequest;
+import com.vellumhub.catalog_service.module.book.application.command.UpdateBookCommand;
 import com.vellumhub.catalog_service.share.metrics.VellumHubMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ class UpdateBookHandlerTest {
 
     @Test void modifiedBookIsPersistedBeforeNotification() {
         when(repository.findById(id)).thenReturn(Optional.of(book));
-        var request=new UpdateBookRequest("New",null,0,null,null,null,0,null,null);
+        var request=new UpdateBookCommand("New",null,0,null,null,null,0,null,null);
         handler.execute(id,request);
         assertThat(book.getTitle()).isEqualTo("New");
         verify(repository).save(book);
@@ -56,14 +56,14 @@ class UpdateBookHandlerTest {
 
     @Test void identicalStateDoesNotEmitRevision() {
         when(repository.findById(id)).thenReturn(Optional.of(book));
-        handler.execute(id,new UpdateBookRequest(null,null,0,null,null,null,0,null,null));
+        handler.execute(id,new UpdateBookCommand(null,null,0,null,null,null,0,null,null));
         verify(repository,never()).save(any());
         verifyNoInteractions(changes);
     }
 
     @Test void absentGenresKeepExistingCollection() {
         when(repository.findById(id)).thenReturn(Optional.of(book));
-        handler.execute(id,new UpdateBookRequest(null,null,0,"/new.png",null,null,0,null,null));
+        handler.execute(id,new UpdateBookCommand(null,null,0,"/new.png",null,null,0,null,null));
         assertThat(book.getGenres()).isEmpty();
         verify(changes).record(book,BookChangeKind.UPDATED);
         verifyNoInteractions(genres);
@@ -72,7 +72,7 @@ class UpdateBookHandlerTest {
     @Test void duplicateIsRejectedBeforePersistence() {
         when(repository.findById(id)).thenReturn(Optional.of(book));
         when(repository.existByTitleAndAuthorAndIsbn(any(),any(),any())).thenReturn(true);
-        assertThatThrownBy(()->handler.execute(id,new UpdateBookRequest(
+        assertThatThrownBy(()->handler.execute(id,new UpdateBookCommand(
             "Conflict",null,0,null,"Author","another-isbn",0,null,null)))
                 .isInstanceOf(InvalidBookException.class);
         verifyNoInteractions(changes);
@@ -80,7 +80,7 @@ class UpdateBookHandlerTest {
 
     @Test void absentBookFailsWithoutEvent() {
         when(repository.findById(id)).thenReturn(Optional.empty());
-        assertThatThrownBy(()->handler.execute(id,new UpdateBookRequest(
+        assertThatThrownBy(()->handler.execute(id,new UpdateBookCommand(
             null,null,0,null,null,null,0,null,null)))
             .isInstanceOf(BookNotFoundException.class);
         verifyNoInteractions(changes);
@@ -89,7 +89,7 @@ class UpdateBookHandlerTest {
     @Test void unknownGenreIsRejected() {
         when(repository.findById(id)).thenReturn(Optional.of(book));
         when(genres.findByName("missing")).thenReturn(Optional.empty());
-        assertThatThrownBy(()->handler.execute(id,new UpdateBookRequest(
+        assertThatThrownBy(()->handler.execute(id,new UpdateBookCommand(
             null,null,0,null,null,null,0,null,Set.of("missing"))))
             .isInstanceOf(InvalidBookException.class);
         verifyNoInteractions(changes);

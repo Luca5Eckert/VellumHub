@@ -122,12 +122,6 @@ Core persisted concepts:
 
 Engagement data is behavioral. It should not become the source of truth for catalog metadata or recommendation vectors.
 
-## Security Rules
-
-- JWT authentication required for protected endpoints.
-- User context is extracted server-side for write operations.
-- Ownership checks apply to update/delete interaction operations.
-
 ## Observability and API Docs
 
 | Resource | Path |
@@ -168,7 +162,7 @@ docker compose up -d engagement-service postgres-engagement kafka
 .\mvnw.cmd -pl services/engagement-service -am test
 ```
 
-For the platform event backbone and known Kafka contract hardening work, see the [root README](../README.md).
+For the platform event backbone and known Kafka contract hardening work, see the [root README](../../README.md).
 
 ## Replicated reading provenance
 
@@ -178,51 +172,18 @@ nullable event ID and lookup/history indexes. Legacy metadata stays null; proces
 must never substitute for occurrence time. Deploy migrations before the new application.
 
 The [offline exporter](../../training/README.md) labels these records `REPLICATED_HISTORY`
-and flags incomplete metadata. It reads current state only from Catalog. Duplicate handling
-remains #200; atomic commit/publication remains #201. Metadata alone provides neither guarantee.
+and flags incomplete metadata. It reads current state only from Catalog. Duplicate handling is the
+consumers' checkpoint ([ordered consumer](../../docs/architecture/flows/ordered-consumer.md)) and atomic publication is the
+Outbox ([Outbox states](../../docs/architecture/states/outbox-delivery.md)); metadata alone provides neither guarantee.
 
 
-## Ordered Kafka failure recovery (#272)
+## Ordered Kafka failure recovery
 
 Canonical Book/Reading Progress consumers use bounded retries, service-scoped DLT copies and a persistent PostgreSQL quarantine. Source offsets stay uncommitted when a revision cannot be applied. On recovery, an operator requests original-offset replay and restarts the affected consumer service; the listener marks the quarantine resolved after the record succeeds. Consult [Kafka Recovery Runbook](../../docs/KAFKA_RECOVERY_RUNBOOK.md) for the CLI, audit trail, replay safety and deployment requirements. Legacy DLT replay remains restricted where a stable event identity is unavailable.
 
-## SEC-01 HTTP security baseline
+## Security
 
-The API remains JWT bearer-based; issue #163 migrates the signature to RS256 with independent public-key validation on this branch (coordinated cutover required). Service security continues to validate tokens independently of the Gateway. Swagger/OpenAPI is opt-in through `VELLUM_DOCS_ENABLED=true` in local Compose; default deployment configuration denies documentation. Health and Prometheus remain unauthenticated at the service HTTP layer for **internal** probe/scrape traffic, so network and Ingress must keep these ports private. CORS uses explicit `CORS_ALLOWED_ORIGINS` and preserves credentialed browser requests for compatibility. JWT Bearer remains the authenticator; any future cookie-session authentication requires separate CSRF review. See [SEC-01 HTTP boundary contract](../../docs/SECURITY_HTTP_BOUNDARY.md) for policy matrix, tests and rollback.
+Auth is the only issuer. This service validates RS256 `at+jwt` access tokens locally against `JWT_JWKS_URI` (issuer, audience, `typ`, `kid`; `JWT_CLOCK_SKEW_SECONDS` defaults to 30) and never calls Auth or User per request. Each operation needs an explicit OAuth scope plus the USER/ADMIN role ([scope matrix](../../docs/SECURITY_SCOPES_RBAC.md)); ADMIN never implies scopes. Swagger is opt-in (`VELLUM_DOCS_ENABLED`), and health/Prometheus endpoints must stay on the private network. Request path: [authorization sequence](../../docs/architecture/flows/api-request-authorization.md).
 
-## RS256 public-key validation (issue #163)
-
-This service validates RS256 access tokens through the configured Auth JWKS URI. The decoder explicitly accepts only RS256; invalid, altered, expired, wrong-key, and legacy HS256 bearer JWTs are rejected. It does not hold `JWT_PRIVATE_KEY_LOCATION` and does not contact the User Service for every request. The existing `roles` mapping, resource ownership checks, and HTTP contracts are unchanged. The signing key is owned only by `auth-service`. [Provisioning and coordinated cutover](../../docs/SECURITY_RS256.md).
-
-
-### Security JWT/JWKS transition (#304, #305)
-
-PR #321 (merged) introduced JWT verifiers that fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, immutable UUID subject, `client_id`, `jti`, issued/expiry times and signature. Unknown kids and invalid token contexts fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30; key material is not accepted from token-provided URLs. Only `auth-service` signs access tokens and exposes the trusted JWKS; this service is a Resource Server only. Legacy `user_id` is emitted only as a temporary identical compatibility claim; do not use it for new authorization decisions. Read [docs/SECURITY_JWKS_RFC9068.md](../../docs/SECURITY_JWKS_RFC9068.md) for configuration, key rotation, outage behavior and safe cutover. Not yet deployed.
-
-## SEC-10 — explicit OAuth capabilities
-
-Domain HTTP operations require an Auth-issued human access token with an explicit
-scope and the required USER/ADMIN role. ADMIN never implies scopes, and machine
-grants cannot impersonate a human. See [the endpoint matrix, configuration and
-rollback guide](../../docs/SECURITY_SCOPES_RBAC.md). OpenAPI documents each scope.
-Fresh tokens must request the relevant capabilities; `openid profile` alone is
-insufficient. Ownership rules remain separate.
-
-
-### SEC-12: interactions and ownership
-
-Rating and reaction writes are always attributed to the verified JWT subject.
-Private rating/user and reaction-by-ID reads require the same subject, with
-non-enumerating 404 for hidden resources. Reviews by book are available at
-`GET /rating/books/{bookId}` (the old UUID book path was ambiguous with user
-ratings); this endpoint remains explicitly visible with `engagement:read`.
-See [SEC-12 ownership matrix](../../docs/SECURITY_OWNERSHIP_SEC12.md).
-
-
-### SEC-14 Kafka principal and recovery
-
-Engagement authenticates to Kafka as `engagement_service`: reads approved
-Book/Progress topics and publishes only its ratings/reactions plus its scoped
-legacy retry and ordered DLT transport. Special-purpose retry/recovery producers
-now inherit Kafka SASL/TLS; no bearer tokens are forwarded.
-See [SEC-14](../../docs/KAFKA_SERVICE_IDENTITIES_SEC14.md).
+- **Ownership:** ratings and reactions are always written as the JWT `sub`. Reading a private rating or a reaction by ID requires the same subject; foreign or missing records answer an identical 404. `GET /rating/books/{bookId}` is the explicit public-review read (`engagement:read`).
+- **Kafka identity:** `engagement_service` reads Book/Progress and produces ratings, reactions and its own retry/DLT topics ([Kafka identities](../../docs/KAFKA_SERVICE_IDENTITIES.md)). Ordered recovery: [sequence](../../docs/architecture/flows/ordered-consumer.md) · [quarantine states](../../docs/architecture/states/kafka-quarantine.md).

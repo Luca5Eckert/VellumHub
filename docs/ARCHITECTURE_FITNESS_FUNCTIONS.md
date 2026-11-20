@@ -1,6 +1,6 @@
 # Architecture Fitness Functions — implementation and evidence
 
-> AFF-01/#323 and AFF-02/#324 were merged through PR #326. AFF-03/#325 extends the evidence pipeline on its own branch. Maturity never implies a suite ran in a particular CI job.
+> Rule status and maturity live in `tools/architecture/fitness-catalog.json`; evidence for a run comes from `generate_evidence.py` on that run's SHA. Maturity never implies a suite ran in a particular CI job.
 
 ## System topology and test layers
 
@@ -28,11 +28,13 @@ mvn -B verify
 mvn -B -Pdistributed-e2e verify
 ```
 
-The default reactor has six deployable services and three shared libraries; `integration-tests/distributed-e2e` remains opt-in. The Python static checks have negative fixtures and a GitHub Actions workflow. The Maven Enforcer plugin in the five domain/gateway service POMs resolves and checks transitive dependencies at `validate`; only deployable-to-deployable artifacts are banned. Shared `lib/kafka-contracts` and test support remain available.
+The default reactor has six deployable services and four shared libraries (`kafka-contracts`, `kafka-avro-contracts`, `jwt-security`, `distributed-test-support`); `integration-tests/distributed-e2e` remains opt-in. The Python static checks have negative fixtures and a GitHub Actions workflow. The Maven Enforcer plugin in the five domain/gateway service POMs resolves and checks transitive dependencies at `validate`; only deployable-to-deployable artifacts are banned. Shared `lib/kafka-contracts` and test support remain available.
 
 ### AFF-STR-001 and AFF-STR-002
 
 ArchUnit remains test-scoped in the five domain/gateway modules; Auth is covered by the deployable dependency and database-ownership checks. The domain boundary rule prohibits domain -> infrastructure/adapter/controller dependencies. The module rule checks slice cycles. Non-applicable package layouts use JUnit assumptions, so skipped tests do not claim coverage. Catalog also includes negative fixtures for forbidden dependencies and cycles.
+
+Catalog additionally forbids `..application.handler..` -> `..presentation..`: use-case handlers take application commands (for example `UpdateBookCommand`) and return domain or application types (`BookCover`), while the `BookService` facade maps HTTP DTOs. A negative fixture proves the rule fails on a handler that accepts a DTO. Other services do not yet assert this slice.
 
 A real historical cycle `book -> book_request -> book` was discovered by CI and the Book handlers were refactored to use their own domain exception instead of an exception from BookRequest. This changes the exception type for invalid genres, while preserving existing BookDomainException handling.
 
@@ -65,7 +67,7 @@ sequenceDiagram
     P->>K: publish
     K-->>P: ACK
     alt PUBLISHED marking fails
-      Note over P,DB: Event remains IN_FLIGHT; lease may expire
+      Note over P,DB: Event remains IN_FLIGHT, lease may expire
       P->>DB: reclaim with new fencing token
       P->>K: republish same event ID
     end
@@ -90,22 +92,6 @@ Remaining proof obligations include exhaustive consumer/stream coverage, Kafka b
 
 The `lib/kafka-contracts` test suite now checks a frozen field/type baseline for the canonical Book, Rating, Reaction and ReadingProgress records and reads four versioned JSON payloads including a legacy Reaction fixture. Existing service integration tests prove Kafka `__TypeId__` headers. Compatibility outside explicitly captured fixture versions is not proven.
 
-## Evidence matrix
-
-| Rule | Test/code location | Status pending full CI |
-| --- | --- | --- |
-| STR-001/STR-002 | `services/*/src/test/java/**/architecture` | Implemented; verify all modules and historical violations |
-| BOUND-003 | Maven Enforcer + `tools/architecture/check_service_boundaries.py` | Static workflow passing; full reactor verification pending |
-| DATA-004 | `tools/architecture/check_database_ownership.py` | Configuration only; credentials not isolated |
-| EVT-005 | Catalog/Engagement PostgreSQL tests, Catalog Kafka ack test | CI Testcontainers verification pending |
-| EVT-006 | Recommendation `ConsumerIdempotencyDistributedTest` | Partial scenarios; full matrix pending |
-| EVT-007 | Recommendation revision-gap cases, Outbox fencing | Partial scenarios; full matrix pending |
-| CON-008 | `lib/kafka-contracts/src/test` and fixtures | JSON fixtures added; CI verification pending |
-
-## Operational status
-
-Latest confirmed static boundary workflow passed at commit `e6b1655f981f8e4dab51f25ffb29b4afb421bb98`; Recommendation benchmark passed for the same commit. An earlier general Maven verify run was unsuccessful and the log could not be retrieved in full through the connector because it exceeded its size limit. Do not merge solely on isolated workflow successes. Record the final PR run URL, commit SHA, test summary and any known limitations before changing statuses in the Obsidian source of truth.
-
 ## Canonical stream failure coverage matrix (AFF-02)
 
 | Property | Book | BookProgress | Rating | Reaction |
@@ -117,12 +103,6 @@ Latest confirmed static boundary workflow passed at commit `e6b1655f981f8e4dab51
 | Wire backward compatibility | Book fixture | ReadingProgress fixture | Rating fixture | Reaction legacy fixture |
 
 **Interpretation**: a test against one type is not evidence of coverage for all streams. Existing E2E Catalog producer -> Recommendation projection proves one full pipeline, not an all-stream guarantee. Kafka ACK after database commit can be ambiguous and physical duplicates remain valid under at-least-once delivery. For each future stream, add test evidence before changing this matrix. The Reaction/Ratings revision-gap tests use real PostgreSQL in the Recommendation distributed harness.
-
-### CI evidence by commit
-
-- Baseline `c9a2bb75e822defb03408970f6d7abdddabe45dc`: [Maven and distributed verify](https://github.com/Luca5Eckert/VellumHub/actions/runs/39614547962) and [static architecture / wire fixtures](https://github.com/Luca5Eckert/VellumHub/actions/runs/39614548517) passed.
-- `beedacd785b6a1d53d77564036e247da2a172ee0`: distributed run failed: Reaction test used invalid enum `LIKE` (runtime supports `POSITIVE`, `NEGATIVE`, `VERY_POSITIVE`).
-- `4c2eadb56a1fbce584e44de84f247db9531bb05a`: test corrected; result must be checked at [PR #326](https://github.com/Luca5Eckert/VellumHub/pull/326). Passing on an earlier SHA is not passing on this commit.
 
 ## Architecture fitness review / Definition of Done
 
@@ -146,17 +126,16 @@ Evidence is bounded to **tested code paths**. The older legacy Reaction topic
 does not have stable event IDs or revisions and cannot be made canonically
 idempotent without a migration. Universal DLT replay and deployment-specific
 network policies are independent concerns and are **not** asserted by these
-fitness functions. See `docs/REACTION_EVENT_CONTRACTS.md` and issue #272.
+fitness functions. See `docs/REACTION_EVENT_CONTRACTS.md` and `docs/KAFKA_RECOVERY_RUNBOOK.md`.
 
 All CI claims must cite the exact run and commit. Passing earlier commits does
-not validate the latest branch HEAD; leave this record as implementation evidence
-until the PR checks finish.
+not validate the latest branch HEAD.
 
 ## AFF-03: Read autonomy, convergence and evidence
 
-- **AFF-REC-009** — the #283 distributed Recommendation benchmark creates books by real Kafka events, materializes user profiles, and asserts authenticated GET responses contain only expected local projection IDs and titles. A loopback HTTP-503 canary records all calls to the configured test User/Catalog/Engagement endpoints: even swallowed failures increment the count, and **zero** calls is an invariant. A Recommendation serving-path ArchUnit test blocks known synchronous HTTP client dependencies. The canary is bounded to configured endpoints; extending the stack requires extending the instrumented coverage. New upstream events are not guaranteed during producer failure.
-- **AFF-OPS-010** — the benchmark retains separate measurements for event-to-projection (publish to local row observed) and event-to-visible-ranking (publish to first authenticated ranking change). Raw events, seed, warmups, environment and commit metadata remain under the existing #283 report directory. Reference p50/p95/p99 and throughput are **not** gates on hosted runner hardware; smoke gates only semantic invariants.
-- **AFF-RES-011** — per-flow degradation is catalogued against existing outbox, retry/DLT, revision-gap and checkpoint behavior. Replay and quarantine claims require their own tested evidence. No universal replay or global exactly-once claim.
+- **AFF-REC-009** — the distributed Recommendation benchmark creates books by real Kafka events, materializes user profiles, and asserts authenticated GET responses contain only expected local projection IDs and titles. A loopback HTTP-503 canary records all calls to the configured test User/Catalog/Engagement endpoints: even swallowed failures increment the count, and **zero** calls is an invariant. A Recommendation serving-path ArchUnit test blocks known synchronous HTTP client dependencies. The canary is bounded to configured endpoints; extending the stack requires extending the instrumented coverage. New upstream events are not guaranteed during producer failure.
+- **AFF-OPS-010** — the benchmark retains separate measurements for event-to-projection (publish to local row observed) and event-to-visible-ranking (publish to first authenticated ranking change). Raw events, seed, warmups, environment and commit metadata remain in the benchmark report directory. Reference p50/p95/p99 and throughput are **not** gates on hosted runner hardware; smoke gates only semantic invariants.
+- **AFF-RES-011** — per-flow degradation is catalogued against existing outbox, retry/DLT, revision-gap and checkpoint behavior. Replay and quarantine claims require their own tested evidence. No universal replay or global exactly-once claim. Engagement and Recommendation keep separate copies of `OrderedKafkaRecovery`; `tools/architecture/test_ordered_recovery_parity.py` fails if they drift beyond package and service name.
 
 ### Catalog and CI execution evidence
 

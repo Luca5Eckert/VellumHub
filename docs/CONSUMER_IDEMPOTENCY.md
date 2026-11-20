@@ -1,6 +1,6 @@
-# Kafka consumer idempotency (#200)
+# Kafka consumer idempotency
 
-Status: implemented in code; production cutover and CI/distributed-test results must be verified independently. This document describes Recommendation's versioned streams, not a guarantee of exactly-once Kafka delivery.
+Sequence: [ordered consumer](architecture/flows/ordered-consumer.md) · states: [quarantine](architecture/states/kafka-quarantine.md). This describes Recommendation's versioned streams; it is not an exactly-once Kafka delivery claim.
 
 ## Problem and guarantee
 
@@ -89,14 +89,12 @@ mvn -Pdistributed-e2e -pl integration-tests/distributed-e2e -am -Dgroups=distrib
 
 Do not describe these scenarios as passing until CI or local execution confirms success. The distributed test framework requires Docker.
 
-## Boundaries and next work
+## Boundaries
 
-- Strict blocking retries preserve sequence but a poison message may stall a partition. Bounded retry, DLT, replay and operational recovery belong to [#272](https://github.com/Luca5Eckert/VellumHub/issues/272).
-- End-to-end observability evidence belongs to [#214](https://github.com/Luca5Eckert/VellumHub/issues/214).
+- Strict blocking retries preserve sequence; after bounded retries `OrderedKafkaRecovery` quarantines the record and pauses its partition ([Kafka Recovery Runbook](KAFKA_RECOVERY_RUNBOOK.md)).
 - The current implementation does not use Redis as an idempotency store, Kafka transactions, Debezium, or a generic cross-service deduplication framework. PostgreSQL is sufficient because projection writes and checkpoints must commit atomically.
 - The score/vector compensation for a deleted historical rating does not perfectly reconstruct all prior normalization steps. Idempotency prevents a delta from applying twice, but does not make the ranking algorithm mathematically invertible.
 
-
-## Recovery of blocked ordered partitions (#272)
+## Recovery of blocked ordered partitions
 
 Bounded retry, sanitized DLT copies, PostgreSQL quarantine markers and original-offset replay are documented in [Kafka Recovery Runbook](KAFKA_RECOVERY_RUNBOOK.md). A DLT record does not authorize advancing over a missing revision. The operational CLI requires an audited resume and consumer restart; processed-event checkpoints remain the source of correctness.

@@ -1,6 +1,7 @@
 package com.vellumhub.catalog_service.service;
 
 import com.vellumhub.catalog_service.module.book.application.command.CreateBookCommand;
+import com.vellumhub.catalog_service.module.book.application.command.UpdateBookCommand;
 import com.vellumhub.catalog_service.module.book.application.handler.DeleteBookHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.UploadBookCoverHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.get.*;
@@ -65,7 +66,9 @@ class BookServiceTest {
 
             bookService.update(bookId, request);
 
-            verify(updateBookHandler).execute(bookId, request);
+            verify(updateBookHandler).execute(bookId, new UpdateBookCommand(
+                    "Title", "Desc", 2024, "url", "Author", "ISBN", 100, "Pub", Set.of("Sci-Fi")
+            ));
         }
 
         @Test
@@ -96,7 +99,6 @@ class BookServiceTest {
             Book mockBook = mock(Book.class);
             Instant now = Instant.now();
 
-            // Ajustado para o novo Record Recommendation
             Recommendation rec = new Recommendation(
                     id, "Title", "Desc", 2024, "url", List.of("Sci-Fi"), now, now
             );
@@ -115,15 +117,12 @@ class BookServiceTest {
             UUID id = UUID.randomUUID();
             List<UUID> ids = List.of(id);
 
-            // Ajustado para o novo Record BookCoverResponse (bookId, coverData, contentType)
-            BookCoverResponse coverResponse = new BookCoverResponse(id, "base64String", "image/jpeg");
-
-            when(getBookCoversBulkHandler.execute(ids)).thenReturn(List.of(coverResponse));
+            BookCover cover = new BookCover(id, "base64String", "image/jpeg");
+            when(getBookCoversBulkHandler.execute(ids)).thenReturn(List.of(cover));
 
             List<BookCoverResponse> result = bookService.getBookCoversBulk(ids);
 
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).contentType()).isEqualTo("image/jpeg");
+            assertThat(result).containsExactly(new BookCoverResponse(id, "base64String", "image/jpeg"));
         }
     }
 

@@ -1,6 +1,6 @@
 # Distributed Integration Testing
 
-VellumHub uses Testcontainers for reliability-sensitive flows whose correctness depends on real Kafka or PostgreSQL/pgvector behavior. The shared harness introduced by issue #278 evolves the Recommendation pilot from #207 only after a second concrete consumer exists: the Catalog producer distributed test.
+VellumHub uses Testcontainers for reliability-sensitive flows whose correctness depends on real Kafka or PostgreSQL/pgvector behavior. The shared harness in `lib/distributed-test-support` serves Recommendation consumers and Catalog/Engagement producers.
 
 ## Current coverage
 
@@ -177,7 +177,7 @@ Service Dockerfiles intentionally exclude test-scope dependencies during `depend
 
 ## Idempotency and transactional outbox
 
-Canonical consumer idempotency is implemented through PostgreSQL checkpoints and processed-event identities in Recommendation (#200). Catalog and Engagement transactional outboxes are implemented in code (#201/#202). Production deployment and convergence require a separate verified cutover.
+Canonical consumer idempotency uses PostgreSQL checkpoints and processed-event identities in Recommendation; Catalog and Engagement publish through transactional outboxes ([ordered consumer](architecture/flows/ordered-consumer.md), [Outbox states](architecture/states/outbox-delivery.md)). Production convergence still requires a verified cutover.
 
 `ConsumerIdempotencyDistributedTest` extends the existing Kafka + pgvector harness without introducing a new framework. It checks:
 
@@ -191,7 +191,7 @@ Canonical consumer idempotency is implemented through PostgreSQL checkpoints and
 
 These scenarios run with a deterministic embedding double, real Kafka, real PostgreSQL/pgvector and the production Spring consumer implementation. Their presence in source is not evidence of a passing CI run. See [Consumer Idempotency](CONSUMER_IDEMPOTENCY.md) for rollout rules, invariants and operational limits.
 
-Publisher outbox failure/recovery is exercised by the Catalog and Engagement Outbox distributed suites; it should not be duplicated in this consumer-specific issue.
+Publisher outbox failure/recovery is exercised by the Catalog and Engagement Outbox distributed suites; it is not duplicated in the consumer suite.
 
 ## Explicit limits
 
@@ -199,12 +199,11 @@ The shared harness is not a general testing framework and does not replace unit,
 
 Toxiproxy, network latency/fault injection, metrics-level retry assertions, and broader parallel execution remain conditional improvements. Add them only when a concrete production failure mode or guarantee makes the extra infrastructure worthwhile.
 
-
-## Ordered Kafka recovery (#272)
+## Ordered Kafka recovery
 
 `OrderedKafkaRecoveryTest` verifies bounded policy construction and the installed record/rebalance callbacks. The extended Recommendation distributed idempotency test sends an intentionally failing canonical Book event to actual Kafka and verifies the DLT provenance headers, durable quarantine and absence of committed projection checkpoints. The recovery CLI additionally defaults to dry run. See [Kafka Recovery Runbook](KAFKA_RECOVERY_RUNBOOK.md) for crash-window and reprocessing limitations.
 
-## Architecture Fitness Functions #323/#324
+## Architecture fitness functions
 
 Distributed invariant tests reuse the existing Kafka and PostgreSQL Testcontainers infrastructure.
 Catalog verifies Book and BookProgress Outbox rollback, Kafka publication, retry and fencing;

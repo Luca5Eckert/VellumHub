@@ -85,4 +85,4 @@ The Recommendation Service remains event-carried-state-transfer based for this f
 
 ## Delivery guarantee boundary
 
-The current producer persists state and publishes through `KafkaTemplate`; transactional outbox publication is not yet an implemented guarantee. This contract change improves event semantics and payload quality but does not claim atomic database-and-Kafka publication.
+The legacy `created-rating` / `updated-rating` producers persist state and publish directly through `KafkaTemplate`, so they do not provide atomic database-and-Kafka publication. The canonical `engagement.ratings.v1` stream is written through the Engagement transactional outbox ([Engagement events](ENGAGEMENT_EVENTS.md)).

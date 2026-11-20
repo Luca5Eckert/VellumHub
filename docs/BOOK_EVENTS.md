@@ -1,6 +1,6 @@
 # Catalog Book Events — ECST and Transactional Outbox
 
-Status: implementation merged in [PR #296](https://github.com/Luca5Eckert/VellumHub/pull/296); consumer identity hardening tracked by [#200](https://github.com/Luca5Eckert/VellumHub/issues/200). Neither merge proves production rollout.
+Diagrams: [Book → Outbox → Kafka sequence](architecture/flows/book-outbox.md) · [Outbox states](architecture/states/outbox-delivery.md) · [wire format states](architecture/states/event-wire-format.md). Merged code is not proof of a production rollout.
 
 ## Overview
 
@@ -62,18 +62,18 @@ HTTP 201, 200 or 204 reflect the local Catalog transaction only. They do not imp
 - Cover upload files are outside the PostgreSQL transaction: orphan cleanup is an outstanding operational concern.
 - Heavy embedding computation under a consumer transaction can hold its per-book lock; profile and measure before optimizing.
 - Purging PUBLISHED rows requires a documented retention policy.
-- Rating and Reaction canonical consumers have identity checkpoints under #200/#202. Legacy topic handlers remain excluded from those guarantees until coordinated cutover; retry/DLT and operational replay remain in #272.
+- Canonical consumers keep identity checkpoints ([Consumer Idempotency](CONSUMER_IDEMPOTENCY.md)). Legacy topic handlers stay outside those guarantees until their cutover; exhausted ordered records are quarantined ([Kafka Recovery Runbook](KAFKA_RECOVERY_RUNBOOK.md)).
 
 See `docs/DISTRIBUTED_TESTING.md` for distributed test infrastructure.
 
-## Book Avro migration (issue #349)
+## Avro wire format
 
 Book JSON remains the default. The opt-in Avro path uses `book-events.avro`, the shared
 `lib/kafka-avro-contracts` generated contract and an isolated producer/decoder. Catalog
 Outbox payloads remain JSONB; `wire_format` and `payload_schema_version` are persisted
 per row. Historical JSON rows keep their destination after a producer flag change.
 Recommendation and Engagement reuse their existing projection/checkpoint transaction.
-Reading Progress, Ratings and Reactions retain their existing transport.
+Reading Progress, Ratings and Reactions have equivalent opt-in Avro paths with their own runbooks.
 
 See [the cutover runbook](BOOK_AVRO_CUTOVER_RUNBOOK.md) for freeze/drain, rollback and
 executable acceptance commands. Per-service acceptance, the combined consumer E2E and

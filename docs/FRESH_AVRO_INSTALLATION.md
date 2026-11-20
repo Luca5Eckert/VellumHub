@@ -1,6 +1,6 @@
 # Instalação nova: Kafka Avro + Apicurio Registry (sem cutover legado)
 
-Este procedimento foi criado **após** o encerramento da #365 como `not planned`: o projeto ainda não tem um ambiente persistente legado a migrar. Não substitui os runbooks de cutover JSON → Avro para instalações com dados existentes. Os contratos, publishers, consumers, Outbox e testes distribuídos foram entregues na #350; esta configuração seleciona as rotas Avro **na primeira inicialização**.
+Use este procedimento para ambientes **sem dados legados**: ele seleciona as rotas Avro já na primeira inicialização. Instalações com dados JSON existentes seguem os runbooks de cutover ([estados de wire format](architecture/states/event-wire-format.md)).
 
 ## O que é ativado
 
@@ -62,10 +62,10 @@ kubectl -n vellumhub rollout status deployment/engagement-service --timeout=10m
 kubectl -n vellumhub rollout status deployment/recommendation-service --timeout=10m
 ```
 
-Os arquivos Kustomize antigos `local` e `prod` **não foram alterados**. Em AWS/staging/produção, primeiro é necessário provisionar os quatro tópicos Avro com partições, retenção e fator de replicação compatíveis com o cluster, escolher endpoints de Kafka/DB, provisionar Registry persistente com OIDC/roles e TLS, garantir autorização de **leitura de schema** para produtores/consumidores, registrar schemas por workflow aprovado e criar overlay ambiental protegido. Os clientes Avro atuais usam URL sem suporte explícito a bearer token OIDC; **não declare que o overlay de produção com OIDC já funciona** nem use esta configuração local insegura em produção. Esse requisito é separado da #365 e não autoriza credenciais no Git.
+Os arquivos Kustomize antigos `local` e `prod` **não foram alterados**. Em AWS/staging/produção, primeiro é necessário provisionar os quatro tópicos Avro com partições, retenção e fator de replicação compatíveis com o cluster, escolher endpoints de Kafka/DB, provisionar Registry persistente com OIDC/roles e TLS, garantir autorização de **leitura de schema** para produtores/consumidores, registrar schemas por workflow aprovado e criar overlay ambiental protegido. Os clientes Avro atuais usam URL sem suporte explícito a bearer token OIDC; **não declare que o overlay de produção com OIDC já funciona** nem use esta configuração local insegura em produção. Esse requisito não autoriza credenciais no Git.
 
 ## Evidência e limites
 
-- Testes distribuídos Kafka + SQL + Registry dos streams: CI da #350.
+- Testes distribuídos Kafka + SQL + Registry dos streams: `.github/workflows/canonical-streams-avro-acceptance.yml`.
 - A nova CI valida flags de Compose/Kustomize, a compatibilidade da rede e o Registry persistente; **um render estático não equivale a E2E da stack inteira**.
 - `bootstrap_fresh.py` aguarda healthchecks, mas esses checks não substituem testes de jornada real (criar livro, ler, avaliar, reagir, reconciliar projeções). Não há evidência de deploy AWS ou cutover de ambiente antigo neste procedimento.

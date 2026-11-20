@@ -73,7 +73,7 @@ A duplicação de configuração Compose/Kubernetes é uma fronteira intencional
 entre runtimes diferentes. Diferença explícita: Compose usa Confluent Kafka
 7.5 com ZooKeeper para o harness de ACL; Kind usa Apache Kafka 3.9 em KRaft.
 A migração para um broker único exige comprovar novamente o contrato de ACL
-SEC-14, o comportamento de replay e o Kind E2E; não está incluída aqui.
+Kafka, o comportamento de replay e o Kind E2E; não está incluída aqui.
 Redis é fixado em 7.4-alpine nos dois ambientes locais.
 
 ## Verificação rápida

@@ -1,24 +1,23 @@
 ---
 name: backend-code-review
-description: Perform evidence-backed backend PR reviews for correctness, security, failure semantics, architecture and tests.
+description: Review a VellumHub backend diff or PR — including your own changes before handing them over — for correctness, security, failure semantics, readability, architecture boundaries and test quality, with file/line evidence and concrete failure scenarios. Use it for "review this", self-review before a PR, responding to review comments, merge-readiness questions, or when asked to find low-readability or low-quality code in the services.
 ---
 
-# backend-code-review
+# Backend code review
 
-## Trigger
-Self-review before opening a PR, requested code review, review feedback or merge readiness check.
+A useful review separates what is wrong (with a scenario that breaks) from what is merely unfamiliar. Severity and evidence matter more than the number of comments.
 
 ## Procedure
-1. Read issue acceptance and repository rules. Review the diff against its parent, not just the changed file names.
-2. Follow changed behavior end-to-end (handler -> authorization -> domain -> storage/event -> response).
-3. Examine negative and adversarial cases: invalid input, unauthorized access, concurrent requests, partial failure, retry, out-of-order events and compatibility.
-4. Inspect migration/contract risks, secrets, error logging, resources, timeouts, and existing architecture fitness rules.
-5. Separate blocking correctness/security findings from maintainability suggestions and style. Provide file/line location and concrete failure scenario.
-6. Review tests as proofs: assert observable outcome, use correct environment and check that they actually ran.
-7. After fixes, re-review final diff and exact SHA; do not reuse stale CI results to declare merge-ready.
+1. Read the issue acceptance and repository rules, then the diff against its parent rather than the file list.
+2. Follow changed behaviour end to end: entry point → authorization → domain → storage or event → response or log.
+3. Probe negative and adversarial cases: invalid input, foreign or hidden resources, concurrency, partial failure, retry, duplicate or out-of-order events, schema compatibility.
+4. Check migrations and contracts, secrets, what reaches response bodies and logs (no SQL/parser text, no personal values), resources and timeouts, and the existing architecture rules.
+5. For readability, look for the patterns that cost the most here: copy-pasted blocks that should be one helper, several statements per line, methods mixing lookup, validation, side effects and checkpointing, application code depending on HTTP DTOs, stale names and Javadoc that describes something else. Propose the refactor only with a way to show behaviour is unchanged (characterization tests, byte-identical SQL/messages).
+6. Treat tests as proofs: do they assert observable outcomes, at the right boundary, and did they actually run?
+7. Re-review your own fixes: a fix can introduce a new problem (for example moving a leaked value from a response into a log).
+8. After fixes, review the final diff and the exact SHA; earlier CI results do not cover it.
 
 ## Output
-Findings ordered by severity, evidence, minimal corrections and explicitly unverified paths.
+Findings ordered by severity, each with file/line, failure scenario and minimal correction; maintainability suggestions separated from blockers; paths explicitly not verified.
 
-## Reference
-Adapted from https://github.com/obra/superpowers/tree/main/skills/requesting-code-review/SKILL.md and https://github.com/obra/superpowers/tree/main/skills/receiving-code-review/SKILL.md.
+Adapted from obra/superpowers `requesting-code-review` and `receiving-code-review`.

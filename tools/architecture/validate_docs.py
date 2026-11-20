@@ -37,6 +37,23 @@ def fail(message: str, errors: list[str]) -> None:
     errors.append(message)
 
 
+def mermaid_text_hazards(block: str) -> list[str]:
+    """Return lines whose text would break Mermaid parsing.
+
+    In sequence and state diagrams the lexer ends a statement at ';' and treats '#'
+    as the start of an entity code, so either character inside a message or label
+    silently truncates it and usually turns the rest into a parse error.
+    """
+    hazards = []
+    for number, line in enumerate(block.splitlines(), start=1):
+        stripped = line.strip()
+        if stripped.startswith("%%"):
+            continue
+        if ";" in stripped or "#" in stripped:
+            hazards.append(f"line {number}: {stripped}")
+    return hazards
+
+
 def metadata(raw: str, path: Path, errors: list[str]) -> tuple[dict[str, str], str]:
     if not raw.startswith("---\n"):
         fail(f"{path}: missing frontmatter", errors)
@@ -108,6 +125,9 @@ def validate() -> int:
             first = next((l.strip() for l in block.splitlines() if l.strip()), "")
             if first not in VALID_DIAGRAMS:
                 fail(f"{path}: unsupported Mermaid diagram type {first}", errors)
+            if first in ("sequenceDiagram", "stateDiagram-v2"):
+                for hazard in mermaid_text_hazards(block):
+                    fail(f"{path}: ';' or '#' breaks Mermaid text ({hazard})", errors)
         opened = raw.count("```")
         if opened % 2:
             fail(f"{path}: unbalanced code fences", errors)

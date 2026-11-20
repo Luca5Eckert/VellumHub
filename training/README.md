@@ -1,6 +1,6 @@
 # Offline training data
 
-This job exports versioned facts for #193. It does not train a model, assign weights,
+This job exports versioned facts for offline model training. It does not train a model, assign weights,
 reconstruct current state from Kafka, or change the online recommendation path.
 The synthetic benchmark under `services/recommendation-service/evaluation/` remains separate.
 
@@ -53,7 +53,7 @@ Signal payloads:
 Reading history preserves Catalog `eventId` and `occurredAt`. Missing either field
 sets `historyQuality=LEGACY_UNKNOWN`; no consumer time is substituted. Training must
 exclude these rows from time-dependent features unless it explicitly handles unknowns.
-Duplicate events are preserved for audit; #200 owns online idempotency. Training must
+Duplicate events are preserved for audit; online idempotency is handled by the consumers' checkpoints. Training must
 make an explicit duplicate policy before summing signals.
 
 Current reading records have no occurrence timestamp. Ratings store a timestamp
@@ -103,4 +103,4 @@ TEST_POSTGRES_URL=postgresql://test:test@localhost:5432/training_test python -m 
 The integration test applies the actual Catalog and Engagement SQL migrations and proves
 corpus, feedback, legacy history, independent current state, stable hashes and orphan rejection.
 CI supplies PostgreSQL and runs it on every PR. Without the test URL it is explicitly skipped.
-#193 owns sampling, temporal splits, labels, weights and model evaluation; #194 owns import.
+Sampling, temporal splits, labels, weights, model evaluation and import are outside this exporter.

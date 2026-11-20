@@ -80,4 +80,45 @@ class BookListTest {
             assertThat(list.canUpdate(otherUserId)).isFalse();
         }
     }
+
+    @Nested
+    @DisplayName("Content and Membership Management Rules")
+    class ManagementTests {
+
+        private void assertManagement(BookList list, UUID userId, boolean expected) {
+            assertThat(list.canUpdateList(userId)).isEqualTo(expected);
+            assertThat(list.canAddMember(userId)).isEqualTo(expected);
+            assertThat(list.canDeleteMember(userId)).isEqualTo(expected);
+            assertThat(list.canUpdateRole(userId)).isEqualTo(expected);
+        }
+
+        @Test
+        @DisplayName("Owner may manage both private and public lists")
+        void ownerAlwaysManages() {
+            assertManagement(BookList.create("T", "D", TypeBookList.PRIVATE, ownerId, new ArrayList<>()), ownerId, true);
+            assertManagement(BookList.create("T", "D", TypeBookList.PUBLIC, ownerId, new ArrayList<>()), ownerId, true);
+        }
+
+        @Test
+        @DisplayName("ADMIN member may manage a public list but not a private one")
+        void adminManagesOnlyNonPrivateLists() {
+            var publicList = BookList.create("T", "D", TypeBookList.PUBLIC, ownerId, new ArrayList<>());
+            publicList.addMember(otherUserId, MembershipRole.ADMIN);
+            var privateList = BookList.create("T", "D", TypeBookList.PRIVATE, ownerId, new ArrayList<>());
+            privateList.addMember(otherUserId, MembershipRole.ADMIN);
+
+            assertManagement(publicList, otherUserId, true);
+            assertManagement(privateList, otherUserId, false);
+        }
+
+        @Test
+        @DisplayName("Non-admin members and strangers may not manage")
+        void othersCannotManage() {
+            var list = BookList.create("T", "D", TypeBookList.PUBLIC, ownerId, new ArrayList<>());
+            list.addMember(otherUserId, MembershipRole.VIEWER);
+
+            assertManagement(list, otherUserId, false);
+            assertManagement(list, UUID.randomUUID(), false);
+        }
+    }
 }

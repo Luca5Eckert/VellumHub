@@ -1,12 +1,13 @@
-# Book JSON→Avro cutover and rollback — issue #349
+# Book JSON→Avro cutover and rollback
 
-Status: **implementation PR, NOT production rollout**. This runbook describes operator-controlled actions; the existence of code, flags or passing static Kustomize gates is **not** proof of a rehearsed cutover. Never perform these steps on shared/production environments without change approval, backups and validated Registry OIDC/TLS.
+State machine: [wire format per stream](architecture/states/event-wire-format.md).
+
+This runbook describes operator-controlled actions; the existence of code, flags or passing static Kustomize gates is **not** proof of a rehearsed cutover. Never perform these steps on shared/production environments without change approval, backups and validated Registry OIDC/TLS.
 
 ## Boundary and invariants
 
-Legacy Book is `book-events` with Spring JSON; new Book is `book-events.avro` with Confluent-compatible Avro schema IDs via Apicurio 3.1.7. Kafka key stays the string `bookId`. Writer schema is in `lib/kafka-avro-contracts/src/main/avro/BookChangedEvent.avsc`, and Registry subject is `book-events.avro-com.vellumhub.kafka.avro.book.BookChangedEvent`. `auto.register.schemas=false`, so an operator must register v1/v2 through the #348 controlled publication flow first. The Kafka ACL allowlist is `infra/kafka/acl-policy.json` and is distinct from Registry read role authorization.
+Legacy Book is `book-events` with Spring JSON; new Book is `book-events.avro` with Confluent-compatible Avro schema IDs via Apicurio 3.1.7. Kafka key stays the string `bookId`. Writer schema is in `lib/kafka-avro-contracts/src/main/avro/BookChangedEvent.avsc`, and Registry subject is `book-events.avro-com.vellumhub.kafka.avro.book.BookChangedEvent`. `auto.register.schemas=false`, so an operator must register v1/v2 through the controlled publication workflow (`schema-registry-publish.yml`) first. The Kafka ACL allowlist is `infra/kafka/acl-policy.json` and is distinct from Registry read role authorization.
 The Catalog serializer uses `use.latest.version=true` with `latest.compatibility.strict=true`, and keeps `auto.register.schemas=false`: it reads the Registry's approved latest writer instead of demanding a byte-for-byte match with a Java `SpecificRecord` rendering of the AVSC. This does **not** authorize an arbitrary schema upgrade. Before each cutover, verify the effective subject version is the reviewed current v2, the immutable schema IDs and compatibility policy match the manifest, and the application principal cannot register schemas. An unexpected new latest version is **NO-GO** pending separate approval. The Catalog relay's real PostgreSQL/Kafka/Registry acceptance test registers the approved raw AVSC exactly as the protected Registry gate does, while historical v1/v2 consumer fixtures exercise both writer versions independently.
-
 
 Catalog `outbox_events.payload` remains JSONB. The new Flyway V4 metadata `wire_format` and `payload_schema_version` are immutable *per row*; old rows default to JSON/1 without rewriting payloads. `aggregate_version` remains the Book revision, not the Avro schema version. **Never convert a historical JSON Outbox row to Avro by changing only the service flag.** The relay routes by the stored metadata even after rollback. No dual-publish. Reading Progress and ratings/reactions remain JSON.
 
@@ -16,7 +17,7 @@ Only the new Avro listener reads raw bytes; it decodes the wire itself, so the e
 
 ## Preconditions / GO-NO-GO
 
-1. Confirm all images are pinned to approved SHAs and the #347 schema compatibility and #348 Registry persistence CI succeeded **on those SHAs**, without changing historic v1/v2 definitions. Apply **canonical** Kind app overlay and separate Registry local overlay; never deploy a second duplicate full app overlay. In stable clusters, provision SQL-backed Registry with OIDC roles and TLS/CA/secrets first.
+1. Confirm all images are pinned to approved SHAs and the schema evolution tests and Registry governance CI succeeded **on those SHAs**, without changing historic v1/v2 definitions. Apply **canonical** Kind app overlay and separate Registry local overlay; never deploy a second duplicate full app overlay. In stable clusters, provision SQL-backed Registry with OIDC roles and TLS/CA/secrets first.
 2. Explicitly create `book-events.avro` with the intended partition count and durable retention and provision read/write/DLT ACLs for Catalog, Recommendation and Engagement. Record partition counts of **both** topics and the actual partition mapping for all active Book IDs: a consistent key serializer alone does not guarantee equivalent partitions if counts differ. Do not change the partition count after cutover.
 3. Register Book writer schemas v1/v2 under the approved subject through the protected Registry workflow; verify IDs and that the three applications can resolve them. No application principal may create or modify schemas.
 4. Before cutover, capture high-watermarks/end offsets of `book-events`, group positions for `recommendation-service` and `engagement-service`, active quarantines and DLT records, plus Catalog Outbox rows, `book_event_offsets` from **both** DBs and both read models. Check new Avro topic is empty or has a documented starting offset. Any unexpected rows/partition blocks/revision gaps are **NO-GO**.
@@ -132,8 +133,7 @@ Run Maven reactor, the existing Schema Registry governance and Book Avro pilot C
 
 Production gates still absent until measured/proven: real OIDC read-only token and 401/403, TLS/mTLS/CA, backup and restore of schema IDs, topic/Registry security across namespaces, actual rolling update in managed Kubernetes and read-model reconciliation. Do not call a GitHub merge a production rollout.
 
-Links: [#349](https://github.com/Luca5Eckert/VellumHub/issues/349), [Schema Registry operations](SCHEMA_REGISTRY_OPERATIONS.md), [Book JSON baseline](BOOK_EVENTS.md), [ordered recovery](KAFKA_RECOVERY_RUNBOOK.md).
-
+Links: [Schema Registry operations](SCHEMA_REGISTRY_OPERATIONS.md), [Book JSON baseline](BOOK_EVENTS.md), [ordered recovery](KAFKA_RECOVERY_RUNBOOK.md).
 
 ## Automated acceptance commands
 

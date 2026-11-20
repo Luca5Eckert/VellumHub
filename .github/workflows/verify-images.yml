@@ -32,7 +32,7 @@ jobs:
       - name: Confirm Docker for Testcontainers
         run: docker info
       - name: Verify reactor and non-distributed integration tests
-        run: mvn -B -ntp -DexcludedGroups=distributed clean verify
+        run: bash tools/ci/retry_dependency_resolution.sh mvn -B -ntp -DexcludedGroups=distributed clean verify
 
 
       # The reactor can emit extensive log output; publish focused XML diagnostics
@@ -93,7 +93,7 @@ jobs:
           docker pull confluentinc/cp-kafka:7.5.0
           docker pull apicurio/apicurio-registry:3.1.7
       - name: Warm Maven dependencies and compilation
-        run: mvn -B -ntp -Pdistributed-e2e -pl ${{ matrix.module }} -am -DskipTests test-compile
+        run: bash tools/ci/retry_dependency_resolution.sh mvn -B -ntp -Pdistributed-e2e -pl ${{ matrix.module }} -am -DskipTests test-compile
       - name: Run distributed suite within 150 second execution budget
         shell: bash
         env:
@@ -105,7 +105,7 @@ jobs:
             suite_args+=("-Dtest=$DISTRIBUTED_TEST" -Dsurefire.failIfNoSpecifiedTests=false)
           fi
           started_at=$(date +%s)
-          mvn -B -ntp -T 2 -Pdistributed-e2e -pl "$DISTRIBUTED_MODULE" -am \
+          bash tools/ci/retry_dependency_resolution.sh mvn -B -ntp -T 2 -Pdistributed-e2e -pl "$DISTRIBUTED_MODULE" -am \
             -Dgroups=distributed -DexcludedGroups=book-avro-e2e "${suite_args[@]}" test
           elapsed=$(( $(date +%s) - started_at ))
           echo "Distributed integration suite execution: ${elapsed}s"

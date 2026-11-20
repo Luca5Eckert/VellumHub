@@ -1,6 +1,6 @@
-# SEC-14: Kafka identities, ACLs and token-free event transport (#315)
+# Kafka service identities and ACLs
 
-SEC-14 is **transport/broker authorization**, independent of HTTP OAuth/OIDC.
+Kafka authorization is **transport/broker authorization**, independent of HTTP OAuth/OIDC.
 HTTP callers authenticate with JWT; Kafka authenticates **service principals**
 against the broker. Domain events retain stable `userId`/`actorId` as business
 data where already defined, never a bearer/refresh/ID token or caller JAAS secret.
@@ -28,7 +28,7 @@ Publishers are responsible only for their emitted topic families. Consumers may
 `<source>-retry*` namespace and `<source>-dlt` topic; the ACL script
 restricts their `Create`/`Write` permissions to the matching source family.
 Ordered DLTs have an exact `<source>.<service>-dlt` grant, preserving the
-quarantine/recovery contract of #272.
+[quarantine contract](architecture/states/kafka-quarantine.md).
 
 **Manual review gate:** if Kafka listeners, topic names, consumer groups or
 retry topology change, edit the JSON policy in the same PR; do not broaden the
@@ -59,7 +59,7 @@ The unauthenticated Kafka UI is not started in the secure overlay.
    **UID requirement for Linux bind mounts:** broker/admin/CLI files must be
    readable by the Confluent container UID 1000, while each Java service's
    `<service>_service.properties` must be owned by the Java image UID 10001
-   (all stay mode 0600). The SEC-14 CI sets ownership explicitly. For a
+   (all stay mode 0600). The ACL CI workflow sets ownership explicitly. For a
    local Docker environment with the same UIDs, apply the matching `chown`
    through a privileged local setup. Never relax secrets to world-readable.
 3. Start isolated infrastructure:
@@ -168,7 +168,7 @@ Broker-backed operator replay is a separate acceptance gate.
   JAAS values through an approved secret manager; empty production values are invalid.
 - Existing Maven distributed/outbox/ordering tests remain the regression gates
   for at-least-once delivery, checkpoint semantics and sanitized DLT headers.
-- SEC-14 does **not** change event contracts, introduce OAuth token exchange,
+- Broker ACLs do **not** change event contracts, introduce OAuth token exchange,
   delegate end-user authorization to the broker, or prove a live production
   Kafka cluster has correct external ACLs and TLS without deployment evidence.
 - No SQL migration. Applying ACLs is a broker configuration rollout, separate

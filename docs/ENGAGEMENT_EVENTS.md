@@ -1,6 +1,6 @@
 # Engagement — durable domain facts
 
-**Scope:** [#202](https://github.com/Luca5Eckert/VellumHub/issues/202), [PR #297](https://github.com/Luca5Eckert/VellumHub/pull/297).
+Diagrams: [ordered consumer](architecture/flows/ordered-consumer.md) · [Outbox states](architecture/states/outbox-delivery.md) · [wire format states](architecture/states/event-wire-format.md).
 
 The Engagement bounded context owns Rating and Reaction mutations. Published events are **facts in past tense**, not commands to update Recommendation. Type names: `RatingCreatedEvent`, `RatingUpdatedEvent`, `RatingDeletedEvent`, and `ReactionChangedEvent` (creation means oldTypeReaction=null). Baseline records are *technical migration checkpoints*, not user interactions.
 
@@ -18,7 +18,7 @@ Every live fact contains immutable eventId, occurredAt, the persisted aggregate 
 - Recommendation persists `processed_engagement_events` and per-aggregate `engagement_event_offsets` within the UserProfile transaction. Already-applied revisions are no-ops; reusing an event ID on an unapplied revision fails the transaction instead of silently acknowledging it. Missing BookFeature is a retryable error, not a successful skip. See [Consumer Idempotency](CONSUMER_IDEMPOTENCY.md).
 - New aggregates start at revision 0; preexisting aggregates receive migration-only RatingBaselineEvent/ReactionBaselineEvent at their persisted revision. Baselines only set checkpoints and **do not** reapply historic weights.
 - Kafka key userId preserves order *within each topic*, not a global order across rating and reaction topics. `UserProfile.@Version` guards concurrent updates across partitions.
-- Strict retry favors ordering over liveness; poison messages can block a partition. Coordinate DLT/replay design with #272.
+- Strict retry favors ordering over liveness; poison messages can block a partition. Exhausted ordered records are quarantined and resumed from the original offset ([Kafka Recovery Runbook](KAFKA_RECOVERY_RUNBOOK.md)).
 
 ## Rollout checklist
 
@@ -36,4 +36,3 @@ HTTP Swagger/OpenAPI endpoints report *local* database success and eventual down
 Canonical consumers expose `vellumhub.kafka.events.duplicate`, retaining event IDs in logs but never in metric labels. The legacy listeners remain enabled by default for pre-cutover deployments and do not share the new identity checkpoint; do not process the same logical mutation from both versions.
 
 Physical delivery remains at-least-once; even a compensated RatingDeleted effect cannot perfectly invert a normalized historical embedding vector. Production guarantees require monitored rollout and failure/recovery testing.
-

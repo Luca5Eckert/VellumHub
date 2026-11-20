@@ -1,6 +1,8 @@
-# Engagement Ratings / Reactions JSON → Avro cutover (#350)
+# Engagement Ratings / Reactions JSON → Avro cutover
 
-Status: implementation and CI validation; **not evidence of production rollout**. Source: [PR #362](https://github.com/Luca5Eckert/VellumHub/pull/362). Phase 1 Reading Progress: [PR #361](https://github.com/Luca5Eckert/VellumHub/pull/361).
+State machine: [wire format per stream](architecture/states/event-wire-format.md).
+
+Merged code and CI are **not evidence of a production rollout**. Reading Progress follows its own [runbook](READING_PROGRESS_AVRO_CUTOVER_RUNBOOK.md).
 
 ## Invariants and wire contracts
 

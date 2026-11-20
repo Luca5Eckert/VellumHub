@@ -1,25 +1,26 @@
 ---
 name: backend-delivery-verification
-description: Validate implementation acceptance, tests and CI for the exact revision before calling a backend change complete.
+description: Decide whether a VellumHub backend change is really done — map every acceptance criterion to code and evidence, run focused tests plus the reactor verify (Docker-backed suites included when available), check architecture and documentation guards, and compare CI against the exact PR head SHA. Use it before saying work is complete, before opening or approving a PR, after fixing CI, and whenever someone asks "is this ready?", "can we merge?" or "did everything pass?".
 ---
 
-# backend-delivery-verification
+# Backend delivery verification (VellumHub)
 
-## Trigger
-Issue implementation nearing completion, PR validation, CI fix or pre-merge review.
+"Implemented", "tests pass locally", "CI green on this SHA", "merged", "deployed" and "operationally validated" are different claims. Reporting the strongest one you actually have — and naming the gaps — is what makes the summary trustworthy.
 
 ## Procedure
-1. Read the issue and extract each acceptance criterion, including non-functional, security, migration and failure cases.
-2. Build criterion -> source change -> test/check -> result matrix. Never say a criterion passed without evidence for that criterion.
-3. Run focused tests and the repository-defined full validation. Record commands, environment, exact SHA and pass/fail/skip state.
-4. Inspect architecture/security checks and affected integrations; classify gaps instead of pretending an unrelated successful job is proof.
-5. Verify PR head SHA against CI SHA. Investigate failed or cancelled jobs and rerun the appropriate scope after changes.
-6. Review final diff, generated files, new dependencies, secrets and documentation. Do not merge, publish or deploy without authorization.
-7. Keep distinct: implemented, locally tested, CI-green, merged, deployed and operationally validated.
-8. On blockers, provide smallest reproducible failure and next action rather than a blanket success message.
+1. Extract each acceptance criterion from the issue, including security, migration, failure and non-functional ones.
+2. Build a matrix: criterion → changed code → test or check → result. A criterion without its own evidence is `unverified`, not `passed`.
+3. Run focused tests first, then the repository validation:
+   - `./mvnw -B verify` for the reactor. Default runs include Testcontainers suites (`*DistributedTest`, `*PostgresIntegrationTest`, `*PostgresTest`, `*IT`); without Docker they error, which is an environment gap, not a pass or a product failure.
+   - `python -m unittest discover -s tools/architecture -p "test_*.py"` and `python tools/architecture/validate_docs.py` when architecture or docs changed.
+   - `-Pdistributed-e2e` when cross-service behaviour changed and the environment supports it.
+   - CI uses JDK 21; a newer local JDK is fine only with the compiler settings described in `spring-boot-engineering`.
+4. Read the output, not just the exit code: skipped tests, tests that ran zero cases, ignored suites, generated files and unrelated diffs.
+5. Load other skills selectively (security, events, architecture) for the criteria that need them; do not activate every skill by default.
+6. Check remote CI against the PR head SHA. A green run on an earlier commit, or one job of several, does not cover the final diff.
+7. Review the final diff for secrets, new dependencies, weakened guards and stale documentation. Do not merge, publish or deploy without an explicit request.
 
 ## Output
-Acceptance matrix, validation commands/results, CI SHA, blockers and merge recommendation.
+Criterion → evidence → status matrix (`passed`, `failed`, `skipped`, `blocked`, `unverified`), commands with environment and SHA, blockers with the smallest reproduction, and a merge recommendation that states its limits.
 
-## Reference
-Adapted from https://github.com/obra/superpowers/tree/main/skills/verification-before-completion/SKILL.md; complements existing workflow.
+Adapted from obra/superpowers `verification-before-completion`; merges the former `backend-change-verification` supplement.

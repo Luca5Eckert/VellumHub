@@ -26,7 +26,7 @@ sequenceDiagram
     E-->>Reader: Local write committed
     E->>K: Outbox relay after commit
     K->>R: Canonical interaction event
-    R->>RD: Check event/revision; update profile delta and checkpoint atomically
+    R->>RD: Check event/revision, update profile delta and checkpoint atomically
     R->>Cache: Invalidate affected profile generation (best effort)
     Reader->>G: GET /api/v1/recommendations/recommendations
     G->>R: Relay authenticated request
@@ -35,11 +35,11 @@ sequenceDiagram
         Cache-->>R: Serialized ranking DTO
     else Miss / unavailable
         R->>RD: pgvector candidate retrieval + 70/30 ranking (or popularity fallback)
-        RD-->>R: Local result; no User/Catalog/Engagement fan-out
+        RD-->>R: Local result, no User/Catalog/Engagement fan-out
         R->>Cache: Optional TTL write
     end
     R-->>Reader: Recommendation response
-    Note over Reader,R: Result may precede Kafka consumer convergence; eventual consistency
+    Note over Reader,R: Result may precede Kafka consumer convergence, eventual consistency
 ```
 
 Read model and ranker: [VH-REC](../services/recommendation.md); owner of rating/reaction state: [VH-ENG](../services/engagement.md). The cache does not store canonical identities, event checkpoints or Kafka schema definitions. Reference: [Recommendation cache](../../RECOMMENDATION_REDIS_CACHE.md), [Engagement contracts](../../ENGAGEMENT_EVENTS.md), [consumer idempotency](../../CONSUMER_IDEMPOTENCY.md).

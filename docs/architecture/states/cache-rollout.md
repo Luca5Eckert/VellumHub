@@ -19,7 +19,7 @@ stateDiagram-v2
     state "INVALIDATING: read=false / invalidate=true" as INVALIDATING
     state "ACTIVE: read=true / invalidate=true" as ACTIVE
     OFF --> INVALIDATING: Deploy all writer replicas with new invalidation code
-    INVALIDATING --> ACTIVE: Confirm all writers upgraded; canary readers gradually
+    INVALIDATING --> ACTIVE: Confirm all writers upgraded, canary readers gradually
     ACTIVE --> INVALIDATING: Disable reads in every pod (rollback first)
     INVALIDATING --> OFF: Disable invalidation after all readers are OFF
     note right of ACTIVE
@@ -36,4 +36,4 @@ stateDiagram-v2
 | INVALIDATING | `false` | `true` | **All** Book writers register after-commit invalidation, including writer pods not serving cached reads |
 | ACTIVE | `true` | `true` | Verified Redis/ACL/TLS, hit distribution, error rate, p95/p99, rollback and freshness in a real target environment |
 
-`CATALOG_CACHE_ENABLED` and `CATALOG_CACHE_INVALIDATION_ENABLED` are separate. The app rejects reads ON with invalidation OFF. An old binary from before PR #370 that skips invalidation when read-OFF is **not safe to mix with a cache-reading pod**, even if the new code is correct. Backout sequence: **ACTIVE → INVALIDATING → OFF**. Production overlay currently remains OFF, and its Redis hostname is not a provisioned endpoint. See [runbook](../../CATALOG_REDIS_CACHE.md) and [cache read sequence](../flows/catalog-cache.md).
+`CATALOG_CACHE_ENABLED` and `CATALOG_CACHE_INVALIDATION_ENABLED` are separate. The app rejects reads ON with invalidation OFF. An older binary that skips invalidation when read-OFF is **not safe to mix with a cache-reading pod**, even if the new code is correct. Backout sequence: **ACTIVE → INVALIDATING → OFF**. Production overlay currently remains OFF, and its Redis hostname is not a provisioned endpoint. See [runbook](../../CATALOG_REDIS_CACHE.md) and [cache read sequence](../flows/catalog-cache.md).
