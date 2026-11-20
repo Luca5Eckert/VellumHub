@@ -82,7 +82,7 @@ Canonical versioned topics:
 | `reading-progress-events` | Catalog | User progress delta via `reading_progress_offsets` and `processed_events` |
 | `engagement.ratings.v1` | Engagement | Rating lifecycle via `engagement_event_offsets` / `processed_engagement_events` |
 | `engagement.reactions.v1` | Engagement | Reaction transitions via the same Engagement checkpoints |
-| `created-user-preference` | User | Cold-start user preference updates (outside #200's canonical versioned streams) |
+| `created-user-preference` | User | Cold-start user preference updates (legacy topic, outside the canonical versioned streams) |
 
 Older topics (`created/updated/deleted-book`, `created/updated-reading-progress`, `created/updated-rating` and `user-reaction-changed`) have compatibility listeners. They do not share the canonical checkpoint guarantees; keep them only during a coordinated migration and disable them with `KAFKA_LEGACY_CONSUMERS_ENABLED=false` after draining. The current default is `true` to preserve pre-cutover behavior. See [Consumer Idempotency](../../docs/CONSUMER_IDEMPOTENCY.md) before enabling the canonical writers.
 
@@ -90,7 +90,7 @@ Rating updates within the same rating category produce a zero adjustment and lea
 
 See [Reaction Lifecycle Kafka Contracts](../../docs/REACTION_EVENT_CONTRACTS.md) for the enriched reaction payload, legacy compatibility, and delivery-guarantee boundary.
 
-Legacy retry/DLT handling is configured in `share/kafka/config/KafkaRetryConfig`. Canonical ordered consumers use blocking retries until the operational retry/DLT/replay policy is implemented in #272.
+Legacy retry/DLT handling is configured in `share/kafka/config/KafkaRetryConfig`. Canonical ordered consumers retry with a bounded back-off and then quarantine the record, publish a diagnostic DLT copy and pause the partition ([sequence](../../docs/architecture/flows/ordered-consumer.md), [quarantine states](../../docs/architecture/states/kafka-quarantine.md)).
 
 ## Vector Pipeline and Ranking
 
@@ -175,7 +175,7 @@ docker info
 mvn -pl services/recommendation-service -am -Dgroups=distributed test
 ```
 
-The distributed suite covers the legacy `created-book` retry/DLT boundary, rating and reaction lifecycle tests, and the canonical #200 idempotency scenarios (replay, concurrency, rollback and real Kafka redelivery).
+The distributed suite covers the legacy `created-book` retry/DLT boundary, rating and reaction lifecycle tests, and the canonical idempotency scenarios (replay, concurrency, rollback and real Kafka redelivery).
 
 See [Distributed Integration Testing](../../docs/DISTRIBUTED_TESTING.md) for infrastructure boundaries, CI budget, extension rules, and the planned E2E boundary.
 
@@ -188,11 +188,11 @@ intermediate publisher or synchronous dependency. `eventId`/`occurredAt` enrich 
 without changing profile weights. Canonical consumers fail and retry when required BookFeature data is missing; legacy consumers may still warn and skip during migration.
 
 The separate [offline exporter](../../training/README.md) reads canonical Catalog state and
-Engagement feedback/history into versioned facts for #193. Replicated history never substitutes
+Engagement feedback/history into versioned facts for offline model training. Replicated history never substitutes
 for current Catalog state. This is distinct from the synthetic evaluation harness.
 
 
-## Ordered Kafka failure recovery (#272)
+## Ordered Kafka failure recovery
 
 Canonical Book/Reading Progress/Rating/Reaction consumers use bounded retries, service-scoped DLT copies and a persistent PostgreSQL quarantine. Source offsets stay uncommitted when a revision cannot be applied. On recovery, an operator requests original-offset replay and restarts the affected consumer service; the listener marks the quarantine resolved after the record succeeds. Consult [Kafka Recovery Runbook](../../docs/KAFKA_RECOVERY_RUNBOOK.md) for the CLI, audit trail, replay safety and deployment requirements. Legacy DLT replay remains restricted where a stable event identity is unavailable.
 
@@ -201,4 +201,4 @@ Canonical Book/Reading Progress/Rating/Reaction consumers use bounded retries, s
 Auth is the only issuer. This service validates RS256 `at+jwt` access tokens locally against `JWT_JWKS_URI` (issuer, audience, `typ`, `kid`; `JWT_CLOCK_SKEW_SECONDS` defaults to 30) and never calls Auth or User per request. Each operation needs an explicit OAuth scope plus the USER/ADMIN role ([scope matrix](../../docs/SECURITY_SCOPES_RBAC.md)); ADMIN never implies scopes. Swagger is opt-in (`VELLUM_DOCS_ENABLED`), and health/Prometheus endpoints must stay on the private network. Request path: [authorization sequence](../../docs/architecture/flows/api-request-authorization.md).
 
 - **Ownership:** `GET /recommendations` takes the user only from the verified JWT `sub`; there is no client-chosen user ID and no call to User/Catalog/Engagement on the read path.
-- **Kafka identity:** `recommendation_service` consumes Book, Progress, ratings and reactions and writes only its own retry/DLT topics ([Kafka identities](../../docs/KAFKA_SERVICE_IDENTITIES_SEC14.md)). Ordered recovery: [sequence](../../docs/architecture/flows/ordered-consumer.md) · [quarantine states](../../docs/architecture/states/kafka-quarantine.md).
+- **Kafka identity:** `recommendation_service` consumes Book, Progress, ratings and reactions and writes only its own retry/DLT topics ([Kafka identities](../../docs/KAFKA_SERVICE_IDENTITIES.md)). Ordered recovery: [sequence](../../docs/architecture/flows/ordered-consumer.md) · [quarantine states](../../docs/architecture/states/kafka-quarantine.md).

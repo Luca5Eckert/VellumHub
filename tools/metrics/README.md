@@ -56,7 +56,7 @@ performance harness and not a claim that a CI check or production deployment pas
   and machine metadata before promoting any claim to the resume.
 
 
-## Measurable engineering outcomes — issue #345
+## Measurable engineering outcomes
 
 The optional `tools/metrics/analyze_outcomes.py` derives a candidate report **only from
 executed, matching-commit artifacts**. It consumes M07 raw events and freshness,

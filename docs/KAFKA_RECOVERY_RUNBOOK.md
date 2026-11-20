@@ -1,4 +1,6 @@
-# Kafka consumer recovery: retry, quarantine, DLT and replay (#272)
+# Kafka consumer recovery: retry, quarantine, DLT and replay
+
+Diagrams: [ordered consumer sequence](architecture/flows/ordered-consumer.md) · [quarantine states](architecture/states/kafka-quarantine.md).
 
 The source of truth for Book, Reading Progress and Engagement events remains the
 original Kafka topic and its producer Outbox. A DLT is an immutable diagnostic
@@ -140,7 +142,7 @@ Run non-distributed Maven tests and the existing Docker-backed
 distributed suite. Verify one canonical ordered failure against
 PostgreSQL quarantine, Kafka DLT headers and **absence** of a processed
 checkpoint. Test duplicate delivery and retry after repair, plus the
-legacy retry/DLT regression suite. Any failure must keep the PR draft.
+legacy retry/DLT regression suite. Any failure blocks the change.
 
 On rollback, **do not discard quarantine rows** or manually advance
 consumer offsets. Revert the deployment only after reconciling those
@@ -151,8 +153,7 @@ Related: [Consumer Idempotency](CONSUMER_IDEMPOTENCY.md),
 [Distributed Testing](DISTRIBUTED_TESTING.md),
 [Observability Runbooks](OBSERVABILITY_RUNBOOKS.md).
 
-
-## SEC-14: authenticated recovery identities
+## Authenticated recovery identities
 
 The service-specific retry/ordered DLT producers inherit their owner's Kafka
 SASL/TLS configuration and ACLs. Quarantine/resume continues to use the
@@ -161,4 +162,4 @@ by resetting offsets, skipping records, or granting wildcards.
 The optional independent `replay-dlt` CLI requires a **separate, operator-approved**
 client principal able to read only the intended DLT and publish the intended
 source; its broker credentials are not an HTTP JWT. Follow the provisioning,
-rotation and negative broker checks in [SEC-14](KAFKA_SERVICE_IDENTITIES_SEC14.md).
+rotation and negative broker checks in [Kafka service identities](KAFKA_SERVICE_IDENTITIES.md).

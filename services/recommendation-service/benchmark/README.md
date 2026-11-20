@@ -1,6 +1,6 @@
 # Distributed Recommendation Benchmark
 
-This harness implements VellumHub issue #283. It measures three properties of the Recommendation architecture through real distributed boundaries:
+This harness measures three properties of the Recommendation architecture through real distributed boundaries:
 
 1. how quickly a Kafka interaction signal converges into Recommendation-owned projection state;
 2. how quickly that interaction is reflected by the authenticated recommendation endpoint;
@@ -143,7 +143,7 @@ CI intentionally has no absolute p95, throughput, capacity, or freshness thresho
 - The strongest public latency claim is the retained **event-to-recommendation freshness p95**, because it measures the complete interaction-to-changed-ranking path rather than adding separately measured projection and read percentiles.
 - Quantitative resume/portfolio claims should use only values from a retained reference artifact tied to a commit SHA.
 
-## Architecture fitness evidence (AFF-03 / #325)
+## Architecture fitness evidence (AFF-03)
 
 The existing suites are the normative implementation of **AFF-REC-009** (read autonomy) and **AFF-OPS-010** (event-to-projection and event-to-visible-ranking). Do not create a parallel benchmark.
 

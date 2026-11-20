@@ -102,7 +102,7 @@ You can connect JMX monitoring tools (like JConsole or VisualVM) to `localhost:9
 
 ## Kafka Topics
 
-The system uses the following Kafka topics for event-driven communication:
+The system uses the following Kafka topics for event-driven communication. Legacy topics stay while `KAFKA_LEGACY_CONSUMERS_ENABLED=true`; ACLs per topic are in [Kafka service identities](KAFKA_SERVICE_IDENTITIES.md).
 
 | Topic | Producer | Consumer | Purpose |
 |-------|----------|----------|---------|
@@ -110,7 +110,11 @@ The system uses the following Kafka topics for event-driven communication:
 | `updated-book` | Catalog Service | Recommendation Service | Book update events |
 | `deleted-book` | Catalog Service | Recommendation Service | Book deletion events |
 | `created-rating` | Engagement Service | Recommendation Service | First persisted rating events |
-| `updated-rating` | Engagement Service | Planned in issue #189 | Existing-rating transition events |
+| `updated-rating` | Engagement Service | Recommendation Service (legacy listener) | Existing-rating transition events |
+| `book-events` / `book-events.avro` | Catalog Service (outbox) | Engagement, Recommendation | Canonical Book state (JSON default, Avro opt-in) |
+| `reading-progress-events` / `.avro` | Catalog Service (outbox) | Engagement, Recommendation | Canonical reading progress |
+| `engagement.ratings.v1` / `.avro` | Engagement Service (outbox) | Recommendation Service | Canonical rating facts |
+| `engagement.reactions.v1` / `.avro` | Engagement Service (outbox) | Recommendation Service | Canonical reaction facts |
 
 The detailed rating payload semantics are documented in [Rating Lifecycle Kafka Contracts](RATING_EVENT_CONTRACTS.md).
 

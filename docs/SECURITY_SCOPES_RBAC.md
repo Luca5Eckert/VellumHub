@@ -1,17 +1,6 @@
-# SEC-10 — OAuth scopes and local RBAC (#311)
+# OAuth scopes and RBAC
 
-## Execution plan
-
-1. Inventory current HTTP operations and distinguish anonymous, delegated human,
-   human ADMIN and private provisioning access.
-2. Register explicit client capabilities in Auth; preserve the granted subset in
-   the access token. Issue `grant_type=authorization_code` from protocol context.
-3. Enforce scope AND human role in each Resource Server before request binding;
-   keep existing method/domain checks. Deny unmapped operations by default.
-4. Exercise each operation with anonymous, USER, ADMIN, missing/wrong scope and
-   machine credentials; verify OpenAPI completeness and signed-token regression.
-5. Validate the real reduced grant through Auth -> Gateway -> all four APIs,
-   run reactor/distributed CI, review the diff and record evidence in the Vault.
+Request path and ownership checks: [authorization sequence](architecture/flows/api-request-authorization.md).
 
 ## Client -> audience -> scope -> role
 
@@ -27,14 +16,14 @@ No client is enabled by default. The default enabled-client capability allowlist
 Admin capabilities (`user:write`, `catalog:write`, `catalog:requests:read`) must be
 explicitly added by an operator to the relevant client registration. A USER asking
 for an admin capability still cannot use it: role and scope are independent.
-No Client Credentials or Token Exchange client is introduced (#314/#316 remain deferred).
+No Client Credentials or Token Exchange client exists.
 The common logical audience is retained for verified Token Relay; per-context scopes
 prevent a User-only token from accessing Catalog, Engagement or Recommendation.
 
 ## Endpoint matrix
 
 Paths below are Resource Server paths after Gateway prefix stripping. `USER/ADMIN`
-means either human role, with the exact listed scope. Ownership remains #312/#313.
+means either human role, with the exact listed scope. Ownership is enforced separately in each use case.
 
 | Service | Method | Path | Required scope | Human role |
 | --- | --- | --- | --- | --- |
@@ -147,14 +136,3 @@ issuer/audience/signature/JWKS regression coverage. The distributed OIDC smoke r
 only `openid user:read`, confirms that exact granted subset, succeeds against User,
 and receives 403 from Catalog, Engagement and Recommendation with the same token.
 The full existing reactor, distributed E2E, Postman, CodeQL and image checks remain gates.
-
-Review scope: least privilege, ordering of bulk-read exceptions before Catalog writes,
-private provisioning chain precedence, method RBAC activation in User, JWT provenance,
-requested scope preservation, public-cover boundary, safe errors and configuration drift.
-
-Known pre-existing issue found during inventory: RatingController declares both
-GET `/{userId}` and GET `/{bookId}`. Those templates collide for UUID requests.
-This change does not claim to fix that domain contract; both require `engagement:read`.
-The unambiguous `/rating/me` flow is used in distributed security validation.
-Ownership/IDOR and granular list membership remain explicitly #312/#313.
-This document describes branch behavior until merge and CI evidence confirm delivery.

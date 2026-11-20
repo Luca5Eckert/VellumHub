@@ -1,7 +1,5 @@
 # Database migrations
 
-Issue: https://github.com/Luca5Eckert/VellumHub/issues/205
-
 The PostgreSQL schemas for `user-service`, `catalog-service`, `engagement-service`, and `recommendation-service` are managed by Flyway.
 
 ## Runtime flow

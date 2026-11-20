@@ -2,7 +2,7 @@
 
 [Architecture card · VH-AUT](../../docs/architecture/services/auth.md) · [C4 containers](../../docs/architecture/diagrams/c4-containers.md) · [All service codes](../../docs/architecture/services/README.md).
 
-**Current contract:** Auth is the sole identity and access-token issuer, implemented in the repository. Earlier SEC-16/POC configurations are migration history, not alternative runtime issuers. Live Google/HTTPS/proxy rollout requires separate verification.
+**Current contract:** Auth is the sole identity and access-token issuer, implemented in the repository. Live Google/HTTPS/proxy rollout requires separate verification.
 
 The Auth Service is VellumHub's single authentication and identity authority and the only issuer/JWKS source for API access tokens. It is part of the default Maven reactor, Compose runtime and Kubernetes topology.
 
@@ -123,7 +123,7 @@ The full pull-request gate also runs the reactor, architecture fitness functions
 
 Do not infer production rollout from CI. Live Google credentials, HTTPS/proxy/cookie behavior and any real-client deployment remain environment-specific evidence.
 
-## SEC-10 — explicit OAuth capabilities
+## OAuth capabilities
 
 Domain HTTP operations require an Auth-issued human access token with an explicit
 scope and the required USER/ADMIN role. ADMIN never implies scopes, and machine

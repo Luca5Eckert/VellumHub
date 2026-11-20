@@ -172,11 +172,12 @@ nullable event ID and lookup/history indexes. Legacy metadata stays null; proces
 must never substitute for occurrence time. Deploy migrations before the new application.
 
 The [offline exporter](../../training/README.md) labels these records `REPLICATED_HISTORY`
-and flags incomplete metadata. It reads current state only from Catalog. Duplicate handling
-remains #200; atomic commit/publication remains #201. Metadata alone provides neither guarantee.
+and flags incomplete metadata. It reads current state only from Catalog. Duplicate handling is the
+consumers' checkpoint ([ordered consumer](../../docs/architecture/flows/ordered-consumer.md)) and atomic publication is the
+Outbox ([Outbox states](../../docs/architecture/states/outbox-delivery.md)); metadata alone provides neither guarantee.
 
 
-## Ordered Kafka failure recovery (#272)
+## Ordered Kafka failure recovery
 
 Canonical Book/Reading Progress consumers use bounded retries, service-scoped DLT copies and a persistent PostgreSQL quarantine. Source offsets stay uncommitted when a revision cannot be applied. On recovery, an operator requests original-offset replay and restarts the affected consumer service; the listener marks the quarantine resolved after the record succeeds. Consult [Kafka Recovery Runbook](../../docs/KAFKA_RECOVERY_RUNBOOK.md) for the CLI, audit trail, replay safety and deployment requirements. Legacy DLT replay remains restricted where a stable event identity is unavailable.
 
@@ -185,4 +186,4 @@ Canonical Book/Reading Progress consumers use bounded retries, service-scoped DL
 Auth is the only issuer. This service validates RS256 `at+jwt` access tokens locally against `JWT_JWKS_URI` (issuer, audience, `typ`, `kid`; `JWT_CLOCK_SKEW_SECONDS` defaults to 30) and never calls Auth or User per request. Each operation needs an explicit OAuth scope plus the USER/ADMIN role ([scope matrix](../../docs/SECURITY_SCOPES_RBAC.md)); ADMIN never implies scopes. Swagger is opt-in (`VELLUM_DOCS_ENABLED`), and health/Prometheus endpoints must stay on the private network. Request path: [authorization sequence](../../docs/architecture/flows/api-request-authorization.md).
 
 - **Ownership:** ratings and reactions are always written as the JWT `sub`. Reading a private rating or a reaction by ID requires the same subject; foreign or missing records answer an identical 404. `GET /rating/books/{bookId}` is the explicit public-review read (`engagement:read`).
-- **Kafka identity:** `engagement_service` reads Book/Progress and produces ratings, reactions and its own retry/DLT topics ([Kafka identities](../../docs/KAFKA_SERVICE_IDENTITIES_SEC14.md)). Ordered recovery: [sequence](../../docs/architecture/flows/ordered-consumer.md) · [quarantine states](../../docs/architecture/states/kafka-quarantine.md).
+- **Kafka identity:** `engagement_service` reads Book/Progress and produces ratings, reactions and its own retry/DLT topics ([Kafka identities](../../docs/KAFKA_SERVICE_IDENTITIES.md)). Ordered recovery: [sequence](../../docs/architecture/flows/ordered-consumer.md) · [quarantine states](../../docs/architecture/states/kafka-quarantine.md).

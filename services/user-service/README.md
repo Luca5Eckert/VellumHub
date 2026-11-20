@@ -115,4 +115,4 @@ Auth is the only issuer. This service validates RS256 `at+jwt` access tokens loc
 - **Profile ownership:** `GET /users/me` resolves the JWT `sub`; `GET /users/{id}` returns private data only to that subject and a generic 404 otherwise; `GET /users` requires ADMIN and `user:read`.
 - **Provisioning:** `POST /internal/identity/profiles` (enabled by `VELLUM_IDENTITY_PROVISIONING_ENABLED=true`) accepts only Auth with a 32+ character `VELLUM_INTERNAL_PROVISION_KEY` on the internal network; the Gateway denies the path. 201 creates, 204 is an exact replay, 409 is a collision ([identity states](../../docs/architecture/states/auth-identity-lifecycle.md)).
 - **No credentials here:** login, passwords, Google bindings and signing keys belong to Auth; User Flyway V4 removed the former credential tables.
-- **Kafka identity:** `user_service` produces `created-user-preference` only ([Kafka identities](../../docs/KAFKA_SERVICE_IDENTITIES_SEC14.md)).
+- **Kafka identity:** `user_service` produces `created-user-preference` only ([Kafka identities](../../docs/KAFKA_SERVICE_IDENTITIES.md)).

@@ -51,6 +51,6 @@ C4Component
 | Cache and bulkhead | [BookReadCache](../../../services/catalog-service/src/main/java/com/vellumhub/catalog_service/module/book/infrastructure/cache/BookReadCache.java) |
 | Outbox transaction | [OutboxBookChangeWriter](../../../services/catalog-service/src/main/java/com/vellumhub/catalog_service/module/book/application/event/OutboxBookChangeWriter.java) |
 | Delivery statuses | [JdbcOutboxStore](../../../services/catalog-service/src/main/java/com/vellumhub/catalog_service/module/outbox/infrastructure/persistence/JdbcOutboxStore.java) |
-| Cache hardening | [Runbook](../../CATALOG_REDIS_CACHE.md) · [PR #370](https://github.com/Luca5Eckert/VellumHub/pull/370) |
+| Cache hardening | [Runbook](../../CATALOG_REDIS_CACHE.md) |
 
 Detailed flows: [cache sequence](../flows/catalog-cache.md) · [Book Outbox](../flows/book-outbox.md) · [Outbox states](../states/outbox-delivery.md).

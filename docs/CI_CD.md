@@ -1,6 +1,6 @@
 # CI/CD — VellumHub Java Backend
 
-**Estado:** implementação na [PR #344](https://github.com/Luca5Eckert/VellumHub/pull/344), em revisão. A PR não realiza merge, release GHCR, GitOps nem deployment operacional. Aprovação de PR não valida permissões de publicação na `main`.
+Os workflows abaixo estão na `main`. Um run verde de PR não é release GHCR, GitOps nem deployment operacional, e aprovação de PR não valida permissões de publicação na `main`.
 
 ## Fluxo de entrega — imagem única por execução
 
@@ -36,7 +36,7 @@ O overlay `deploy/kubernetes/overlays/ci` usa issuer e cliente OAuth2/PKCE de te
 - A incompatibilidade de Testcontainers 1.20.4 e Docker 29 foi corrigida nos seis POMs para Testcontainers 1.21.4; nenhuma suíte foi desabilitada.
 - `python3 -m unittest discover -s tools/ci -p 'test_*.py' -v` cobre rejeição de arquivos adulterados, release-set incompleto, SHA/digest errado e falsos verdes no Job Kubernetes.
 - A proteção da main exige ajuste pelo GitHub Rulesets (fora do YAML); conferir nomes efetivos para exigir o workflow PR, os scans, Kind, CodeQL e contratos de segurança. Até habilitar, o workflow verde **não prova proteção de branch**.
-- Há risco de supply chain residual em `@v4`, binário Kind baixado sem checksum e imagens-base em tags mutáveis. Planejar pinning de SHA/digest e atualização automatizada como follow-up de segurança.
+- Há risco de supply chain residual em `@v4`, binário Kind baixado sem checksum e imagens-base em tags mutáveis. Pinning de SHA/digest e atualização automatizada ainda não estão implementados.
 
 ## Medições e interpretação
 

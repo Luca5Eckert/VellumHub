@@ -52,7 +52,7 @@ Provisioned dashboards:
 - `Kafka Flow`
 - `Recommendation Health`
 
-The dashboards are versioned definitions; successful provisioning and ingestion still require validation under #214. The dashboards use the provisioned `Prometheus`, `Loki`, and `Tempo` datasources. Panels based on custom Kafka and business metrics remain No data until local traffic emits those series. Missing series must not be interpreted as zero errors, zero lag, or a healthy service. The popularity-fallback series is omitted because no corresponding counter is implemented.
+The dashboards are versioned definitions; provisioning and ingestion must be checked in each environment. The dashboards use the provisioned `Prometheus`, `Loki`, and `Tempo` datasources. Panels based on custom Kafka and business metrics remain No data until local traffic emits those series. Missing series must not be interpreted as zero errors, zero lag, or a healthy service. The popularity-fallback series is omitted because no corresponding counter is implemented.
 
 Validate dashboards locally:
 
@@ -81,7 +81,7 @@ Validate target health in Prometheus:
 
 ### Custom Kafka And Business Metrics
 
-Issue `#210` adds custom Micrometer metrics in `user-service`, `catalog-service`, `engagement-service`, and `recommendation-service`. Micrometer dotted names are exported by Prometheus with underscores and counter suffixes.
+Custom Micrometer metrics are emitted by `user-service`, `catalog-service`, `engagement-service`, and `recommendation-service`. Micrometer dotted names are exported by Prometheus with underscores and counter suffixes.
 
 Kafka metrics:
 
@@ -230,7 +230,7 @@ When validating logs, avoid relying on visual spot checks only. Search represent
 docker compose logs gateway-service user-service catalog-service engagement-service recommendation-service
 ```
 
-Alloy forwards log bodies without redaction. JSON formatting and low-cardinality labels do not guarantee sensitive-data removal. The following are application logging requirements, pending representative validation under #214:
+Alloy forwards log bodies without redaction. JSON formatting and low-cardinality labels do not guarantee sensitive-data removal. The following are application logging requirements; verify them against representative logs:
 
 - no complete JWT values;
 - no passwords or secrets;
@@ -251,5 +251,4 @@ Alloy forwards log bodies without redaction. JSON formatting and low-cardinality
 | `infra/observability/alloy/config.alloy` | Docker log collection, Loki forwarding, and OTLP-to-Tempo forwarding. |
 | `docs/OBSERVABILITY_RUNBOOKS.md` | Operational investigation guides linked from alerts. |
 
-Manual domain spans remain outside this issue; metrics continue to use Prometheus/Micrometer.
-
+There are no manual domain spans; metrics use Prometheus/Micrometer.

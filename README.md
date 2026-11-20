@@ -278,18 +278,18 @@ GitHub Actions verifies builds, contracts, security and images. Kustomize/Argo C
 |---|---|---|
 | Six services with separate identity/domain ownership | Implemented | [Service map](#service-ownership) |
 | Canonical Auth, Google federation, JDBC sessions and Argon2id | Implemented; live-provider/HTTPS setup is environment-specific | [Authentication](#authentication-and-authorization) |
-| OAuth scopes and human USER/ADMIN enforcement | Implemented; resource ownership hardening remains #312/#313 | [Authorization matrix](docs/SECURITY_SCOPES_RBAC.md) |
+| OAuth scopes, USER/ADMIN roles and resource ownership | Implemented | [Scopes](docs/SECURITY_SCOPES_RBAC.md) · [Authorization sequence](docs/architecture/flows/api-request-authorization.md) |
 | JVM embeddings and local pgvector ranking | Implemented | [Recommendation engine](#recommendation-engine) |
-| Central Kafka contract library | Implemented | [#199](https://github.com/Luca5Eckert/VellumHub/issues/199) |
-| Flyway migrations and PostgreSQL verification | Implemented | [#205](https://github.com/Luca5Eckert/VellumHub/issues/205) |
+| Central Kafka contract libraries (JSON and Avro) | Implemented | [kafka-contracts](lib/kafka-contracts) · [kafka-avro-contracts](lib/kafka-avro-contracts) · [Schema evolution tests](docs/SCHEMA_EVOLUTION_TESTS.md) |
+| Flyway migrations and PostgreSQL verification | Implemented | [Database migrations](docs/DATABASE_MIGRATIONS.md) |
 | Metrics, JSON logs, traces, dashboards and alerts | Six-service metric/log discovery; Auth tracing/logging parity and E2E correlation tracked separately | [Observability](docs/OBSERVABILITY.md) |
 | CI, immutable images, Kubernetes, Kustomize, and Argo CD | Implemented | [Kubernetes](deploy/kubernetes/README.md) |
 | Central Swagger UI and service-owned OpenAPI | Implemented | [API documentation](docs/api-documentation.md) |
 | Contract-derived Postman collection and workflows | Implemented | [Postman](postman/README.md) |
-| Real Kafka + PostgreSQL/pgvector distributed testing | Cross-service suite and Recommendation benchmarks implemented | [#207](https://github.com/Luca5Eckert/VellumHub/issues/207) |
-| Recommendation convergence, read-autonomy, and freshness benchmark | Implemented in PR #286 | [#283](https://github.com/Luca5Eckert/VellumHub/issues/283) |
-| Consumer idempotency | #200 implementation merged via #299 for canonical Book/Reading Progress/Rating/Reaction; operational cutover unverified | [#200](https://github.com/Luca5Eckert/VellumHub/issues/200), [#299](https://github.com/Luca5Eckert/VellumHub/pull/299) |
-| Transactional outbox | Merged for Catalog progress/Book and Engagement rating/reaction; not production-validated | [#295](https://github.com/Luca5Eckert/VellumHub/pull/295), [#296](https://github.com/Luca5Eckert/VellumHub/pull/296), [#297](https://github.com/Luca5Eckert/VellumHub/pull/297) |
+| Real Kafka + PostgreSQL/pgvector distributed testing | Cross-service suite and Recommendation benchmarks implemented | [Distributed testing](docs/DISTRIBUTED_TESTING.md) |
+| Recommendation convergence, read-autonomy, and freshness benchmark | Implemented | [Benchmark](services/recommendation-service/benchmark/README.md) |
+| Consumer idempotency and ordered recovery | Implemented for canonical Book, Reading Progress, Rating and Reaction streams; operational cutover unverified | [Ordered consumer](docs/architecture/flows/ordered-consumer.md) · [Quarantine states](docs/architecture/states/kafka-quarantine.md) |
+| Transactional outbox | Implemented for Catalog Book/progress and Engagement rating/reaction; not production-validated | [Book → Kafka sequence](docs/architecture/flows/book-outbox.md) · [Outbox states](docs/architecture/states/outbox-delivery.md) |
 | Broader cross-service E2E coverage | Selected real-boundary flows covered; failure/recovery coverage continues | [Distributed testing](docs/DISTRIBUTED_TESTING.md) |
 
 ## Design Principles
@@ -309,6 +309,6 @@ Keep domain ownership and contracts explicit; prefer independent reads when they
 | Event contracts and consistency | [Book](docs/BOOK_EVENTS.md) · [Engagement](docs/ENGAGEMENT_EVENTS.md) · [Idempotency](docs/CONSUMER_IDEMPOTENCY.md) |
 | Tests and reproducible measurements | [Distributed testing](docs/DISTRIBUTED_TESTING.md) · [Benchmark](services/recommendation-service/benchmark/README.md) · [Offline quality](services/recommendation-service/evaluation/README.md) |
 | Operation and delivery | [Operations](docs/OPERATIONS.md) · [Observability](docs/OBSERVABILITY.md) · [Kubernetes](deploy/kubernetes/README.md) |
-| Security | [Authorization sequence](docs/architecture/flows/api-request-authorization.md) · [Identity states](docs/architecture/states/auth-identity-lifecycle.md) · [Kafka identities](docs/KAFKA_SERVICE_IDENTITIES_SEC14.md) |
+| Security | [Authorization sequence](docs/architecture/flows/api-request-authorization.md) · [Identity states](docs/architecture/states/auth-identity-lifecycle.md) · [Kafka identities](docs/KAFKA_SERVICE_IDENTITIES.md) |
 
 Detailed decision history, alternatives, personal engineering plans and dated experiments are maintained in the Obsidian Vault. This public README focuses on implemented capabilities, code structure, results and reproduction.

@@ -137,12 +137,12 @@ The resource baseline is intentionally modest: gateway/user 512Mi request, catal
 JWT verifiers fetch only trusted public RS256 keys from `JWT_JWKS_URI` and require matching `JWT_ISSUER`, `JWT_AUDIENCE`, `typ=at+jwt`, UUID subject, `client_id`, `jti`, issued/expiry times and signature; unknown kids fail closed. `JWT_CLOCK_SKEW_SECONDS` defaults to 30. Only `auth-service` mounts the signing key (one active key; rotation is not implemented). See the [authorization sequence](../../docs/architecture/flows/api-request-authorization.md).
 
 
-### SEC-14 Kafka authorization
+### Kafka authorization
 
 The production overlay requires `SASL_SSL`, four **separate** broker client
 identities and their `KAFKA_*_JAAS` keys from a Secret manager. Broker-side
 ACLs are provisioned separately, not from app pods. The local single-node Kafka
 is intentionally insecure and not a production template; use a managed or
 externally secured Kafka broker in production.
-See [SEC-14](../../docs/KAFKA_SERVICE_IDENTITIES_SEC14.md) for TLS, provisioning,
+See [Kafka service identities](../../docs/KAFKA_SERVICE_IDENTITIES.md) for TLS, provisioning,
 rotation, rollback and tests.

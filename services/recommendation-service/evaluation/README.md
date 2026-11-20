@@ -1,6 +1,6 @@
 # Offline Recommendation Quality Evaluation
 
-This harness implements VellumHub issue #282. It compares the current personalized ranker with explicit ranking baselines using the same deterministic text dataset, user profiles, holdout relevance set, exclusions, embedding pipeline, and eligible candidate pool.
+This harness compares the current personalized ranker with explicit ranking baselines using the same deterministic text dataset, user profiles, holdout relevance set, exclusions, embedding pipeline, and eligible candidate pool.
 
 ## What is measured
 

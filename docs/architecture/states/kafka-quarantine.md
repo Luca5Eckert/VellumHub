@@ -14,16 +14,18 @@ related: [vh-ordered-consumer, vh-service-engagement, vh-service-recommendation]
 ```mermaid
 stateDiagram-v2
     [*] --> BLOCKED: retries exhausted / DLT copy acked, row upserted, partition paused
-    BLOCKED --> BLOCKED: rebalance / partition paused again on assignment
     BLOCKED --> RETRY_REQUESTED: operator resume after fix (scripts/kafka-recovery.py)
-    RETRY_REQUESTED --> RETRY_REQUESTED: consumer restart / seek to original offset
     RETRY_REQUESTED --> RESOLVED: record at that offset processed successfully
     RETRY_REQUESTED --> BLOCKED: fails again / upsert BLOCKED, attempts updated
     RESOLVED --> [*]
-    note right of BLOCKED
-      If DLT publish or the DB write fails,
-      no row is written and the source record
-      is retried at the transport level.
+    note left of BLOCKED
+      On every rebalance the partition is paused again.
+      If the DLT publish or the DB write fails, no row
+      is written and the record is retried by Kafka.
+    end note
+    note right of RETRY_REQUESTED
+      On consumer restart the partition
+      seeks to the original offset.
     end note
 ```
 
