@@ -30,7 +30,7 @@ jobs:
         run: docker pull pgvector/pgvector:pg15
       - name: Run reproducible recommendation evaluation
         run: >-
-          mvn -B -ntp -pl services/recommendation-service -am
+          bash tools/ci/retry_dependency_resolution.sh mvn -B -ntp -pl services/recommendation-service -am
           -Dtest=RecommendationQualityEvaluationIT
           -Dsurefire.failIfNoSpecifiedTests=false
           -Dgroups=evaluation
