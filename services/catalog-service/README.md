@@ -36,6 +36,17 @@ quando não há correspondência. A migração Flyway V7 cria um índice GIN
 parcial para os livros visíveis. A busca consulta o PostgreSQL diretamente
 para refletir criações, atualizações e exclusões do catálogo.
 
+Para reproduzir a validação da consulta e do índice em PostgreSQL 15
+descartável, execute da raiz do repositório:
+
+```bash
+bash infra/scripts/validation/verify-catalog-search.sh
+```
+
+O teste usa Docker e Python 3. Aplica as migrações V1–V7 e executa o SQL
+do repositório com registros de teste. Também confirma o plano GIN com
+6 mil livros adicionais.
+
 ## What It Owns
 
 | Concern | Owned here |
