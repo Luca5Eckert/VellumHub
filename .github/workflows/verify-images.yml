@@ -106,7 +106,7 @@ jobs:
           fi
           started_at=$(date +%s)
           bash tools/ci/retry_dependency_resolution.sh mvn -B -ntp -T 2 -Pdistributed-e2e -pl "$DISTRIBUTED_MODULE" -am \
-            -Dgroups=distributed -DexcludedGroups=book-avro-e2e "${suite_args[@]}" test
+            -Dgroups=distributed -DexcludedGroups=book-avro-e2e,preference-avro-e2e "${suite_args[@]}" test
           elapsed=$(( $(date +%s) - started_at ))
           echo "Distributed integration suite execution: ${elapsed}s"
           if (( elapsed > 150 )); then
