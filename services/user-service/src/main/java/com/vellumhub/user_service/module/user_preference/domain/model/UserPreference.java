@@ -34,4 +34,7 @@ public class UserPreference {
 
     private String about;
 
+    @Builder.Default
+    private long revision = -1;
+
 }

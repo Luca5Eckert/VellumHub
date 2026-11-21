@@ -4,20 +4,15 @@ import com.vellumhub.user_service.module.user.application.exception.UserNotFound
 import com.vellumhub.user_service.module.user.domain.UserEntity;
 import com.vellumhub.user_service.module.user.domain.port.UserRepository;
 import com.vellumhub.user_service.module.user_preference.application.command.CreateUserPreferenceCommand;
-import com.vellumhub.kafka.contracts.user.CreateUserPreferenceEvent;
 import com.vellumhub.user_service.module.user_preference.domain.model.UserPreference;
 import com.vellumhub.user_service.module.user_preference.domain.port.UserPreferenceRepository;
-import com.vellumhub.user_service.share.metrics.VellumHubMetrics;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.kafka.core.KafkaTemplate;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,7 +20,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,10 +32,9 @@ class CreateUserPreferenceUseCaseTest {
     private UserRepository userRepository;
 
     @Mock
-    private KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate;
+    private PreferenceOutbox outbox;
 
     private CreateUserPreferenceUseCase createUserPreferenceUseCase;
-    private SimpleMeterRegistry meterRegistry;
 
     private UUID userId;
     private UserEntity user;
@@ -52,32 +45,29 @@ class CreateUserPreferenceUseCaseTest {
         userId = UUID.randomUUID();
         user = mock(UserEntity.class);
         command = new CreateUserPreferenceCommand(userId, List.of("FANTASY", "SCIENCE_FICTION"), "I love sci-fi books");
-        meterRegistry = new SimpleMeterRegistry();
         createUserPreferenceUseCase = new CreateUserPreferenceUseCase(
                 userPreferenceRepository,
                 userRepository,
-                kafkaTemplate,
-                new VellumHubMetrics(meterRegistry)
+                outbox
         );
     }
 
     @Test
     void execute_whenUserDoesNotExist_shouldThrowUserNotFoundException() {
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        when(userRepository.findByIdForPreferenceUpdate(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> createUserPreferenceUseCase.execute(command))
                 .isInstanceOf(UserNotFoundException.class);
 
         verify(userPreferenceRepository, never()).save(any());
-        verify(kafkaTemplate, never()).send(any(), any(), any());
+        verifyNoInteractions(outbox);
     }
 
     @Test
     void execute_whenPreferenceDoesNotExist_shouldCreateNewPreference() {
         when(user.getId()).thenReturn(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdForPreferenceUpdate(userId)).thenReturn(Optional.of(user));
         when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.empty());
-        stubKafkaSendSuccess();
 
         createUserPreferenceUseCase.execute(command);
 
@@ -91,7 +81,7 @@ class CreateUserPreferenceUseCaseTest {
     }
 
     @Test
-    void execute_whenPreferenceAlreadyExists_shouldReuseExistingPreference() {
+    void execute_whenPreferenceAlreadyExists_shouldReplaceGenresAndPublishUpdatedPreference() {
         when(user.getId()).thenReturn(userId);
 
         UserPreference existing = UserPreference.builder()
@@ -100,9 +90,8 @@ class CreateUserPreferenceUseCaseTest {
                 .about("old about")
                 .build();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdForPreferenceUpdate(userId)).thenReturn(Optional.of(user));
         when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.of(existing));
-        stubKafkaSendSuccess();
 
         createUserPreferenceUseCase.execute(command);
 
@@ -111,73 +100,23 @@ class CreateUserPreferenceUseCaseTest {
 
         UserPreference saved = captor.getValue();
         assertThat(saved.getUser()).isEqualTo(user);
-        assertThat(saved.getGenres()).isEqualTo(List.of("ROMANCE"));
-        assertThat(saved.getAbout()).isEqualTo("old about");
+        assertThat(saved).isSameAs(existing);
+        assertThat(saved.getGenres()).isEqualTo(command.genres());
+        assertThat(saved.getAbout()).isEqualTo(command.about());
+        verify(outbox).enqueue(userId, 0, command.genres(), command.about());
     }
 
     @Test
-    void execute_shouldPublishEventWithCorrectTopic() {
+    void execute_enqueuesSnapshotAfterSavingTheNextRevision() {
         when(user.getId()).thenReturn(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.empty());
-        stubKafkaSendSuccess();
+        when(userRepository.findByIdForPreferenceUpdate(userId)).thenReturn(Optional.of(user));
+        var existing = UserPreference.builder().user(user).revision(4).build();
+        when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.of(existing));
 
         createUserPreferenceUseCase.execute(command);
 
-        verify(kafkaTemplate).send(eq("created-user-preference"), eq(userId.toString()), any(CreateUserPreferenceEvent.class));
-    }
-
-    @Test
-    void execute_shouldPublishEventWithCorrectPayload() {
-        when(user.getId()).thenReturn(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.empty());
-        stubKafkaSendSuccess();
-
-        createUserPreferenceUseCase.execute(command);
-
-        ArgumentCaptor<CreateUserPreferenceEvent> captor = ArgumentCaptor.forClass(CreateUserPreferenceEvent.class);
-        verify(kafkaTemplate).send(any(), any(), captor.capture());
-
-        CreateUserPreferenceEvent event = captor.getValue();
-        assertThat(event.userId()).isEqualTo(userId);
-        assertThat(event.genres()).isEqualTo(command.genres());
-        assertThat(event.about()).isEqualTo(command.about());
-    }
-
-    @Test
-    void execute_shouldSaveBeforePublishingEvent() {
-        when(user.getId()).thenReturn(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.empty());
-        stubKafkaSendSuccess();
-
-        var inOrder = inOrder(userPreferenceRepository, kafkaTemplate);
-
-        createUserPreferenceUseCase.execute(command);
-
-        inOrder.verify(userPreferenceRepository).save(any());
-        inOrder.verify(kafkaTemplate).send(any(), any(), any());
-    }
-
-    @Test
-    void execute_shouldCountSuccessfulKafkaPublication() {
-        when(user.getId()).thenReturn(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.empty());
-        stubKafkaSendSuccess();
-
-        createUserPreferenceUseCase.execute(command);
-
-        assertThat(meterRegistry.get("vellumhub.kafka.events.published")
-                .tag("topic", "created-user-preference")
-                .tag("event_type", "CreateUserPreferenceEvent")
-                .counter()
-                .count()).isEqualTo(1.0);
-    }
-
-    private void stubKafkaSendSuccess() {
-        when(kafkaTemplate.send(any(), any(), any(CreateUserPreferenceEvent.class)))
-                .thenReturn(CompletableFuture.completedFuture(null));
+        var order = inOrder(userPreferenceRepository, outbox);
+        order.verify(userPreferenceRepository).save(existing);
+        order.verify(outbox).enqueue(userId, 5, command.genres(), command.about());
     }
 }

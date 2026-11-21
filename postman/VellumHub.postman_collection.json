@@ -489,6 +489,108 @@
               "response": []
             }
           ]
+        },
+        {
+          "name": "user-preference-controller",
+          "item": [
+            {
+              "name": "List Catalog genres available for onboarding",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/users/genres",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "genres"
+                  ]
+                },
+                "description": "List Catalog genres available for onboarding\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `genres`."
+              },
+              "response": []
+            },
+            {
+              "name": "Read own genre preferences",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/users/me/preferences",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "me",
+                    "preferences"
+                  ]
+                },
+                "description": "Returns an empty list before preferences are set.\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `getOwn`."
+              },
+              "response": []
+            },
+            {
+              "name": "Replace own genre preferences",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/users/me/preferences",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "me",
+                    "preferences"
+                  ]
+                },
+                "description": "Use the exact genre names returned by GET /users/genres.\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `replaceOwn`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"genres\": [\n    \"Fantasy\",\n    \"Science Fiction\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            }
+          ]
         }
       ]
     },

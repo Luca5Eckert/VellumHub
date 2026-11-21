@@ -116,3 +116,22 @@ Auth is the only issuer. This service validates RS256 `at+jwt` access tokens loc
 - **Provisioning:** `POST /internal/identity/profiles` (enabled by `VELLUM_IDENTITY_PROVISIONING_ENABLED=true`) accepts only Auth with a 32+ character `VELLUM_INTERNAL_PROVISION_KEY` on the internal network; the Gateway denies the path. 201 creates, 204 is an exact replay, 409 is a collision ([identity states](../../docs/architecture/states/auth-identity-lifecycle.md)).
 - **No credentials here:** login, passwords, Google bindings and signing keys belong to Auth; User Flyway V4 removed the former credential tables.
 - **Kafka identity:** `user_service` produces `created-user-preference` only ([Kafka identities](../../docs/KAFKA_SERVICE_IDENTITIES.md)).
+
+### Preferências de gênero
+
+| Método e rota no Gateway | Escopo | Resultado |
+| --- | --- | --- |
+| `GET /api/v1/users/genres` | `user:read` | Nomes canônicos dos gêneros de onboarding do Catalog |
+| `GET /api/v1/users/me/preferences` | `user:read` | Preferências do titular ou uma lista vazia |
+| `PUT /api/v1/users/me/preferences` | `user:write` | Substitui os gêneros do titular e retorna a seleção |
+
+O corpo de `PUT` é um objeto como `{"genres":["Fantasy","Science Fiction"]}`.
+A lista deve ter de 1 a 10 nomes distintos retornados por `GET /users/genres`.
+A identidade vem do `sub` autenticado. O Catalog mantém a taxonomia padrão
+em um contrato compartilhado com o User para evitar divergência e chamadas
+síncronas entre os serviços. Cada substituição grava a próxima revisão e
+um snapshot no outbox dentro da mesma transação do PostgreSQL. O relay usa
+`created-user-preference` com a chave do usuário, remove o registro após o
+ACK do Kafka e tenta novamente em caso de falha, respeitando a ordem de
+revisão por usuário. A entrega permanece ao menos uma vez. O evento JSON
+mantém o contrato atual do Recommendation durante a transição Avro da #374.

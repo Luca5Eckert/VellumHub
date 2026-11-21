@@ -1,6 +1,10 @@
 package com.vellumhub.user_service.share.config;
 
 import com.vellumhub.user_service.UserServiceApplication;
+import com.vellumhub.user_service.module.user_preference.application.command.CreateUserPreferenceCommand;
+import com.vellumhub.user_service.module.user_preference.application.use_case.CreateUserPreferenceUseCase;
+import com.vellumhub.kafka.contracts.user.CreateUserPreferenceEvent;
+import com.vellumhub.user_service.module.user_preference.infrastructure.KafkaPreferenceOutbox;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -11,23 +15,36 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @Testcontainers
 @ActiveProfiles("prod")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FlywayPostgresIntegrationTest {
+
+    @MockitoBean
+    KafkaTemplate<String, CreateUserPreferenceEvent> kafkaTemplate;
 
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:15-alpine")
@@ -83,6 +100,54 @@ class FlywayPostgresIntegrationTest {
 
     @Test
     @Order(3)
+    void replacesSavedGenresAndPreservesTheExistingEventContract(
+            @Autowired JdbcTemplate jdbc, @Autowired CreateUserPreferenceUseCase preferences,
+            @Autowired KafkaPreferenceOutbox outbox, @Autowired TransactionTemplate transactions) {
+        UUID userId = UUID.fromString("019a0000-1111-7000-8000-000000000001");
+        when(kafkaTemplate.send(any(String.class), any(String.class), any(CreateUserPreferenceEvent.class)))
+                .thenReturn(CompletableFuture.failedFuture(new IllegalStateException("fixture broker offline")))
+                .thenReturn(CompletableFuture.completedFuture(null));
+
+        assertThat(preferences.findGenres(userId)).isEmpty();
+        preferences.execute(new CreateUserPreferenceCommand(userId, List.of("Fantasy"), "existing bio"));
+        preferences.execute(new CreateUserPreferenceCommand(userId, List.of("History", "Adventure"), null));
+
+        assertThat(preferences.findGenres(userId)).containsExactlyInAnyOrder("History", "Adventure");
+        assertThat(jdbc.queryForObject("select count(*) from user_preferences where user_id = ?",
+                Integer.class, userId)).isEqualTo(1);
+        assertThat(jdbc.queryForList("select revision from user_preference_outbox where user_id = ? order by revision",
+                Long.class, userId)).containsExactly(0L, 1L);
+        verifyNoInteractions(kafkaTemplate);
+
+        outbox.dispatchNext();
+        outbox.dispatchNext();
+        assertThat(jdbc.queryForList("select revision from user_preference_outbox where user_id = ? order by revision",
+                Long.class, userId)).containsExactly(0L, 1L);
+
+        jdbc.update("update user_preference_outbox set next_attempt_at = current_timestamp where user_id = ? and revision = 0",
+                userId);
+        outbox.dispatchNext();
+        outbox.dispatchNext();
+
+        var order = inOrder(kafkaTemplate);
+        order.verify(kafkaTemplate, org.mockito.Mockito.times(2)).send("created-user-preference", userId.toString(),
+                new CreateUserPreferenceEvent(userId, List.of("Fantasy"), "existing bio"));
+        order.verify(kafkaTemplate).send("created-user-preference", userId.toString(),
+                new CreateUserPreferenceEvent(userId, List.of("History", "Adventure"), "existing bio"));
+        assertThat(jdbc.queryForObject("select count(*) from user_preference_outbox where user_id = ?",
+                Integer.class, userId)).isZero();
+
+        transactions.executeWithoutResult(status -> {
+            preferences.execute(new CreateUserPreferenceCommand(userId, List.of("Romance"), null));
+            status.setRollbackOnly();
+        });
+        assertThat(preferences.findGenres(userId)).containsExactlyInAnyOrder("History", "Adventure");
+        assertThat(jdbc.queryForObject("select count(*) from user_preference_outbox where user_id = ?",
+                Integer.class, userId)).isZero();
+    }
+
+    @Test
+    @Order(4)
     void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(@Autowired JdbcTemplate jdbcTemplate) {
         jdbcTemplate.execute("alter table tb_users drop column email");
 
@@ -113,6 +178,7 @@ class FlywayPostgresIntegrationTest {
                 Map.entry("spring.datasource.password", POSTGRES.getPassword()),
                 Map.entry("spring.kafka.bootstrap-servers", "localhost:65535"),
                 Map.entry("spring.kafka.listener.auto-startup", "false"),
+                Map.entry("app.preference-outbox.enabled", "false"),
                 Map.entry("spring.kafka.admin.fail-fast", "false"),
                 Map.entry("management.health.kafka.enabled", "false"),
                 Map.entry("JWT_JWKS_URI", "http://127.0.0.1:1/oauth2/jwks"),
