@@ -1,5 +1,6 @@
 package com.vellumhub.recommendation_service.share.kafka.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.vellumhub.recommendation_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.kafka.contracts.KafkaTopics;
@@ -26,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@ConditionalOnProperty(name = "app.kafka.json-listeners.enabled", havingValue = "true", matchIfMissing = true)
 @Configuration
 @Slf4j
 public class KafkaRetryConfig {

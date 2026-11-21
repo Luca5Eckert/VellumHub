@@ -1,5 +1,6 @@
 package com.vellumhub.engagement_service.module.book_snapshot.presentation.consumer;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.vellumhub.engagement_service.module.book_snapshot.application.command.DeleteBookSnapshotCommand;
 import com.vellumhub.engagement_service.module.book_snapshot.application.use_case.DeleteBookSnapshotUseCase;
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
@@ -12,6 +13,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Slf4j
+@ConditionalOnProperty(name = "app.kafka.json-listeners.enabled", havingValue = "true", matchIfMissing = true)
 @Component
 public class DeleteBookEventConsumer {
 

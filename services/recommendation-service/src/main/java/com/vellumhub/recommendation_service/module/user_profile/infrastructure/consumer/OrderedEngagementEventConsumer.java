@@ -1,5 +1,6 @@
 package com.vellumhub.recommendation_service.module.user_profile.infrastructure.consumer;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.kafka.contracts.KafkaTopics;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 /** Message type is selected by the producer's explicit, allowlisted JSON type alias. */
 @Slf4j
+@ConditionalOnProperty(name = "app.kafka.json-listeners.enabled", havingValue = "true", matchIfMissing = true)
 @Component
 public class OrderedEngagementEventConsumer {
     private final EngagementEventProcessor processor;

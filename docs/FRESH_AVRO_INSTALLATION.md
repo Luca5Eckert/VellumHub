@@ -14,7 +14,7 @@ Use este procedimento para ambientes **sem dados legados**: ele seleciona as rot
 
 Os subjects de `infra/schema-registry/contracts.json` são registrados antes da criação de fatos. Usa-se Confluent-compatible Avro, `TopicRecordNameStrategy`, `BACKWARD_TRANSITIVE` e `auto.register.schemas=false`. O Registry 3.1.7 persiste metadados/IDs em PostgreSQL dedicado; Kafka e dados dos aplicativos continuam em volumes separados.
 
-**Não desabilite globalmente os listeners JSON:** `KAFKA_LEGACY_CONSUMERS_ENABLED=true` permanece propositalmente enquanto existirem rotas legadas independentes. Nesta instalação nova, as cinco rotas da tabela publicam em Avro. A migração de instalações existentes requer o procedimento de cada stream.
+Nesta instalação nova, as cinco rotas publicam e consomem Avro. O overlay desativa os listeners JSON canônicos e de compatibilidade em Engagement e Recommendation. O Compose padrão mantém esses listeners para instalações existentes, que devem seguir o procedimento de migração de cada stream.
 
 ## Compose local: caminho de instalação nova
 
@@ -76,8 +76,7 @@ Os arquivos Kustomize antigos `local` e `prod` **não foram alterados**. Em AWS/
 O bootstrap registra `user-preference-events.avro` e ativa o publisher de User
 e o consumidor ordenado de Recommendation. Cada usuário começa na revisão
 Avro zero. A revisão Avro gravada no outbox determina o formato de cada
-envio, inclusive nas tentativas posteriores. O overlay mantém os flags de
-compatibilidade específicos dos demais streams.
+envio, inclusive nas tentativas posteriores.
 
 Em uma instalação existente, interrompa temporariamente as escritas de
 preferências e aguarde o outbox JSON e o lag do grupo
@@ -87,6 +86,14 @@ e as ACLs. Ative `USER_PREFERENCE_AVRO_CONSUMER_ENABLED=true` e
 prontidão do consumidor, ative `USER_PREFERENCE_AVRO_WRITE_ENABLED=true`
 em todas as réplicas de User e retome as escritas. Use
 `USER_PREFERENCE_AVRO_REGISTRY_URL` nos dois serviços.
+
+O workflow de aceitação de streams canônicos tem uma suíte de preferências
+com Kafka, Registry e PostgreSQL descartáveis. Para executá-la localmente:
+
+```bash
+./mvnw -B -ntp -pl services/recommendation-service -am \
+  -Dgroups=preference-avro-e2e -Dsurefire.failIfNoSpecifiedTests=false test
+```
 
 O consumidor aplica a projeção, a identidade do evento e o checkpoint
 na mesma transação. Reentregas idênticas são ignoradas, e lacunas e colisões

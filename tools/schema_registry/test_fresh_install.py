@@ -28,7 +28,9 @@ class FreshInstallTest(unittest.TestCase):
                 if key.endswith("REGISTRY_URL"):
                     self.assertEqual(REGISTRY_URL, val)
         env = config["services"]["recommendation-service"]["environment"]
-        self.assertEqual("true", env["KAFKA_LEGACY_CONSUMERS_ENABLED"])
+        self.assertEqual("false", env["KAFKA_LEGACY_CONSUMERS_ENABLED"])
+        for name in ("engagement-service", "recommendation-service"):
+            self.assertEqual("false", config["services"][name]["environment"]["KAFKA_JSON_LISTENERS_ENABLED"])
 
     def test_local_bootstrap_uses_only_manifest_approved_avro_topics(self):
         subjects = self.read_yaml("infra/schema-registry/contracts.json")["subjects"]
@@ -40,6 +42,10 @@ class FreshInstallTest(unittest.TestCase):
         current = {"services": {name: {"environment": dict(values)} for name, values in REQUIRED.items()}}
         self.assertTrue(verify_config(current))
         current["services"]["catalog-service"]["environment"]["BOOK_EVENTS_WIRE_FORMAT"] = "json"
+        with self.assertRaises(BootstrapError):
+            verify_config(current)
+        current["services"]["catalog-service"]["environment"]["BOOK_EVENTS_WIRE_FORMAT"] = "avro"
+        current["services"]["engagement-service"]["environment"]["KAFKA_JSON_LISTENERS_ENABLED"] = "true"
         with self.assertRaises(BootstrapError):
             verify_config(current)
 

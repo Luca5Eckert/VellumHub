@@ -1,10 +1,12 @@
 package com.vellumhub.engagement_service.module.reading_progress.infrastructure.kafka;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.vellumhub.engagement_service.module.reading_progress.application.use_case.ProcessOrderedReadingProgressUseCase;
 import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+@ConditionalOnProperty(name = "app.kafka.json-listeners.enabled", havingValue = "true", matchIfMissing = true)
 @Component
 public class OrderedReadingProgressConsumer {
     private final ProcessOrderedReadingProgressUseCase process;
