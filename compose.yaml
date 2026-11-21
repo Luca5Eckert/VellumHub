@@ -332,6 +332,9 @@ services:
   alloy:
     image: grafana/alloy:v1.16.1
     restart: unless-stopped
+    environment:
+      NO_PROXY: "${NO_PROXY:-localhost,127.0.0.1},loki,tempo"
+      no_proxy: "${no_proxy:-${NO_PROXY:-localhost,127.0.0.1}},loki,tempo"
     ports:
       - "12345:12345"
     volumes:
