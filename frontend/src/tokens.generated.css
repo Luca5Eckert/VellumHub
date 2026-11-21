@@ -1,0 +1,29 @@
+/* Generated from tokens.json. */
+:root {
+  color-scheme: light;
+  --canvas: #f5f2ea;
+  --surface: #fffdf7;
+  --ink: #22271e;
+  --muted: #4e5549;
+  --line: #737a6d;
+  --accent: #284c37;
+  --on-accent: #ffffff;
+  --danger: #a12a25;
+  --cover: #d7ddcc;
+  --radius: 0.65rem;
+  --space: 1rem;
+  --control: 2.75rem;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #1b211b;
+  --surface: #242d24;
+  --ink: #f6f3e7;
+  --muted: #ced6c7;
+  --line: #879583;
+  --accent: #a8d1ad;
+  --on-accent: #192b1e;
+  --danger: #ffb6aa;
+  --cover: #394b3a;
+}
