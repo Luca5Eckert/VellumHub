@@ -497,7 +497,7 @@ services:
       <<: *java-build
       args:
         SERVICE: user-service
-        DEPS_STAGE: deps-kafka
+        DEPS_STAGE: deps-avro
     restart: on-failure
     env_file: .env
     environment:

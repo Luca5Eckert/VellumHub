@@ -22,11 +22,15 @@ REGISTRY = [
     "-f", "infra/compose/schema-registry-app-network.yaml",
 ]
 REGISTRY_URL = "http://schema-registry:8080/apis/ccompat/v7"
-# Contract manifest is the source of truth for the four dedicated Avro topics.
+# Contract manifest is the source of truth for the dedicated Avro topics.
 AVRO_TOPICS = sorted({entry["topic"] for entry in json.loads(
     (ROOT / "infra/schema-registry/contracts.json").read_text(encoding="utf-8")
 )["subjects"]})
 REQUIRED = {
+    "user-service": {
+        "USER_PREFERENCE_AVRO_WRITE_ENABLED": "true",
+        "USER_PREFERENCE_AVRO_REGISTRY_URL": REGISTRY_URL,
+    },
     "catalog-service": {
         "BOOK_EVENTS_WIRE_FORMAT": "avro",
         "READING_PROGRESS_EVENTS_WIRE_FORMAT": "avro",
@@ -43,6 +47,9 @@ REQUIRED = {
         "ENGAGEMENT_AVRO_REGISTRY_URL": REGISTRY_URL,
     },
     "recommendation-service": {
+        "USER_PREFERENCE_AVRO_CONSUMER_ENABLED": "true",
+        "USER_PREFERENCE_JSON_CONSUMER_ENABLED": "false",
+        "USER_PREFERENCE_AVRO_REGISTRY_URL": REGISTRY_URL,
         "BOOK_AVRO_CONSUMER_ENABLED": "true",
         "READING_PROGRESS_AVRO_CONSUMER_ENABLED": "true",
         "ENGAGEMENT_RATINGS_AVRO_CONSUMER_ENABLED": "true",

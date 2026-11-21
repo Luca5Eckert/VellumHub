@@ -20,6 +20,11 @@
 	</properties>
 
 	<dependencies>
+        <dependency>
+            <groupId>com.vellumhub</groupId>
+            <artifactId>kafka-avro-contracts</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <!-- AFF-STR-001/002: test-only architectural invariants -->
         <dependency>
             <groupId>com.tngtech.archunit</groupId>

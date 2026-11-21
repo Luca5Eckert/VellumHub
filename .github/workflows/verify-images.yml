@@ -216,7 +216,7 @@ jobs:
           - service: user-service
             image: vellumhub-user
             dockerfile: infra/docker/java/Dockerfile
-            dep_stage: deps-kafka
+            dep_stage: deps-avro
             runtime_image: eclipse-temurin:21-jre-alpine
             app_port: '8080'
             health_port: '8080'

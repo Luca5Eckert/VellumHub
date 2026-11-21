@@ -1,6 +1,7 @@
 package com.vellumhub.user_service.module.user_preference.infrastructure;
 
 import com.vellumhub.kafka.contracts.user.CreateUserPreferenceEvent;
+import com.vellumhub.kafka.contracts.user.UserPreferenceChanged;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -18,6 +19,7 @@ class PreferenceOutboxEvent {
     private UUID eventId;
     private UUID userId;
     private long revision;
+    private Long avroRevision;
     private Instant occurredAt;
     private Instant nextAttemptAt;
     @JdbcTypeCode(SqlTypes.ARRAY)
@@ -26,18 +28,27 @@ class PreferenceOutboxEvent {
 
     protected PreferenceOutboxEvent() {}
 
-    PreferenceOutboxEvent(UUID userId, long revision, List<String> genres, String about) {
+    PreferenceOutboxEvent(UUID userId, long revision, Long avroRevision, List<String> genres, String about) {
         eventId = UUID.randomUUID();
         occurredAt = Instant.now();
         nextAttemptAt = occurredAt;
         this.userId = userId;
         this.revision = revision;
+        this.avroRevision = avroRevision;
         this.genres = genres.toArray(String[]::new);
         this.about = about;
     }
 
     CreateUserPreferenceEvent legacyPayload() {
         return new CreateUserPreferenceEvent(userId, List.of(genres), about);
+    }
+
+    boolean isAvro() {
+        return avroRevision != null;
+    }
+
+    UserPreferenceChanged avroPayload() {
+        return new UserPreferenceChanged(eventId, occurredAt, userId, avroRevision, List.of(genres), about);
     }
 
     void retryAfter(Instant instant) {

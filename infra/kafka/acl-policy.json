@@ -18,7 +18,8 @@
   },
   "user_service": {
     "publish": [
-      "created-user-preference"
+      "created-user-preference",
+      "user-preference-events.avro"
     ],
     "subscribe": [],
     "legacy_retry": [],
@@ -83,7 +84,8 @@
       "book-events.avro",
       "reading-progress-events.avro",
       "engagement.ratings.v1.avro",
-      "engagement.reactions.v1.avro"
+      "engagement.reactions.v1.avro",
+      "user-preference-events.avro"
     ],
     "legacy_retry": [
       "created-book",
@@ -104,7 +106,8 @@
       "book-events.avro",
       "reading-progress-events.avro",
       "engagement.ratings.v1.avro",
-      "engagement.reactions.v1.avro"
+      "engagement.reactions.v1.avro",
+      "user-preference-events.avro"
     ],
     "groups": [
       "recommendation-service",
@@ -114,7 +117,8 @@
       "recommendation-service-book-avro",
       "recommendation-service-reading-progress-avro",
       "recommendation-service-ratings-avro",
-      "recommendation-service-reactions-avro"
+      "recommendation-service-reactions-avro",
+      "recommendation-service-preferences-avro"
     ]
   }
 }

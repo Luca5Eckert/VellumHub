@@ -19,7 +19,7 @@ publishing still requires topic-specific `Write`.
 | Broker identity | Publishes | Subscribes | Consumer groups |
 | --- | --- | --- | --- |
 | `catalog_service` | `book-events`, `reading-progress-events`, Book/Progress legacy topics | none | none |
-| `user_service` | `created-user-preference` | none | none |
+| `user_service` | `created-user-preference`, `user-preference-events.avro` | none | none |
 | `engagement_service` | `engagement.ratings.v1`, `engagement.reactions.v1`, legacy rating/reaction topics; own retry and DLT | `book-events`, `reading-progress-events`, Book/Progress legacy topics; own retry/DLT | `engagement-service`, `engagement-service-dlt-group`, generated retry groups |
 | `recommendation_service` | only retry and DLT transport | Book/Progress/Engagement streams and legacy user-preference/ratings/reactions | `recommendation-service`, `recommendation-group`, `recommendation_service_group`, `recommendation-service-dlt-group`, generated retry groups |
 

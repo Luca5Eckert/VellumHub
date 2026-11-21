@@ -133,5 +133,4 @@ síncronas entre os serviços. Cada substituição grava a próxima revisão e
 um snapshot no outbox dentro da mesma transação do PostgreSQL. O relay usa
 `created-user-preference` com a chave do usuário, remove o registro após o
 ACK do Kafka e tenta novamente em caso de falha, respeitando a ordem de
-revisão por usuário. A entrega permanece ao menos uma vez. O evento JSON
-mantém o contrato atual do Recommendation durante a transição Avro da #374.
+revisão por usuário. A entrega permanece ao menos uma vez. O formato JSON fica ativo por padrão. Em Avro, a revisão do novo stream inicia em zero por usuário. Consulte o [procedimento de migração](../../docs/FRESH_AVRO_INSTALLATION.md#preferências-no-kafka).

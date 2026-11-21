@@ -10,10 +10,11 @@ Use este procedimento para ambientes **sem dados legados**: ele seleciona as rot
 | Catalog | Reading Progress: `reading-progress-events.avro` | Engagement e Recommendation |
 | Engagement | Ratings: `engagement.ratings.v1.avro` | Recommendation |
 | Engagement | Reactions: `engagement.reactions.v1.avro` | Recommendation |
+| User | Preferences: `user-preference-events.avro` | Recommendation |
 
-Os oito subjects de `infra/schema-registry/contracts.json` são registrados antes da criação de fatos. Usa-se Confluent-compatible Avro, `TopicRecordNameStrategy`, `BACKWARD_TRANSITIVE` e `auto.register.schemas=false`. O Registry 3.1.7 persiste metadados/IDs em PostgreSQL dedicado; Kafka e dados dos aplicativos continuam em volumes separados.
+Os subjects de `infra/schema-registry/contracts.json` são registrados antes da criação de fatos. Usa-se Confluent-compatible Avro, `TopicRecordNameStrategy`, `BACKWARD_TRANSITIVE` e `auto.register.schemas=false`. O Registry 3.1.7 persiste metadados/IDs em PostgreSQL dedicado; Kafka e dados dos aplicativos continuam em volumes separados.
 
-**Não desabilite globalmente os listeners JSON:** `KAFKA_LEGACY_CONSUMERS_ENABLED=true` permanece propositalmente enquanto existirem rotas legadas independentes (por exemplo, preferências). Os quatro publishers acima são exclusivamente Avro nesta configuração e não duplicam eventos nesses tópicos JSON. Não é uma conversão de dados preexistentes.
+**Não desabilite globalmente os listeners JSON:** `KAFKA_LEGACY_CONSUMERS_ENABLED=true` permanece propositalmente enquanto existirem rotas legadas independentes. Nesta instalação nova, as cinco rotas da tabela publicam em Avro. A migração de instalações existentes requer o procedimento de cada stream.
 
 ## Compose local: caminho de instalação nova
 
@@ -32,7 +33,7 @@ O bootstrap executa, em ordem:
 1. Valida a interpolação de **ambos** os arquivos Compose, flags de writers/listeners, manifesto e configuração Auth; recusa volumes/containers preexistentes nos projetos.
 2. Inicia apenas Kafka/Zookeeper da stack principal (cria a rede de apps).
 3. Inicia Registry e PostgreSQL em **outro** projeto Compose, com rede compartilhada declarada por `infra/compose/schema-registry-app-network.yaml`; continua independente para `down` e preserva a vinculação após recreação.
-4. Aguarda a API e provisiona explicitamente os quatro tópicos Avro no Kafka local (3 partições, fator de replicação 1); publica schemas aprovados somente no Registry local e verifica policies, versões e IDs.
+4. Aguarda a API e provisiona explicitamente os cinco tópicos Avro no Kafka local (3 partições, fator de replicação 1); publica schemas aprovados somente no Registry local e verifica policies, versões e IDs.
 5. Somente após isso inicia os aplicativos com `infra/compose/avro-fresh.yaml`, aguarda healthchecks e verifica os IDs mais uma vez.
 
 Em caso de interrupção de uma **instalação comprovadamente nova**, corrija o erro e use `--resume`; esta opção não confere que os volumes são novos. Nunca use `--resume` em uma instalação existente para 'ativar Avro'. Não execute `down -v` se desejar preservar Kafka, Outbox ou schemas.
@@ -62,10 +63,33 @@ kubectl -n vellumhub rollout status deployment/engagement-service --timeout=10m
 kubectl -n vellumhub rollout status deployment/recommendation-service --timeout=10m
 ```
 
-Os arquivos Kustomize antigos `local` e `prod` **não foram alterados**. Em AWS/staging/produção, primeiro é necessário provisionar os quatro tópicos Avro com partições, retenção e fator de replicação compatíveis com o cluster, escolher endpoints de Kafka/DB, provisionar Registry persistente com OIDC/roles e TLS, garantir autorização de **leitura de schema** para produtores/consumidores, registrar schemas por workflow aprovado e criar overlay ambiental protegido. Os clientes Avro atuais usam URL sem suporte explícito a bearer token OIDC; **não declare que o overlay de produção com OIDC já funciona** nem use esta configuração local insegura em produção. Esse requisito não autoriza credenciais no Git.
+Os arquivos Kustomize antigos `local` e `prod` **não foram alterados**. Em AWS/staging/produção, primeiro é necessário provisionar os cinco tópicos Avro com partições, retenção e fator de replicação compatíveis com o cluster, escolher endpoints de Kafka/DB, provisionar Registry persistente com OIDC/roles e TLS, garantir autorização de **leitura de schema** para produtores/consumidores, registrar schemas por workflow aprovado e criar overlay ambiental protegido. Os clientes Avro atuais usam URL sem suporte explícito a bearer token OIDC; **não declare que o overlay de produção com OIDC já funciona** nem use esta configuração local insegura em produção. Esse requisito não autoriza credenciais no Git.
 
 ## Evidência e limites
 
 - Testes distribuídos Kafka + SQL + Registry dos streams: `.github/workflows/canonical-streams-avro-acceptance.yml`.
 - A nova CI valida flags de Compose/Kustomize, a compatibilidade da rede e o Registry persistente; **um render estático não equivale a E2E da stack inteira**.
 - `bootstrap_fresh.py` aguarda healthchecks, mas esses checks não substituem testes de jornada real (criar livro, ler, avaliar, reagir, reconciliar projeções). Não há evidência de deploy AWS ou cutover de ambiente antigo neste procedimento.
+
+## Preferências no Kafka
+
+O bootstrap registra `user-preference-events.avro` e ativa o publisher de User
+e o consumidor ordenado de Recommendation. Cada usuário começa na revisão
+Avro zero. A revisão Avro gravada no outbox determina o formato de cada
+envio, inclusive nas tentativas posteriores. O overlay mantém os flags de
+compatibilidade específicos dos demais streams.
+
+Em uma instalação existente, interrompa temporariamente as escritas de
+preferências e aguarde o outbox JSON e o lag do grupo
+`recommendation_service_group` chegarem a zero. Provisione o tópico, o subject
+e as ACLs. Ative `USER_PREFERENCE_AVRO_CONSUMER_ENABLED=true` e
+`USER_PREFERENCE_JSON_CONSUMER_ENABLED=false` em Recommendation. Depois da
+prontidão do consumidor, ative `USER_PREFERENCE_AVRO_WRITE_ENABLED=true`
+em todas as réplicas de User e retome as escritas. Use
+`USER_PREFERENCE_AVRO_REGISTRY_URL` nos dois serviços.
+
+O consumidor aplica a projeção, a identidade do evento e o checkpoint
+na mesma transação. Reentregas idênticas são ignoradas, e lacunas e colisões
+entram na recuperação ordenada. Após a primeira escrita em Avro, o serviço
+rejeita voltar aquele usuário ao JSON. Uma reversão do formato exige um
+procedimento de migração coordenado.

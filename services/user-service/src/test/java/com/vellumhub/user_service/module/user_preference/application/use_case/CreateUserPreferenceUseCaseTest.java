@@ -48,7 +48,7 @@ class CreateUserPreferenceUseCaseTest {
         createUserPreferenceUseCase = new CreateUserPreferenceUseCase(
                 userPreferenceRepository,
                 userRepository,
-                outbox
+                outbox, false
         );
     }
 
@@ -103,7 +103,7 @@ class CreateUserPreferenceUseCaseTest {
         assertThat(saved).isSameAs(existing);
         assertThat(saved.getGenres()).isEqualTo(command.genres());
         assertThat(saved.getAbout()).isEqualTo(command.about());
-        verify(outbox).enqueue(userId, 0, command.genres(), command.about());
+        verify(outbox).enqueue(userId, 0, null, command.genres(), command.about());
     }
 
     @Test
@@ -117,6 +117,35 @@ class CreateUserPreferenceUseCaseTest {
 
         var order = inOrder(userPreferenceRepository, outbox);
         order.verify(userPreferenceRepository).save(existing);
-        order.verify(outbox).enqueue(userId, 5, command.genres(), command.about());
+        order.verify(outbox).enqueue(userId, 5, null, command.genres(), command.about());
+    }
+
+    @Test
+    void startsTheAvroSequenceIndependentlyOfExistingJsonRevisions() {
+        when(user.getId()).thenReturn(userId);
+        when(userRepository.findByIdForPreferenceUpdate(userId)).thenReturn(Optional.of(user));
+        var existing = UserPreference.builder().user(user).revision(7).build();
+        when(userPreferenceRepository.findByUserId(userId)).thenReturn(Optional.of(existing));
+        var avro = new CreateUserPreferenceUseCase(userPreferenceRepository, userRepository, outbox, true);
+
+        avro.execute(command);
+        avro.execute(command);
+
+        var order = inOrder(outbox);
+        order.verify(outbox).enqueue(userId, 8, 0L, command.genres(), command.about());
+        order.verify(outbox).enqueue(userId, 9, 1L, command.genres(), command.about());
+    }
+
+    @Test
+    void refusesJsonAfterTheUserStartsTheAvroSequence() {
+        when(user.getId()).thenReturn(userId);
+        when(userRepository.findByIdForPreferenceUpdate(userId)).thenReturn(Optional.of(user));
+        when(userPreferenceRepository.findByUserId(userId))
+                .thenReturn(Optional.of(UserPreference.builder().user(user).avroRevision(0L).build()));
+
+        assertThatThrownBy(() -> createUserPreferenceUseCase.execute(command))
+                .hasMessage("A migrated preference cannot be published as JSON");
+        verify(userPreferenceRepository, never()).save(any());
+        verifyNoInteractions(outbox);
     }
 }

@@ -62,5 +62,29 @@
       "name": "KAFKA_LEGACY_CONSUMERS_ENABLED",
       "value": "true"
     }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "USER_PREFERENCE_AVRO_CONSUMER_ENABLED",
+      "value": "true"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "USER_PREFERENCE_JSON_CONSUMER_ENABLED",
+      "value": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "USER_PREFERENCE_AVRO_REGISTRY_URL",
+      "value": "http://schema-registry:8080/apis/ccompat/v7"
+    }
   }
 ]

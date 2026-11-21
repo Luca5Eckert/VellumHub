@@ -13,6 +13,7 @@ public final class KafkaConsumerGroups {
     public static final String RECOMMENDATION_RATINGS_AVRO = "recommendation-service-ratings-avro";
     public static final String RECOMMENDATION_REACTIONS_AVRO = "recommendation-service-reactions-avro";
     public static final String RECOMMENDATION_SERVICE_DLT = "recommendation-service-dlt-group";
+    public static final String RECOMMENDATION_PREFERENCES_AVRO = "recommendation-service-preferences-avro";
     public static final String RECOMMENDATION_USER_PROFILE = "recommendation_service_group";
     public static final String RECOMMENDATION_GROUP = "recommendation-group";
     public static final String RECOMMENDATION_GROUP_TEST = "recommendation-group-test";

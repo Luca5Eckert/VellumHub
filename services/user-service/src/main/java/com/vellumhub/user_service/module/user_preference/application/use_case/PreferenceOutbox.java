@@ -4,5 +4,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PreferenceOutbox {
-    void enqueue(UUID userId, long revision, List<String> genres, String about);
+    void enqueue(UUID userId, long revision, Long avroRevision, List<String> genres, String about);
 }

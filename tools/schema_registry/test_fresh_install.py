@@ -33,7 +33,7 @@ class FreshInstallTest(unittest.TestCase):
     def test_local_bootstrap_uses_only_manifest_approved_avro_topics(self):
         subjects = self.read_yaml("infra/schema-registry/contracts.json")["subjects"]
         self.assertEqual(sorted({item["topic"] for item in subjects}), AVRO_TOPICS)
-        self.assertEqual(4, len(AVRO_TOPICS))
+        self.assertIn("user-preference-events.avro", AVRO_TOPICS)
         self.assertTrue(all(topic.endswith(".avro") for topic in AVRO_TOPICS))
 
     def test_composed_configuration_rejects_missing_or_json_route(self):

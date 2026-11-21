@@ -37,4 +37,6 @@ public class UserPreference {
     @Builder.Default
     private long revision = -1;
 
+    private Long avroRevision;
+
 }
