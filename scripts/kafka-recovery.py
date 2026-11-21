@@ -136,7 +136,7 @@ def replay_dlt(args):
     consumer = Consumer({"bootstrap.servers": bootstrap,
                          "group.id": "vellum-recovery-inspect",
                          "enable.auto.commit": False,
-                         "auto.offset.reset": "none", **operator_security})
+                         "auto.offset.reset": "error", **operator_security})
     try:
         consumer.assign([TopicPartition(topic, args.partition, args.offset)])
         msg = consumer.poll(10)
