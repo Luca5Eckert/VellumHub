@@ -58,7 +58,8 @@ class FreshInstallTest(unittest.TestCase):
         overlay = self.read_yaml("deploy/kubernetes/overlays/local-avro-fresh/kustomization.yaml")
         self.assertIn("../../base", overlay["resources"])
         self.assertNotIn("../../schema-registry/overlays/local", overlay["resources"])
-        for filename in ("infrastructure.yaml", "databases.yaml"):
+        for filename in ("infrastructure.yaml", "databases.yaml", "redis-recommendation-cache.yaml"):
+            self.assertIn(filename, overlay["resources"])
             self.assertEqual(
                 (ROOT / "deploy/kubernetes/overlays/local" / filename).read_text(),
                 (ROOT / "deploy/kubernetes/overlays/local-avro-fresh" / filename).read_text(),
