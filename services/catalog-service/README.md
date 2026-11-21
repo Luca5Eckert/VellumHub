@@ -47,6 +47,20 @@ O teste usa Docker e Python 3. Aplica as migrações V1–V7 e executa o SQL
 do repositório com registros de teste. Também confirma o plano GIN com
 6 mil livros adicionais.
 
+## Busca e importação via Google Books
+
+- `GET /api/v1/catalog/books/google?q=Clean+Code&field=TITLE` retorna até dez
+  candidatos. Os campos disponíveis são `ALL`, `TITLE`, `AUTHOR` e `ISBN`.
+  A rota exige `catalog:read`.
+- `POST /api/v1/catalog/books/google` recebe `{"volumeId":"zyTCAlFPjgYC"}`
+  e retorna o ID do livro do Catalog com status 201. A rota exige ADMIN
+  e `catalog:write`. O serviço consulta o volume selecionado antes de
+  persistir o livro e seu evento de criação na mesma transação.
+
+A busca inclui candidatos com `isbn=null`. A importação exige um volume com ISBN. Um volume ausente retorna 404 e falhas
+de comunicação com o provedor retornam 502. O fluxo direto por ISBN segue
+disponível em `POST /api/v1/catalog/books/isbn`.
+
 ## What It Owns
 
 | Concern | Owned here |

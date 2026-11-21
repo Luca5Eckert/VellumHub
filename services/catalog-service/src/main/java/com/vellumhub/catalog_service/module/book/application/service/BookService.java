@@ -6,6 +6,7 @@ import com.vellumhub.catalog_service.module.book.application.handler.DeleteBookH
 import com.vellumhub.catalog_service.module.book.application.handler.UploadBookCoverHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.create.CreateBookHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.create.CreateBookWithIsbnHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.get.FindExternalBooksHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.get.GetAllBooksHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.get.GetBookCoverHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.get.GetBookCoversBulkHandler;
@@ -14,6 +15,8 @@ import com.vellumhub.catalog_service.module.book.application.handler.get.GetBook
 import com.vellumhub.catalog_service.module.book.application.handler.update.UpdateBookHandler;
 import com.vellumhub.catalog_service.module.book.application.query.PageBook;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
+import com.vellumhub.catalog_service.module.book.domain.model.ExternalBook;
+import com.vellumhub.catalog_service.module.book.domain.model.ExternalBookSearchField;
 import com.vellumhub.catalog_service.module.book.presentation.dto.BookCoverResponse;
 import com.vellumhub.catalog_service.module.book.presentation.dto.CreateBookRequest;
 import com.vellumhub.catalog_service.module.book.presentation.dto.GetBookResponse;
@@ -47,6 +50,7 @@ public class BookService {
     private final UploadBookCoverHandler uploadBookCoverHandler;
     private final GetBookCoverHandler getBookCoverHandler;
     private final GetBookCoversBulkHandler getBookCoversBulkHandler;
+    private final FindExternalBooksHandler findExternalBooksHandler;
     private final BookMapper bookMapper;
 
     public BookService(
@@ -60,6 +64,7 @@ public class BookService {
             GetBookCoverHandler getBookCoverHandler,
             GetBookCoversBulkHandler getBookCoversBulkHandler,
             CreateBookWithIsbnHandler createBookWithIsbnHandler,
+            FindExternalBooksHandler findExternalBooksHandler,
             BookMapper bookMapper) {
         this.createBookHandler = createBookHandler;
         this.deleteBookHandler = deleteBookHandler;
@@ -71,6 +76,7 @@ public class BookService {
         this.getBookCoverHandler = getBookCoverHandler;
         this.getBookCoversBulkHandler = getBookCoversBulkHandler;
         this.createBookWithIsbnHandler = createBookWithIsbnHandler;
+        this.findExternalBooksHandler = findExternalBooksHandler;
         this.bookMapper = bookMapper;
     }
 
@@ -90,6 +96,14 @@ public class BookService {
 
     public UUID createByIsbn(String isbn) {
         return createBookWithIsbnHandler.handle(isbn);
+    }
+
+    public List<ExternalBook> searchGoogleBooks(String query, ExternalBookSearchField field) {
+        return findExternalBooksHandler.search(query, field);
+    }
+
+    public UUID importGoogleBook(String volumeId) {
+        return createBookWithIsbnHandler.saveImportedVolume(findExternalBooksHandler.fetchVolume(volumeId));
     }
 
     public void delete(UUID bookId) {

@@ -34,12 +34,14 @@ means either human role, with the exact listed scope. Ownership is enforced sepa
 | user | DELETE | `/users/{id}` | `user:write` | ADMIN |
 | catalog | GET | `/books` | `catalog:read` | USER/ADMIN |
 | catalog | GET | `/books/search` | `catalog:read` | USER/ADMIN |
+| catalog | GET | `/books/google` | `catalog:read` | USER/ADMIN |
 | catalog | GET | `/books/{id}` | `catalog:read` | USER/ADMIN |
 | catalog | GET | `/books/{id}/cover` | `catalog:read` | USER/ADMIN |
 | catalog | POST | `/books/bulk` | `catalog:read` | USER/ADMIN |
 | catalog | POST | `/books/covers/bulk` | `catalog:read` | USER/ADMIN |
 | catalog | POST | `/books` | `catalog:write` | ADMIN |
 | catalog | POST | `/books/isbn` | `catalog:write` | ADMIN |
+| catalog | POST | `/books/google` | `catalog:write` | ADMIN |
 | catalog | POST | `/books/{id}/cover` | `catalog:write` | ADMIN |
 | catalog | PUT | `/books/{id}` | `catalog:write` | ADMIN |
 | catalog | DELETE | `/books/{id}` | `catalog:write` | ADMIN |

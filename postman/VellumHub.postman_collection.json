@@ -1032,6 +1032,90 @@
               "response": []
             },
             {
+              "name": "Search Google Books",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/books/google?q=Clean Code",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "books",
+                    "google"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "Clean Code",
+                      "disabled": false,
+                      "description": "Search terms"
+                    },
+                    {
+                      "key": "field",
+                      "value": "ALL",
+                      "disabled": true,
+                      "description": "Google Books field"
+                    }
+                  ]
+                },
+                "description": "Previews up to ten external book candidates.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `searchGoogleBooks`."
+              },
+              "response": []
+            },
+            {
+              "name": "Import a Google Books volume",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/books/google",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "books",
+                    "google"
+                  ]
+                },
+                "description": "Imports the selected volume and returns the Catalog book ID. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `importGoogleBook`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"volumeId\": \"zyTCAlFPjgYC\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
               "name": "Create book by ISBN",
               "request": {
                 "method": "POST",
