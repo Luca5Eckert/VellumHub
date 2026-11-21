@@ -36,6 +36,11 @@ public class BookRepositoryAdapter implements BookRepository {
     }
 
     @Override
+    public List<Book> search(String text, PageRequest pageRequest) {
+        return bookRepository.search(text, pageRequest.getPageSize(), pageRequest.getOffset());
+    }
+
+    @Override
     public Optional<Book> findById(UUID bookId) {
         return bookRepository.findById(bookId);
     }

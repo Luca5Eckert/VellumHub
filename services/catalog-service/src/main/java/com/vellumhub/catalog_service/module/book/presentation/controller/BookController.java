@@ -131,6 +131,24 @@ public class BookController {
         return ResponseEntity.ok(bookResponseList);
     }
 
+    @GetMapping("/search")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:read"})
+    @Operation(summary = "Search catalog books",
+            description = "Searches visible books by title, author, description, and publisher, ordered by relevance.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Paginated matches, or an empty list"),
+            @ApiResponse(responseCode = "400", description = "Missing or invalid search text"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Missing catalog read scope")
+    })
+    public ResponseEntity<List<GetBookResponse>> searchBooks(
+            @Parameter(description = "Search terms", example = "ficção científica")
+            @RequestParam("q") String text,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize) {
+        return ResponseEntity.ok(bookService.search(text, new PageBook(pageSize, pageNumber)));
+    }
+
     @PutMapping("/{id}")
     @SecurityRequirement(name = "oauth2", scopes = {"catalog:write"})
     @PreAuthorize("hasRole('ADMIN')")

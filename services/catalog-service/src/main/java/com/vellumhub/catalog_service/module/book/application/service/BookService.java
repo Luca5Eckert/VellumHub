@@ -22,6 +22,7 @@ import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequ
 import com.vellumhub.catalog_service.module.book.presentation.mapper.BookMapper;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -102,6 +103,13 @@ public class BookService {
     public List<GetBookResponse> getAll(int pageNumber, int pageSize) {
         return getAllBooksHandler.execute(new PageBook(pageSize, pageNumber))
                 .stream()
+                .map(bookMapper::toGetResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetBookResponse> search(String text, PageBook page) {
+        return getAllBooksHandler.search(text, page).stream()
                 .map(bookMapper::toGetResponse)
                 .toList();
     }

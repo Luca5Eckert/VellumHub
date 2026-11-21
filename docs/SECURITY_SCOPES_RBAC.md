@@ -33,6 +33,7 @@ means either human role, with the exact listed scope. Ownership is enforced sepa
 | user | PUT | `/users/{id}` | `user:write` | ADMIN |
 | user | DELETE | `/users/{id}` | `user:write` | ADMIN |
 | catalog | GET | `/books` | `catalog:read` | USER/ADMIN |
+| catalog | GET | `/books/search` | `catalog:read` | USER/ADMIN |
 | catalog | GET | `/books/{id}` | `catalog:read` | USER/ADMIN |
 | catalog | GET | `/books/{id}/cover` | `catalog:read` | USER/ADMIN |
 | catalog | POST | `/books/bulk` | `catalog:read` | USER/ADMIN |

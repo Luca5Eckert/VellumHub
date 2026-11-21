@@ -22,6 +22,20 @@ It owns catalog writes and publishes book/progress events so downstream services
 - Own current reading progress/status for a user and a book.
 - Emit catalog events used by recommendation and engagement projections.
 
+## Busca textual
+
+`GET /api/v1/catalog/books/search?q=ficção+científica&pageNumber=0&pageSize=10`
+usa o escopo `catalog:read`. A consulta aceita de 1 a 200 caracteres após
+remover espaços das extremidades. O PostgreSQL busca todos os termos em
+título, autor, descrição e editora. Os termos são insensíveis a maiúsculas
+e preservam os acentos. O ranking prioriza título e autor, com desempate
+por data de criação e ID.
+
+A busca retorna o mesmo formato da listagem de livros e uma lista vazia
+quando não há correspondência. A migração Flyway V7 cria um índice GIN
+parcial para os livros visíveis. A busca consulta o PostgreSQL diretamente
+para refletir criações, atualizações e exclusões do catálogo.
+
 ## What It Owns
 
 | Concern | Owned here |

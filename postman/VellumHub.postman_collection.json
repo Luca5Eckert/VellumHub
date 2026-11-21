@@ -1074,6 +1074,54 @@
               "response": []
             },
             {
+              "name": "Search catalog books",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/books/search?q=ficção científica",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "books",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "ficção científica",
+                      "disabled": false,
+                      "description": "Search terms"
+                    },
+                    {
+                      "key": "pageNumber",
+                      "value": "0",
+                      "disabled": true,
+                      "description": "Page number"
+                    },
+                    {
+                      "key": "pageSize",
+                      "value": "10",
+                      "disabled": true,
+                      "description": "Page size"
+                    }
+                  ]
+                },
+                "description": "Searches visible books by title, author, description, and publisher, ordered by relevance.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `searchBooks`."
+              },
+              "response": []
+            },
+            {
               "name": "Find book by ID",
               "request": {
                 "method": "GET",
