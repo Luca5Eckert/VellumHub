@@ -23,6 +23,8 @@ spring:
     gateway:
       server:
         webflux:
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
           routes:
             # SEC-09: VellumHub's browser speaks directly to the AS's canonical issuer.
             # Do not proxy authorize/token via Gateway unless external issuer/discovery URLs match.
