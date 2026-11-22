@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - '.github/workflows/canonical-streams-avro-acceptance.yml'
+      - 'tools/ci/retry_dependency_resolution.sh'
+      - 'tools/ci/maven-central-fallback-settings.xml'
       - 'lib/kafka-avro-contracts/**'
       - 'lib/kafka-contracts/**'
       - 'lib/distributed-test-support/**'
@@ -15,6 +17,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/canonical-streams-avro-acceptance.yml'
+      - 'tools/ci/retry_dependency_resolution.sh'
+      - 'tools/ci/maven-central-fallback-settings.xml'
       - 'lib/kafka-avro-contracts/**'
       - 'services/engagement-service/**'
       - 'services/recommendation-service/**'
