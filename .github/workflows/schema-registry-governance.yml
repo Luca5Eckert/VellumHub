@@ -69,7 +69,7 @@ jobs:
           kubectl kustomize deploy/kubernetes/overlays/local-avro-fresh > /tmp/vellumhub-fresh-avro.yaml
           python3 tools/schema_registry/validate_fresh_render.py /tmp/vellumhub-fresh-avro.yaml
       - name: Distributed Kafka + SQL-backed Registry integration tests
-        run: mvn -B -ntp -Pschema-poc -pl integration-tests/schema-evolution-poc -am clean test
+        run: bash tools/ci/retry_dependency_resolution.sh mvn -B -ntp -Pschema-poc -pl integration-tests/schema-evolution-poc -am clean test
       - name: Generate disposable SQL credential
         run: |
           PASSWORD="$(openssl rand -hex 24)"
