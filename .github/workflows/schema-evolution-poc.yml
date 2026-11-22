@@ -6,6 +6,8 @@ on:
       - 'pom.xml'
       - 'integration-tests/schema-evolution-poc/**'
       - '.github/workflows/schema-evolution-poc.yml'
+      - 'tools/ci/retry_dependency_resolution.sh'
+      - 'tools/ci/maven-central-fallback-settings.xml'
   push:
     branches: [main]
     paths:
@@ -19,7 +21,9 @@ permissions:
 jobs:
   schema-poc:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    # Registry contract suite on identical commit took >14 min in CI (dependency resolution).
+    # Keep the actual Kafka/Registry tests enabled; allow reasonable cold-run headroom.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -37,7 +41,7 @@ jobs:
       - name: Confirm Docker for real Kafka and Apicurio
         run: docker info
       - name: Compile Avro and test compatibility plus live Kafka/Registry SerDes
-        run: mvn -B -ntp -Pschema-poc -pl integration-tests/schema-evolution-poc -am clean test
+        run: bash tools/ci/retry_dependency_resolution.sh mvn -B -ntp -Pschema-poc -pl integration-tests/schema-evolution-poc -am clean test
       - name: Preserve Surefire reports
         if: always()
         uses: actions/upload-artifact@v4
