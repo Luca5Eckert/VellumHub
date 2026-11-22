@@ -4,10 +4,12 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "tools/ci/retry_dependency_resolution.sh"
 WORKFLOW = ROOT / ".github/workflows/verify-images.yml"
+MIRROR = ROOT / "tools/ci/maven-central-fallback-settings.xml"
 
 FAKE_MAVEN = """#!/usr/bin/env bash
 printf '%s\\n' "$*" >> "$TRACE"
@@ -19,6 +21,14 @@ if [[ "$MODE" == cached-miss ]]; then
   fi
   echo "[ERROR] Plugin org.apache.maven.plugins:maven-resources-plugin:3.4.0 or one of its dependencies could not be resolved:"
   exit 41
+fi
+if [[ "$MODE" == mirror-recovery ]]; then
+  if [[ " $* " == *" -U "* ]] && [[ " $* " == *" -s "* ]]; then
+    echo "BUILD SUCCESS"
+    exit 0
+  fi
+  echo "[ERROR] Plugin org.apache.maven.plugins:maven-resources-plugin:3.4.0 or one of its dependencies could not be resolved:"
+  exit 43
 fi
 if [[ "$MODE" == test-failure ]]; then
   echo "[ERROR] Tests run: 1, Failures: 1"
@@ -61,6 +71,26 @@ class MavenCentralRetryTest(unittest.TestCase):
         self.assertEqual(len(calls), 2)
         self.assertNotIn("-U", calls[0])
         self.assertIn("-U", calls[1])
+
+    def test_independent_mirror_recovers_persistent_central_failure(self):
+        result, calls = self.execute("mirror-recovery")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(len(calls), 2)
+        self.assertNotIn("-s", calls[0])
+        self.assertIn("-U", calls[1])
+        self.assertIn("-s", calls[1])
+        self.assertIn(str(MIRROR), calls[1])
+
+    def test_fallback_settings_mirrors_only_central(self):
+        root = ET.parse(MIRROR).getroot()
+        ns = {"m": "http://maven.apache.org/SETTINGS/1.2.0"}
+        mirrors = root.findall("m:mirrors/m:mirror", ns)
+        self.assertEqual(len(mirrors), 1)
+        self.assertEqual(mirrors[0].findtext("m:mirrorOf", namespaces=ns), "central")
+        self.assertEqual(
+            mirrors[0].findtext("m:url", namespaces=ns),
+            "https://maven-central.storage-download.googleapis.com/maven2/",
+        )
 
     def test_real_test_failure_is_not_retried(self):
         result, calls = self.execute("test-failure")
