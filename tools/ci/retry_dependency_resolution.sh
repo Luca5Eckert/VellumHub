@@ -16,10 +16,16 @@ fi
 
 for (( attempt=1; attempt<=max_attempts; attempt++ )); do
   command=("$@")
-  # Maven caches failed resolution attempts in *.lastUpdated. Force a new lookup
-  # after a transient repository failure, rather than replaying the cached miss.
+  # On retry, bypass both cached misses and intermittent failures at the
+  # primary Central endpoint. The Google-hosted mirror replaces ONLY 'central';
+  # other repositories (e.g. Confluent) keep their original configuration.
   if (( attempt > 1 )) && [[ "${command[0]##*/}" == mvn || "${command[0]##*/}" == mvnw ]]; then
-    command=("${command[0]}" -U "${command[@]:1}")
+    fallback_settings="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/maven-central-fallback-settings.xml"
+    if [[ ! -f "$fallback_settings" ]]; then
+      echo "Missing Maven Central fallback settings: $fallback_settings" >&2
+      exit 2
+    fi
+    command=("${command[0]}" -U -s "$fallback_settings" "${command[@]:1}")
   fi
 
   log_file=$(mktemp)
@@ -40,6 +46,6 @@ for (( attempt=1; attempt<=max_attempts; attempt++ )); do
 
   rm -f "$log_file"
   delay=$((retry_delay_seconds * attempt))
-  echo "Maven dependency resolution failed (attempt $attempt/$max_attempts); retrying in ${delay}s with refreshed metadata." >&2
+  echo "Maven dependency resolution failed (attempt $attempt/$max_attempts); retrying in ${delay}s against the alternate Central mirror." >&2
   sleep "$delay"
 done
