@@ -10,8 +10,9 @@ import com.vellumhub.recommendation_service.module.user_profile.domain.port.Embe
 import com.vellumhub.recommendation_service.support.DistributedIntegrationTestSupport;
 import com.vellumhub.testing.distributed.avro.BookAvroFixture;
 import com.vellumhub.testing.distributed.kafka.KafkaProbe;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.avro.Schema;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -82,7 +82,8 @@ class PreferenceAvroRecommendationDistributedTest extends DistributedIntegration
         try (var stream = UserPreferenceChangedEvent.class.getResourceAsStream("/UserPreferenceChangedEvent.avsc");
              var http = HttpClient.newHttpClient()) {
             assertThat(stream).isNotNull();
-            String rawSchema = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+            // Match the compact schema representation used by the Registry bootstrap and serializer lookup.
+            String schema = new Schema.Parser().parse(stream).toString();
             var config = HttpRequest.newBuilder(URI.create(registry + "/config/" + subject))
                     .header("Content-Type", type).timeout(Duration.ofSeconds(10))
                     .PUT(HttpRequest.BodyPublishers.ofString("{\"compatibility\":\"BACKWARD_TRANSITIVE\"}")).build();
@@ -90,7 +91,7 @@ class PreferenceAvroRecommendationDistributedTest extends DistributedIntegration
             var registration = HttpRequest.newBuilder(URI.create(registry + "/subjects/" + subject + "/versions"))
                     .header("Content-Type", type).timeout(Duration.ofSeconds(10))
                     .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(
-                            Map.of("schemaType", "AVRO", "schema", rawSchema)))).build();
+                            Map.of("schemaType", "AVRO", "schema", schema)))).build();
             var response = http.send(registration, HttpResponse.BodyHandlers.ofString());
             assertThat(response.statusCode()).isEqualTo(200);
             schemaId = json.readTree(response.body()).path("id").asInt(-1);
