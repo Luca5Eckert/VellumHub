@@ -13,6 +13,8 @@ on:
       - 'tools/schema_registry/**'
       - 'integration-tests/schema-evolution-poc/**'
       - '.github/workflows/schema-registry-governance.yml'
+      - 'tools/ci/retry_dependency_resolution.sh'
+      - 'tools/ci/maven-central-fallback-settings.xml'
       - '.github/workflows/schema-registry-publish.yml'
   push:
     branches: [main]
@@ -28,6 +30,8 @@ on:
       - 'tools/schema_registry/**'
       - 'integration-tests/schema-evolution-poc/**'
       - '.github/workflows/schema-registry-governance.yml'
+      - 'tools/ci/retry_dependency_resolution.sh'
+      - 'tools/ci/maven-central-fallback-settings.xml'
 permissions: {contents: read}
 jobs:
   registry-contracts:
