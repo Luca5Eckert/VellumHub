@@ -1,0 +1,224 @@
+{
+  "components": {
+    "schemas": {
+      "ApiResponseError": {
+        "properties": {
+          "details": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "status": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CreateUserPreferenceRequest": {
+        "example": {
+          "genres": [
+            "Fantasy",
+            "Science Fiction"
+          ]
+        },
+        "properties": {
+          "genres": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "genres"
+        ],
+        "type": "object"
+      },
+      "GenreSelection": {
+        "properties": {
+          "genres": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "genres"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "oauth2": {
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "/oauth2/authorize",
+            "scopes": {
+              "catalog:personal:read": "Explicit API capability: catalog:personal:read",
+              "catalog:personal:write": "Explicit API capability: catalog:personal:write",
+              "catalog:read": "Explicit API capability: catalog:read",
+              "catalog:requests:read": "Explicit API capability: catalog:requests:read",
+              "catalog:requests:write": "Explicit API capability: catalog:requests:write",
+              "catalog:write": "Explicit API capability: catalog:write",
+              "engagement:read": "Explicit API capability: engagement:read",
+              "engagement:write": "Explicit API capability: engagement:write",
+              "recommendation:read": "Explicit API capability: recommendation:read",
+              "user:read": "Explicit API capability: user:read",
+              "user:write": "Explicit API capability: user:write"
+            },
+            "tokenUrl": "/oauth2/token"
+          }
+        },
+        "type": "oauth2"
+      }
+    }
+  },
+  "info": {
+    "title": "VellumHub Gateway — User Preferences",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/users/genres": {
+      "get": {
+        "operationId": "genres",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenreSelection"
+                }
+              }
+            },
+            "description": "Catalog genres"
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "user:read"
+            ]
+          }
+        ],
+        "summary": "List Catalog genres available for onboarding",
+        "tags": [
+          "user-preference-controller"
+        ]
+      }
+    },
+    "/api/v1/users/me/preferences": {
+      "get": {
+        "description": "Returns an empty list before preferences are set.",
+        "operationId": "getOwn",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenreSelection"
+                }
+              }
+            },
+            "description": "Current genre preferences"
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "user:read"
+            ]
+          }
+        ],
+        "summary": "Read own genre preferences",
+        "tags": [
+          "user-preference-controller"
+        ]
+      },
+      "put": {
+        "description": "Use the exact genre names returned by GET /users/genres.",
+        "operationId": "replaceOwn",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserPreferenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenreSelection"
+                }
+              }
+            },
+            "description": "Preferences saved"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseError"
+                }
+              }
+            },
+            "description": "Genres are empty, duplicate, or unknown"
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "user:write"
+            ]
+          }
+        ],
+        "summary": "Replace own genre preferences",
+        "tags": [
+          "user-preference-controller"
+        ]
+      }
+    }
+  }
+}

@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - "postman/**"
+      - "frontend/contracts/**"
+      - "frontend/scripts/preferences-contract.mjs"
+      - "frontend/src/preferences.generated.ts"
+      - "frontend/package*.json"
       - ".github/workflows/postman-validation.yml"
       - "compose.yaml"
       - ".env.example"
@@ -127,6 +131,17 @@ jobs:
           echo "OpenAPI contracts did not become available."
           docker compose ps
           exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Check frontend preferences against the live Gateway OpenAPI
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run preferences:check -- http://localhost:8080/docs/user/v3/api-docs
 
       - name: Verify canonical Auth login and authorization across services
         env:

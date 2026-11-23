@@ -1,3 +1,6 @@
+import createClient from 'openapi-fetch'
+import type { paths as PreferencePaths } from './preferences.generated'
+
 const gateway = import.meta.env.VITE_GATEWAY_URL ?? 'http://127.0.0.1:8080'
 
 export interface Book {
@@ -35,6 +38,18 @@ export class ApiError extends Error {
 }
 
 export function api(token: string) {
+  const preferencesClient = createClient<PreferencePaths>({
+    baseUrl: gateway,
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+  async function preferenceResult<T>(operation: Promise<{ data?: T; response: Response }>): Promise<T> {
+    const { data, response } = await operation
+    if (!response.ok) throw new ApiError(response.status)
+    if (data === undefined) throw new Error('Missing preference response')
+    return data
+  }
+
   async function request<T>(path: string, method = 'GET', body?: object): Promise<T> {
     const response = await fetch(`${gateway}/api/v1${path}`, {
       method,
@@ -49,9 +64,9 @@ export function api(token: string) {
 
   return {
     profile: () => request<{ name: string }>('/users/me'),
-    genres: () => request<{ genres: string[] }>('/users/genres'),
-    preferences: () => request<{ genres: string[] }>('/users/me/preferences'),
-    savePreferences: (genres: string[]) => request<{ genres: string[] }>('/users/me/preferences', 'PUT', { genres }),
+    genres: () => preferenceResult(preferencesClient.GET('/api/v1/users/genres')),
+    preferences: () => preferenceResult(preferencesClient.GET('/api/v1/users/me/preferences')),
+    savePreferences: (genres: string[]) => preferenceResult(preferencesClient.PUT('/api/v1/users/me/preferences', { body: { genres } })),
     recommendations: () => request<Book[]>('/recommendations?limit=12'),
     book: (id: string) => request<Book>(`/catalog/books/${encodeURIComponent(id)}`),
     catalog: () => request<Book[]>('/catalog/books?pageSize=12'),

@@ -100,3 +100,12 @@ na mesma transação. Reentregas idênticas são ignoradas, e lacunas e colisõe
 entram na recuperação ordenada. Após a primeira escrita em Avro, o serviço
 rejeita voltar aquele usuário ao JSON. Uma reversão do formato exige um
 procedimento de migração coordenado.
+
+A CI também verifica o caminho HTTP autenticado do User até a projeção do
+Recommendation, com rollback, retry do outbox após registrar o schema e
+reentrega do mesmo evento. Execute o teste focado com Docker e Java 21:
+
+```sh
+./mvnw -B -Pdistributed-e2e -pl integration-tests/distributed-e2e -am \
+  -Dtest=UserPreferenceAvroE2ETest -Dsurefire.failIfNoSpecifiedTests=false test
+```

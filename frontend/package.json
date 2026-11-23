@@ -8,7 +8,9 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "tokens": "node scripts/tokens.mjs",
-    "lint": "eslint src tests && node scripts/tokens.mjs --check"
+    "lint": "eslint src tests && node scripts/tokens.mjs --check",
+    "preferences:check": "node scripts/preferences-contract.mjs --check",
+    "preferences:generate": "node scripts/preferences-contract.mjs --write"
   },
   "type": "module",
   "private": true,
@@ -17,6 +19,7 @@
     "@fontsource-variable/literata": "^5.3.0",
     "lucide-react": "^1.78.0",
     "oidc-client-ts": "^3.5.0",
+    "openapi-fetch": "0.17.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
@@ -31,6 +34,7 @@
     "@vitejs/plugin-react": "^6.3.0",
     "eslint": "^9.39.5",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "openapi-typescript": "7.13.0",
     "storybook": "^10.6.8",
     "style-dictionary": "^5.8.0",
     "tailwindcss": "^4.3.5",
