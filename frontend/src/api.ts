@@ -8,6 +8,21 @@ export interface Book {
   coverUrl?: string
   pageCount?: number
   genres: string[]
+  releaseYear?: number
+  publisher?: string
+  isbn?: string
+}
+
+export interface Reading {
+  bookId: string
+  status: 'WANT_TO_READ' | 'READING' | 'COMPLETED'
+  currentPage: number
+}
+
+export interface BookList {
+  id: string
+  booksIds: string[]
+  userOwner: string
 }
 
 export class ApiError extends Error {
@@ -33,13 +48,22 @@ export function api(token: string) {
   }
 
   return {
+    profile: () => request<{ name: string }>('/users/me'),
     genres: () => request<{ genres: string[] }>('/users/genres'),
     preferences: () => request<{ genres: string[] }>('/users/me/preferences'),
     savePreferences: (genres: string[]) => request<{ genres: string[] }>('/users/me/preferences', 'PUT', { genres }),
     recommendations: () => request<Book[]>('/recommendations?limit=12'),
     book: (id: string) => request<Book>(`/catalog/books/${encodeURIComponent(id)}`),
-    rate: (id: string, stars: number) =>
-      request<void>('/engagement/rating', 'POST', { bookId: id, stars }),
+    catalog: () => request<Book[]>('/catalog/books?pageSize=12'),
+    likeReadBook: (id: string) =>
+      request<void>('/engagement/reactions', 'POST', { bookId: id, typeReaction: 'POSITIVE' }),
+    search: (query: string) => request<Book[]>(`/catalog/books/search?q=${encodeURIComponent(query)}`),
+    readingList: () => request<Reading[]>('/catalog/book-progress/reading-list'),
+    lists: () => request<BookList[]>('/catalog/book-list?Number+of+page=0&Size+of+page=20'),
+    addToList: (listId: string, bookId: string) =>
+      request<void>(`/catalog/book-list/${encodeURIComponent(listId)}/books/${encodeURIComponent(bookId)}`, 'POST'),
+    rate: (id: string, stars: number, review: string) =>
+      request<void>('/engagement/rating', 'POST', { bookId: id, stars, ...(review && { review }) }),
     startReading: (id: string, currentPage: number) =>
       request<void>(`/catalog/book-progress/${encodeURIComponent(id)}/status`, 'POST', {
         status: 'READING', currentPage, startedAt: new Date().toISOString(),
@@ -48,3 +72,7 @@ export function api(token: string) {
       request<void>(`/catalog/book-progress/${encodeURIComponent(id)}/progress`, 'PUT', { newCurrentPage }),
   }
 }
+
+export const errorMessage = (cause: unknown) => cause instanceof ApiError
+  ? cause.message
+  : 'O serviço está indisponível. Tente novamente em instantes.'

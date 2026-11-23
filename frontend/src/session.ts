@@ -6,7 +6,7 @@ export const session = new UserManager({
   redirect_uri: `${location.origin}/callback`,
   post_logout_redirect_uri: location.origin + '/',
   response_type: 'code',
-  scope: 'openid profile user:read user:write catalog:read catalog:personal:write engagement:write recommendation:read',
+  scope: 'openid profile user:read user:write catalog:read catalog:personal:read catalog:personal:write engagement:write recommendation:read',
   userStore: new WebStorageStateStore({ store: sessionStorage }),
   automaticSilentRenew: false,
   monitorSession: false,

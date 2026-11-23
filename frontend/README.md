@@ -15,7 +15,7 @@ VELLUM_AUTH_CLIENT_ENABLED=true
 VELLUM_AUTH_CLIENT_ID=vellumhub-web
 VELLUM_AUTH_CLIENT_REDIRECT_URI=http://127.0.0.1:9100/callback
 VELLUM_AUTH_CLIENT_POST_LOGOUT_URI=http://127.0.0.1:9100/
-VELLUM_AUTH_CLIENT_SCOPES=user:read,user:write,catalog:read,catalog:personal:write,engagement:write,recommendation:read
+VELLUM_AUTH_CLIENT_SCOPES=user:read,user:write,catalog:read,catalog:personal:read,catalog:personal:write,engagement:write,recommendation:read
 VELLUM_AUTH_ALLOWED_ORIGIN=http://127.0.0.1:9100
 CORS_ALLOWED_ORIGINS=http://127.0.0.1:9100
 ```
@@ -24,6 +24,10 @@ Use a origem exata `http://127.0.0.1:9100` no navegador. A SPA usa por padrão
 o Auth em `http://127.0.0.1:9000` e o Gateway em `http://127.0.0.1:8080`.
 Sobrescreva com `VITE_OIDC_ISSUER`, `VITE_OIDC_CLIENT_ID` e `VITE_GATEWAY_URL`
 quando necessário. O cliente OIDC é público e dispensa segredo de cliente.
+O escopo `catalog:personal:read` carrega o estado de leitura e habilita a Estante.
+Se o Auth já tiver um cliente persistido com os escopos antigos, configure um
+novo ID em `VELLUM_AUTH_CLIENT_ID` e `VITE_OIDC_CLIENT_ID` ou atualize o registro
+existente antes de reiniciar o Auth.
 
 ```sh
 cd frontend

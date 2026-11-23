@@ -13,6 +13,9 @@
   "type": "module",
   "private": true,
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/literata": "^5.3.0",
+    "lucide-react": "^1.78.0",
     "oidc-client-ts": "^3.5.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
