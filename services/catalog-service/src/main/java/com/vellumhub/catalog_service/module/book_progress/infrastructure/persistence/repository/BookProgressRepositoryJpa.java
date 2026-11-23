@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface BookProgressRepositoryJpa extends JpaRepository<BookProgress, UUID> {
-    Optional<BookProgress> findByUserIdAndBookId(UUID userId, UUID bookId);
+    Optional<BookProgress> findByUserIdAndBookIdAndIsActiveTrue(UUID userId, UUID bookId);
 
     boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
 

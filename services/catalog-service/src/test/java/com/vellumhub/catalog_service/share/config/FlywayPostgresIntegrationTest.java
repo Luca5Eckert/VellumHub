@@ -5,6 +5,8 @@ import com.vellumhub.catalog_service.module.book.application.query.PageBook;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
 import com.vellumhub.catalog_service.module.book.presentation.dto.GetBookResponse;
+import com.vellumhub.catalog_service.module.book_progress.application.handler.UpdateBookProgressHandler;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookIsNotBeingReadException;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -110,6 +112,37 @@ class FlywayPostgresIntegrationTest {
     }
 
     @Test
+    @Order(4)
+    void updatesOnlyTheActiveReadingAndEmitsItsEvent(
+            @Autowired JdbcTemplate jdbc, @Autowired UpdateBookProgressHandler progress) {
+        UUID book = UUID.randomUUID();
+        UUID reader = UUID.randomUUID();
+        UUID completed = UUID.randomUUID();
+        UUID active = UUID.randomUUID();
+        UUID other = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO books(id,title,release_year,author,isbn,page_count,publisher,version,created_at)
+                VALUES(?,'Rereading',2026,'Test Author','rereading-test',300,'Test Publisher',0,now())
+                """, book);
+        jdbc.update("""
+                INSERT INTO book_progress(id,book_id,user_id,reading_status,current_page,is_active,version)
+                VALUES (?,?,?,'COMPLETED',300,false,0), (?,?,?,'READING',20,true,0), (?,?,?,'READING',15,true,0)
+                """, completed, book, reader, active, book, reader, other, book, UUID.randomUUID());
+
+        progress.handle(42, book, reader);
+
+        assertThat(jdbc.queryForObject("SELECT current_page FROM book_progress WHERE id=?", Integer.class, active)).isEqualTo(42);
+        assertThat(jdbc.queryForObject("SELECT current_page FROM book_progress WHERE id=?", Integer.class, completed)).isEqualTo(300);
+        assertThat(jdbc.queryForObject("SELECT current_page FROM book_progress WHERE id=?", Integer.class, other)).isEqualTo(15);
+        assertThat(jdbc.queryForList("""
+                SELECT aggregate_id FROM outbox_events WHERE aggregate_id IN (?, ?, ?)
+                """, UUID.class, active, completed, other)).containsExactly(active);
+
+        progress.handle(300, book, reader);
+        assertThatThrownBy(() -> progress.handle(50, book, reader)).isInstanceOf(BookIsNotBeingReadException.class);
+    }
+
+    @Test
     @Order(3)
     void searchesVisibleBooksByRelevanceWithStablePages(
             @Autowired JdbcTemplate jdbc, @Autowired BookService books) {
@@ -142,7 +175,7 @@ class FlywayPostgresIntegrationTest {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(@Autowired JdbcTemplate jdbcTemplate) {
         jdbcTemplate.execute("alter table books drop column title");
 
