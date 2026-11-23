@@ -1,6 +1,7 @@
 package com.vellumhub.catalog_service.share.config;
 
 import com.vellumhub.catalog_service.module.book.domain.model.Genre;
+import com.vellumhub.kafka.contracts.user.CatalogGenreNames;
 import com.vellumhub.catalog_service.module.book.infrastructure.repository.genre.JpaGenreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -13,18 +14,7 @@ import java.util.List;
 @Component
 public class InitialGenreSeeder implements ApplicationRunner {
 
-    static final List<String> INITIAL_GENRES = List.of(
-            "Science Fiction",
-            "Fantasy",
-            "Horror",
-            "Romance",
-            "Thriller",
-            "Biography",
-            "History",
-            "Self-Help",
-            "Dystopian",
-            "Adventure"
-    );
+    static final List<String> INITIAL_GENRES = CatalogGenreNames.ONBOARDING;
 
     private final JpaGenreRepository genreRepository;
     private final List<String> initialGenres;

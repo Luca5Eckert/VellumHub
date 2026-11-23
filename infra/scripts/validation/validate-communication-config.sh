@@ -116,10 +116,10 @@ else
     print_result "Catalog Event Producer" "FAIL" "KafkaBookEventProducer not found"
 fi
 
-if [ -f "$PROJECT_ROOT/services/engagement-service/src/main/java/com/vellumhub/engagement_service/module/rating/infrastructure/producer/KafkaEventProducer.java" ]; then
-    print_result "Engagement Event Producer" "PASS" "KafkaEventProducer exists"
+if [ -f "$PROJECT_ROOT/services/engagement-service/src/main/java/com/vellumhub/engagement_service/module/rating/application/event/RatingEventRecorder.java" ]; then
+    print_result "Engagement Event Producer" "PASS" "RatingEventRecorder exists"
 else
-    print_result "Engagement Event Producer" "FAIL" "KafkaEventProducer not found"
+    print_result "Engagement Event Producer" "FAIL" "RatingEventRecorder not found"
 fi
 
 # Test 6: Verify Kafka event consumers exist

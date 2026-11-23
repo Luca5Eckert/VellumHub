@@ -21,6 +21,7 @@ public final class KafkaTopics {
     public static final String UPDATED_RATING = "updated-rating";
     public static final String USER_REACTION_CHANGED = "user-reaction-changed";
 
+    public static final String USER_PREFERENCE_EVENTS_AVRO = "user-preference-events.avro";
     public static final String CREATED_USER_PREFERENCE = "created-user-preference";
 
     public static final String CREATED_READING_PROGRESS = "created-reading-progress";

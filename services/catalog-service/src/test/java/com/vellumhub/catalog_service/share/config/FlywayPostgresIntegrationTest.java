@@ -1,6 +1,10 @@
 package com.vellumhub.catalog_service.share.config;
 
 import com.vellumhub.catalog_service.CatalogServiceApplication;
+import com.vellumhub.catalog_service.module.book.application.query.PageBook;
+import com.vellumhub.catalog_service.module.book.application.service.BookService;
+import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
+import com.vellumhub.catalog_service.module.book.presentation.dto.GetBookResponse;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -19,6 +23,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -106,6 +111,38 @@ class FlywayPostgresIntegrationTest {
 
     @Test
     @Order(3)
+    void searchesVisibleBooksByRelevanceWithStablePages(
+            @Autowired JdbcTemplate jdbc, @Autowired BookService books) {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        UUID hidden = UUID.randomUUID();
+        insertSearchBook(jdbc, first, "Nebulosa", "A. Silva", "Uma expedição", false);
+        insertSearchBook(jdbc, second, "Uma expedição", "B. Costa", "Viagem por uma nebulosa", false);
+        insertSearchBook(jdbc, hidden, "Nebulosa", "C. Reis", null, true);
+
+        assertThat(books.search("NEBULOSA", new PageBook(1, 0))).extracting(GetBookResponse::id)
+                .containsExactly(first);
+        assertThat(books.search("nebulosa", new PageBook(1, 1))).extracting(GetBookResponse::id)
+                .containsExactly(second);
+        assertThat(books.search("Silva", new PageBook(10, 0))).extracting(GetBookResponse::id)
+                .containsExactly(first);
+        assertThat(books.search("sem correspondência", new PageBook(10, 0))).isEmpty();
+        assertThatThrownBy(() -> books.search("  ", new PageBook(10, 0)))
+                .isInstanceOf(BookDomainException.class);
+    }
+
+    private void insertSearchBook(JdbcTemplate jdbc, UUID id, String title, String author,
+                                  String description, boolean deleted) {
+        jdbc.update("""
+                INSERT INTO books(id, title, author, description, release_year, isbn, page_count,
+                                  publisher, version, created_at, deleted_at)
+                VALUES (?, ?, ?, ?, 2025, ?, 150, 'Fixture', 0, now(),
+                        CASE WHEN ? THEN now() ELSE NULL END)
+                """, id, title, author, description, id.toString(), deleted);
+    }
+
+    @Test
+    @Order(4)
     void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(@Autowired JdbcTemplate jdbcTemplate) {
         jdbcTemplate.execute("alter table books drop column title");
 

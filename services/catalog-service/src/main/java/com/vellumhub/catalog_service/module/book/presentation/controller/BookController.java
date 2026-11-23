@@ -6,6 +6,9 @@ import com.vellumhub.catalog_service.module.book.presentation.dto.GetBookRespons
 import com.vellumhub.catalog_service.module.book.presentation.dto.Recommendation;
 import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequest;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
+import com.vellumhub.catalog_service.module.book.domain.model.ExternalBook;
+import com.vellumhub.catalog_service.module.book.domain.model.ExternalBookSearchField;
+import com.vellumhub.catalog_service.module.book.presentation.dto.GoogleBookImportRequest;
 import com.vellumhub.catalog_service.module.book.infrastructure.cache.BookReadCache;
 import com.vellumhub.catalog_service.module.book.application.query.PageBook;
 import io.swagger.v3.oas.annotations.Operation;
@@ -80,6 +83,35 @@ public class BookController {
                 .body(bookId);
     }
 
+    @GetMapping("/google")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:read"})
+    @Operation(summary = "Search Google Books", description = "Previews up to ten external book candidates.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "External book candidates"),
+            @ApiResponse(responseCode = "400", description = "Invalid search criteria"),
+            @ApiResponse(responseCode = "502", description = "External catalog unavailable")
+    })
+    public ResponseEntity<List<ExternalBook>> searchGoogleBooks(
+            @Parameter(description = "Search terms", example = "Clean Code") @RequestParam("q") String query,
+            @Parameter(description = "Google Books field") @RequestParam(defaultValue = "ALL") ExternalBookSearchField field) {
+        return ResponseEntity.ok(bookService.searchGoogleBooks(query, field));
+    }
+
+    @PostMapping("/google")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:write"})
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Import a Google Books volume",
+            description = "Imports the selected volume and returns the Catalog book ID. Requires ADMIN role.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Book imported"),
+            @ApiResponse(responseCode = "400", description = "Invalid volume, missing ISBN, or duplicate ISBN"),
+            @ApiResponse(responseCode = "404", description = "External volume not found"),
+            @ApiResponse(responseCode = "502", description = "External catalog unavailable")
+    })
+    public ResponseEntity<UUID> importGoogleBook(@RequestBody @Valid GoogleBookImportRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(bookService.importGoogleBook(request.volumeId()));
+    }
+
     @DeleteMapping("/{id}")
     @SecurityRequirement(name = "oauth2", scopes = {"catalog:write"})
     @PreAuthorize("hasRole('ADMIN')")
@@ -129,6 +161,24 @@ public class BookController {
                 () -> bookService.getAll(page.pageNumber(), page.pageSize()));
 
         return ResponseEntity.ok(bookResponseList);
+    }
+
+    @GetMapping("/search")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:read"})
+    @Operation(summary = "Search catalog books",
+            description = "Searches visible books by title, author, description, and publisher, ordered by relevance.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Paginated matches, or an empty list"),
+            @ApiResponse(responseCode = "400", description = "Missing or invalid search text"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Missing catalog read scope")
+    })
+    public ResponseEntity<List<GetBookResponse>> searchBooks(
+            @Parameter(description = "Search terms", example = "ficção científica")
+            @RequestParam("q") String text,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize) {
+        return ResponseEntity.ok(bookService.search(text, new PageBook(pageSize, pageNumber)));
     }
 
     @PutMapping("/{id}")

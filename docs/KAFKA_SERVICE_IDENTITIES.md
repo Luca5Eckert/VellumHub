@@ -19,7 +19,7 @@ publishing still requires topic-specific `Write`.
 | Broker identity | Publishes | Subscribes | Consumer groups |
 | --- | --- | --- | --- |
 | `catalog_service` | `book-events`, `reading-progress-events`, Book/Progress legacy topics | none | none |
-| `user_service` | `created-user-preference` | none | none |
+| `user_service` | `created-user-preference`, `user-preference-events.avro` | none | none |
 | `engagement_service` | `engagement.ratings.v1`, `engagement.reactions.v1`, legacy rating/reaction topics; own retry and DLT | `book-events`, `reading-progress-events`, Book/Progress legacy topics; own retry/DLT | `engagement-service`, `engagement-service-dlt-group`, generated retry groups |
 | `recommendation_service` | only retry and DLT transport | Book/Progress/Engagement streams and legacy user-preference/ratings/reactions | `recommendation-service`, `recommendation-group`, `recommendation_service_group`, `recommendation-service-dlt-group`, generated retry groups |
 
@@ -156,7 +156,15 @@ requires it. These are **not yet automatically provisioned** by the
 four-service policy and require security review before replay is enabled.
 Do not grant topic or group wildcards. Ordered sources still use
 quarantine-based `resume` and must never be blindly republished.
-Broker-backed operator replay is a separate acceptance gate.
+The ACL workflow runs an independent replay check against disposable Kafka and
+PostgreSQL. It confirms ACL denials for the service principal and unrelated
+topic, preserves the original event identity and payload, and records
+`ATTEMPTED` and `PUBLISHED` in the recovery audit. Run it locally with Docker
+and the dependencies in `scripts/kafka-recovery-requirements.txt`.
+
+```sh
+python infra/scripts/kafka/verify-operator-replay.py
+```
 
 ## Evidence, limits and non-goals
 

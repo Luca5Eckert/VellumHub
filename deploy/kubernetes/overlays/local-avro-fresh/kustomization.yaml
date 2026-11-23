@@ -5,10 +5,13 @@ namespace: vellumhub
 resources:
   - ../../base
   - infrastructure.yaml
+  - redis-recommendation-cache.yaml
   - databases.yaml
   - local-allow.yaml
 patches:
   - path: local-patches.yaml
+  - target: {group: apps, version: v1, kind: Deployment, name: user-service}
+    path: user.json
   - target: {group: apps, version: v1, kind: Deployment, name: catalog-service}
     path: catalog.json
   - target: {group: apps, version: v1, kind: Deployment, name: engagement-service}

@@ -14,6 +14,8 @@ on:
       - "services/**/src/main/java/**/OrderedRecoveryPublisherConfig.java"
       - "deploy/kubernetes/**"
       - "scripts/kafka-recovery.py"
+      - "scripts/kafka-recovery-requirements.txt"
+      - "services/recommendation-service/src/main/resources/db/migration/V5__kafka_consumer_quarantine.sql"
   workflow_dispatch:
 
 permissions:
@@ -88,3 +90,14 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose -f compose.yaml -f infra/compose/kafka-secure.yaml down -v --remove-orphans || true
+
+  operator-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r scripts/kafka-recovery-requirements.txt
+      - run: python infra/scripts/kafka/verify-operator-replay.py

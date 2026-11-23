@@ -108,6 +108,19 @@
       ],
       "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/reaction-baseline-event-v2-compatible.avsc",
       "negative": "integration-tests/schema-evolution-poc/src/test/resources/history/reaction-baseline-event-v2-incompatible.avsc"
+    },
+    {
+      "topic": "user-preference-events.avro",
+      "record": "com.vellumhub.kafka.avro.userpreference.UserPreferenceChangedEvent",
+      "compatibility": "BACKWARD_TRANSITIVE",
+      "versions": [
+        {
+          "label": "v1",
+          "file": "lib/kafka-avro-contracts/src/main/avro/UserPreferenceChangedEvent.avsc"
+        }
+      ],
+      "positive": "integration-tests/schema-evolution-poc/src/test/resources/history/user-preference-changed-event-v2-compatible.avsc",
+      "negative": "integration-tests/schema-evolution-poc/src/test/resources/history/user-preference-changed-event-v2-incompatible.avsc"
     }
   ]
 }

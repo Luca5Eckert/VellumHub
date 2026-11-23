@@ -28,18 +28,24 @@ class FreshInstallTest(unittest.TestCase):
                 if key.endswith("REGISTRY_URL"):
                     self.assertEqual(REGISTRY_URL, val)
         env = config["services"]["recommendation-service"]["environment"]
-        self.assertEqual("true", env["KAFKA_LEGACY_CONSUMERS_ENABLED"])
+        self.assertEqual("false", env["KAFKA_LEGACY_CONSUMERS_ENABLED"])
+        for name in ("engagement-service", "recommendation-service"):
+            self.assertEqual("false", config["services"][name]["environment"]["KAFKA_JSON_LISTENERS_ENABLED"])
 
     def test_local_bootstrap_uses_only_manifest_approved_avro_topics(self):
         subjects = self.read_yaml("infra/schema-registry/contracts.json")["subjects"]
         self.assertEqual(sorted({item["topic"] for item in subjects}), AVRO_TOPICS)
-        self.assertEqual(4, len(AVRO_TOPICS))
+        self.assertIn("user-preference-events.avro", AVRO_TOPICS)
         self.assertTrue(all(topic.endswith(".avro") for topic in AVRO_TOPICS))
 
     def test_composed_configuration_rejects_missing_or_json_route(self):
         current = {"services": {name: {"environment": dict(values)} for name, values in REQUIRED.items()}}
         self.assertTrue(verify_config(current))
         current["services"]["catalog-service"]["environment"]["BOOK_EVENTS_WIRE_FORMAT"] = "json"
+        with self.assertRaises(BootstrapError):
+            verify_config(current)
+        current["services"]["catalog-service"]["environment"]["BOOK_EVENTS_WIRE_FORMAT"] = "avro"
+        current["services"]["engagement-service"]["environment"]["KAFKA_JSON_LISTENERS_ENABLED"] = "true"
         with self.assertRaises(BootstrapError):
             verify_config(current)
 
@@ -58,7 +64,8 @@ class FreshInstallTest(unittest.TestCase):
         overlay = self.read_yaml("deploy/kubernetes/overlays/local-avro-fresh/kustomization.yaml")
         self.assertIn("../../base", overlay["resources"])
         self.assertNotIn("../../schema-registry/overlays/local", overlay["resources"])
-        for filename in ("infrastructure.yaml", "databases.yaml"):
+        for filename in ("infrastructure.yaml", "databases.yaml", "redis-recommendation-cache.yaml"):
+            self.assertIn(filename, overlay["resources"])
             self.assertEqual(
                 (ROOT / "deploy/kubernetes/overlays/local" / filename).read_text(),
                 (ROOT / "deploy/kubernetes/overlays/local-avro-fresh" / filename).read_text(),

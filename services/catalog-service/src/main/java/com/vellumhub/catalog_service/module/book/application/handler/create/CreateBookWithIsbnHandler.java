@@ -2,7 +2,6 @@ package com.vellumhub.catalog_service.module.book.application.handler.create;
 
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
-import com.vellumhub.catalog_service.module.book.domain.model.Genre;
 import com.vellumhub.catalog_service.module.book.domain.port.BookChangeWriter;
 import com.vellumhub.catalog_service.module.book.domain.model.BookChangeKind;
 import com.vellumhub.catalog_service.module.book.domain.port.BookExternalProvider;
@@ -37,10 +36,20 @@ public class CreateBookWithIsbnHandler {
         Book newBook = bookExternalProvider.fetchByIsbn(isbn)
                 .orElseThrow(() -> new BookDomainException("Book not found in external provider for ISBN: " + isbn));
 
+        return persist(newBook);
+    }
+
+    @Transactional
+    public UUID saveImportedVolume(Book book) {
+        if (bookRepository.existsByIsbn(book.getIsbn())) {
+            throw new BookDomainException("A book with the provided ISBN already exists.");
+        }
+        return persist(book);
+    }
+
+    private UUID persist(Book newBook) {
         bookRepository.save(newBook);
         bookChangeWriter.record(newBook, BookChangeKind.CREATED);
-
-
 
         return newBook.getId();
     }

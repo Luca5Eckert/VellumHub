@@ -105,7 +105,7 @@ docker compose up -d --build
 | Kafka UI | `http://localhost:8090` |
 | Grafana (with `--profile observability`) | `http://localhost:3002` |
 
-Tokens come from Auth through a PKCE client; the default read workflow needs `user:read catalog:read engagement:read recommendation:read`. A contract-generated [Postman collection](postman/README.md) and `bash infra/scripts/security/run_oidc_lote2_e2e.sh` (a disposable end-to-end login exercise) help you try it. The repository ships backend APIs, not a product frontend. Layout and overlays: [infrastructure](docs/INFRASTRUCTURE_LAYOUT.md) · empty environment straight on Avro: [fresh Avro installation](docs/FRESH_AVRO_INSTALLATION.md).
+Tokens come from Auth through a PKCE client; the default read workflow needs `user:read catalog:read engagement:read recommendation:read`. A contract-generated [Postman collection](postman/README.md) and `bash infra/scripts/security/run_oidc_lote2_e2e.sh` (a disposable end-to-end login exercise) help you try it. The [web client](frontend/README.md) uses the Gateway for onboarding, recommendations and reading actions. Layout and overlays: [infrastructure](docs/INFRASTRUCTURE_LAYOUT.md) · empty environment straight on Avro: [fresh Avro installation](docs/FRESH_AVRO_INSTALLATION.md).
 
 ## Verify it
 

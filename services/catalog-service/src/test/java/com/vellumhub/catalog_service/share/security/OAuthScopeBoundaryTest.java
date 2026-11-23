@@ -49,12 +49,15 @@ class OAuthScopeBoundaryTest {
     @ParameterizedTest
     @CsvSource({
             "GET,/books,catalog:read,false",
+            "GET,/books/search,catalog:read,false",
+            "GET,/books/google,catalog:read,false",
             "GET,/books/123,catalog:read,false",
             "GET,/books/123/cover,catalog:read,false",
             "POST,/books/bulk,catalog:read,false",
             "POST,/books/covers/bulk,catalog:read,false",
             "POST,/books,catalog:write,true",
             "POST,/books/isbn,catalog:write,true",
+            "POST,/books/google,catalog:write,true",
             "POST,/books/123/cover,catalog:write,true",
             "PUT,/books/123,catalog:write,true",
             "DELETE,/books/123,catalog:write,true",

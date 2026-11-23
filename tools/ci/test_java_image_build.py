@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[2]
 EXPECTED_STAGES = {
     "gateway-service": "deps-jwt",
     "auth-service": "deps-jwt",
-    "user-service": "deps-kafka",
+    "user-service": "deps-avro",
     "catalog-service": "deps-avro",
     "engagement-service": "deps-avro",
     "recommendation-service": "deps-avro",
@@ -26,10 +26,8 @@ class JavaImageBuildContractTest(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/verify-images.yml").read_text(encoding="utf-8")
         for name, stage in EXPECTED_STAGES.items():
             self.assertFalse((ROOT / f"services/{name}/Dockerfile").exists())
-            self.assertIn(f"SERVICE: {name}", compose)
-            self.assertIn(f"DEPS_STAGE: {stage}", compose)
-            self.assertIn(f"service: {name}", workflow)
-            self.assertIn(f"dep_stage: {stage}", workflow)
+            self.assertRegex(compose, rf"SERVICE: {name}\n +DEPS_STAGE: {stage}\b")
+            self.assertRegex(workflow, rf"service: {name}\n(?: +[a-z_]+: [^\n]+\n)*? +dep_stage: {stage}\b")
         self.assertIn("RUNTIME_IMAGE: eclipse-temurin:21-jre", compose)
         self.assertIn("APP_PORT: \"9000\"", compose)
         self.assertIn("HEALTH_PORT: \"9001\"", compose)

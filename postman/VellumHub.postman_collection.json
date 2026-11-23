@@ -489,6 +489,108 @@
               "response": []
             }
           ]
+        },
+        {
+          "name": "user-preference-controller",
+          "item": [
+            {
+              "name": "List Catalog genres available for onboarding",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/users/genres",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "genres"
+                  ]
+                },
+                "description": "List Catalog genres available for onboarding\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `genres`."
+              },
+              "response": []
+            },
+            {
+              "name": "Read own genre preferences",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/users/me/preferences",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "me",
+                    "preferences"
+                  ]
+                },
+                "description": "Returns an empty list before preferences are set.\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `getOwn`."
+              },
+              "response": []
+            },
+            {
+              "name": "Replace own genre preferences",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/users/me/preferences",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "me",
+                    "preferences"
+                  ]
+                },
+                "description": "Use the exact genre names returned by GET /users/genres.\n\nGenerated from `/docs/user/v3/api-docs`. Operation ID: `replaceOwn`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"genres\": [\n    \"Fantasy\",\n    \"Science Fiction\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            }
+          ]
         }
       ]
     },
@@ -930,6 +1032,90 @@
               "response": []
             },
             {
+              "name": "Search Google Books",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/books/google?q=Clean Code",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "books",
+                    "google"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "Clean Code",
+                      "disabled": false,
+                      "description": "Search terms"
+                    },
+                    {
+                      "key": "field",
+                      "value": "ALL",
+                      "disabled": true,
+                      "description": "Google Books field"
+                    }
+                  ]
+                },
+                "description": "Previews up to ten external book candidates.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `searchGoogleBooks`."
+              },
+              "response": []
+            },
+            {
+              "name": "Import a Google Books volume",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/books/google",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "books",
+                    "google"
+                  ]
+                },
+                "description": "Imports the selected volume and returns the Catalog book ID. Requires ADMIN role.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `importGoogleBook`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"volumeId\": \"zyTCAlFPjgYC\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
               "name": "Create book by ISBN",
               "request": {
                 "method": "POST",
@@ -968,6 +1154,54 @@
                     }
                   }
                 }
+              },
+              "response": []
+            },
+            {
+              "name": "Search catalog books",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/books/search?q=ficção científica",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "books",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "ficção científica",
+                      "disabled": false,
+                      "description": "Search terms"
+                    },
+                    {
+                      "key": "pageNumber",
+                      "value": "0",
+                      "disabled": true,
+                      "description": "Page number"
+                    },
+                    {
+                      "key": "pageSize",
+                      "value": "10",
+                      "disabled": true,
+                      "description": "Page size"
+                    }
+                  ]
+                },
+                "description": "Searches visible books by title, author, description, and publisher, ordered by relevance.\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `searchBooks`."
               },
               "response": []
             },

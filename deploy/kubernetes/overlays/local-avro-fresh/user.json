@@ -1,0 +1,18 @@
+[
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "USER_PREFERENCE_AVRO_WRITE_ENABLED",
+      "value": "true"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "USER_PREFERENCE_AVRO_REGISTRY_URL",
+      "value": "http://schema-registry:8080/apis/ccompat/v7"
+    }
+  }
+]

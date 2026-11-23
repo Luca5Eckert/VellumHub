@@ -4,6 +4,7 @@ import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainExce
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotExistException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookWritesFrozenException;
+import com.vellumhub.catalog_service.module.book.domain.exception.ExternalBookProviderException;
 import com.vellumhub.catalog_service.module.book.infrastructure.cache.CacheLoadOverloadedException;
 import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListDomainException;
 import com.vellumhub.catalog_service.module.book_list.domain.exception.BookListPermissionDeniedException;
@@ -56,6 +57,13 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .toList();
         return respond(HttpStatus.BAD_REQUEST, "Validation Error", "Input validation failed", fieldErrors, request);
+    }
+
+    @ExceptionHandler(ExternalBookProviderException.class)
+    public ResponseEntity<ApiResponseError> handleExternalBookProvider(HttpServletRequest request) {
+        return respond(HttpStatus.BAD_GATEWAY, "External Catalog Error",
+                "External catalog service is currently unavailable",
+                "Retry the external catalog request later", request);
     }
 
     @ExceptionHandler(BookNotFoundException.class)

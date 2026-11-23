@@ -1,6 +1,10 @@
 # Explicitly opt-in for a NEW installation. Never apply to existing JSON/Outbox data.
 # Use with: docker compose -f compose.yaml -f infra/compose/avro-fresh.yaml
 services:
+  user-service:
+    environment:
+      USER_PREFERENCE_AVRO_WRITE_ENABLED: "true"
+      USER_PREFERENCE_AVRO_REGISTRY_URL: "http://schema-registry:8080/apis/ccompat/v7"
   catalog-service:
     environment:
       BOOK_EVENTS_WIRE_FORMAT: avro
@@ -9,6 +13,7 @@ services:
       READING_PROGRESS_AVRO_REGISTRY_URL: http://schema-registry:8080/apis/ccompat/v7
   engagement-service:
     environment:
+      KAFKA_JSON_LISTENERS_ENABLED: "false"
       BOOK_AVRO_CONSUMER_ENABLED: "true"
       READING_PROGRESS_AVRO_CONSUMER_ENABLED: "true"
       ENGAGEMENT_RATINGS_WIRE_FORMAT: avro
@@ -18,6 +23,10 @@ services:
       ENGAGEMENT_AVRO_REGISTRY_URL: http://schema-registry:8080/apis/ccompat/v7
   recommendation-service:
     environment:
+      KAFKA_JSON_LISTENERS_ENABLED: "false"
+      USER_PREFERENCE_AVRO_CONSUMER_ENABLED: "true"
+      USER_PREFERENCE_JSON_CONSUMER_ENABLED: "false"
+      USER_PREFERENCE_AVRO_REGISTRY_URL: "http://schema-registry:8080/apis/ccompat/v7"
       BOOK_AVRO_CONSUMER_ENABLED: "true"
       READING_PROGRESS_AVRO_CONSUMER_ENABLED: "true"
       ENGAGEMENT_RATINGS_AVRO_CONSUMER_ENABLED: "true"
@@ -25,6 +34,4 @@ services:
       BOOK_AVRO_REGISTRY_URL: http://schema-registry:8080/apis/ccompat/v7
       READING_PROGRESS_AVRO_REGISTRY_URL: http://schema-registry:8080/apis/ccompat/v7
       ENGAGEMENT_AVRO_REGISTRY_URL: http://schema-registry:8080/apis/ccompat/v7
-      # Intentionally leave JSON-only compatibility routes enabled.
-      # Never disable this shared flag without auditing ALL legacy listeners.
-      KAFKA_LEGACY_CONSUMERS_ENABLED: "true"
+      KAFKA_LEGACY_CONSUMERS_ENABLED: "false"

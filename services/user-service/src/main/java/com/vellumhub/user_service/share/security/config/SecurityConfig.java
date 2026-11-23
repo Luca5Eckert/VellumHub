@@ -65,9 +65,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/users")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "user:read", true)))
-                        .requestMatchers(HttpMethod.GET, "/users/*")
+                        .requestMatchers(HttpMethod.GET, "/users/*", "/users/me/preferences")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "user:read", false)))
+                        .requestMatchers(HttpMethod.PUT, "/users/me/preferences")
+                        .access((authentication, context) -> new AuthorizationDecision(
+                                HumanApiAccess.allowed(authentication.get(), "user:write", false)))
                         .requestMatchers(HttpMethod.PUT, "/users/*")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "user:write", true)))

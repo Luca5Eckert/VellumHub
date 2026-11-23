@@ -3,6 +3,9 @@ package com.vellumhub.catalog_service.module.book.application.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookNotFoundException;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookWritesFrozenException;
+import com.vellumhub.catalog_service.module.book.domain.exception.ExternalBookProviderException;
+import com.vellumhub.catalog_service.module.book.domain.model.ExternalBook;
+import com.vellumhub.catalog_service.module.book.domain.model.ExternalBookSearchField;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
 import com.vellumhub.catalog_service.module.book.infrastructure.cache.BookReadCache;
 import com.vellumhub.catalog_service.module.book.infrastructure.cache.CacheLoadOverloadedException;
@@ -25,12 +28,14 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BookController.class)
@@ -75,6 +80,37 @@ class BookControllerTest {
                 .authorities(new SimpleGrantedAuthority("ROLE_USER"),
                         new SimpleGrantedAuthority("SCOPE_catalog:read"),
                         new SimpleGrantedAuthority("SCOPE_catalog:write"));
+    }
+
+    @Test
+    void previewsVolumesAndRequiresAdminForImport() throws Exception {
+        var candidate = new ExternalBook("selected", "Clean Code", "Robert Martin", null,
+                2008, 464, "9780132350884", "Prentice Hall", null);
+        given(bookService.searchGoogleBooks("Clean Code", ExternalBookSearchField.TITLE))
+                .willReturn(List.of(candidate));
+        UUID bookId = UUID.randomUUID();
+        given(bookService.importGoogleBook("selected")).willReturn(bookId);
+
+        mockMvc.perform(get("/books/google").param("q", "Clean Code").param("field", "TITLE").with(userJwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].volumeId").value("selected"));
+
+        String selection = "{\"volumeId\":\"selected\"}";
+        mockMvc.perform(post("/books/google").with(userJwt()).contentType(MediaType.APPLICATION_JSON).content(selection))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/books/google").with(adminJwt()).contentType(MediaType.APPLICATION_JSON).content(selection))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$").value(bookId.toString()));
+    }
+
+    @Test
+    void hidesProviderErrorDetails() throws Exception {
+        given(bookService.searchGoogleBooks("Clean Code", ExternalBookSearchField.ALL))
+                .willThrow(new ExternalBookProviderException(new IllegalStateException("private provider detail")));
+
+        mockMvc.perform(get("/books/google").param("q", "Clean Code").with(userJwt()))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.message").value("External catalog service is currently unavailable"));
     }
 
     @Test

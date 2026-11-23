@@ -30,6 +30,7 @@ public class CreatedUserPreferenceConsumerEvent {
 
     @KafkaListener(
             topics = KafkaTopics.CREATED_USER_PREFERENCE,
+            autoStartup = "${app.user-preference.json.consumer-enabled:true}",
             groupId = KafkaConsumerGroups.RECOMMENDATION_USER_PROFILE
     )
     public void consume(@Payload CreateUserPreferenceEvent event) {

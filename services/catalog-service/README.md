@@ -22,6 +22,45 @@ It owns catalog writes and publishes book/progress events so downstream services
 - Own current reading progress/status for a user and a book.
 - Emit catalog events used by recommendation and engagement projections.
 
+## Busca textual
+
+`GET /api/v1/catalog/books/search?q=ficção+científica&pageNumber=0&pageSize=10`
+usa o escopo `catalog:read`. A consulta aceita de 1 a 200 caracteres após
+remover espaços das extremidades. O PostgreSQL busca todos os termos em
+título, autor, descrição e editora. Os termos são insensíveis a maiúsculas
+e preservam os acentos. O ranking prioriza título e autor, com desempate
+por data de criação e ID.
+
+A busca retorna o mesmo formato da listagem de livros e uma lista vazia
+quando não há correspondência. A migração Flyway V7 cria um índice GIN
+parcial para os livros visíveis. A busca consulta o PostgreSQL diretamente
+para refletir criações, atualizações e exclusões do catálogo.
+
+Para reproduzir a validação da consulta e do índice em PostgreSQL 15
+descartável, execute da raiz do repositório:
+
+```bash
+bash infra/scripts/validation/verify-catalog-search.sh
+```
+
+O teste usa Docker e Python 3. Aplica as migrações V1–V7 e executa o SQL
+do repositório com registros de teste. Também confirma o plano GIN com
+6 mil livros adicionais.
+
+## Busca e importação via Google Books
+
+- `GET /api/v1/catalog/books/google?q=Clean+Code&field=TITLE` retorna até dez
+  candidatos. Os campos disponíveis são `ALL`, `TITLE`, `AUTHOR` e `ISBN`.
+  A rota exige `catalog:read`.
+- `POST /api/v1/catalog/books/google` recebe `{"volumeId":"zyTCAlFPjgYC"}`
+  e retorna o ID do livro do Catalog com status 201. A rota exige ADMIN
+  e `catalog:write`. O serviço consulta o volume selecionado antes de
+  persistir o livro e seu evento de criação na mesma transação.
+
+A busca inclui candidatos com `isbn=null`. A importação exige um volume com ISBN. Um volume ausente retorna 404 e falhas
+de comunicação com o provedor retornam 502. O fluxo direto por ISBN segue
+disponível em `POST /api/v1/catalog/books/isbn`.
+
 ## What It Owns
 
 | Concern | Owned here |

@@ -1,5 +1,6 @@
 package com.vellumhub.engagement_service.module.reading_session_entry.infrastructure.kafka.consumer;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.vellumhub.engagement_service.module.reading_session_entry.application.command.CreateReadingSessionEntryCommand;
 import com.vellumhub.engagement_service.module.reading_session_entry.application.use_case.CreateReadingSessionEntryUseCase;
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+@ConditionalOnProperty(name = "app.kafka.json-listeners.enabled", havingValue = "true", matchIfMissing = true)
 @Component
 @Slf4j
 public class CreateReadingProgressEventConsumer {

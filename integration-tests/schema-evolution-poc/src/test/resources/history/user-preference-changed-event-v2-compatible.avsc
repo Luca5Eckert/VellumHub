@@ -1,0 +1,52 @@
+{
+  "type": "record",
+  "name": "UserPreferenceChangedEvent",
+  "namespace": "com.vellumhub.kafka.avro.userpreference",
+  "doc": "User-owned preference snapshot. The Kafka key is the userId and revision orders changes for that user.",
+  "fields": [
+    {
+      "name": "eventId",
+      "type": "string",
+      "doc": "Immutable UUID identifying the original fact"
+    },
+    {
+      "name": "occurredAt",
+      "type": "string",
+      "doc": "UTC ISO-8601 instant"
+    },
+    {
+      "name": "userId",
+      "type": "string",
+      "doc": "Aggregate UUID and Kafka key"
+    },
+    {
+      "name": "revision",
+      "type": "long",
+      "doc": "Aggregate revision, starting at zero"
+    },
+    {
+      "name": "genres",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "doc": "Complete snapshot of canonical Catalog genre names"
+    },
+    {
+      "name": "about",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "source",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    }
+  ]
+}

@@ -23,12 +23,43 @@ Stop the stack:
 docker compose --profile observability down
 ```
 
+## Validate The Local Stack
+
+After startup and at least one Prometheus scrape, run:
+
+```bash
+python3 infra/scripts/validation/verify-observability.py
+```
+
+The verifier checks the five observability components, successful Prometheus
+scrapes, recent application logs in Loki, and Grafana provisioning. It also sends
+an unauthenticated request to a protected Gateway route with a unique trace ID
+and requires both the trace in Tempo and the HTTP 401 counter increase in
+Prometheus. It reports failed checks with a nonzero exit status.
+
+For a partial development stack, pass the running applications explicitly:
+
+```bash
+python3 infra/scripts/validation/verify-observability.py \
+  --services auth-service gateway-service user-service
+```
+
+Logs are checked over the previous 30 minutes by default. Use
+`--lookback-minutes` if the selected services have had little recent activity.
+The Grafana checks use the local Compose credentials unless `GRAFANA_USER`
+and `GRAFANA_PASSWORD` are supplied in the process environment.
+
+If Loki is ready but Alloy reports retries, check disk capacity and
+`loki_ingester_wal_disk_usage_percent`. Loki can reject new writes when the WAL
+volume crosses its disk threshold. In proxied development environments, Alloy
+uses direct connections to its Compose peers Loki and Tempo.
+
 ## Local Endpoints
 
 | Component | URL | Notes |
 |---|---|---|
 | Grafana | `http://localhost:3002` | Login with `admin` / `admin` locally. |
-| Prometheus | `http://localhost:9090` | Scrapes the five application services. |
+| Prometheus | `http://localhost:9090` | Scrapes Auth, Gateway, User, Catalog, Engagement, and Recommendation. |
 | Loki | `http://localhost:3100` | Receives Docker container logs through Alloy. |
 | Tempo | `http://localhost:3200` | Stores traces sent through Alloy OTLP receivers. |
 | Alloy | `http://localhost:12345` | Collector UI and pipeline status. |

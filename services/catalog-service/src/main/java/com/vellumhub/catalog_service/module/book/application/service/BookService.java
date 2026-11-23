@@ -6,6 +6,7 @@ import com.vellumhub.catalog_service.module.book.application.handler.DeleteBookH
 import com.vellumhub.catalog_service.module.book.application.handler.UploadBookCoverHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.create.CreateBookHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.create.CreateBookWithIsbnHandler;
+import com.vellumhub.catalog_service.module.book.application.handler.get.FindExternalBooksHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.get.GetAllBooksHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.get.GetBookCoverHandler;
 import com.vellumhub.catalog_service.module.book.application.handler.get.GetBookCoversBulkHandler;
@@ -14,6 +15,8 @@ import com.vellumhub.catalog_service.module.book.application.handler.get.GetBook
 import com.vellumhub.catalog_service.module.book.application.handler.update.UpdateBookHandler;
 import com.vellumhub.catalog_service.module.book.application.query.PageBook;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
+import com.vellumhub.catalog_service.module.book.domain.model.ExternalBook;
+import com.vellumhub.catalog_service.module.book.domain.model.ExternalBookSearchField;
 import com.vellumhub.catalog_service.module.book.presentation.dto.BookCoverResponse;
 import com.vellumhub.catalog_service.module.book.presentation.dto.CreateBookRequest;
 import com.vellumhub.catalog_service.module.book.presentation.dto.GetBookResponse;
@@ -22,6 +25,7 @@ import com.vellumhub.catalog_service.module.book.presentation.dto.UpdateBookRequ
 import com.vellumhub.catalog_service.module.book.presentation.mapper.BookMapper;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -46,6 +50,7 @@ public class BookService {
     private final UploadBookCoverHandler uploadBookCoverHandler;
     private final GetBookCoverHandler getBookCoverHandler;
     private final GetBookCoversBulkHandler getBookCoversBulkHandler;
+    private final FindExternalBooksHandler findExternalBooksHandler;
     private final BookMapper bookMapper;
 
     public BookService(
@@ -59,6 +64,7 @@ public class BookService {
             GetBookCoverHandler getBookCoverHandler,
             GetBookCoversBulkHandler getBookCoversBulkHandler,
             CreateBookWithIsbnHandler createBookWithIsbnHandler,
+            FindExternalBooksHandler findExternalBooksHandler,
             BookMapper bookMapper) {
         this.createBookHandler = createBookHandler;
         this.deleteBookHandler = deleteBookHandler;
@@ -70,6 +76,7 @@ public class BookService {
         this.getBookCoverHandler = getBookCoverHandler;
         this.getBookCoversBulkHandler = getBookCoversBulkHandler;
         this.createBookWithIsbnHandler = createBookWithIsbnHandler;
+        this.findExternalBooksHandler = findExternalBooksHandler;
         this.bookMapper = bookMapper;
     }
 
@@ -91,6 +98,14 @@ public class BookService {
         return createBookWithIsbnHandler.handle(isbn);
     }
 
+    public List<ExternalBook> searchGoogleBooks(String query, ExternalBookSearchField field) {
+        return findExternalBooksHandler.search(query, field);
+    }
+
+    public UUID importGoogleBook(String volumeId) {
+        return createBookWithIsbnHandler.saveImportedVolume(findExternalBooksHandler.fetchVolume(volumeId));
+    }
+
     public void delete(UUID bookId) {
         deleteBookHandler.execute(bookId);
     }
@@ -102,6 +117,13 @@ public class BookService {
     public List<GetBookResponse> getAll(int pageNumber, int pageSize) {
         return getAllBooksHandler.execute(new PageBook(pageSize, pageNumber))
                 .stream()
+                .map(bookMapper::toGetResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetBookResponse> search(String text, PageBook page) {
+        return getAllBooksHandler.search(text, page).stream()
                 .map(bookMapper::toGetResponse)
                 .toList();
     }

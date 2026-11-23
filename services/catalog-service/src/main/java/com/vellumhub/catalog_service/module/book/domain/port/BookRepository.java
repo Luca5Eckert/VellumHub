@@ -13,6 +13,8 @@ public interface BookRepository {
 
     Page<Book> findAll(PageRequest pageRequest);
 
+    List<Book> search(String text, PageRequest pageRequest);
+
     Optional<Book> findById(UUID bookId);
 
     void deleteById(UUID bookId);

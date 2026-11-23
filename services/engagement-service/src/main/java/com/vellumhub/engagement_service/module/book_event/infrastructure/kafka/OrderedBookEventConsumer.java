@@ -1,5 +1,6 @@
 package com.vellumhub.engagement_service.module.book_event.infrastructure.kafka;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.vellumhub.engagement_service.module.book_event.application.use_case.ApplyBookEventUseCase;
 import com.vellumhub.engagement_service.share.metrics.VellumHubMetrics;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 /** Ordered, at-least-once transport with a durable per-book checkpoint. */
 @Slf4j
+@ConditionalOnProperty(name = "app.kafka.json-listeners.enabled", havingValue = "true", matchIfMissing = true)
 @Component
 public class OrderedBookEventConsumer {
     private final ApplyBookEventUseCase projection;

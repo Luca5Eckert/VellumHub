@@ -1,5 +1,6 @@
 package com.vellumhub.recommendation_service.module.reading_progress.infrastructure.kafka;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.vellumhub.kafka.contracts.KafkaConsumerGroups;
 import com.vellumhub.kafka.contracts.KafkaTopics;
 import com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent;
@@ -12,6 +13,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Slf4j
+@ConditionalOnProperty(name = "app.kafka.json-listeners.enabled", havingValue = "true", matchIfMissing = true)
 @Component
 public class OrderedReadingProgressConsumer {
     private static final String EVENT_TYPE = "ReadingProgressChangedEvent";

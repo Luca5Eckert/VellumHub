@@ -22,11 +22,15 @@ REGISTRY = [
     "-f", "infra/compose/schema-registry-app-network.yaml",
 ]
 REGISTRY_URL = "http://schema-registry:8080/apis/ccompat/v7"
-# Contract manifest is the source of truth for the four dedicated Avro topics.
+# Contract manifest is the source of truth for the dedicated Avro topics.
 AVRO_TOPICS = sorted({entry["topic"] for entry in json.loads(
     (ROOT / "infra/schema-registry/contracts.json").read_text(encoding="utf-8")
 )["subjects"]})
 REQUIRED = {
+    "user-service": {
+        "USER_PREFERENCE_AVRO_WRITE_ENABLED": "true",
+        "USER_PREFERENCE_AVRO_REGISTRY_URL": REGISTRY_URL,
+    },
     "catalog-service": {
         "BOOK_EVENTS_WIRE_FORMAT": "avro",
         "READING_PROGRESS_EVENTS_WIRE_FORMAT": "avro",
@@ -34,6 +38,7 @@ REQUIRED = {
         "READING_PROGRESS_AVRO_REGISTRY_URL": REGISTRY_URL,
     },
     "engagement-service": {
+        "KAFKA_JSON_LISTENERS_ENABLED": "false",
         "BOOK_AVRO_CONSUMER_ENABLED": "true",
         "READING_PROGRESS_AVRO_CONSUMER_ENABLED": "true",
         "ENGAGEMENT_RATINGS_WIRE_FORMAT": "avro",
@@ -43,6 +48,10 @@ REQUIRED = {
         "ENGAGEMENT_AVRO_REGISTRY_URL": REGISTRY_URL,
     },
     "recommendation-service": {
+        "KAFKA_JSON_LISTENERS_ENABLED": "false",
+        "USER_PREFERENCE_AVRO_CONSUMER_ENABLED": "true",
+        "USER_PREFERENCE_JSON_CONSUMER_ENABLED": "false",
+        "USER_PREFERENCE_AVRO_REGISTRY_URL": REGISTRY_URL,
         "BOOK_AVRO_CONSUMER_ENABLED": "true",
         "READING_PROGRESS_AVRO_CONSUMER_ENABLED": "true",
         "ENGAGEMENT_RATINGS_AVRO_CONSUMER_ENABLED": "true",
@@ -50,7 +59,7 @@ REQUIRED = {
         "BOOK_AVRO_REGISTRY_URL": REGISTRY_URL,
         "READING_PROGRESS_AVRO_REGISTRY_URL": REGISTRY_URL,
         "ENGAGEMENT_AVRO_REGISTRY_URL": REGISTRY_URL,
-        "KAFKA_LEGACY_CONSUMERS_ENABLED": "true",
+        "KAFKA_LEGACY_CONSUMERS_ENABLED": "false",
     },
 }
 

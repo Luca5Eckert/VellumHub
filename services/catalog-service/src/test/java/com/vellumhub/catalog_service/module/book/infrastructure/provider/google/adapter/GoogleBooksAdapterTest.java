@@ -1,6 +1,9 @@
 package com.vellumhub.catalog_service.module.book.infrastructure.provider.google.adapter;
 
+import com.vellumhub.catalog_service.module.book.domain.exception.ExternalBookProviderException;
 import com.vellumhub.catalog_service.module.book.domain.model.Book;
+import com.vellumhub.catalog_service.module.book.domain.model.ExternalBook;
+import com.vellumhub.catalog_service.module.book.domain.model.ExternalBookSearchField;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -135,6 +138,49 @@ class GoogleBooksAdapterTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("External catalog service is currently unavailable");
 
+        mockServer.verify();
+    }
+
+    @Test
+    void searchesByFieldAndReturnsProviderIdsAndPreferredIsbn() {
+        mockServer.expect(request -> {
+                    assertThat(request.getURI().getPath()).isEqualTo("/volumes");
+                    assertThat(request.getURI().getRawQuery()).contains("%26");
+                    assertThat(request.getURI().getQuery()).isEqualTo("q=intitle:Books & Reading&maxResults=10");
+                })
+                .andRespond(withSuccess("""
+                        {"items":[{"id":"selected_123","volumeInfo":{
+                          "title":"Books & Reading","authors":["Ada Reviewer"],
+                          "industryIdentifiers":[{"type":"ISBN_10","identifier":"0132350882"},
+                                                 {"type":"ISBN_13","identifier":"9780132350884"}]
+                        }},{"volumeInfo":{"title":"Missing provider ID"}}]}
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(adapter.search("Books & Reading", ExternalBookSearchField.TITLE))
+                .singleElement()
+                .satisfies(book -> {
+                    assertThat(book.volumeId()).isEqualTo("selected_123");
+                    assertThat(book.title()).isEqualTo("Books & Reading");
+                    assertThat(book.isbn()).isEqualTo("9780132350884");
+                });
+        mockServer.verify();
+    }
+
+    @Test
+    void resolvesTheSelectedVolumeAndDistinguishesMissingFromUnavailable() {
+        mockServer.expect(requestTo("https://api.google.com/volumes/selected_123"))
+                .andRespond(withSuccess("""
+                        {"id":"selected_123","volumeInfo":{"title":"Selected book","publishedDate":"2024-07"}}
+                        """, MediaType.APPLICATION_JSON));
+        mockServer.expect(requestTo("https://api.google.com/volumes/missing"))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
+        mockServer.expect(requestTo("https://api.google.com/volumes/unavailable"))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS));
+
+        assertThat(adapter.fetchVolume("selected_123")).map(ExternalBook::releaseYear).contains(2024);
+        assertThat(adapter.fetchVolume("missing")).isEmpty();
+        assertThatThrownBy(() -> adapter.fetchVolume("unavailable"))
+                .isInstanceOf(ExternalBookProviderException.class);
         mockServer.verify();
     }
 }

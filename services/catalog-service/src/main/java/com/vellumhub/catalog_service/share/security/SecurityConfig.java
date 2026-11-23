@@ -95,7 +95,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/books", "/books/*", "/books/*/cover")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "catalog:read", false)))
-                        .requestMatchers(HttpMethod.POST, "/books", "/books/isbn", "/books/*/cover", "/book-requests/*/approve")
+                        .requestMatchers(HttpMethod.POST, "/books", "/books/isbn", "/books/google", "/books/*/cover", "/book-requests/*/approve")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "catalog:write", true)))
                         .requestMatchers(HttpMethod.PUT, "/books/*")
