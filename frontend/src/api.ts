@@ -15,8 +15,17 @@ export interface Book {
 
 export interface Reading {
   bookId: string
-  status: 'WANT_TO_READ' | 'READING' | 'COMPLETED'
+  status: 'WANT_TO_READ' | 'READING' | 'COMPLETED' | 'PAUSED' | 'ABANDONED'
   currentPage: number
+}
+
+export interface BookReading extends Omit<Reading, 'bookId'> {
+  id: string
+  readingNumber: number
+  startedAt: string | null
+  endAt: string | null
+  targetEndDate: string | null
+  pageCount: number
 }
 
 export interface BookList {
@@ -47,6 +56,9 @@ export function api(token: string) {
       : undefined) as T
   }
 
+  const readingsPath = (bookId: string) => `/catalog/book-progress/${encodeURIComponent(bookId)}/readings`
+  const readingPath = (bookId: string, readingId: string) => `${readingsPath(bookId)}/${encodeURIComponent(readingId)}`
+
   return {
     profile: () => request<{ name: string }>('/users/me'),
     genres: () => request<{ genres: string[] }>('/users/genres'),
@@ -64,12 +76,15 @@ export function api(token: string) {
       request<void>(`/catalog/book-list/${encodeURIComponent(listId)}/books/${encodeURIComponent(bookId)}`, 'POST'),
     rate: (id: string, stars: number, review: string) =>
       request<void>('/engagement/rating', 'POST', { bookId: id, stars, ...(review && { review }) }),
-    startReading: (id: string, currentPage: number) =>
-      request<void>(`/catalog/book-progress/${encodeURIComponent(id)}/status`, 'POST', {
-        status: 'READING', currentPage, startedAt: new Date().toISOString(),
-      }),
-    updateProgress: (id: string, newCurrentPage: number) =>
-      request<void>(`/catalog/book-progress/${encodeURIComponent(id)}/progress`, 'PUT', { newCurrentPage }),
+    bookReadings: (bookId: string) => request<BookReading[]>(readingsPath(bookId)),
+    startReading: (bookId: string, startedAt?: string) =>
+      request<BookReading>(readingsPath(bookId), 'POST', startedAt ? { startedAt } : {}),
+    updateProgress: (bookId: string, readingId: string, progress: { page?: number, percentage?: number, readAt?: string }) =>
+      request<BookReading>(`${readingPath(bookId, readingId)}/progress`, 'PATCH', progress),
+    transitionReading: (bookId: string, readingId: string, status: Reading['status']) =>
+      request<BookReading>(`${readingPath(bookId, readingId)}/status`, 'PATCH', { status }),
+    setReadingTarget: (bookId: string, readingId: string, targetEndDate: string | null) =>
+      request<BookReading>(`${readingPath(bookId, readingId)}/target`, 'PATCH', { targetEndDate }),
   }
 }
 

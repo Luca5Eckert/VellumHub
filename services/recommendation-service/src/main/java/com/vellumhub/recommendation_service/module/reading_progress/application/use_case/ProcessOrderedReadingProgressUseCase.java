@@ -33,6 +33,11 @@ public class ProcessOrderedReadingProgressUseCase {
             throw new IllegalArgumentException("First revision must be CREATED");
         if (event.revision()>0 && event.kind()!=ReadingProgressChangedEvent.Kind.UPDATED)
             throw new IllegalArgumentException("Later revisions must be UPDATED");
+        if (event.kind() == ReadingProgressChangedEvent.Kind.UPDATED
+                && event.oldPage() == event.newPage()) {
+            checkpoint.markApplied(event.bookProgressId(), event.revision(), event.eventId());
+            return EventProcessingOutcome.APPLIED;
+        }
         // The legacy use case silently skips missing book features. The ordered path must
         // NOT commit its offset in that situation, or the profile would permanently miss the signal.
         if (features.findById(event.bookId()).isEmpty())

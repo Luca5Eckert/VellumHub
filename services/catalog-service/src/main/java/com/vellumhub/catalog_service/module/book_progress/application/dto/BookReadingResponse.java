@@ -3,6 +3,7 @@ package com.vellumhub.catalog_service.module.book_progress.application.dto;
 import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
 
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record BookReadingResponse(
@@ -12,5 +13,6 @@ public record BookReadingResponse(
         OffsetDateTime startedAt,
         OffsetDateTime endAt,
         int currentPage,
-        int pageCount
+        int pageCount,
+        LocalDate targetEndDate
 ) {}

@@ -89,7 +89,7 @@ class BookProgressControllerTest {
 
         @Test
         void startingAnotherActiveReadingReturnsConflict() throws Exception {
-            when(bookReadingsHandler.start(bookId, userId))
+            when(bookReadingsHandler.start(bookId, userId, null))
                     .thenThrow(new BookProgressConflictException("An active reading already exists"));
 
             mockMvc.perform(post("/book-progress/{bookId}/readings", bookId))

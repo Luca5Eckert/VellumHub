@@ -19,6 +19,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -63,8 +67,10 @@ public class BookProgressController {
     @ApiResponse(responseCode = "201", description = "Reading started")
     @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
     @ApiResponse(responseCode = "409", description = "An active reading already exists", content = @Content)
-    public ResponseEntity<BookReadingResponse> startReading(@PathVariable UUID bookId) {
-        var reading = bookReadingsHandler.start(bookId, authenticationService.getAuthenticatedUserId());
+    public ResponseEntity<BookReadingResponse> startReading(@PathVariable UUID bookId,
+            @RequestBody(required = false) StartReadingRequest request) {
+        var reading = bookReadingsHandler.start(bookId, authenticationService.getAuthenticatedUserId(),
+                request == null ? null : request.startedAt());
         return ResponseEntity.status(HttpStatus.CREATED).body(toReadingResponse(reading));
     }
 
@@ -77,10 +83,46 @@ public class BookProgressController {
                 .toList();
     }
 
+    @PatchMapping("/{bookId}/readings/{readingId}/progress")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
+    @Operation(summary = "Record a page or percentage for a reading")
+    public BookReadingResponse recordProgress(@PathVariable UUID bookId, @PathVariable UUID readingId,
+                                               @RequestBody RecordProgressRequest request) {
+        return toReadingResponse(bookReadingsHandler.progress(bookId, authenticationService.getAuthenticatedUserId(),
+                readingId, request.page(), request.percentage(), request.readAt()));
+    }
+
+    @PatchMapping("/{bookId}/readings/{readingId}/status")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
+    @Operation(summary = "Transition the status of a reading")
+    public BookReadingResponse transition(@PathVariable UUID bookId, @PathVariable UUID readingId,
+                                           @Valid @RequestBody TransitionReadingRequest request) {
+        return toReadingResponse(bookReadingsHandler.transition(bookId, authenticationService.getAuthenticatedUserId(),
+                readingId, request.status()));
+    }
+
+    @PatchMapping("/{bookId}/readings/{readingId}/target")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
+    @Operation(summary = "Set the reading target date, or clear it with null")
+    public BookReadingResponse target(@PathVariable UUID bookId, @PathVariable UUID readingId,
+                                      @RequestBody ReadingTargetRequest request) {
+        return toReadingResponse(bookReadingsHandler.target(bookId, authenticationService.getAuthenticatedUserId(),
+                readingId, request.targetEndDate()));
+    }
+
+    public record StartReadingRequest(OffsetDateTime startedAt) {}
+
+    public record RecordProgressRequest(Integer page, Integer percentage, OffsetDateTime readAt) {}
+
+    public record TransitionReadingRequest(@NotNull ReadingStatus status) {}
+
+    public record ReadingTargetRequest(LocalDate targetEndDate) {}
+
     private BookReadingResponse toReadingResponse(BookReadingsHandler.Reading reading) {
         var progress = reading.progress();
         return new BookReadingResponse(progress.getId(), reading.readingNumber(), progress.getReadingStatus(),
-                progress.getStartedAt(), progress.getEndAt(), progress.getCurrentPage(), progress.getBook().getPageCount());
+                progress.getStartedAt(), progress.getEndAt(), progress.getCurrentPage(), progress.getBook().getPageCount(),
+                progress.getTargetEndDate());
     }
 
     @PostMapping("/{bookId}/status")

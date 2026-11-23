@@ -102,14 +102,24 @@ class ReadingProgressAvroEngagementDistributedTest extends KafkaIntegrationTestS
             checkpoint(aggregate,0);
             assertThat(jdbc.queryForObject("SELECT count(*) FROM reading_session_entries WHERE event_id=?",
                     Long.class,created.eventId())).isEqualTo(1L);
-            var updated=fact(aggregate,book,user,1,ReadingProgressChangedEvent.Kind.UPDATED);
+            Instant readAt = Instant.now().minusSeconds(86400).truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+            var updated = new ReadingProgressChangedEvent(UUID.randomUUID(), Instant.now(), aggregate, user, book,
+                    "READING", 0, 1, 1, ReadingProgressChangedEvent.Kind.UPDATED, readAt, null);
             send(producer,topic,aggregate,updated);
             checkpoint(aggregate,1);
             send(producer,topic,aggregate,updated);
             await().during(Duration.ofMillis(250)).atMost(Duration.ofSeconds(3)).untilAsserted(() ->
                     assertThat(jdbc.queryForObject("SELECT count(*) FROM reading_session_entries WHERE event_id=?",
                             Long.class,updated.eventId())).isEqualTo(1L));
-            var gap=fact(aggregate,book,user,3,ReadingProgressChangedEvent.Kind.UPDATED);
+            assertThat(jdbc.queryForObject("SELECT read_at < timestamp FROM reading_session_entries WHERE event_id=?",
+                    Boolean.class, updated.eventId())).isTrue();
+            var paused = new ReadingProgressChangedEvent(UUID.randomUUID(), Instant.now(), aggregate, user, book,
+                    "PAUSED", 1, 1, 2, ReadingProgressChangedEvent.Kind.UPDATED);
+            send(producer,topic,aggregate,paused);
+            checkpoint(aggregate,2);
+            assertThat(jdbc.queryForObject("SELECT type FROM reading_session_entries WHERE event_id=?",
+                    String.class,paused.eventId())).isEqualTo("PAUSED");
+            var gap=fact(aggregate,book,user,4,ReadingProgressChangedEvent.Kind.UPDATED);
             send(producer,topic,aggregate,gap);
             var dead=dlt.awaitRecord(dltTopic,aggregate.toString(),Duration.ofSeconds(30),Duration.ofMillis(200));
             assertThat(dead.value()[0]).isEqualTo((byte)0);
@@ -117,7 +127,7 @@ class ReadingProgressAvroEngagementDistributedTest extends KafkaIntegrationTestS
             assertThat(KafkaProbe.utf8HeaderValues(dead,"x-vellum-source-topic")).containsExactly(topic);
             assertThat(KafkaProbe.utf8HeaderValues(dead,"x-vellum-consumer-group"))
                     .containsExactly(KafkaConsumerGroups.ENGAGEMENT_READING_PROGRESS_AVRO);
-            checkpoint(aggregate,1);
+            checkpoint(aggregate,2);
             assertThat(jdbc.queryForObject("SELECT count(*) FROM reading_session_entries WHERE event_id=?",
                     Long.class,gap.eventId())).isZero();
         }

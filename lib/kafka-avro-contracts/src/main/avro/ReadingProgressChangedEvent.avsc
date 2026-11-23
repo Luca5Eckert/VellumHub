@@ -55,6 +55,22 @@
           "UPDATED"
         ]
       }
+    },
+    {
+      "name": "readAt",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "targetEndDate",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
     }
   ]
 }

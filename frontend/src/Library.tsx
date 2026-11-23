@@ -195,8 +195,6 @@ export function Library({ token, userId, name, dark, toggleTheme, signOut }: Pro
   const featured = filtered[0]
   const matchingGenres = reason?.genres.filter(genre => savedGenres.includes(genre)) ?? []
   const visibleLoad = tab === 'shelf' || tab === 'lists' ? browseStatus[tab] : searchState
-  const currentReading = selected && (readings.find(item => item.bookId === selected.id && item.status === 'READING')
-    ?? readings.find(item => item.bookId === selected.id))
 
   return <div className="app-shell">
     <header className="app-top">
@@ -215,11 +213,14 @@ export function Library({ token, userId, name, dark, toggleTheme, signOut }: Pro
     <main className="app-content">
       {error && <p role="alert" className="error">{error}</p>}
       {opening && <p role="status">Carregando livro…</p>}
-      {selected ? <BookDetail key={selected.id} book={selected} reading={currentReading || undefined} client={client} userId={userId}
+      {selected ? <BookDetail key={selected.id} book={selected} client={client} userId={userId}
         onBack={() => setSelected(undefined)}
         onReading={reading => {
           setReadings(current => [...current.filter(item => item.bookId !== reading.bookId), reading])
-          setContinueBooks(current => [selected, ...current.filter(book => book.id !== selected.id)].slice(0, 2))
+          setContinueBooks(current => {
+            const others = current.filter(book => book.id !== selected.id)
+            return reading.status === 'READING' ? [selected, ...others].slice(0, 2) : others
+          })
         }} />
         : tab === 'home' ? <>
           <header className="screen-intro">

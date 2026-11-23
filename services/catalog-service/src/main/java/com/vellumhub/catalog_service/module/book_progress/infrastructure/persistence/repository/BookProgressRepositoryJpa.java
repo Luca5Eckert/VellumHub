@@ -14,6 +14,8 @@ import java.util.UUID;
 public interface BookProgressRepositoryJpa extends JpaRepository<BookProgress, UUID> {
     Optional<BookProgress> findByUserIdAndBookIdAndIsActiveTrue(UUID userId, UUID bookId);
 
+    Optional<BookProgress> findByUserIdAndBookIdAndId(UUID userId, UUID bookId, UUID readingId);
+
     @Query("""
             select progress from BookProgress progress join fetch progress.book book
             where progress.userId = :userId and book.id = :bookId

@@ -4,6 +4,7 @@ import com.vellumhub.catalog_service.module.book_progress.domain.command.UpdateB
 import com.vellumhub.catalog_service.module.book_progress.domain.use_case.UpdateBookProgressUseCase;
 import com.vellumhub.catalog_service.module.outbox.application.model.OutboxMessage;
 import com.vellumhub.catalog_service.module.outbox.application.port.OutboxWriter;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingProgressChange;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,10 @@ public class UpdateBookProgressHandler {
     public void handle(int currentPage, UUID bookId, UUID userId) {
         writeGate.requireWritable();
         var event = useCase.execute(new UpdateBookProgressCommand(userId, bookId, currentPage));
+        append(event);
+    }
+
+    void append(ReadingProgressChange event) {
         if (event != null) {
             outbox.append(OutboxMessage.readingProgress(events.map(event), avro));
         }

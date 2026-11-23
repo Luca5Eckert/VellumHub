@@ -12,7 +12,7 @@ public class ReadingProgressEventFactory {
             change.eventId(), change.occurredAt(), change.bookProgressId(),
             change.userId(), change.bookId(), change.progress(), change.oldPage(),
             change.newPage(), change.revision(),
-            ReadingProgressChangedEvent.Kind.valueOf(change.kind().name()));
+            ReadingProgressChangedEvent.Kind.valueOf(change.kind().name()), change.readAt(), change.targetEndDate());
     }
 }
 

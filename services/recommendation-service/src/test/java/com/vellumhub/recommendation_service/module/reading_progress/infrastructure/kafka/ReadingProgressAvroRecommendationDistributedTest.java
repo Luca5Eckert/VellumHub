@@ -120,7 +120,14 @@ class ReadingProgressAvroRecommendationDistributedTest extends DistributedIntegr
                     ReadingProgressChangedEvent.Kind.CREATED));
             checkpoint(v2Progress,0);
             assertThat(profiles.findById(v2User)).isPresent();
-            var gap=fact(progress,user,book,2,ReadingProgressChangedEvent.Kind.UPDATED);
+            int revision = 0;
+            for (String status : new String[]{"PAUSED", "READING", "ABANDONED"}) {
+                var transition = new ReadingProgressChangedEvent(UUID.randomUUID(), Instant.now(),
+                        progress, user, book, status, 1, 1, ++revision, ReadingProgressChangedEvent.Kind.UPDATED);
+                send(producer, transition);
+                checkpoint(progress, revision);
+            }
+            var gap=fact(progress,user,book,5,ReadingProgressChangedEvent.Kind.UPDATED);
             send(producer,gap);
             var dead=dlt.awaitRecord(dltTopic,progress.toString(),Duration.ofSeconds(30),Duration.ofMillis(200));
             assertThat(dead.value()[0]).isEqualTo((byte)0);
@@ -128,7 +135,7 @@ class ReadingProgressAvroRecommendationDistributedTest extends DistributedIntegr
             assertThat(KafkaProbe.utf8HeaderValues(dead,"x-vellum-source-topic")).containsExactly(topic);
             assertThat(KafkaProbe.utf8HeaderValues(dead,"x-vellum-consumer-group"))
                     .containsExactly(KafkaConsumerGroups.RECOMMENDATION_READING_PROGRESS_AVRO);
-            checkpoint(progress,0);
+            checkpoint(progress,3);
             assertThat(profiles.findById(user).orElseThrow().getTotalEngagementScore()).isEqualTo(score);
         }
     }

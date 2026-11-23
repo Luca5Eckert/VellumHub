@@ -24,6 +24,11 @@ public class BookProgressRepositoryAdapter implements BookProgressRepository {
     }
 
     @Override
+    public Optional<BookProgress> findOwnedReading(UUID userId, UUID bookId, UUID readingId) {
+        return bookProgressRepositoryJpa.findByUserIdAndBookIdAndId(userId, bookId, readingId);
+    }
+
+    @Override
     public List<BookProgress> findHistory(UUID userId, UUID bookId) {
         return bookProgressRepositoryJpa.findHistory(userId, bookId);
     }

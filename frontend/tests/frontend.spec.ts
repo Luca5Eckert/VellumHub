@@ -42,19 +42,34 @@ for (const { viewport, colorScheme } of [
     const book = { id: 'fixture-book', title: 'Duna', author: 'Frank Herbert',
       description: 'Uma viagem a Arrakis.', pageCount: 400, genres: ['Science Fiction'] }
     let recommendationAttempts = 0
-    let readingStarted = false
+    const readings: Array<{ id: string, readingNumber: number, status: string, currentPage: number,
+      pageCount: number, targetEndDate: string | null }> = []
     const writes: Array<{ path: string, body: unknown }> = []
     await page.route('http://127.0.0.1:8080/api/v1/**', async route => {
       const request = route.request()
       const path = new URL(request.url()).pathname
       if (request.method() !== 'GET') {
-        if (path.endsWith('/status')) readingStarted = true
-        if (path.endsWith('/progress') && !readingStarted) {
-          await route.fulfill({ status: 404 })
+        const body = request.postDataJSON()
+        writes.push({ path, body })
+        if (path.endsWith('/readings')) {
+          const number = readings.length + 1
+          readings.unshift({ id: `reading-${number}`, readingNumber: number,
+            status: 'READING', currentPage: 0, pageCount: book.pageCount, targetEndDate: null })
+          await route.fulfill({ status: 201, json: readings[0] })
           return
         }
-        writes.push({ path, body: request.postDataJSON() })
-        await route.fulfill({ json: path.endsWith('/preferences') ? request.postDataJSON() : {} })
+        if (path.includes('/readings/')) {
+          const current = readings[0]
+          if (path.endsWith('/progress')) current.currentPage = body.page ?? body.percentage * book.pageCount / 100
+          if (path.endsWith('/status')) {
+            current.status = body.status
+            if (body.status === 'COMPLETED') current.currentPage = book.pageCount
+          }
+          if (path.endsWith('/target')) current.targetEndDate = body.targetEndDate
+          await route.fulfill({ json: current })
+          return
+        }
+        await route.fulfill({ json: path.endsWith('/preferences') ? body : {} })
         return
       }
       if (path.endsWith('/recommendations') && ++recommendationAttempts === 1) {
@@ -64,6 +79,7 @@ for (const { viewport, colorScheme } of [
       const data = path.endsWith('/genres') ? { genres: ['Science Fiction', 'Fantasy', 'Adventure'] }
         : path.endsWith('/preferences') ? { genres: [] }
         : path.endsWith('/recommendations') ? [book]
+          : path.endsWith('/readings') ? readings
           : path.endsWith('/reading-list') ? []
             : path.endsWith('/books') ? [book] : book
       await route.fulfill({ json: data })
@@ -103,13 +119,31 @@ for (const { viewport, colorScheme } of [
     await page.getByLabel('Página atual').fill('42')
     await page.getByRole('button', { name: 'Salvar progresso' }).click()
     await expect(page.getByRole('status')).toHaveText('Progresso atualizado.')
+    await page.getByRole('button', { name: 'Pausar' }).click()
+    await expect(page.getByRole('button', { name: 'Retomar' })).toBeVisible()
+    await page.getByRole('button', { name: 'Retomar' }).click()
+    await page.getByRole('button', { name: 'Meta de término' }).click()
+    await page.getByLabel('Data de término').fill('2099-12-31')
+    await page.getByRole('button', { name: 'Salvar meta' }).click()
+    await expect(page.getByRole('status')).toHaveText('Meta salva.')
+    await page.getByRole('button', { name: 'Concluir' }).click()
+    await page.getByRole('button', { name: 'Iniciar releitura' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Iniciar releitura' }).click()
+    await expect(page.getByRole('list', { name: 'Histórico de leituras' }).getByRole('listitem')).toHaveCount(2)
+    await page.getByRole('button', { name: 'Abandonar' }).click()
+    await expect(page.getByRole('status')).toHaveText('Abandonada.')
     expect(writes).toEqual([
       { path: '/api/v1/users/me/preferences', body: { genres: ['Science Fiction', 'Fantasy', 'Adventure'] } },
       { path: '/api/v1/engagement/reactions', body: { bookId: book.id, typeReaction: 'POSITIVE' } },
       { path: '/api/v1/engagement/rating', body: { bookId: book.id, stars: 4, review: 'Boa leitura.' } },
-      { path: '/api/v1/catalog/book-progress/fixture-book/status',
-        body: { status: 'READING', currentPage: 0, startedAt: expect.any(String) } },
-      { path: '/api/v1/catalog/book-progress/fixture-book/progress', body: { newCurrentPage: 42 } },
+      { path: '/api/v1/catalog/book-progress/fixture-book/readings', body: {} },
+      { path: '/api/v1/catalog/book-progress/fixture-book/readings/reading-1/progress', body: { page: 42 } },
+      { path: '/api/v1/catalog/book-progress/fixture-book/readings/reading-1/status', body: { status: 'PAUSED' } },
+      { path: '/api/v1/catalog/book-progress/fixture-book/readings/reading-1/status', body: { status: 'READING' } },
+      { path: '/api/v1/catalog/book-progress/fixture-book/readings/reading-1/target', body: { targetEndDate: '2099-12-31' } },
+      { path: '/api/v1/catalog/book-progress/fixture-book/readings/reading-1/status', body: { status: 'COMPLETED' } },
+      { path: '/api/v1/catalog/book-progress/fixture-book/readings', body: {} },
+      { path: '/api/v1/catalog/book-progress/fixture-book/readings/reading-2/status', body: { status: 'ABANDONED' } },
     ])
   })
 }
