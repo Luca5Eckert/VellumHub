@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookProgressResponse;
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookStatusRequest;
 import com.vellumhub.catalog_service.module.book_progress.application.dto.UpdateBookProgressRequest;
+import com.vellumhub.catalog_service.module.book_progress.application.handler.BookReadingsHandler;
 import com.vellumhub.catalog_service.module.book_progress.application.handler.DefineBookStatusHandler;
 import com.vellumhub.catalog_service.module.book_progress.application.handler.DeleteBookProgressHandler;
 import com.vellumhub.catalog_service.module.book_progress.application.handler.GetReadingListHandler;
@@ -56,6 +57,9 @@ class BookProgressControllerTest {
     private GetReadingListHandler getReadingListHandler;
 
     @MockitoBean
+    private BookReadingsHandler bookReadingsHandler;
+
+    @MockitoBean
     private AuthenticationService authenticationService;
 
     @MockitoBean
@@ -69,6 +73,28 @@ class BookProgressControllerTest {
         userId = UUID.randomUUID();
         bookId = UUID.randomUUID();
         when(authenticationService.getAuthenticatedUserId()).thenReturn(userId);
+    }
+
+    @Nested
+    class BookReadings {
+        @Test
+        void listsReadingsForTheAuthenticatedUser() throws Exception {
+            when(bookReadingsHandler.list(bookId, userId)).thenReturn(List.of());
+
+            mockMvc.perform(get("/book-progress/{bookId}/readings", bookId))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json("[]"));
+            verify(bookReadingsHandler).list(bookId, userId);
+        }
+
+        @Test
+        void startingAnotherActiveReadingReturnsConflict() throws Exception {
+            when(bookReadingsHandler.start(bookId, userId))
+                    .thenThrow(new BookProgressConflictException("An active reading already exists"));
+
+            mockMvc.perform(post("/book-progress/{bookId}/readings", bookId))
+                    .andExpect(status().isConflict());
+        }
     }
 
     @Nested

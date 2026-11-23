@@ -11,6 +11,8 @@ import java.util.UUID;
 public interface BookProgressRepository {
     Optional<BookProgress> findActiveByUserIdAndBookId(UUID userId, UUID bookId);
 
+    List<BookProgress> findHistory(UUID userId, UUID bookId);
+
     BookProgress save(BookProgress bookProgress);
 
     Optional<BookProgress> findById(UUID bookProgressId);

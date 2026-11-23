@@ -1,5 +1,7 @@
 package com.vellumhub.catalog_service.share.config;
 
+import com.vellumhub.catalog_service.module.book_progress.application.handler.BookReadingsHandler;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressConflictException;
 import com.vellumhub.catalog_service.CatalogServiceApplication;
 import com.vellumhub.catalog_service.module.book.application.query.PageBook;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
@@ -114,20 +116,24 @@ class FlywayPostgresIntegrationTest {
     @Test
     @Order(4)
     void updatesOnlyTheActiveReadingAndEmitsItsEvent(
-            @Autowired JdbcTemplate jdbc, @Autowired UpdateBookProgressHandler progress) {
+            @Autowired JdbcTemplate jdbc, @Autowired UpdateBookProgressHandler progress,
+            @Autowired BookReadingsHandler readings) {
         UUID book = UUID.randomUUID();
         UUID reader = UUID.randomUUID();
         UUID completed = UUID.randomUUID();
         UUID active = UUID.randomUUID();
         UUID other = UUID.randomUUID();
+        UUID otherReader = UUID.randomUUID();
         jdbc.update("""
                 INSERT INTO books(id,title,release_year,author,isbn,page_count,publisher,version,created_at)
                 VALUES(?,'Rereading',2026,'Test Author','rereading-test',300,'Test Publisher',0,now())
                 """, book);
         jdbc.update("""
-                INSERT INTO book_progress(id,book_id,user_id,reading_status,current_page,is_active,version)
-                VALUES (?,?,?,'COMPLETED',300,false,0), (?,?,?,'READING',20,true,0), (?,?,?,'READING',15,true,0)
-                """, completed, book, reader, active, book, reader, other, book, UUID.randomUUID());
+                INSERT INTO book_progress(id,book_id,user_id,reading_status,current_page,is_active,version,created_at)
+                VALUES (?,?,?,'COMPLETED',300,false,0,now() - interval '2 days'),
+                       (?,?,?,'READING',20,true,0,now() - interval '1 day'),
+                       (?,?,?,'READING',15,true,0,now())
+                """, completed, book, reader, active, book, reader, other, book, otherReader);
 
         progress.handle(42, book, reader);
 
@@ -138,8 +144,23 @@ class FlywayPostgresIntegrationTest {
                 SELECT aggregate_id FROM outbox_events WHERE aggregate_id IN (?, ?, ?)
                 """, UUID.class, active, completed, other)).containsExactly(active);
 
+        assertThatThrownBy(() -> readings.start(book, reader)).isInstanceOf(BookProgressConflictException.class);
+
         progress.handle(300, book, reader);
         assertThatThrownBy(() -> progress.handle(50, book, reader)).isInstanceOf(BookIsNotBeingReadException.class);
+
+        var rereading = readings.start(book, reader);
+        UUID rereadingId = rereading.progress().getId();
+        assertThat(rereading.readingNumber()).isEqualTo(3);
+        assertThat(rereading.progress().getCurrentPage()).isZero();
+        assertThat(readings.list(book, reader))
+                .extracting(reading -> reading.progress().getId())
+                .containsExactly(rereadingId, active, completed);
+        assertThat(readings.list(book, otherReader))
+                .extracting(reading -> reading.progress().getId())
+                .containsExactly(other);
+        assertThat(jdbc.queryForList("SELECT aggregate_version FROM outbox_events WHERE aggregate_id = ?",
+                Long.class, rereadingId)).containsExactly(0L);
     }
 
     @Test

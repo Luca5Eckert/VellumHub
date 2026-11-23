@@ -110,10 +110,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/book-requests")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "catalog:requests:write", false)))
-                        .requestMatchers(HttpMethod.GET, "/book-progress/reading-list", "/book-list", "/book-list/*", "/book-list/membership", "/book-list/membership/*")
+                        .requestMatchers(HttpMethod.GET, "/book-progress/reading-list", "/book-progress/*/readings", "/book-list", "/book-list/*", "/book-list/membership", "/book-list/membership/*")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "catalog:personal:read", false)))
-                        .requestMatchers(HttpMethod.POST, "/book-progress/*/status", "/book-list", "/book-list/*/books/*", "/book-list/membership/*")
+                        .requestMatchers(HttpMethod.POST, "/book-progress/*/status", "/book-progress/*/readings", "/book-list", "/book-list/*/books/*", "/book-list/membership/*")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "catalog:personal:write", false)))
                         .requestMatchers(HttpMethod.PUT, "/book-progress/*/progress", "/book-list/*", "/book-list/membership/*/role")

@@ -1,6 +1,8 @@
 package com.vellumhub.catalog_service.module.book_progress.application.controller;
 
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookProgressResponse;
+import com.vellumhub.catalog_service.module.book_progress.application.dto.BookReadingResponse;
+import com.vellumhub.catalog_service.module.book_progress.application.handler.BookReadingsHandler;
 import com.vellumhub.catalog_service.module.book_progress.application.dto.BookStatusRequest;
 import com.vellumhub.catalog_service.module.book_progress.application.dto.UpdateBookProgressRequest;
 import com.vellumhub.catalog_service.module.book_progress.application.handler.DefineBookStatusHandler;
@@ -36,6 +38,7 @@ public class BookProgressController {
     private final UpdateBookProgressHandler updateBookProgressHandler;
     private final DeleteBookProgressHandler deleteBookProgressHandler;
     private final GetReadingListHandler getReadingListHandler;
+    private final BookReadingsHandler bookReadingsHandler;
     private final AuthenticationService authenticationService;
 
     public BookProgressController(
@@ -43,13 +46,41 @@ public class BookProgressController {
             UpdateBookProgressHandler updateBookProgressHandler,
             DeleteBookProgressHandler deleteBookProgressHandler,
             GetReadingListHandler getReadingListHandler,
+            BookReadingsHandler bookReadingsHandler,
             AuthenticationService authenticationService
     ) {
         this.defineBookStatusHandler = defineBookStatusHandler;
         this.updateBookProgressHandler = updateBookProgressHandler;
         this.deleteBookProgressHandler = deleteBookProgressHandler;
         this.getReadingListHandler = getReadingListHandler;
+        this.bookReadingsHandler = bookReadingsHandler;
         this.authenticationService = authenticationService;
+    }
+
+    @PostMapping("/{bookId}/readings")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
+    @Operation(summary = "Start a new reading")
+    @ApiResponse(responseCode = "201", description = "Reading started")
+    @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
+    @ApiResponse(responseCode = "409", description = "An active reading already exists", content = @Content)
+    public ResponseEntity<BookReadingResponse> startReading(@PathVariable UUID bookId) {
+        var reading = bookReadingsHandler.start(bookId, authenticationService.getAuthenticatedUserId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(toReadingResponse(reading));
+    }
+
+    @GetMapping("/{bookId}/readings")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:read"})
+    @Operation(summary = "List the authenticated user's readings for a book, newest first")
+    public List<BookReadingResponse> listReadings(@PathVariable UUID bookId) {
+        return bookReadingsHandler.list(bookId, authenticationService.getAuthenticatedUserId()).stream()
+                .map(this::toReadingResponse)
+                .toList();
+    }
+
+    private BookReadingResponse toReadingResponse(BookReadingsHandler.Reading reading) {
+        var progress = reading.progress();
+        return new BookReadingResponse(progress.getId(), reading.readingNumber(), progress.getReadingStatus(),
+                progress.getStartedAt(), progress.getEndAt(), progress.getCurrentPage(), progress.getBook().getPageCount());
     }
 
     @PostMapping("/{bookId}/status")

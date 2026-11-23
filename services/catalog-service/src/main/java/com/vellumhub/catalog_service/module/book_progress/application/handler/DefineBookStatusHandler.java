@@ -37,10 +37,16 @@ public class DefineBookStatusHandler {
     }
     @Transactional
     public void handle(BookStatusRequest request, UUID userId, UUID bookId) {
-        writeGate.requireWritable();
-        var event = useCase.execute(new DefineBookStatusCommand(
+        create(new DefineBookStatusCommand(
                 userId, bookId, request.status(), request.currentPage(), request.startedAt(), request.endAt()));
+    }
+
+    @Transactional
+    public UUID create(DefineBookStatusCommand command) {
+        writeGate.requireWritable();
+        var event = useCase.execute(command);
         outbox.append(OutboxMessage.readingProgress(events.map(event), avro));
+        return event.bookProgressId();
     }
 }
 

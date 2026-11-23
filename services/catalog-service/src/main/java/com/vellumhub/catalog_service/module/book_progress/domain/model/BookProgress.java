@@ -36,6 +36,9 @@ public class BookProgress {
     @Column(name = "current_page", nullable = false)
     private Integer currentPage;
 
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
     @Column(name = "started_at")
     private OffsetDateTime startedAt;
 
