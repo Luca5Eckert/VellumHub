@@ -23,6 +23,13 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.mrs</groupId>
+            <artifactId>user-service</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>test</scope>
+            <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+        </dependency>
+        <dependency>
             <groupId>com.mrs</groupId><artifactId>engagement-service</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
@@ -82,6 +89,11 @@
                 <directory>${project.basedir}/../../services/engagement-service/src/main/resources</directory>
                 <includes><include>db/migration/**</include><include>application.properties</include></includes>
                 <targetPath>engagement</targetPath>
+            </testResource>
+            <testResource>
+                <directory>${project.basedir}/../../services/user-service/src/main/resources</directory>
+                <includes><include>db/migration/**</include><include>application.properties</include></includes>
+                <targetPath>user</targetPath>
             </testResource>
         </testResources>
     </build>

@@ -52,3 +52,23 @@ npm test
 Os testes de navegador exercitam teclado, tema, acessibilidade e o fluxo integrado
 com respostas HTTP simuladas. Rodar contra a stack local com dados de catálogo
 continua sendo necessário para validar login e recomendação com serviços reais.
+
+### Contrato de preferências
+
+O catálogo é dono da taxonomia de onboarding. O bootstrap do Catalog e a
+validação no User compartilham a lista versionada `CatalogGenreNames.ONBOARDING`.
+User persiste e publica nomes canônicos, sem uma consulta síncrona ao Catalog.
+Essa lista cobre apenas o onboarding. Alterar um nome exige avaliar preferências
+persistidas e consumidores do evento. O frontend traduz os rótulos para exibição
+e envia o valor canônico recebido da API.
+
+O contrato versionado e os tipos TypeScript são extraídos do OpenAPI servido
+pelo Gateway. Com a stack local rodando, regenere e confira as alterações:
+
+```sh
+npm run preferences:generate -- http://localhost:8080/docs/user/v3/api-docs
+npm run preferences:check -- http://localhost:8080/docs/user/v3/api-docs
+```
+
+A CI compara a projeção do contrato com o Gateway real e verifica se os tipos
+gerados correspondem ao contrato versionado.

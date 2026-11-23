@@ -11,6 +11,8 @@ on:
       - 'services/catalog-service/**'
       - 'services/engagement-service/**'
       - 'services/recommendation-service/**'
+      - 'services/user-service/**'
+      - 'integration-tests/distributed-e2e/**'
       - 'infra/schema-registry/**'
       - 'integration-tests/schema-evolution-poc/**'
   push:
@@ -22,6 +24,8 @@ on:
       - 'lib/kafka-avro-contracts/**'
       - 'services/engagement-service/**'
       - 'services/recommendation-service/**'
+      - 'services/user-service/**'
+      - 'integration-tests/distributed-e2e/**'
 
 permissions: {contents: read}
 
@@ -75,3 +79,23 @@ jobs:
             lib/kafka-avro-contracts/target/surefire-reports/
           if-no-files-found: error
           retention-days: 21
+
+  preferences-http-avro:
+    name: User HTTP → outbox → Avro → Recommendation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21', cache: maven}
+      - name: Verify rollback, retry, ordering and duplicate delivery
+        run: >-
+          bash tools/ci/retry_dependency_resolution.sh mvn -B -ntp -Pdistributed-e2e
+          -pl integration-tests/distributed-e2e -am
+          -Dtest=UserPreferenceAvroE2ETest -Dsurefire.failIfNoSpecifiedTests=false test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: preference-http-avro-evidence-${{ github.sha }}
+          path: integration-tests/distributed-e2e/target/surefire-reports/
+          if-no-files-found: error
