@@ -1,0 +1,19 @@
+[INFO] Reactor Summary:
+[INFO]
+[INFO] kafka-contracts 1.0-SNAPSHOT ....................... SUCCESS [  2.197 s]
+[INFO] vellumhub 1.0-SNAPSHOT ............................. SUCCESS [  0.000 s]
+[INFO] kafka-avro-contracts 1.0-SNAPSHOT .................. SUCCESS [  2.417 s]
+[INFO] jwt-security 1.0-SNAPSHOT .......................... SUCCESS [  2.098 s]
+[INFO] distributed-test-support 1.0-SNAPSHOT .............. SUCCESS [  1.115 s]
+[INFO] catalog-service 0.0.1-SNAPSHOT ..................... FAILURE [05:20 min]
+[INFO] engagement-service 0.0.1-SNAPSHOT .................. SUCCESS [04:55 min]
+[INFO] user-service 0.0.1-SNAPSHOT ........................ SUCCESS [ 28.433 s]
+[INFO] recommendation-service 0.0.1-SNAPSHOT .............. FAILURE [06:08 min]
+[INFO]  0.0.1-SNAPSHOT .................................... SUCCESS [ 21.009 s]
+[INFO] auth-service 0.0.1-SNAPSHOT ........................ SUCCESS [ 35.983 s]
+[INFO] distributed-e2e-tests 1.0-SNAPSHOT ................. SKIPPED
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  17:59 min
+[INFO] Finished at: 2026-11-24T08:29:11-03:00

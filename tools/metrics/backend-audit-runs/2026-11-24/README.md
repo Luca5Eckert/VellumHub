@@ -85,6 +85,8 @@ A execução local de `./mvnw -B -ntp -fae -Pdistributed-e2e verify` validou **1
 
 `BookAvroRegistryFailureDistributedTest` encerrou com erro de ambiente antes da asserção central. O daemon rejeitou `pause` porque o runtime não oferece `cgroup.freeze`. Um container mínimo da mesma máquina reproduziu a falha com `docker pause`. Esta execução local do reator, portanto, tem um erro de infraestrutura. Os gates remotos com Kafka e Registry ficam registrados separadamente por SHA. [JUnit selecionado do reator local](outbox-verify.json) · [Controle de pause](docker-pause-probe.txt)
 
+O reator terminou com erro também no `ReadingProgressAvroRecommendationDistributedTest`. O RootlessKit encontrou uma porta ocupada ao criar a rede do Kafka, antes das asserções do teste. O E2E cruzado ficou fora desta execução local por dependência de módulos com erro. Os módulos independentes concluíram. [Resumo do reator](reactor-summary.txt)
+
 O smoke `RatingServiceApplicationTests.contextLoads` passou em 41,11 s apesar de retries do KafkaAdmin na inicialização. A asserção do smoke se limita ao carregamento do contexto. Para integração com broker e efeitos observáveis, as suítes distribuídas e os gates de release dão evidência mais direta.
 
 ### Qualidade offline do ranking
@@ -102,6 +104,8 @@ Pelo nDCG@10, no mesmo perfil, o 70/30 venceu popularidade em **23/24** (um empa
 ### OAuth 2.0/OIDC e telemetria em imagens publicadas
 
 No Compose de laboratório, as imagens dos seis serviços foram puxadas pela tag do SHA auditado. O cliente local verificou registro com UUIDv7, provisionamento Auth→User, Authorization Code + PKCE, relay do bearer, leituras nas quatro APIs e as negativas defensivas de token, escopo e papel. Com Auth parado, o token já emitido seguiu aceito pela rota Gateway→User com JWKS quente. Essa etapa usa Auth e serviços reais, enquanto o perfil local usa HTTP loopback e uma identidade descartável. [Saída dos probes OIDC](oidc-probes.txt) · [Digests OCI](compose-image-digests.txt)
+
+No reator local, `FederatedOidcLifecycleIntegrationTest` passou **11/11** com provedor OIDC simulado e PostgreSQL. Cobriu vinculação canônica, expiração e exclusão de sessão, logout, retomada entre réplicas e rejeição de sessões de identidades desabilitadas. [Casos JUnit](FederatedOidcLifecycleIntegrationTest.json)
 
 O primeiro Compose com OIDC e observabilidade mostrou logs dos seis serviços no Loki, trace HTTP no Tempo e incremento da métrica de Gateway, além de fontes/dashboards provisionados no Grafana. A consulta aos targets encontrou cinco scrapes ativos. Auth estava down porque o perfil `local-poc` abre administração em 9000 e o Prometheus do Compose base consulta 9001. O overlay descartável do script final mantém 9001 via `MANAGEMENT_SERVER_PORT`. A inicialização também exigiu leituras diretas no healthcheck do Recommendation para evitar o proxy do runner. Uma tentativa paralela ficou sem espaço no armazenamento Docker `vfs`. Após limpar os recursos da própria auditoria e isolar o Compose, a rodada com o overlay corrigido obteve **6/6 scrapes**, logs dos seis serviços e correlação do trace HTTP com a métrica do Gateway. [Probes iniciais](telemetry-initial-probes.txt) · [Probes da repetição](telemetry-probes.txt) · [Metadados Compose](compose-environment.txt)
 

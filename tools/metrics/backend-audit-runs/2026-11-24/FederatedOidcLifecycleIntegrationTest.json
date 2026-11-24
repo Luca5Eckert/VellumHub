@@ -1,0 +1,20 @@
+{
+  "tests": "11",
+  "failures": "0",
+  "errors": "0",
+  "skipped": "0",
+  "time": "20.053",
+  "cases": [
+    "rejectsBadNonceAudienceIssuerUnverifiedEmailAndStateBeforeCreatingIdentity",
+    "federatedSecurityContextSurvivesIndependentJdbcSessionRepositoryAndDeletion",
+    "challengeHasExactlyOneConsumerAcrossIndependentRepositoryInstances",
+    "concurrentFirstLoginConvergesOnOneCanonicalIdentityWithoutOrphans",
+    "googleCodeExchangeSurvivesJdbcSerializationAndRetainsCanonicalSubject",
+    "logoutRequiresCsrfEndsAsSessionAndDoesNotRevokePreviouslyIssuedJwt",
+    "localPasswordLoginStillWorksAndPendingOrWrongPasswordFails",
+    "idleAndAbsoluteExpiryPreventSessionReauthorization",
+    "disabledIdentityCannotReuseAsSessionOrRedeemOutstandingCode",
+    "oidcLogoutRejectsForeignRedirectAndEndsOnlyCurrentSession",
+    "sessionReauthorizationAndLogoutWorkAcrossRunningReplicaAndRestart"
+  ]
+}
