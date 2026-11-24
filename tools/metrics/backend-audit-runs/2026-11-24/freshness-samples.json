@@ -1,0 +1,835 @@
+{
+  "benchmarkId": "issue-283-event-to-recommendation-freshness",
+  "profile": "reference",
+  "commitSha": "a9a6398373ecbfd5c7688613ad74dc548f74b2a9",
+  "seed": 2832026,
+  "generatedAt": "2026-11-24T11:02:18.999333884Z",
+  "metricDefinition": "CreatedRatingEvent publish -> first authenticated /recommendations response with the deterministic semantic target at rank #1",
+  "notes": "Real Kafka, production rating consumer/profile update, PostgreSQL+pgvector production ranking query and authenticated HTTP read. Polling is 10 ms and burst scenarios use round-robin observation, so latency includes observation granularity.",
+  "scenarioResults": [
+    {
+      "scenario": "sequential",
+      "submittedEvents": 10,
+      "observedRecommendations": 10,
+      "failedEvents": 0,
+      "latency": {
+        "p50Millis": 55.165485,
+        "p95Millis": 1937.013304,
+        "p99Millis": 1937.013304,
+        "minMillis": 37.382955,
+        "maxMillis": 1937.013304
+      },
+      "scenarioDurationMillis": 2457.940754
+    },
+    {
+      "scenario": "small-burst",
+      "submittedEvents": 30,
+      "observedRecommendations": 30,
+      "failedEvents": 0,
+      "latency": {
+        "p50Millis": 194.82327,
+        "p95Millis": 368.699978,
+        "p99Millis": 407.898821,
+        "minMillis": 37.221742,
+        "maxMillis": 407.898821
+      },
+      "scenarioDurationMillis": 408.911484
+    },
+    {
+      "scenario": "medium-burst",
+      "submittedEvents": 90,
+      "observedRecommendations": 90,
+      "failedEvents": 0,
+      "latency": {
+        "p50Millis": 918.047327,
+        "p95Millis": 1090.393521,
+        "p99Millis": 1099.693901,
+        "minMillis": 81.802686,
+        "maxMillis": 1099.693901
+      },
+      "scenarioDurationMillis": 1157.796214
+    }
+  ],
+  "measurements": [
+    {
+      "scenario": "sequential",
+      "eventIndex": 0,
+      "latencyMillis": 1937.013304,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "sequential",
+      "eventIndex": 1,
+      "latencyMillis": 77.359973,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "sequential",
+      "eventIndex": 2,
+      "latencyMillis": 47.95381,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "sequential",
+      "eventIndex": 3,
+      "latencyMillis": 37.382955,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "sequential",
+      "eventIndex": 4,
+      "latencyMillis": 53.408261,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "sequential",
+      "eventIndex": 5,
+      "latencyMillis": 60.651941,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "sequential",
+      "eventIndex": 6,
+      "latencyMillis": 61.349079,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "sequential",
+      "eventIndex": 7,
+      "latencyMillis": 85.875996,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "sequential",
+      "eventIndex": 8,
+      "latencyMillis": 55.165485,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "sequential",
+      "eventIndex": 9,
+      "latencyMillis": 40.79542,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 0,
+      "latencyMillis": 37.221742,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 1,
+      "latencyMillis": 41.776065,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 2,
+      "latencyMillis": 46.493724,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 3,
+      "latencyMillis": 51.213384,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 4,
+      "latencyMillis": 407.898821,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 5,
+      "latencyMillis": 72.301673,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 6,
+      "latencyMillis": 84.980489,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 7,
+      "latencyMillis": 96.228622,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 8,
+      "latencyMillis": 107.582475,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 9,
+      "latencyMillis": 121.046693,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 10,
+      "latencyMillis": 152.034677,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 11,
+      "latencyMillis": 160.329637,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 12,
+      "latencyMillis": 165.960249,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 13,
+      "latencyMillis": 174.470944,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 14,
+      "latencyMillis": 181.464806,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 15,
+      "latencyMillis": 194.82327,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 16,
+      "latencyMillis": 201.146034,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 17,
+      "latencyMillis": 206.158004,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 18,
+      "latencyMillis": 209.986795,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 19,
+      "latencyMillis": 217.147459,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 20,
+      "latencyMillis": 233.103095,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 21,
+      "latencyMillis": 239.629501,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 22,
+      "latencyMillis": 247.835996,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 23,
+      "latencyMillis": 259.790399,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 24,
+      "latencyMillis": 268.518759,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 25,
+      "latencyMillis": 278.693025,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 26,
+      "latencyMillis": 295.064141,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 27,
+      "latencyMillis": 344.404159,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 28,
+      "latencyMillis": 360.391309,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "small-burst",
+      "eventIndex": 29,
+      "latencyMillis": 368.699978,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 0,
+      "latencyMillis": 81.802686,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 1,
+      "latencyMillis": 93.121543,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 2,
+      "latencyMillis": 102.017195,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 3,
+      "latencyMillis": 130.688686,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 4,
+      "latencyMillis": 141.530576,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 5,
+      "latencyMillis": 150.26194,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 6,
+      "latencyMillis": 165.608286,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 7,
+      "latencyMillis": 172.23872,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 8,
+      "latencyMillis": 188.309116,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 9,
+      "latencyMillis": 254.429121,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 10,
+      "latencyMillis": 265.746806,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 11,
+      "latencyMillis": 275.718997,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 12,
+      "latencyMillis": 291.777774,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 13,
+      "latencyMillis": 336.66669,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 14,
+      "latencyMillis": 353.961307,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 15,
+      "latencyMillis": 373.410295,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 16,
+      "latencyMillis": 390.920215,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 17,
+      "latencyMillis": 437.352714,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 18,
+      "latencyMillis": 460.462207,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 19,
+      "latencyMillis": 536.616798,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 20,
+      "latencyMillis": 546.714508,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 21,
+      "latencyMillis": 559.783748,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 22,
+      "latencyMillis": 572.041217,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 23,
+      "latencyMillis": 581.310291,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 24,
+      "latencyMillis": 589.748495,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 25,
+      "latencyMillis": 635.240648,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 26,
+      "latencyMillis": 649.249843,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 27,
+      "latencyMillis": 660.939608,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 28,
+      "latencyMillis": 670.408222,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 29,
+      "latencyMillis": 680.18608,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 30,
+      "latencyMillis": 695.830174,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 31,
+      "latencyMillis": 709.125505,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 32,
+      "latencyMillis": 725.140225,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 33,
+      "latencyMillis": 742.408402,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 34,
+      "latencyMillis": 751.72016,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 35,
+      "latencyMillis": 759.999624,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 36,
+      "latencyMillis": 807.861694,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 37,
+      "latencyMillis": 816.852318,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 38,
+      "latencyMillis": 827.545384,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 39,
+      "latencyMillis": 839.74711,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 40,
+      "latencyMillis": 848.85463,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 41,
+      "latencyMillis": 862.704946,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 42,
+      "latencyMillis": 899.325184,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 43,
+      "latencyMillis": 912.9301,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 44,
+      "latencyMillis": 918.047327,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 45,
+      "latencyMillis": 921.621485,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 46,
+      "latencyMillis": 929.702821,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 47,
+      "latencyMillis": 936.804645,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 48,
+      "latencyMillis": 941.846098,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 49,
+      "latencyMillis": 946.250043,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 50,
+      "latencyMillis": 950.754469,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 51,
+      "latencyMillis": 956.896758,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 52,
+      "latencyMillis": 960.750176,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 53,
+      "latencyMillis": 964.214877,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 54,
+      "latencyMillis": 967.016572,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 55,
+      "latencyMillis": 972.903808,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 56,
+      "latencyMillis": 976.20225,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 57,
+      "latencyMillis": 979.176684,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 58,
+      "latencyMillis": 982.999245,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 59,
+      "latencyMillis": 985.60177,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 60,
+      "latencyMillis": 979.045848,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 61,
+      "latencyMillis": 982.721538,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 62,
+      "latencyMillis": 986.960184,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 63,
+      "latencyMillis": 991.541596,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 64,
+      "latencyMillis": 994.751835,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 65,
+      "latencyMillis": 1001.424433,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 66,
+      "latencyMillis": 1006.511946,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 67,
+      "latencyMillis": 1009.806482,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 68,
+      "latencyMillis": 1013.55374,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 69,
+      "latencyMillis": 1016.779902,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 70,
+      "latencyMillis": 1019.692404,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 71,
+      "latencyMillis": 1022.716603,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 72,
+      "latencyMillis": 1025.237055,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 73,
+      "latencyMillis": 1028.119941,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 74,
+      "latencyMillis": 1031.071451,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 75,
+      "latencyMillis": 1034.059566,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 76,
+      "latencyMillis": 1036.976885,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 77,
+      "latencyMillis": 1043.07602,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 78,
+      "latencyMillis": 1046.46009,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 79,
+      "latencyMillis": 1050.782864,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 80,
+      "latencyMillis": 1053.582094,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 81,
+      "latencyMillis": 1057.443954,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 82,
+      "latencyMillis": 1060.194472,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 83,
+      "latencyMillis": 1078.933991,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 84,
+      "latencyMillis": 1083.855204,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 85,
+      "latencyMillis": 1090.393521,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 86,
+      "latencyMillis": 1094.201118,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 87,
+      "latencyMillis": 1097.499891,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 88,
+      "latencyMillis": 1097.031125,
+      "recommendationReflected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "eventIndex": 89,
+      "latencyMillis": 1099.693901,
+      "recommendationReflected": true
+    }
+  ]
+}

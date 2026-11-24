@@ -33,10 +33,7 @@ performance harness and not a claim that a CI check or production deployment pas
      manual observation of actual application deployments **only in a cluster
      where all real images, credentials and dependencies are already available**.
      It does not measure actual rollout/rollback duration.
-   - Full-stack M18 (six Java deployments, backing services, authentication and
-     user-facing smoke on current images) remains UNMEASURED until those exact
-     images and a working full-stack environment exist. Do not infer readiness
-     or end-to-end availability from the controller fixture.
+   - Full-stack M18 validates six real Java services, backing services, authentication and business journeys in Kind. The [audited main run](https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920) records the successful gate for the published six-image release set. The separate Nginx fixture measures controller behavior.
 
 ## Controls
 
@@ -119,3 +116,7 @@ PR's head).
 
 Use these measurements to choose outcomes before rewriting resume bullets;
 do not imply that more metrics automatically justify more claims.
+
+## Auditoria de engenharia
+
+A [auditoria de engenharia backend](backend-engineering-audit.md) reúne a matriz profissional, a revisão da arquitetura, as afirmações para currículo e o relatório experimental vinculado ao SHA.

@@ -1,0 +1,32 @@
+{
+  "CatalogCacheRedisOutageBootIT": {
+    "tests": "1",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "18.002",
+    "cases": [
+      "startupAndAuthenticatedReadWriteRemainAvailableWithoutRedis"
+    ]
+  },
+  "CatalogCacheTwoContextsIT": {
+    "tests": "1",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "9.141",
+    "cases": [
+      "crossContextUpdateRollbackAndDeleteRespectCommittedOutboxState"
+    ]
+  },
+  "CatalogCacheNetworkHttpIT": {
+    "tests": "1",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "6.276",
+    "cases": [
+      "signedJwtAuthorizationRealHttpHitsAndAfterCommitFreshness"
+    ]
+  }
+}

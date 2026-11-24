@@ -1,0 +1,106 @@
+{
+  "datasetVersion": "vellumhub-synthetic-v2-model-embedded",
+  "seed": 2822026,
+  "cutoff": 10,
+  "aggregates": [
+    {
+      "ranker": "POPULARITY_ONLY",
+      "metrics": {
+        "precisionAt10": 0.041666666666666664,
+        "recallAt10": 0.08333333333333333,
+        "ndcgAt10": 0.06622744954867386,
+        "mrrAt10": 0.11729497354497354
+      },
+      "catalogCoverage": 0.10833333333333334,
+      "emptyResultRate": 0.0,
+      "upliftAgainstPopularity": {
+        "ndcgAt10": {
+          "absoluteDelta": 0.0,
+          "relativeLift": 0.0
+        },
+        "recallAt10": {
+          "absoluteDelta": 0.0,
+          "relativeLift": 0.0
+        },
+        "precisionAt10": {
+          "absoluteDelta": 0.0,
+          "relativeLift": 0.0
+        },
+        "mrrAt10": {
+          "absoluteDelta": 0.0,
+          "relativeLift": 0.0
+        }
+      }
+    },
+    {
+      "ranker": "SEMANTIC_ONLY",
+      "metrics": {
+        "precisionAt10": 0.5,
+        "recallAt10": 1.0,
+        "ndcgAt10": 1.0,
+        "mrrAt10": 1.0
+      },
+      "catalogCoverage": 1.0,
+      "emptyResultRate": 0.0,
+      "upliftAgainstPopularity": {
+        "ndcgAt10": {
+          "absoluteDelta": 0.9337725504513261,
+          "relativeLift": 14.09947924636672
+        },
+        "recallAt10": {
+          "absoluteDelta": 0.9166666666666666,
+          "relativeLift": 11.0
+        },
+        "precisionAt10": {
+          "absoluteDelta": 0.4583333333333333,
+          "relativeLift": 11.0
+        },
+        "mrrAt10": {
+          "absoluteDelta": 0.8827050264550265,
+          "relativeLift": 7.525514519312096
+        }
+      }
+    },
+    {
+      "ranker": "SEMANTIC_POPULARITY",
+      "metrics": {
+        "precisionAt10": 0.2708333333333333,
+        "recallAt10": 0.5416666666666666,
+        "ndcgAt10": 0.5988246589852171,
+        "mrrAt10": 0.8726851851851851
+      },
+      "catalogCoverage": 0.5416666666666666,
+      "emptyResultRate": 0.0,
+      "upliftAgainstPopularity": {
+        "ndcgAt10": {
+          "absoluteDelta": 0.5325972094365432,
+          "relativeLift": 8.041940510559913
+        },
+        "recallAt10": {
+          "absoluteDelta": 0.4583333333333333,
+          "relativeLift": 5.5
+        },
+        "precisionAt10": {
+          "absoluteDelta": 0.22916666666666666,
+          "relativeLift": 5.5
+        },
+        "mrrAt10": {
+          "absoluteDelta": 0.7553902116402116,
+          "relativeLift": 6.440090217084861
+        }
+      }
+    }
+  ],
+  "paired_nDCG_at_10": {
+    "POPULARITY_ONLY": {
+      "wins": 23,
+      "ties": 1,
+      "losses": 0
+    },
+    "SEMANTIC_ONLY": {
+      "wins": 0,
+      "ties": 2,
+      "losses": 22
+    }
+  }
+}

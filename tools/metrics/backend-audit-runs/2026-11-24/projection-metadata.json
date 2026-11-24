@@ -1,0 +1,42 @@
+{
+  "project": "VellumHub",
+  "benchmarkId": "issue-283-distributed-recommendation",
+  "commitSha": "a9a6398373ecbfd5c7688613ad74dc548f74b2a9",
+  "benchmarkProfile": "reference",
+  "seed": 2832026,
+  "scenarios": [
+    {
+      "id": "sequential",
+      "events": 10,
+      "batchSize": 1,
+      "pauseBetweenBatchesMillis": 0,
+      "awaitProjectionPerEvent": true
+    },
+    {
+      "id": "small-burst",
+      "events": 30,
+      "batchSize": 10,
+      "pauseBetweenBatchesMillis": 0,
+      "awaitProjectionPerEvent": false
+    },
+    {
+      "id": "medium-burst",
+      "events": 90,
+      "batchSize": 30,
+      "pauseBetweenBatchesMillis": 0,
+      "awaitProjectionPerEvent": false
+    }
+  ],
+  "eventType": "CreatedRatingEvent",
+  "kafkaTopic": "created-rating",
+  "consumerGroup": "recommendation-service",
+  "readWarmupRequests": 3,
+  "readMeasuredRequests": 30,
+  "repetitions": 1,
+  "javaVersion": "21.0.13.1",
+  "operatingSystem": "Linux amd64",
+  "availableProcessors": 2,
+  "generatedAt": "2026-11-24T10:43:52.920833568Z",
+  "executionCommand": "mvn -pl services/recommendation-service -am -Dtest=DistributedRecommendationBenchmarkIT -Dsurefire.failIfNoSpecifiedTests=false -Dgroups=distributed-benchmark -Dbenchmark.profile=reference test",
+  "notes": "Real Kafka + pgvector/PostgreSQL + Flyway + production consumers. Deterministic test embedding is used only while materializing book projections. Latency includes projection polling granularity and is not a production SLA."
+}

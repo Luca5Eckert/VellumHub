@@ -1,0 +1,189 @@
+[
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-24T00:45:05Z",
+    "headSha": "a9a6398373ecbfd5c7688613ad74dc548f74b2a9",
+    "jobs": [
+      {
+        "conclusion": "success",
+        "name": "verify / Training exporter + PostgreSQL",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138128793411"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Distributed integration / catalog",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138128793606"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Distributed integration / engagement",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138128793689"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Distributed integration / cross-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138128793768"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Distributed integration / recommendation",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138128793779"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Maven verify",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138128793933"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Distributed integration + cross-service E2E",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138130918466"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Build and scan auth-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138130975922"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Build and scan recommendation-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138130976024"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Build and scan catalog-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138130976033"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Build and scan gateway-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138130976043"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Build and scan user-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138130976055"
+      },
+      {
+        "conclusion": "success",
+        "name": "verify / Build and scan engagement-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138130976102"
+      },
+      {
+        "conclusion": "success",
+        "name": "Kind full-stack before publication / Six real Java apps + dependencies + lifecycle",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138133716110"
+      },
+      {
+        "conclusion": "success",
+        "name": "Publish gateway-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138138128260"
+      },
+      {
+        "conclusion": "success",
+        "name": "Publish catalog-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138138128306"
+      },
+      {
+        "conclusion": "success",
+        "name": "Publish engagement-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138138128321"
+      },
+      {
+        "conclusion": "success",
+        "name": "Publish user-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138138128327"
+      },
+      {
+        "conclusion": "success",
+        "name": "Publish recommendation-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138138128335"
+      },
+      {
+        "conclusion": "success",
+        "name": "Publish auth-service",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138138128408"
+      },
+      {
+        "conclusion": "success",
+        "name": "Assemble verified six-image release manifest",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920/job/138138534845"
+      }
+    ],
+    "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920"
+  },
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-24T00:45:05Z",
+    "headSha": "a9a6398373ecbfd5c7688613ad74dc548f74b2a9",
+    "jobs": [
+      {
+        "conclusion": "success",
+        "name": "User HTTP \u2192 outbox \u2192 Avro \u2192 Recommendation",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684643/job/138128793487"
+      },
+      {
+        "conclusion": "success",
+        "name": "reading-avro-e2e / recommendation-service (Kafka, PostgreSQL, Registry)",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684643/job/138128793764"
+      },
+      {
+        "conclusion": "success",
+        "name": "engagement-avro-e2e / recommendation-service (Kafka, PostgreSQL, Registry)",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684643/job/138128793864"
+      },
+      {
+        "conclusion": "success",
+        "name": "reading-avro-e2e / catalog-service (Kafka, PostgreSQL, Registry)",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684643/job/138128793967"
+      },
+      {
+        "conclusion": "success",
+        "name": "engagement-avro-e2e / engagement-service (Kafka, PostgreSQL, Registry)",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684643/job/138128794056"
+      },
+      {
+        "conclusion": "success",
+        "name": "preference-avro-e2e / recommendation-service (Kafka, PostgreSQL, Registry)",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684643/job/138128794069"
+      },
+      {
+        "conclusion": "success",
+        "name": "reading-avro-e2e / engagement-service (Kafka, PostgreSQL, Registry)",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684643/job/138128794088"
+      }
+    ],
+    "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684643"
+  },
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-24T00:45:05Z",
+    "headSha": "a9a6398373ecbfd5c7688613ad74dc548f74b2a9",
+    "jobs": [
+      {
+        "conclusion": "success",
+        "name": "registry-kind",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684547/job/138128792111"
+      },
+      {
+        "conclusion": "success",
+        "name": "registry-contracts",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684547/job/138128792833"
+      }
+    ],
+    "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684547"
+  },
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-24T00:45:05Z",
+    "headSha": "a9a6398373ecbfd5c7688613ad74dc548f74b2a9",
+    "jobs": [
+      {
+        "conclusion": "success",
+        "name": "oauth-scopes",
+        "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684373/job/138128791650"
+      }
+    ],
+    "url": "https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684373"
+  }
+]

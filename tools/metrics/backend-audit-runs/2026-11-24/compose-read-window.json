@@ -1,0 +1,1483 @@
+{
+  "baseline": [
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 52.161751000312506
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 75.51613400028145
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 36.94996000012907
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 51.634095999816054
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 40.43401399985669
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 39.99237800007904
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 35.59240799995678
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 40.961467000215634
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 40.66569699989486
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 38.07680199997776
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 35.2911889999632
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 48.443809999753285
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 31.803096999738045
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 38.19169899998087
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 45.24072600042928
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 29.344902000048023
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 38.56547099985619
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 34.490529999857245
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 45.79629699992438
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 50.15622800010533
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 58.76246300022103
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 50.7337720000578
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 59.04181300002165
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 52.67833699963376
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 46.8725670002641
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 61.19453800010888
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 54.44273300008717
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 100.59577099991657
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 95.47178200000417
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 42.7677349998703
+    }
+  ],
+  "upstream_stopped": [
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 36.46225600004982
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 32.46952900008182
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 39.96741699984341
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 34.72799600012877
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 45.558154999980616
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 33.28408399966065
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 37.75519299961161
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 29.699651000100857
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 36.02286500017726
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 45.00323000002027
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 47.97832499980359
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 64.48716500017326
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 83.33929299988085
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 53.25822899976629
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 71.3776030002009
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 38.462366000203474
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 58.205531999647064
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 38.05617499983782
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 37.08264900024005
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 31.490810999912355
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 39.599522999651526
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 29.928913999810902
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 923.3431699999528
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 187.8487409999252
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 24.575319000177842
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 31.710225000097125
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 33.13841400040474
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 30.577531000290037
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 31.59459100015738
+    },
+    {
+      "status": 200,
+      "expected_fixture": true,
+      "elapsed_ms": 27.32132100027229
+    }
+  ],
+  "recovery_probes": [
+    {
+      "elapsed_seconds": 2.754359309999927,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 5.02538688300001,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 7.030765038000027,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 8.505435905000013,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 9.900412322999728,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 11.903822103000039,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 13.309963694999624,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 14.634000422999634,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 16.398330194999744,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 18.25975575099983,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 19.60571839799968,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 20.904366858999765,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 22.209507599999597,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 23.74147204599967,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 25.108098185000017,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 26.442786449999858,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 27.70233593499961,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 29.252483863999714,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 30.62291091299994,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 31.860711452000032,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 33.305391956999756,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 34.65756075699983,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 36.033522996999636,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 37.30206844899976,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 38.69921056999965,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 40.05166480999969,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 41.25890171099991,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 42.62205185399989,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 43.86127250199979,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 45.208831667999675,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 46.43028100499987,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 47.704699914999765,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 48.92797258199971,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 50.14946710799995,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 51.52201302399999,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 52.72548085199969,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 54.040779267999824,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 55.35498323999991,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 56.65728521699975,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 57.84644243799994,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 59.13464915099985,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 60.42520461799995,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 61.753374000999884,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 62.9448349889999,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 64.22371554899973,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 65.42814965499974,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 66.64106056799983,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 67.90940778200002,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 69.06137954099995,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 70.32927969899993,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 71.54801705499995,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 72.81273577999991,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 74.10849123599974,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 75.343657936,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 76.54658402899986,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 77.84138009599974,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 79.11590323999962,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 80.60932638199984,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 81.82433536500002,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 83.01079357599974,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 84.21161346600002,
+      "statuses": [
+        500,
+        500,
+        500
+      ]
+    },
+    {
+      "elapsed_seconds": 91.09856429599995,
+      "statuses": [
+        500,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 92.24045708899985,
+      "statuses": [
+        500,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 94.01891062000004,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 95.08132174000002,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 96.16302325699962,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 97.24541049499976,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 98.3374490819997,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 99.4029335299997,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 100.48188299000003,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 101.56318080899973,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 102.6309734409997,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 103.6821300759998,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 104.7453670509999,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 105.80395504499984,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 106.86704479299988,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 107.93919796,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 109.01587066899992,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 110.06909339100002,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 111.1373067329996,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 112.20084779699982,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 113.27620182700002,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 114.33946803799972,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 115.39671291199966,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 116.48161566699991,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 117.54778389099965,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 118.61609151399989,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 119.6754738059999,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 120.73192946899962,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 121.80946292099998,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 122.85872383199967,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 123.90926156399973,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 124.96053782799981,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 126.04023132999964,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 127.10183439299999,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 128.16041885200002,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 129.22033658700002,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 130.28280835999976,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 131.3549894339999,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 132.40490900899977,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 133.45987044000003,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 134.51987997199967,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 135.58831823799983,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 136.63946756399992,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 137.7134328809998,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 138.79109666899967,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 139.84783461999996,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 141.00084412399974,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 142.07025658199973,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 143.1453062429996,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 144.21198977099993,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 145.2705447809999,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 146.32946192600002,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 147.42291437999984,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 148.48513666400004,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 149.559107392,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 150.62958757299975,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 151.6901778309998,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 152.75291749500002,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 153.81175298799963,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 154.86865541299994,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 155.91341725799975,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 156.972057683,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 158.01994954899965,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 159.070886728,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 160.12742753799967,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 161.18145425399962,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 162.30754583899989,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 163.35915476599985,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 164.41906730999972,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 165.47448519499994,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 166.52189065699986,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 167.61731627499967,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 168.66999708599997,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 169.7303912489997,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 170.78205344699973,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 171.8614007809997,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 172.91011465699967,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 173.96618672499972,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 175.02516669999977,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 176.0763002509998,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 177.12738705899983,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 178.17869233199963,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    },
+    {
+      "elapsed_seconds": 179.22474801999988,
+      "statuses": [
+        403,
+        403,
+        403
+      ]
+    }
+  ],
+  "summary": {
+    "baseline": {
+      "requests": 30,
+      "successful": 30,
+      "error_rate": 0.0,
+      "duration_seconds": 1.4721621910002796,
+      "requests_per_second": 20.378189430076393,
+      "p50_ms": 45.24072600042928,
+      "p95_ms": 95.47178200000417,
+      "p99_ms": 100.59577099991657
+    },
+    "upstream_stopped": {
+      "requests": 30,
+      "successful": 30,
+      "error_rate": 0.0,
+      "duration_seconds": 2.254763339999954,
+      "requests_per_second": 13.305165765202041,
+      "p50_ms": 37.08264900024005,
+      "p95_ms": 187.8487409999252,
+      "p99_ms": 923.3431699999528
+    }
+  },
+  "upstream_confirmed_stopped": true
+}

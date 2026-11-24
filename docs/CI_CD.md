@@ -32,12 +32,12 @@ O overlay `deploy/kubernetes/overlays/ci` usa issuer e cliente OAuth2/PKCE de te
 
 ## Segurança, teste e diagnóstico
 
-- PRs têm `contents: read`. Só os jobs de publicação na main têm `packages: write`, `id-token: write` e `attestations: write`. A função `actions/attest@v4` gera provenance/SBOM ligada ao digest do GHCR, **pendente de execução real**.
+- PRs têm `contents: read`. Só os jobs de publicação na main têm `packages: write`, `id-token: write` e `attestations: write`. A função `actions/attest@v4` gera provenance/SBOM ligada ao digest do GHCR. A execução da main concluiu as duas etapas de atestação em cada uma das seis imagens. [Run de publicação](https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920)
 - A incompatibilidade de Testcontainers 1.20.4 e Docker 29 foi corrigida nos seis POMs para Testcontainers 1.21.4; nenhuma suíte foi desabilitada.
 - `python3 -m unittest discover -s tools/ci -p 'test_*.py' -v` cobre rejeição de arquivos adulterados, release-set incompleto, SHA/digest errado e falsos verdes no Job Kubernetes.
-- A proteção da main exige ajuste pelo GitHub Rulesets (fora do YAML); conferir nomes efetivos para exigir o workflow PR, os scans, Kind, CodeQL e contratos de segurança. Até habilitar, o workflow verde **não prova proteção de branch**.
+- Os rulesets da main retornados em 24/11/2026 exigiam Maven verify, Analyze Java e cinco scans (Gateway, User, Catalog, Engagement e Recommendation). Scan de Auth e Kind rodaram como parte dos workflows e estavam fora da lista de checks obrigatórios retornada pela API. [Regras aplicáveis à main](https://api.github.com/repos/Luca5Eckert/VellumHub/rules/branches/main)
 - Há risco de supply chain residual em `@v4`, binário Kind baixado sem checksum e imagens-base em tags mutáveis. Pinning de SHA/digest e atualização automatizada ainda não estão implementados.
 
 ## Medições e interpretação
 
-A referência anterior, o protocolo com n mínimo e os resultados executados estão no [plano de CI/CD do Obsidian Vault](https://github.com/Luca5Eckert/obsidian-vault/pull/21). **Não inferir ganho de velocidade ou redução de erros da presença de novas etapas:** somente runs completos comparáveis provam o depois. A publicação de seis imagens, attestations e manifesto GHCR ainda precisa de um push autorizado da `main` antes do status VERIFIED.
+A referência anterior, o protocolo com n mínimo e os resultados executados estão no [plano de CI/CD do Obsidian Vault](https://github.com/Luca5Eckert/obsidian-vault/pull/21). **Não inferir ganho de velocidade ou redução de erros da presença de novas etapas:** somente runs completos comparáveis provam o depois. A publicação, as atestações e o manifesto com seis imagens foram verificados no run de publicação da `main` para o SHA `a9a6398373ecbfd5c7688613ad74dc548f74b2a9`. [Run de publicação](https://github.com/Luca5Eckert/VellumHub/actions/runs/45299684920)

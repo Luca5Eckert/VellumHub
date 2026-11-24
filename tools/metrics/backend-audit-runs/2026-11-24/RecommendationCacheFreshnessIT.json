@@ -1,0 +1,11 @@
+{
+  "tests": "2",
+  "failures": "0",
+  "errors": "0",
+  "skipped": "0",
+  "time": "42.631",
+  "cases": [
+    "prewarmedCacheReflectsCommittedKafkaEventWithoutWaitingForTtl",
+    "cachedUserMustStillPassSecurityFilter"
+  ]
+}

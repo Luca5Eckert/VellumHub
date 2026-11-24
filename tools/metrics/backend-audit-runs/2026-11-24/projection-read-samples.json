@@ -1,0 +1,1166 @@
+{
+  "eventMeasurements": [
+    {
+      "scenario": "sequential",
+      "publishedAt": "2026-11-24T10:43:43.229478829Z",
+      "projectedAt": "2026-11-24T10:43:45.185904304Z",
+      "latencyMillis": 1956.330632,
+      "projected": true
+    },
+    {
+      "scenario": "sequential",
+      "publishedAt": "2026-11-24T10:43:45.251756630Z",
+      "projectedAt": "2026-11-24T10:43:45.328878334Z",
+      "latencyMillis": 77.228736,
+      "projected": true
+    },
+    {
+      "scenario": "sequential",
+      "publishedAt": "2026-11-24T10:43:45.350558849Z",
+      "projectedAt": "2026-11-24T10:43:45.458579007Z",
+      "latencyMillis": 108.013419,
+      "projected": true
+    },
+    {
+      "scenario": "sequential",
+      "publishedAt": "2026-11-24T10:43:45.497205758Z",
+      "projectedAt": "2026-11-24T10:43:45.602348437Z",
+      "latencyMillis": 105.11042,
+      "projected": true
+    },
+    {
+      "scenario": "sequential",
+      "publishedAt": "2026-11-24T10:43:45.616570488Z",
+      "projectedAt": "2026-11-24T10:43:45.709855774Z",
+      "latencyMillis": 93.256262,
+      "projected": true
+    },
+    {
+      "scenario": "sequential",
+      "publishedAt": "2026-11-24T10:43:45.732036832Z",
+      "projectedAt": "2026-11-24T10:43:45.899010574Z",
+      "latencyMillis": 166.954944,
+      "projected": true
+    },
+    {
+      "scenario": "sequential",
+      "publishedAt": "2026-11-24T10:43:45.927577161Z",
+      "projectedAt": "2026-11-24T10:43:46.031570942Z",
+      "latencyMillis": 104.642776,
+      "projected": true
+    },
+    {
+      "scenario": "sequential",
+      "publishedAt": "2026-11-24T10:43:46.074797099Z",
+      "projectedAt": "2026-11-24T10:43:46.499911020Z",
+      "latencyMillis": 425.117768,
+      "projected": true
+    },
+    {
+      "scenario": "sequential",
+      "publishedAt": "2026-11-24T10:43:46.522899734Z",
+      "projectedAt": "2026-11-24T10:43:46.609058706Z",
+      "latencyMillis": 86.172352,
+      "projected": true
+    },
+    {
+      "scenario": "sequential",
+      "publishedAt": "2026-11-24T10:43:46.617514540Z",
+      "projectedAt": "2026-11-24T10:43:46.690955174Z",
+      "latencyMillis": 73.4445,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.748354669Z",
+      "projectedAt": "2026-11-24T10:43:46.831585504Z",
+      "latencyMillis": 83.244246,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.749244528Z",
+      "projectedAt": "2026-11-24T10:43:46.834562714Z",
+      "latencyMillis": 85.32092,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.749851852Z",
+      "projectedAt": "2026-11-24T10:43:46.834904208Z",
+      "latencyMillis": 85.039968,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.750083470Z",
+      "projectedAt": "2026-11-24T10:43:46.836556284Z",
+      "latencyMillis": 86.475649,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.750342500Z",
+      "projectedAt": "2026-11-24T10:43:46.919098945Z",
+      "latencyMillis": 168.770797,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.750576382Z",
+      "projectedAt": "2026-11-24T10:43:46.919895884Z",
+      "latencyMillis": 169.322918,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.750816433Z",
+      "projectedAt": "2026-11-24T10:43:46.920329527Z",
+      "latencyMillis": 169.515367,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.751003745Z",
+      "projectedAt": "2026-11-24T10:43:46.921060096Z",
+      "latencyMillis": 170.058664,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.751216235Z",
+      "projectedAt": "2026-11-24T10:43:46.972027422Z",
+      "latencyMillis": 220.835584,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.751449516Z",
+      "projectedAt": "2026-11-24T10:43:47.069715654Z",
+      "latencyMillis": 318.392439,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.795838593Z",
+      "projectedAt": "2026-11-24T10:43:47.071103773Z",
+      "latencyMillis": 275.255115,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.796482481Z",
+      "projectedAt": "2026-11-24T10:43:47.073688632Z",
+      "latencyMillis": 277.209386,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.796708191Z",
+      "projectedAt": "2026-11-24T10:43:47.075506718Z",
+      "latencyMillis": 278.802192,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.796880130Z",
+      "projectedAt": "2026-11-24T10:43:47.169654656Z",
+      "latencyMillis": 372.800315,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.797076986Z",
+      "projectedAt": "2026-11-24T10:43:47.170560650Z",
+      "latencyMillis": 373.542692,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.797241844Z",
+      "projectedAt": "2026-11-24T10:43:47.171262466Z",
+      "latencyMillis": 374.024097,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.797423898Z",
+      "projectedAt": "2026-11-24T10:43:47.173304999Z",
+      "latencyMillis": 375.89366,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.797634715Z",
+      "projectedAt": "2026-11-24T10:43:47.216916136Z",
+      "latencyMillis": 419.296873,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.797822838Z",
+      "projectedAt": "2026-11-24T10:43:47.217239542Z",
+      "latencyMillis": 419.418837,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.798037271Z",
+      "projectedAt": "2026-11-24T10:43:47.269477130Z",
+      "latencyMillis": 471.442593,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.885980328Z",
+      "projectedAt": "2026-11-24T10:43:47.311520516Z",
+      "latencyMillis": 425.545887,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.887213143Z",
+      "projectedAt": "2026-11-24T10:43:47.312182222Z",
+      "latencyMillis": 424.908508,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.888171695Z",
+      "projectedAt": "2026-11-24T10:43:47.312838950Z",
+      "latencyMillis": 424.67045,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.888897177Z",
+      "projectedAt": "2026-11-24T10:43:47.313236869Z",
+      "latencyMillis": 424.340153,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.889861718Z",
+      "projectedAt": "2026-11-24T10:43:47.334479585Z",
+      "latencyMillis": 444.628653,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.890056331Z",
+      "projectedAt": "2026-11-24T10:43:47.367164809Z",
+      "latencyMillis": 477.126075,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.890390764Z",
+      "projectedAt": "2026-11-24T10:43:47.394823651Z",
+      "latencyMillis": 503.920075,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.891514846Z",
+      "projectedAt": "2026-11-24T10:43:47.395470514Z",
+      "latencyMillis": 503.957321,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.891761016Z",
+      "projectedAt": "2026-11-24T10:43:47.396740315Z",
+      "latencyMillis": 505.000961,
+      "projected": true
+    },
+    {
+      "scenario": "small-burst",
+      "publishedAt": "2026-11-24T10:43:46.891962129Z",
+      "projectedAt": "2026-11-24T10:43:47.397480889Z",
+      "latencyMillis": 505.56498,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.445036461Z",
+      "projectedAt": "2026-11-24T10:43:47.524133061Z",
+      "latencyMillis": 79.094115,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.467250634Z",
+      "projectedAt": "2026-11-24T10:43:47.694574577Z",
+      "latencyMillis": 227.214098,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.468460234Z",
+      "projectedAt": "2026-11-24T10:43:47.695121640Z",
+      "latencyMillis": 226.661395,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.468702799Z",
+      "projectedAt": "2026-11-24T10:43:47.695493870Z",
+      "latencyMillis": 226.818292,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.468880917Z",
+      "projectedAt": "2026-11-24T10:43:47.699823686Z",
+      "latencyMillis": 230.948807,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.469035250Z",
+      "projectedAt": "2026-11-24T10:43:47.783920795Z",
+      "latencyMillis": 314.938115,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.469183983Z",
+      "projectedAt": "2026-11-24T10:43:47.785410938Z",
+      "latencyMillis": 316.249748,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.469417925Z",
+      "projectedAt": "2026-11-24T10:43:47.785759973Z",
+      "latencyMillis": 316.344021,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.469636364Z",
+      "projectedAt": "2026-11-24T10:43:47.788413045Z",
+      "latencyMillis": 318.79575,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.469804968Z",
+      "projectedAt": "2026-11-24T10:43:47.789051896Z",
+      "latencyMillis": 319.250884,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.469956556Z",
+      "projectedAt": "2026-11-24T10:43:47.789777959Z",
+      "latencyMillis": 319.82614,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.470105570Z",
+      "projectedAt": "2026-11-24T10:43:47.790056809Z",
+      "latencyMillis": 319.954864,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.473303883Z",
+      "projectedAt": "2026-11-24T10:43:47.910439060Z",
+      "latencyMillis": 437.144782,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.474262886Z",
+      "projectedAt": "2026-11-24T10:43:47.915087375Z",
+      "latencyMillis": 440.870108,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.474469968Z",
+      "projectedAt": "2026-11-24T10:43:47.915990544Z",
+      "latencyMillis": 441.525694,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.474656118Z",
+      "projectedAt": "2026-11-24T10:43:47.916388162Z",
+      "latencyMillis": 441.735569,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.478351779Z",
+      "projectedAt": "2026-11-24T10:43:47.916843397Z",
+      "latencyMillis": 438.488683,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.478641515Z",
+      "projectedAt": "2026-11-24T10:43:47.917064870Z",
+      "latencyMillis": 438.423546,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.478820895Z",
+      "projectedAt": "2026-11-24T10:43:47.917287375Z",
+      "latencyMillis": 438.468443,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.481436711Z",
+      "projectedAt": "2026-11-24T10:43:47.917744163Z",
+      "latencyMillis": 436.303134,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.481724995Z",
+      "projectedAt": "2026-11-24T10:43:47.918082922Z",
+      "latencyMillis": 436.358247,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.482283245Z",
+      "projectedAt": "2026-11-24T10:43:48.086731184Z",
+      "latencyMillis": 604.469071,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.482519421Z",
+      "projectedAt": "2026-11-24T10:43:48.087184757Z",
+      "latencyMillis": 604.685166,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.482835957Z",
+      "projectedAt": "2026-11-24T10:43:48.087625220Z",
+      "latencyMillis": 604.791396,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.483055087Z",
+      "projectedAt": "2026-11-24T10:43:48.089943288Z",
+      "latencyMillis": 606.893229,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.483221007Z",
+      "projectedAt": "2026-11-24T10:43:48.090322890Z",
+      "latencyMillis": 607.105428,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.483406305Z",
+      "projectedAt": "2026-11-24T10:43:48.090838576Z",
+      "latencyMillis": 607.435836,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.486992352Z",
+      "projectedAt": "2026-11-24T10:43:48.091324246Z",
+      "latencyMillis": 604.326928,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.488793602Z",
+      "projectedAt": "2026-11-24T10:43:48.091705210Z",
+      "latencyMillis": 602.920111,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.489017659Z",
+      "projectedAt": "2026-11-24T10:43:48.198879215Z",
+      "latencyMillis": 709.83052,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.531734670Z",
+      "projectedAt": "2026-11-24T10:43:48.199231735Z",
+      "latencyMillis": 667.487551,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.532243816Z",
+      "projectedAt": "2026-11-24T10:43:48.199503785Z",
+      "latencyMillis": 667.262933,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.567105526Z",
+      "projectedAt": "2026-11-24T10:43:48.199865920Z",
+      "latencyMillis": 632.723509,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.570204289Z",
+      "projectedAt": "2026-11-24T10:43:48.200114053Z",
+      "latencyMillis": 629.867831,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.570553855Z",
+      "projectedAt": "2026-11-24T10:43:48.300553625Z",
+      "latencyMillis": 730.06662,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.570741137Z",
+      "projectedAt": "2026-11-24T10:43:48.301703255Z",
+      "latencyMillis": 730.967847,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.570891964Z",
+      "projectedAt": "2026-11-24T10:43:48.302073592Z",
+      "latencyMillis": 731.186165,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.571040227Z",
+      "projectedAt": "2026-11-24T10:43:48.302379753Z",
+      "latencyMillis": 731.343211,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.571204284Z",
+      "projectedAt": "2026-11-24T10:43:48.305865508Z",
+      "latencyMillis": 734.667544,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.571365296Z",
+      "projectedAt": "2026-11-24T10:43:48.306690209Z",
+      "latencyMillis": 735.329451,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.571503754Z",
+      "projectedAt": "2026-11-24T10:43:48.306955058Z",
+      "latencyMillis": 735.454669,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.571659709Z",
+      "projectedAt": "2026-11-24T10:43:48.307137583Z",
+      "latencyMillis": 735.480027,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.571800481Z",
+      "projectedAt": "2026-11-24T10:43:48.307320768Z",
+      "latencyMillis": 735.527669,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.571935704Z",
+      "projectedAt": "2026-11-24T10:43:48.307510904Z",
+      "latencyMillis": 735.578045,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.572074643Z",
+      "projectedAt": "2026-11-24T10:43:49.174016303Z",
+      "latencyMillis": 1601.96866,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.572204419Z",
+      "projectedAt": "2026-11-24T10:43:49.174459119Z",
+      "latencyMillis": 1602.257585,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.572345140Z",
+      "projectedAt": "2026-11-24T10:43:49.175840227Z",
+      "latencyMillis": 1603.499374,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.572479142Z",
+      "projectedAt": "2026-11-24T10:43:49.177517651Z",
+      "latencyMillis": 1605.044168,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.572631892Z",
+      "projectedAt": "2026-11-24T10:43:49.177729400Z",
+      "latencyMillis": 1605.099882,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.572775418Z",
+      "projectedAt": "2026-11-24T10:43:49.177965605Z",
+      "latencyMillis": 1605.192151,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.572905844Z",
+      "projectedAt": "2026-11-24T10:43:49.178132807Z",
+      "latencyMillis": 1605.243948,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.573034327Z",
+      "projectedAt": "2026-11-24T10:43:49.179994118Z",
+      "latencyMillis": 1606.97255,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.573172966Z",
+      "projectedAt": "2026-11-24T10:43:49.180389933Z",
+      "latencyMillis": 1607.220623,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.573303042Z",
+      "projectedAt": "2026-11-24T10:43:49.234723625Z",
+      "latencyMillis": 1661.445771,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.573437704Z",
+      "projectedAt": "2026-11-24T10:43:49.237080482Z",
+      "latencyMillis": 1663.648696,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.573566939Z",
+      "projectedAt": "2026-11-24T10:43:49.237931232Z",
+      "latencyMillis": 1664.369951,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.573728171Z",
+      "projectedAt": "2026-11-24T10:43:49.268108713Z",
+      "latencyMillis": 1694.412339,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.573863916Z",
+      "projectedAt": "2026-11-24T10:43:49.384741452Z",
+      "latencyMillis": 1810.904266,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.573993200Z",
+      "projectedAt": "2026-11-24T10:43:49.384991618Z",
+      "latencyMillis": 1811.002925,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.574126771Z",
+      "projectedAt": "2026-11-24T10:43:49.385296417Z",
+      "latencyMillis": 1811.173201,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.600185685Z",
+      "projectedAt": "2026-11-24T10:43:49.385673855Z",
+      "latencyMillis": 1784.319742,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.602027837Z",
+      "projectedAt": "2026-11-24T10:43:49.385969530Z",
+      "latencyMillis": 1783.995995,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.602281078Z",
+      "projectedAt": "2026-11-24T10:43:49.386272706Z",
+      "latencyMillis": 1783.993602,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.602435931Z",
+      "projectedAt": "2026-11-24T10:43:49.467700859Z",
+      "latencyMillis": 1865.363988,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.602622862Z",
+      "projectedAt": "2026-11-24T10:43:49.470712872Z",
+      "latencyMillis": 1868.095567,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.602768221Z",
+      "projectedAt": "2026-11-24T10:43:49.471001125Z",
+      "latencyMillis": 1868.233896,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.602899939Z",
+      "projectedAt": "2026-11-24T10:43:49.472767333Z",
+      "latencyMillis": 1869.875516,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.604671155Z",
+      "projectedAt": "2026-11-24T10:43:49.473080825Z",
+      "latencyMillis": 1868.390622,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.604864436Z",
+      "projectedAt": "2026-11-24T10:43:49.542914776Z",
+      "latencyMillis": 1938.089019,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.605032008Z",
+      "projectedAt": "2026-11-24T10:43:49.543150280Z",
+      "latencyMillis": 1938.118383,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.605170516Z",
+      "projectedAt": "2026-11-24T10:43:49.543316731Z",
+      "latencyMillis": 1938.146866,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.605339030Z",
+      "projectedAt": "2026-11-24T10:43:49.543525555Z",
+      "latencyMillis": 1938.185995,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.605516887Z",
+      "projectedAt": "2026-11-24T10:43:49.583304755Z",
+      "latencyMillis": 1977.803712,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.606189510Z",
+      "projectedAt": "2026-11-24T10:43:49.627353159Z",
+      "latencyMillis": 2021.177791,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.609757148Z",
+      "projectedAt": "2026-11-24T10:43:49.627731548Z",
+      "latencyMillis": 2017.969913,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.609969908Z",
+      "projectedAt": "2026-11-24T10:43:49.628339143Z",
+      "latencyMillis": 2018.369985,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.610155568Z",
+      "projectedAt": "2026-11-24T10:43:49.690430418Z",
+      "latencyMillis": 2080.286027,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.610358894Z",
+      "projectedAt": "2026-11-24T10:43:49.690811722Z",
+      "latencyMillis": 2080.453489,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.610501979Z",
+      "projectedAt": "2026-11-24T10:43:49.691012894Z",
+      "latencyMillis": 2080.510465,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.610747759Z",
+      "projectedAt": "2026-11-24T10:43:49.691144502Z",
+      "latencyMillis": 2080.393889,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.612861760Z",
+      "projectedAt": "2026-11-24T10:43:49.715576347Z",
+      "latencyMillis": 2102.747207,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.613189203Z",
+      "projectedAt": "2026-11-24T10:43:49.716012894Z",
+      "latencyMillis": 2102.822279,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.613384166Z",
+      "projectedAt": "2026-11-24T10:43:49.767943239Z",
+      "latencyMillis": 2154.589759,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.613546070Z",
+      "projectedAt": "2026-11-24T10:43:49.768887700Z",
+      "latencyMillis": 2155.345407,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.613943277Z",
+      "projectedAt": "2026-11-24T10:43:49.798506010Z",
+      "latencyMillis": 2184.605667,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.616235492Z",
+      "projectedAt": "2026-11-24T10:43:49.822849217Z",
+      "latencyMillis": 2206.709039,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.616525418Z",
+      "projectedAt": "2026-11-24T10:43:49.879933729Z",
+      "latencyMillis": 2263.424856,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.616799411Z",
+      "projectedAt": "2026-11-24T10:43:49.917134888Z",
+      "latencyMillis": 2300.35018,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.625236697Z",
+      "projectedAt": "2026-11-24T10:43:49.917805197Z",
+      "latencyMillis": 2292.550703,
+      "projected": true
+    },
+    {
+      "scenario": "medium-burst",
+      "publishedAt": "2026-11-24T10:43:47.626436823Z",
+      "projectedAt": "2026-11-24T10:43:49.982178306Z",
+      "latencyMillis": 2355.759841,
+      "projected": true
+    }
+  ],
+  "scenarioResults": [
+    {
+      "scenario": "sequential",
+      "submittedEvents": 10,
+      "projectedEvents": 10,
+      "failedEvents": 0,
+      "unexpectedDltEvents": 0,
+      "observedEventsPerSecond": 2.8710116711183598,
+      "projectionLatency": {
+        "p50Millis": 104.642776,
+        "p95Millis": 1956.330632,
+        "p99Millis": 1956.330632,
+        "minMillis": 73.4445,
+        "maxMillis": 1956.330632
+      },
+      "maximumConsumerLag": 1,
+      "catchUpTimeMillis": 94.751102,
+      "scenarioDurationMillis": 3483.092772
+    },
+    {
+      "scenario": "small-burst",
+      "submittedEvents": 30,
+      "projectedEvents": 30,
+      "failedEvents": 0,
+      "unexpectedDltEvents": 0,
+      "observedEventsPerSecond": 44.53034929367006,
+      "projectionLatency": {
+        "p50Millis": 373.542692,
+        "p95Millis": 505.000961,
+        "p99Millis": 505.56498,
+        "minMillis": 83.244246,
+        "maxMillis": 505.56498
+      },
+      "maximumConsumerLag": 30,
+      "catchUpTimeMillis": 529.996335,
+      "scenarioDurationMillis": 673.697837
+    },
+    {
+      "scenario": "medium-burst",
+      "submittedEvents": 90,
+      "projectedEvents": 90,
+      "failedEvents": 0,
+      "unexpectedDltEvents": 0,
+      "observedEventsPerSecond": 35.07689746683054,
+      "projectionLatency": {
+        "p50Millis": 1601.96866,
+        "p95Millis": 2206.709039,
+        "p99Millis": 2355.759841,
+        "minMillis": 79.094115,
+        "maxMillis": 2355.759841
+      },
+      "maximumConsumerLag": 89,
+      "catchUpTimeMillis": 2384.283242,
+      "scenarioDurationMillis": 2565.791347
+    }
+  ],
+  "readMeasurements": [
+    {
+      "requestIndex": 0,
+      "httpStatus": 200,
+      "latencyMillis": 14.795394,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 1,
+      "httpStatus": 200,
+      "latencyMillis": 18.312246,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 2,
+      "httpStatus": 200,
+      "latencyMillis": 49.332335,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 3,
+      "httpStatus": 200,
+      "latencyMillis": 18.403314,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 4,
+      "httpStatus": 200,
+      "latencyMillis": 17.721097,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 5,
+      "httpStatus": 200,
+      "latencyMillis": 22.046916,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 6,
+      "httpStatus": 200,
+      "latencyMillis": 51.831536,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 7,
+      "httpStatus": 200,
+      "latencyMillis": 26.483873,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 8,
+      "httpStatus": 200,
+      "latencyMillis": 16.783245,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 9,
+      "httpStatus": 200,
+      "latencyMillis": 54.011987,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 10,
+      "httpStatus": 200,
+      "latencyMillis": 22.61746,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 11,
+      "httpStatus": 200,
+      "latencyMillis": 49.728085,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 12,
+      "httpStatus": 200,
+      "latencyMillis": 27.982828,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 13,
+      "httpStatus": 200,
+      "latencyMillis": 11.495949,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 14,
+      "httpStatus": 200,
+      "latencyMillis": 14.516724,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 15,
+      "httpStatus": 200,
+      "latencyMillis": 9.865186,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 16,
+      "httpStatus": 200,
+      "latencyMillis": 50.570268,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 17,
+      "httpStatus": 200,
+      "latencyMillis": 9.019372,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 18,
+      "httpStatus": 200,
+      "latencyMillis": 14.103363,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 19,
+      "httpStatus": 200,
+      "latencyMillis": 9.851194,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 20,
+      "httpStatus": 200,
+      "latencyMillis": 14.505028,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 21,
+      "httpStatus": 200,
+      "latencyMillis": 42.370434,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 22,
+      "httpStatus": 200,
+      "latencyMillis": 8.697918,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 23,
+      "httpStatus": 200,
+      "latencyMillis": 7.452565,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 24,
+      "httpStatus": 200,
+      "latencyMillis": 8.358529,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 25,
+      "httpStatus": 200,
+      "latencyMillis": 15.642708,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 26,
+      "httpStatus": 200,
+      "latencyMillis": 56.018166,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 27,
+      "httpStatus": 200,
+      "latencyMillis": 14.160288,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 28,
+      "httpStatus": 200,
+      "latencyMillis": 12.937208,
+      "resultCount": 9
+    },
+    {
+      "requestIndex": 29,
+      "httpStatus": 200,
+      "latencyMillis": 13.581597,
+      "resultCount": 9
+    }
+  ],
+  "readAutonomy": {
+    "requestedReads": 30,
+    "successfulReads": 30,
+    "successRate": 1.0,
+    "latency": {
+      "p50Millis": 15.642708,
+      "p95Millis": 54.011987,
+      "p99Millis": 56.018166,
+      "minMillis": 7.452565,
+      "maxMillis": 56.018166
+    },
+    "upstreamMode": "User, Catalog and Engagement do not run. Their configured endpoints are an instrumented loopback HTTP 503 canary; all connection attempts are counted.",
+    "outboundHttpAttempts": 0
+  }
+}

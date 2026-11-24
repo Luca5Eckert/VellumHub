@@ -1,7 +1,7 @@
 # VellumHub
 
-> **A social reading platform whose recommendations keep working when the rest of the system is down.**
-> Six Spring Boot services, Kafka-carried facts and local pgvector read models — with every guarantee backed by a test against real Kafka and PostgreSQL.
+> **A social reading platform with a recommendation read path designed to survive upstream outages.**
+> Six Spring Boot services, Kafka-carried facts and local pgvector read models, with integration tests at Kafka and PostgreSQL boundaries.
 
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.x-green)](https://spring.io/projects/spring-boot)
@@ -19,10 +19,11 @@ Users register, pick genres, discover books, build shared lists, track reading, 
 
 ## Results
 
+The table records the historical reference runs. The November audit repeats the read-autonomy and ranking measurements on a later SHA and documents the different latency observed. [Historical reference](https://github.com/Luca5Eckert/VellumHub/pull/287) · [November audit](tools/metrics/backend-audit-runs/2026-11-24/README.md)
+
 | What was measured | Result |
 | --- | ---: |
 | Recommendation reads with User, Catalog **and** Engagement unavailable | **60 / 60 succeeded** |
-| Synchronous calls to other services per recommendation request | **0** |
 | Rating → visible change in the user's ranking (90-event burst, p95) | **553–751 ms** |
 | Interactions that produced the expected ranking change | **260 / 260** |
 | Recommendation read latency after convergence (p95) | **15.98–19.86 ms** |
@@ -56,7 +57,7 @@ flowchart TB
 1. **Each service owns its data.** Five PostgreSQL databases with separate credentials, guarded by database-ownership checks; services share facts, never tables.
 2. **Changes leave as facts, atomically.** Catalog and Engagement write the business change and an Outbox row in one transaction; a relay publishes to Kafka with lease-token fencing ([sequence](docs/architecture/flows/book-outbox.md) · [states](docs/architecture/states/outbox-delivery.md)).
 3. **Consumers apply each revision once in effect.** A per-aggregate checkpoint, processed-event IDs and the projection commit together; duplicates are no-ops, gaps are rejected, and poison records are quarantined without breaking order ([sequence](docs/architecture/flows/ordered-consumer.md) · [quarantine states](docs/architecture/states/kafka-quarantine.md)).
-4. **Recommendation answers from local state.** 384-dimension embeddings, HNSW retrieval and re-ranking over its own projections — no fan-out on the read path ([feedback flow](docs/architecture/flows/recommendation-feedback.md)).
+4. **Recommendation answers from local state.** 384-dimension embeddings, pgvector retrieval and reranking over its own projections. The HNSW index is available, and the planner selects the access path. [Feedback flow](docs/architecture/flows/recommendation-feedback.md) · [Measured plans](tools/metrics/backend-audit-runs/2026-11-24/README.md#plano-sql-com-pgvectorhnsw)
 5. **One identity authority.** Auth is the only issuer of RS256 `at+jwt` tokens (OIDC, PKCE, Google federation, Argon2id); every service verifies tokens locally and enforces scope, role and ownership ([authorization sequence](docs/architecture/flows/api-request-authorization.md)).
 
 Every flow above is a code-backed diagram: browse them in the [architecture index](docs/architecture/README.md) or the [HTML explorer](docs/architecture/architecture-explorer.html).
@@ -134,6 +135,7 @@ Pull requests also run distributed E2E, architecture fitness, contract and Postm
 | Events and consistency | [Book events](docs/BOOK_EVENTS.md) · [Engagement events](docs/ENGAGEMENT_EVENTS.md) · [Consumer idempotency](docs/CONSUMER_IDEMPOTENCY.md) · [Kafka recovery](docs/KAFKA_RECOVERY_RUNBOOK.md) |
 | API | [API documentation](docs/api-documentation.md) · [Postman](postman/README.md) |
 | Operations and delivery | [Operations](docs/OPERATIONS.md) · [Kubernetes](deploy/kubernetes/README.md) · [CI/CD](docs/CI_CD.md) |
+| Backend engineering evidence | [Audit and professional evidence](tools/metrics/backend-engineering-audit.md) · [Benchmarks and reproduction](tools/metrics/README.md) |
 | Offline training data | [`training/`](training/README.md) exports versioned books, user signals and a hashed manifest |
 
-Decision history, alternatives and dated experiments live in the engineering Vault; this repository documents what the code does today.
+The engineering Vault keeps decision history and alternatives. This repository documents the current code and retains SHA-bound evidence for audited runs.

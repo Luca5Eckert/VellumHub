@@ -1,0 +1,44 @@
+[
+    {
+        "parameters": null,
+        "type": "deletion"
+    },
+    {
+        "parameters": null,
+        "type": "non_fast_forward"
+    },
+    {
+        "parameters": {
+            "do_not_enforce_on_create": false,
+            "required_status_checks": [
+                {
+                    "context": "verify / Maven verify"
+                },
+                {
+                    "context": "verify / Build and scan gateway-service",
+                    "integration_id": 15368
+                },
+                {
+                    "context": "verify / Build and scan user-service",
+                    "integration_id": 15368
+                },
+                {
+                    "context": "verify / Build and scan catalog-service"
+                },
+                {
+                    "context": "verify / Build and scan engagement-service",
+                    "integration_id": 15368
+                },
+                {
+                    "context": "verify / Build and scan recommendation-service",
+                    "integration_id": 15368
+                },
+                {
+                    "context": "Analyze Java"
+                }
+            ],
+            "strict_required_status_checks_policy": false
+        },
+        "type": "required_status_checks"
+    }
+]

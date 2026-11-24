@@ -1,0 +1,25 @@
+{
+  "tests": "16",
+  "failures": "0",
+  "errors": "0",
+  "skipped": "0",
+  "time": "102.541",
+  "cases": [
+    "ratingRedeliveryThroughRealKafkaIsAcknowledgedWithoutAnotherProfileDelta",
+    "failedBookProjectionRollsBackBothCheckpointAndProcessedEvent",
+    "missingBookFeatureRollsBackReadingProgressCheckpoint",
+    "exhaustedOrderedBookFailureGoesToDltButNeverAcknowledgesRevision",
+    "failedRatingDeltaDoesNotCommitIdentityOrRevisionAndCanBeRetried",
+    "reusingBookEventIdForAnotherAggregateRollsBackTheSecondProjection",
+    "readingProgressRevisionGapDoesNotChangeProfileOrCheckpoint",
+    "reactionRedeliveryPreservesProfileAndSingleCheckpoint",
+    "bookRedeliveryDoesNotRebuildVectorAndPersistsEventIdentity",
+    "ratingRevisionGapDoesNotChangeProfileCheckpointOrProcessedIdentity",
+    "engagementIdentityCollisionDoesNotAcknowledgeSecondAggregate",
+    "readingProgressRedeliveryCannotIncreaseUserProfileTwice",
+    "reactionRevisionGapDoesNotPersistIdentityOrAdvanceOffset",
+    "checkpointWriteFailureRollsBackRatingProfileAndCanBeRetried",
+    "concurrentBookRedeliverySerializesOnCheckpoint",
+    "bookRevisionGapDoesNotAdvancePostgresCheckpoint"
+  ]
+}

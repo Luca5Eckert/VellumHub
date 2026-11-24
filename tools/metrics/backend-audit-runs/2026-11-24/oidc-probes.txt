@@ -1,0 +1,2 @@
+Real Auth UUIDv7 -> User profile -> Gateway -> User/Catalog/Engagement/Recommendation and negative JWT checks: OK
+Auth offline, Gateway + User cached JWT: OK

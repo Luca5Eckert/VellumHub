@@ -1,0 +1,3 @@
+Container A acquired address formerly held by B
+Container B acquired address formerly held by C
+Container C acquired address formerly held by A

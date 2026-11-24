@@ -1,0 +1,10 @@
+Services in scope: auth-service, gateway-service, user-service, catalog-service, engagement-service, recommendation-service
+OK Prometheus ready
+OK Alloy ready
+OK Grafana ready
+OK Prometheus application scrapes
+OK Grafana data sources and dashboards
+OK Loki application logs
+OK Gateway HTTP trace and metric
+OK Loki ready
+OK Tempo ready

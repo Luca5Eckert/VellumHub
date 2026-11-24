@@ -1,0 +1,10 @@
+commit_sha=a9a6398373ecbfd5c7688613ad74dc548f74b2a9
+profile=reference
+started_utc=2026-11-24T10:37:02Z
+Linux 6.18.57 x86_64
+openjdk version "21.0.13.1" 2026-11-17 LTS
+OpenJDK Runtime Environment Temurin-21.0.13.1+2 (build 21.0.13.1+2-LTS)
+OpenJDK 64-Bit Server VM Temurin-21.0.13.1+2 (build 21.0.13.1+2-LTS, mixed mode, sharing)
+Docker 29.9.2 x86_64 CPUs=3 memory_bytes=10452459520
+cpu.max=200000 100000
+memory.max=8589934592
