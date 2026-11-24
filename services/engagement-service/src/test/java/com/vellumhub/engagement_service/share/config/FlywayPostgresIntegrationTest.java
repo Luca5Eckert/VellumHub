@@ -97,11 +97,6 @@ class FlywayPostgresIntegrationTest {
 
         assertThat(store.create(owner, reading, note)).isEqualTo(note);
         assertThat(store.entries(outsider, reading, null, 10)).isEmpty();
-        assertThat(store.hasEntries(owner, reading)).isTrue();
-        assertThat(store.hasEntries(outsider, reading)).isFalse();
-        assertThat(store.noteReadingIds(owner, null, 10)).containsExactly(reading);
-        assertThat(store.noteReadingIds(owner, reading, 10)).isEmpty();
-        assertThat(store.noteReadingIds(outsider, null, 10)).isEmpty();
         assertThat(store.update(outsider, reading, note)).isEmpty();
         assertThat(store.delete(outsider, reading, note.id())).isFalse();
         assertThat(store.entries(owner, reading, null, 10)).hasSize(1);
@@ -124,8 +119,14 @@ class FlywayPostgresIntegrationTest {
                     assertThat(result.readAt()).isEqualTo(time);
                     assertThat(result.page()).isNull();
                 });
-        assertThat(store.delete(owner, reading, note.id())).isTrue();
-        assertThat(store.entries(owner, reading, null, 10)).containsExactly(newest);
+        var otherReading = UUID.randomUUID();
+        store.create(owner, otherReading, new ReadingDiary.Note(UUID.randomUUID(), note.type(), note.page(), note.text(), time));
+        store.purge(owner, reading);
+        store.purge(owner, reading);
+        assertThat(store.entries(owner, reading, null, 10)).isEmpty();
+        assertThat(store.entries(owner, otherReading, null, 10)).hasSize(1);
+        assertThatThrownBy(() -> store.create(owner, reading, note))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
     }
 
     @Test

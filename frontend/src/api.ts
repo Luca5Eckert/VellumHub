@@ -91,6 +91,7 @@ export function api(token: string) {
       request<void>(`/catalog/book-list/${encodeURIComponent(listId)}/books/${encodeURIComponent(bookId)}`, 'POST'),
     rate: (id: string, stars: number, review: string) =>
       request<void>('/engagement/rating', 'POST', { bookId: id, stars, ...(review && { review }) }),
+    deleteReading: (bookId: string, readingId: string) => request<void>(readingPath(bookId, readingId), 'DELETE'),
     bookReadings: (bookId: string) => request<BookReading[]>(readingsPath(bookId)),
     startReading: (bookId: string, startedAt?: string) =>
       request<BookReading>(readingsPath(bookId), 'POST', startedAt ? { startedAt } : {}),

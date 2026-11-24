@@ -123,7 +123,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/book-progress/*/progress", "/book-list/*", "/book-list/membership/*/role")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "catalog:personal:write", false)))
-                        .requestMatchers(HttpMethod.DELETE, "/book-progress/*", "/book-list/*", "/book-list/*/books/*", "/book-list/membership/*/*")
+                        .requestMatchers(HttpMethod.DELETE, "/book-progress/*", "/book-progress/*/readings/*", "/book-list/*", "/book-list/*/books/*", "/book-list/membership/*/*")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "catalog:personal:write", false)))
                         .anyRequest().denyAll()

@@ -186,6 +186,16 @@ public class BookProgressController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("/{bookId}/readings/{readingId}")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
+    @Operation(summary = "Delete one reading and its diary")
+    @ApiResponse(responseCode = "204", description = "Reading deleted", content = @Content)
+    @ApiResponse(responseCode = "404", description = "Reading not found", content = @Content)
+    public ResponseEntity<Void> deleteReading(@PathVariable UUID bookId, @PathVariable UUID readingId) {
+        bookReadingsHandler.delete(bookId, authenticationService.getAuthenticatedUserId(), readingId);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{bookId}")
     @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:write"})
     @Operation(

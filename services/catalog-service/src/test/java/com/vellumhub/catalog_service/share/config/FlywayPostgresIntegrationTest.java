@@ -206,6 +206,14 @@ class FlywayPostgresIntegrationTest {
         var readAt = now.minusDays(1).withNano(0);
         var finished = readings.progress(book, reader, dated.progress().getId(), null, 100, readAt).progress();
         assertThat(finished.getEndAt()).isEqualTo(readAt);
+        assertThatThrownBy(() -> readings.delete(book, otherReader, finished.getId()))
+                .isInstanceOf(BookProgressNotFoundException.class);
+        readings.delete(book, reader, finished.getId());
+        assertThat(readings.list(book, reader)).hasSize(3);
+        assertThat(readings.list(book, otherReader)).hasSize(1);
+        assertThat(jdbc.queryForList("""
+                SELECT aggregate_version FROM outbox_events WHERE aggregate_id = ? AND payload->>'deleted' = 'true'
+                """, Long.class, finished.getId())).containsExactly(2L);
         assertThat(jdbc.queryForObject("""
                 SELECT (payload->>'readAt')::numeric < (payload->>'occurredAt')::numeric
                 FROM outbox_events WHERE aggregate_id = ? AND aggregate_version = 1

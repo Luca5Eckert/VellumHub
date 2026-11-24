@@ -216,10 +216,13 @@ export function Library({ token, userId, name, dark, toggleTheme, signOut }: Pro
       {selected ? <BookDetail key={selected.id} book={selected} client={client} userId={userId}
         onBack={() => setSelected(undefined)}
         onReading={reading => {
-          setReadings(current => [...current.filter(item => item.bookId !== reading.bookId), reading])
+          setReadings(current => {
+            const others = current.filter(item => item.bookId !== selected.id)
+            return reading ? [...others, reading] : others
+          })
           setContinueBooks(current => {
             const others = current.filter(book => book.id !== selected.id)
-            return reading.status === 'READING' ? [selected, ...others].slice(0, 2) : others
+            return reading?.status === 'READING' ? [selected, ...others].slice(0, 2) : others
           })
         }} />
         : tab === 'home' ? <>

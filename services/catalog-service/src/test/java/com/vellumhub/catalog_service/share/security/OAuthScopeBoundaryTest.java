@@ -72,6 +72,7 @@ class OAuthScopeBoundaryTest {
             "POST,/book-progress/123/readings,catalog:personal:write,false",
             "POST,/book-progress/123/status,catalog:personal:write,false",
             "PUT,/book-progress/123/progress,catalog:personal:write,false",
+            "DELETE,/book-progress/123/readings/456,catalog:personal:write,false",
             "DELETE,/book-progress/123,catalog:personal:write,false",
             "GET,/book-progress/reading-list,catalog:personal:read,false",
             "POST,/book-list,catalog:personal:write,false",

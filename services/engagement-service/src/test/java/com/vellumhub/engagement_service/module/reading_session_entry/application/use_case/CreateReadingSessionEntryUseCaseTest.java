@@ -1,5 +1,7 @@
 package com.vellumhub.engagement_service.module.reading_session_entry.application.use_case;
 
+import com.vellumhub.engagement_service.module.reading_diary.infrastructure.ReadingDiaryStore;
+
 import com.vellumhub.engagement_service.module.book_snapshot.domain.model.BookSnapshot;
 import com.vellumhub.engagement_service.module.book_snapshot.domain.port.BookSnapshotRepository;
 import com.vellumhub.engagement_service.module.reading_session_entry.application.command.CreateReadingSessionEntryCommand;
@@ -34,6 +36,9 @@ class CreateReadingSessionEntryUseCaseTest {
 
     @Mock
     private RequestContext requestContext;
+
+    @Mock
+    private ReadingDiaryStore diary;
 
     @InjectMocks
     private CreateReadingSessionEntryUseCase useCase;

@@ -58,6 +58,12 @@ for (const { viewport, colorScheme } of [
           await route.fulfill({ status: 201, json: readings[0] })
           return
         }
+        if (request.method() === 'DELETE' && path.includes('/readings/')) {
+          const index = readings.findIndex(item => path.endsWith('/' + item.id))
+          readings.splice(index, 1)
+          await route.fulfill({ status: 204 })
+          return
+        }
         if (path.includes('/readings/')) {
           const current = readings[0]
           if (path.endsWith('/progress')) current.currentPage = body.page ?? body.percentage * book.pageCount / 100
@@ -132,6 +138,14 @@ for (const { viewport, colorScheme } of [
     await expect(page.getByRole('list', { name: 'Histórico de leituras' }).getByRole('listitem')).toHaveCount(2)
     await page.getByRole('button', { name: 'Abandonar' }).click()
     await expect(page.getByRole('status')).toHaveText('Abandonada.')
+    await page.getByRole('button', { name: 'Excluir 2ª leitura' }).click()
+    await expect(page.getByRole('dialog')).toContainText('O progresso, as notas e as citações desta leitura serão apagados.')
+    await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click()
+    await expect(page.getByRole('list', { name: 'Histórico de leituras' }).getByRole('listitem')).toHaveCount(2)
+    await page.getByRole('button', { name: 'Excluir 2ª leitura' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Excluir leitura' }).click()
+    await expect(page.getByRole('status')).toHaveText('Leitura excluída.')
+    await expect(page.getByRole('list', { name: 'Histórico de leituras' }).getByRole('listitem')).toHaveCount(1)
     expect(writes).toEqual([
       { path: '/api/v1/users/me/preferences', body: { genres: ['Science Fiction', 'Fantasy', 'Adventure'] } },
       { path: '/api/v1/engagement/reactions', body: { bookId: book.id, typeReaction: 'POSITIVE' } },
@@ -144,6 +158,7 @@ for (const { viewport, colorScheme } of [
       { path: '/api/v1/catalog/book-progress/fixture-book/readings/reading-1/status', body: { status: 'COMPLETED' } },
       { path: '/api/v1/catalog/book-progress/fixture-book/readings', body: {} },
       { path: '/api/v1/catalog/book-progress/fixture-book/readings/reading-2/status', body: { status: 'ABANDONED' } },
+      { path: '/api/v1/catalog/book-progress/fixture-book/readings/reading-2', body: null },
     ])
   })
 }

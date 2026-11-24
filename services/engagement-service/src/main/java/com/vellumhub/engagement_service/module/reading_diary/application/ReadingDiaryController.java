@@ -26,7 +26,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Base64;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -49,29 +48,13 @@ public class ReadingDiaryController {
         validateLimit(limit);
         Cursor position = decode(cursor);
         UUID userId = JwtAccessToken.userId(jwt);
-        try {
-            catalog.pageCount(readingId, jwt.getTokenValue());
-        } catch (ResponseStatusException ex) {
-            if (ex.getStatusCode() != HttpStatus.NOT_FOUND || !store.hasEntries(userId, readingId)) {
-                throw ex;
-            }
-        }
+        catalog.pageCount(readingId, jwt.getTokenValue());
         var entries = store.entries(userId, readingId, position, limit + 1);
         if (entries.size() <= limit) {
             return new Entries(entries, null);
         }
         var last = entries.get(limit - 1);
         return new Entries(entries.subList(0, limit), encode(new Cursor(last.readAt(), last.id())));
-    }
-
-    @GetMapping("/with-notes")
-    @SecurityRequirement(name = "oauth2", scopes = {"engagement:read"})
-    @Operation(summary = "List owned reading IDs with private notes")
-    public List<UUID> listReadingsWithNotes(@RequestParam(required = false) UUID after,
-                                           @RequestParam(defaultValue = "20") int limit,
-                                           @AuthenticationPrincipal Jwt jwt) {
-        validateLimit(limit);
-        return store.noteReadingIds(JwtAccessToken.userId(jwt), after, limit);
     }
 
     private static void validateLimit(int limit) {

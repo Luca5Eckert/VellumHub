@@ -813,6 +813,36 @@
               "response": []
             },
             {
+              "name": "Delete one reading and its diary",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/book-progress/{{bookId}}/readings/{{readingId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "book-progress",
+                    "{{bookId}}",
+                    "readings",
+                    "{{readingId}}"
+                  ]
+                },
+                "description": "Delete one reading and its diary\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `deleteReading`."
+              },
+              "response": []
+            },
+            {
               "name": "Record a page or percentage for a reading",
               "request": {
                 "method": "PATCH",
@@ -2565,48 +2595,6 @@
         {
           "name": "Reading Diary",
           "item": [
-            {
-              "name": "List owned reading IDs with private notes",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/engagement/readings/with-notes",
-                  "host": [
-                    "{{gatewayUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "engagement",
-                    "readings",
-                    "with-notes"
-                  ],
-                  "query": [
-                    {
-                      "key": "after",
-                      "value": "{{after}}",
-                      "disabled": true,
-                      "description": ""
-                    },
-                    {
-                      "key": "limit",
-                      "value": "20",
-                      "disabled": true,
-                      "description": ""
-                    }
-                  ]
-                },
-                "description": "List owned reading IDs with private notes\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `listReadingsWithNotes`."
-              },
-              "response": []
-            },
             {
               "name": "List private reading diary entries",
               "request": {

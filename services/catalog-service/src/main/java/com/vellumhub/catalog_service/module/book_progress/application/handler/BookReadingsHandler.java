@@ -85,9 +85,35 @@ public class BookReadingsHandler {
             progressEvents.append(new ReadingProgressChange(
                     UUID.randomUUID(), now.toInstant(), readingId, userId, bookId,
                     persisted.getReadingStatus().name(), oldPage, persisted.getCurrentPage(),
-                    persisted.getVersion(), ReadingProgressChange.Kind.UPDATED, readAt, persisted.getTargetEndDate(), targetOnly));
+                    persisted.getVersion(), ReadingProgressChange.Kind.UPDATED, readAt, persisted.getTargetEndDate(), targetOnly, false));
         }
         return response(bookId, userId, readingId);
+    }
+
+    @Transactional
+    public void delete(UUID bookId, UUID userId, UUID readingId) {
+        gate.requireWritable();
+        var reading = repository.findOwnedReading(userId, bookId, readingId)
+                .orElseThrow(BookProgressNotFoundException::new);
+        deleteAndPublish(reading, bookId, userId);
+    }
+
+    @Transactional
+    public void deleteAll(UUID bookId, UUID userId) {
+        gate.requireWritable();
+        var readings = repository.findHistory(userId, bookId);
+        if (readings.isEmpty()) {
+            throw new BookProgressNotFoundException();
+        }
+        readings.forEach(reading -> deleteAndPublish(reading, bookId, userId));
+    }
+
+    private void deleteAndPublish(BookProgress reading, UUID bookId, UUID userId) {
+        var fact = new ReadingProgressChange(UUID.randomUUID(), now().toInstant(), reading.getId(),
+                userId, bookId, reading.getReadingStatus().name(), reading.getCurrentPage(), reading.getCurrentPage(),
+                reading.getVersion() + 1, ReadingProgressChange.Kind.UPDATED, null, null, false, true);
+        repository.delete(reading);
+        progressEvents.append(fact);
     }
 
     private OffsetDateTime now() {

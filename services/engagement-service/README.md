@@ -220,8 +220,6 @@ ela aparece imediatamente e o progresso aparece depois que a projeção processa
 o evento. Uma falha do Catalog na verificação de propriedade retorna 503 e
 não cria nem altera a nota. Excluir uma nota própria não depende dessa consulta.
 
-`GET /readings/with-notes?after=&limit=20` lista os IDs das leituras com anotações
-do usuário autenticado em ordem crescente. Passe o último ID como `after` para
-continuar. Após excluir uma leitura no Catalog, o dono ainda pode encontrá-la
-por essa lista e consultar ou excluir as anotações existentes. Criação e edição
-continuam exigindo uma leitura válida no Catalog.
+Excluir uma leitura no Catalog oculta o diário imediatamente. O Engagement
+apaga as entradas, notas e citações daquela leitura ao consumir o evento ordenado.
+Abandonar uma leitura preserva seu diário.

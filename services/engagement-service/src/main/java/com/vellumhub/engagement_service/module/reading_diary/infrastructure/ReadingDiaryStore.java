@@ -5,7 +5,11 @@ import com.vellumhub.engagement_service.module.reading_diary.application.Reading
 import com.vellumhub.engagement_service.module.reading_diary.application.ReadingDiary.Note;
 import com.vellumhub.engagement_service.module.reading_diary.application.ReadingDiary.NoteType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -46,23 +50,11 @@ public class ReadingDiaryStore {
                 cursor == null ? null : cursor.id(), limit);
     }
 
-    public boolean hasEntries(UUID userId, UUID readingId) {
-        return Boolean.TRUE.equals(jdbc.queryForObject("""
-                SELECT EXISTS (SELECT 1 FROM reading_note WHERE user_id=? AND reading_id=?)
-                    OR EXISTS (SELECT 1 FROM reading_session_entries WHERE user_id=? AND reading_session_id=?
-                               AND COALESCE(read_at, timestamp) IS NOT NULL)
-                """, Boolean.class, userId, readingId, userId, readingId));
-    }
-
-    public List<UUID> noteReadingIds(UUID userId, UUID after, int limit) {
-        return jdbc.queryForList("""
-                SELECT DISTINCT reading_id FROM reading_note WHERE user_id=?
-                  AND (?::uuid IS NULL OR reading_id > ?::uuid)
-                ORDER BY reading_id LIMIT ?
-                """, UUID.class, userId, after, after, limit);
-    }
-
+    @Transactional
     public Note create(UUID userId, UUID readingId, Note note) {
+        if (lockAndIsDeleted(readingId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reading not found");
+        }
         return jdbc.queryForObject("""
                 INSERT INTO reading_note(id, user_id, reading_id, type, page, note_text, read_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *
@@ -81,6 +73,23 @@ public class ReadingDiaryStore {
     public boolean delete(UUID userId, UUID readingId, UUID noteId) {
         return jdbc.update("DELETE FROM reading_note WHERE id=? AND user_id=? AND reading_id=?",
                 noteId, userId, readingId) == 1;
+    }
+
+    // Serialize projection and note writes with purge while their transactions are active.
+    public boolean lockAndIsDeleted(UUID readingId) {
+        jdbc.query("SELECT pg_advisory_xact_lock(hashtextextended(?::text, 0))",
+                (RowCallbackHandler) row -> {}, readingId);
+        return Boolean.TRUE.equals(jdbc.queryForObject(
+                "SELECT EXISTS (SELECT 1 FROM deleted_reading_diary WHERE reading_id=?)",
+                Boolean.class, readingId));
+    }
+
+    @Transactional
+    public void purge(UUID userId, UUID readingId) {
+        lockAndIsDeleted(readingId);
+        jdbc.update("INSERT INTO deleted_reading_diary(reading_id) VALUES (?) ON CONFLICT DO NOTHING", readingId);
+        jdbc.update("DELETE FROM reading_note WHERE user_id=? AND reading_id=?", userId, readingId);
+        jdbc.update("DELETE FROM reading_session_entries WHERE user_id=? AND reading_session_id=?", userId, readingId);
     }
 
     private static Note mapNote(ResultSet row, int index) throws SQLException {

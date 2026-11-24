@@ -1,4 +1,6 @@
 package com.vellumhub.engagement_service.module.reading_progress.application.use_case;
+
+import com.vellumhub.engagement_service.module.reading_diary.infrastructure.ReadingDiaryStore;
 import com.vellumhub.engagement_service.module.reading_progress.application.port.ReadingProgressCheckpoint;
 import com.vellumhub.engagement_service.module.reading_session_entry.application.command.CreateReadingSessionEntryCommand;
 import com.vellumhub.engagement_service.module.reading_session_entry.application.use_case.CreateReadingSessionEntryUseCase;
@@ -7,10 +9,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ProcessOrderedReadingProgressUseCase {
+    private final ReadingDiaryStore diary;
     private final ReadingProgressCheckpoint checkpoint;
     private final CreateReadingSessionEntryUseCase history;
     public ProcessOrderedReadingProgressUseCase(ReadingProgressCheckpoint checkpoint,
-                                                CreateReadingSessionEntryUseCase history) {
+                                                CreateReadingSessionEntryUseCase history,
+             ReadingDiaryStore diary) {
+        this.diary = diary;
         this.checkpoint=checkpoint; this.history=history;
     }
     @Transactional
@@ -28,7 +33,9 @@ public class ProcessOrderedReadingProgressUseCase {
             throw new IllegalArgumentException("First reading progress event must be CREATED");
         if (event.revision()>0 && event.kind()!=ReadingProgressChangedEvent.Kind.UPDATED)
             throw new IllegalArgumentException("Subsequent reading progress event must be UPDATED");
-        if (!event.targetOnly()) {
+        if (event.deleted()) {
+            diary.purge(event.userId(), event.bookProgressId());
+        } else if (!event.targetOnly()) {
             history.execute(new CreateReadingSessionEntryCommand(
                     event.bookId(), event.bookProgressId(), event.userId(),
                     event.progress(), event.newPage(), event.eventId(), event.occurredAt(), event.readAt(), event.newPage() - event.oldPage()));

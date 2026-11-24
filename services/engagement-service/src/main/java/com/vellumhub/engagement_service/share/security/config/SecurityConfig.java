@@ -88,7 +88,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html")
                         .access((authentication, context) -> new AuthorizationDecision(documentationEnabled))
-                        .requestMatchers(HttpMethod.GET, "/rating/*", "/rating/books/*", "/readings/*/entries", "/readings/with-notes", "/reactions", "/reactions/*")
+                        .requestMatchers(HttpMethod.GET, "/rating/*", "/rating/books/*", "/readings/*/entries", "/reactions", "/reactions/*")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "engagement:read", false)))
                         .requestMatchers(HttpMethod.POST, "/rating", "/reactions", "/readings/*/notes")

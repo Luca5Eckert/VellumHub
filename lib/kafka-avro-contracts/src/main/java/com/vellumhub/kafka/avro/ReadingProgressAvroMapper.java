@@ -23,6 +23,7 @@ public final class ReadingProgressAvroMapper {
                 .setReadAt(event.readAt() == null ? null : event.readAt().toString())
                 .setTargetEndDate(event.targetEndDate() == null ? null : event.targetEndDate().toString())
                 .setTargetOnly(event.targetOnly())
+                .setDeleted(event.deleted())
                 .setKind(ReadingProgressKind.valueOf(event.kind().name())).build();
     }
 
@@ -40,6 +41,6 @@ public final class ReadingProgressAvroMapper {
                 wire.getProgress(), wire.getOldPage(), wire.getNewPage(), wire.getRevision(),
                 ReadingProgressChangedEvent.Kind.valueOf(wire.getKind().name()),
                 wire.getReadAt() == null ? null : Instant.parse(wire.getReadAt()),
-                wire.getTargetEndDate() == null ? null : LocalDate.parse(wire.getTargetEndDate()), wire.getTargetOnly());
+                wire.getTargetEndDate() == null ? null : LocalDate.parse(wire.getTargetEndDate()), wire.getTargetOnly(), wire.getDeleted());
     }
 }
