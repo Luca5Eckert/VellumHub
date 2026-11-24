@@ -11,25 +11,3 @@ spec:
   podSelector: {}
   policyTypes: [Egress]
   egress: [{to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}}], ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]}]
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata: {name: engagement-diary-to-catalog, labels: {app.kubernetes.io/part-of: vellumhub}}
-spec:
-  podSelector: {matchLabels: {app.kubernetes.io/name: engagement-service}}
-  policyTypes: [Egress]
-  egress:
-    - to:
-        - podSelector: {matchLabels: {app.kubernetes.io/name: catalog-service}}
-      ports: [{protocol: TCP, port: 8080}]
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata: {name: catalog-diary-from-engagement, labels: {app.kubernetes.io/part-of: vellumhub}}
-spec:
-  podSelector: {matchLabels: {app.kubernetes.io/name: catalog-service}}
-  policyTypes: [Ingress]
-  ingress:
-    - from:
-        - podSelector: {matchLabels: {app.kubernetes.io/name: engagement-service}}
-      ports: [{protocol: TCP, port: 8080}]
