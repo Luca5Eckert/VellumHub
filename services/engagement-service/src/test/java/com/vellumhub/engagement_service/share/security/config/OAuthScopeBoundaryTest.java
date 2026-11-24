@@ -48,6 +48,7 @@ class OAuthScopeBoundaryTest {
 
     @ParameterizedTest
     @CsvSource({
+            "GET,/readings/with-notes,engagement:read,false",
             "GET,/readings/123/entries,engagement:read,false",
             "POST,/readings/123/notes,engagement:write,false",
             "PATCH,/readings/123/notes/456,engagement:write,false",

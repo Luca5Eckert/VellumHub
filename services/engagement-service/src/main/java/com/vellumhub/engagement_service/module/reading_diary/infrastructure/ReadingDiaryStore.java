@@ -46,6 +46,22 @@ public class ReadingDiaryStore {
                 cursor == null ? null : cursor.id(), limit);
     }
 
+    public boolean hasEntries(UUID userId, UUID readingId) {
+        return Boolean.TRUE.equals(jdbc.queryForObject("""
+                SELECT EXISTS (SELECT 1 FROM reading_note WHERE user_id=? AND reading_id=?)
+                    OR EXISTS (SELECT 1 FROM reading_session_entries WHERE user_id=? AND reading_session_id=?
+                               AND COALESCE(read_at, timestamp) IS NOT NULL)
+                """, Boolean.class, userId, readingId, userId, readingId));
+    }
+
+    public List<UUID> noteReadingIds(UUID userId, UUID after, int limit) {
+        return jdbc.queryForList("""
+                SELECT DISTINCT reading_id FROM reading_note WHERE user_id=?
+                  AND (?::uuid IS NULL OR reading_id > ?::uuid)
+                ORDER BY reading_id LIMIT ?
+                """, UUID.class, userId, after, after, limit);
+    }
+
     public Note create(UUID userId, UUID readingId, Note note) {
         return jdbc.queryForObject("""
                 INSERT INTO reading_note(id, user_id, reading_id, type, page, note_text, read_at)
@@ -56,10 +72,9 @@ public class ReadingDiaryStore {
 
     public Optional<Note> update(UUID userId, UUID readingId, Note note) {
         return jdbc.query("""
-                UPDATE reading_note SET type=?, page=?, note_text=?, read_at=COALESCE(?, read_at)
+                UPDATE reading_note SET type=?, page=?, note_text=?
                 WHERE id=? AND user_id=? AND reading_id=? RETURNING *
                 """, ReadingDiaryStore::mapNote, note.type().name(), note.page(), note.text(),
-                note.readAt() == null ? null : note.readAt().atOffset(ZoneOffset.UTC),
                 note.id(), userId, readingId).stream().findFirst();
     }
 

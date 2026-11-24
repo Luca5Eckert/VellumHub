@@ -200,7 +200,7 @@ As rotas abaixo usam o prefixo `/api/v1/engagement` no Gateway.
 | --- | --- |
 | `GET /readings/{readingId}/entries?cursor=&limit=20` | Ordem decrescente por data e identificador. Use `nextCursor` para pedir a página seguinte. |
 | `POST /readings/{readingId}/notes` | Cria uma nota (`NOTE`) ou citação (`QUOTE`). |
-| `PATCH /readings/{readingId}/notes/{noteId}` | Edita tipo, texto e página. Omitir `readAt` mantém a data atual da nota. |
+| `PATCH /readings/{readingId}/notes/{noteId}` | Edita tipo, texto e página. A data de leitura é fixa depois da criação. |
 | `DELETE /readings/{readingId}/notes/{noteId}` | Exclui a própria nota ou citação. |
 
 O texto aceita até 2.000 caracteres e não pode estar em branco. A página é opcional.
@@ -219,3 +219,9 @@ falhar, o cliente pode tentar novamente apenas a nota. Se a nota for aceita prim
 ela aparece imediatamente e o progresso aparece depois que a projeção processar
 o evento. Uma falha do Catalog na verificação de propriedade retorna 503 e
 não cria nem altera a nota. Excluir uma nota própria não depende dessa consulta.
+
+`GET /readings/with-notes?after=&limit=20` lista os IDs das leituras com anotações
+do usuário autenticado em ordem crescente. Passe o último ID como `after` para
+continuar. Após excluir uma leitura no Catalog, o dono ainda pode encontrá-la
+por essa lista e consultar ou excluir as anotações existentes. Criação e edição
+continuam exigindo uma leitura válida no Catalog.

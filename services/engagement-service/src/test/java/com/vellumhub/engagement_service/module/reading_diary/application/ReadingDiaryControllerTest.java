@@ -61,7 +61,8 @@ class ReadingDiaryControllerTest {
         when(catalog.pageCount(reading, "fixture")).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
         mvc.perform(get("/readings/{readingId}/entries", reading)).andExpect(status().isNotFound());
         postNote("A valid note", HttpStatus.NOT_FOUND);
-        verifyNoInteractions(store);
+        verify(store).hasEntries(reader, reading);
+        verifyNoMoreInteractions(store);
     }
 
     @Test
@@ -74,6 +75,32 @@ class ReadingDiaryControllerTest {
     @Test
     void rejectsMalformedCursorBeforeOwnershipLookup() throws Exception {
         mvc.perform(get("/readings/{readingId}/entries", reading).param("cursor", "!"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(catalog, store);
+    }
+
+    @Test
+    void listsOwnDiaryAndAllowsDeletingNoteAfterReadingRemoval() throws Exception {
+        UUID note = UUID.randomUUID();
+        when(catalog.pageCount(reading, "fixture")).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+        when(store.hasEntries(reader, reading)).thenReturn(true);
+        when(store.entries(reader, reading, null, 21)).thenReturn(java.util.List.of());
+        when(store.noteReadingIds(reader, null, 20)).thenReturn(java.util.List.of(reading));
+        when(store.delete(reader, reading, note)).thenReturn(true);
+        mvc.perform(get("/readings/with-notes")).andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0]")
+                        .value(reading.toString()));
+        mvc.perform(get("/readings/{readingId}/entries", reading)).andExpect(status().isOk());
+        mvc.perform(delete("/readings/{readingId}/notes/{noteId}", reading, note)).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void rejectsChangingTheDiarySortKey() throws Exception {
+        mvc.perform(patch("/readings/{readingId}/notes/{noteId}", reading, UUID.randomUUID())
+                        .contentType("application/json")
+                        .content("""
+                                {"type":"NOTE","text":"Edited","readAt":"2025-01-01T12:00:00Z"}
+                                """))
                 .andExpect(status().isBadRequest());
         verifyNoInteractions(catalog, store);
     }

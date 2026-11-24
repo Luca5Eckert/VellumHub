@@ -28,9 +28,11 @@ public class ProcessOrderedReadingProgressUseCase {
             throw new IllegalArgumentException("First reading progress event must be CREATED");
         if (event.revision()>0 && event.kind()!=ReadingProgressChangedEvent.Kind.UPDATED)
             throw new IllegalArgumentException("Subsequent reading progress event must be UPDATED");
-        history.execute(new CreateReadingSessionEntryCommand(
-                event.bookId(), event.bookProgressId(), event.userId(),
-                event.progress(), event.newPage(), event.eventId(), event.occurredAt(), event.readAt(), event.newPage() - event.oldPage()));
+        if (!event.targetOnly()) {
+            history.execute(new CreateReadingSessionEntryCommand(
+                    event.bookId(), event.bookProgressId(), event.userId(),
+                    event.progress(), event.newPage(), event.eventId(), event.occurredAt(), event.readAt(), event.newPage() - event.oldPage()));
+        }
         checkpoint.markApplied(event.bookProgressId(), event.revision(), event.eventId());
     }
 }

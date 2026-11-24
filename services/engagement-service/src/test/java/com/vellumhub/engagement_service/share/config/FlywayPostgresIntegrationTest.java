@@ -97,6 +97,11 @@ class FlywayPostgresIntegrationTest {
 
         assertThat(store.create(owner, reading, note)).isEqualTo(note);
         assertThat(store.entries(outsider, reading, null, 10)).isEmpty();
+        assertThat(store.hasEntries(owner, reading)).isTrue();
+        assertThat(store.hasEntries(outsider, reading)).isFalse();
+        assertThat(store.noteReadingIds(owner, null, 10)).containsExactly(reading);
+        assertThat(store.noteReadingIds(owner, reading, 10)).isEmpty();
+        assertThat(store.noteReadingIds(outsider, null, 10)).isEmpty();
         assertThat(store.update(outsider, reading, note)).isEmpty();
         assertThat(store.delete(outsider, reading, note.id())).isFalse();
         assertThat(store.entries(owner, reading, null, 10)).hasSize(1);

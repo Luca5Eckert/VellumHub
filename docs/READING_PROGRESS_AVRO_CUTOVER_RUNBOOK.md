@@ -71,3 +71,7 @@ can still be consumed or replayed. Apply the database migrations before starting
 service that reads the new columns. If Catalog must roll back to a version that cannot
 read the new statuses, freeze reading writes and roll forward with a compatible
 Catalog build.
+
+O campo booleano `targetOnly` tem valor padrão `false`. O Engagement atualizado
+avança o checkpoint para eventos marcados e omite a entrada no diário. Atualize
+esse consumidor e registre o schema antes de publicar eventos com o marcador.

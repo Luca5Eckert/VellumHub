@@ -24,7 +24,8 @@ class ReadingProgressAvroMapperTest {
         var current = com.vellumhub.kafka.avro.readingprogress.ReadingProgressChangedEvent.getClassSchema();
         var previous = Schema.createRecord(current.getName(), current.getDoc(), current.getNamespace(), false);
         previous.setFields(current.getFields().stream()
-                .filter(field -> !field.name().equals("readAt") && !field.name().equals("targetEndDate"))
+                .filter(field -> !field.name().equals("readAt") && !field.name().equals("targetEndDate")
+                        && !field.name().equals("targetOnly"))
                 .map(field -> new Schema.Field(field, field.schema()))
                 .toList());
 
@@ -42,6 +43,14 @@ class ReadingProgressAvroMapperTest {
             assertEquals(event, ReadingProgressAvroMapper.fromAvro(event.bookProgressId().toString(),
                     ReadingProgressAvroMapper.toAvro(event)));
         }
+    }
+
+    @Test void removingTheTargetRetainsTheMarkerWithoutADate() {
+        var event = new ReadingProgressChangedEvent(UUID.randomUUID(), Instant.EPOCH,
+                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "READING",
+                3, 3, 1, ReadingProgressChangedEvent.Kind.UPDATED, null, null, true);
+        assertEquals(event, ReadingProgressAvroMapper.fromAvro(event.bookProgressId().toString(),
+                ReadingProgressAvroMapper.toAvro(event)));
     }
 
     @Test void baselineAndCreationKeepTheirOriginalRevisions() {

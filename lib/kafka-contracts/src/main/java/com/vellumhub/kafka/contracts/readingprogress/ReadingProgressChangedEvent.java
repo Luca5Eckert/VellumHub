@@ -9,12 +9,20 @@ import java.util.UUID;
 public record ReadingProgressChangedEvent(
     UUID eventId, Instant occurredAt, UUID bookProgressId, UUID userId, UUID bookId,
     String progress, int oldPage, int newPage, long revision, Kind kind, @JsonInclude(JsonInclude.Include.NON_NULL) Instant readAt,
-    @JsonInclude(JsonInclude.Include.NON_NULL) LocalDate targetEndDate
+    @JsonInclude(JsonInclude.Include.NON_NULL) LocalDate targetEndDate,
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT) boolean targetOnly
 ) {
     public ReadingProgressChangedEvent(UUID eventId, Instant occurredAt, UUID bookProgressId, UUID userId,
             UUID bookId, String progress, int oldPage, int newPage, long revision, Kind kind) {
         this(eventId, occurredAt, bookProgressId, userId, bookId, progress, oldPage, newPage,
                 revision, kind, null, null);
+    }
+
+    public ReadingProgressChangedEvent(UUID eventId, Instant occurredAt, UUID bookProgressId, UUID userId,
+            UUID bookId, String progress, int oldPage, int newPage, long revision, Kind kind,
+            Instant readAt, LocalDate targetEndDate) {
+        this(eventId, occurredAt, bookProgressId, userId, bookId, progress, oldPage, newPage,
+                revision, kind, readAt, targetEndDate, false);
     }
 
     public enum Kind { BASELINE, CREATED, UPDATED }

@@ -197,6 +197,11 @@ class FlywayPostgresIntegrationTest {
                 SELECT aggregate_version FROM outbox_events WHERE aggregate_id = ? ORDER BY aggregate_version
                 """, Long.class, rereadingId)).containsExactly(0L, 1L, 2L, 3L, 4L, 5L, 6L);
 
+        assertThat(jdbc.queryForList("""
+                SELECT aggregate_version FROM outbox_events
+                WHERE aggregate_id = ? AND payload->>'targetOnly' = 'true' ORDER BY aggregate_version
+                """, Long.class, rereadingId)).containsExactly(3L, 4L);
+
         var dated = readings.start(book, reader, now.minusDays(2));
         var readAt = now.minusDays(1).withNano(0);
         var finished = readings.progress(book, reader, dated.progress().getId(), null, 100, readAt).progress();

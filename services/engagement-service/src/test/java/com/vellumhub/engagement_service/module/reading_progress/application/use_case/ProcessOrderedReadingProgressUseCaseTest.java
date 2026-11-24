@@ -38,6 +38,18 @@ class ProcessOrderedReadingProgressUseCaseTest {
         verify(checkpoint).markApplied(e.bookProgressId(),0L,e.eventId());
         verifyNoInteractions(effect);
     }
+    @Test void settingOrRemovingTheTargetAdvancesOnlyTheCheckpoint() {
+        for (var date : java.util.Arrays.asList(java.time.LocalDate.of(2026, 12, 1), null)) {
+            var base = event(1, ReadingProgressChangedEvent.Kind.UPDATED);
+            var e = new ReadingProgressChangedEvent(base.eventId(), base.occurredAt(), base.bookProgressId(),
+                    base.userId(), base.bookId(), "READING", 10, 10, 1, base.kind(), null, date, true);
+            when(checkpoint.lockAndRead(e.bookProgressId())).thenReturn(0L);
+            process.execute(e);
+            verify(checkpoint).markApplied(e.bookProgressId(), 1L, e.eventId());
+        }
+        verifyNoInteractions(effect);
+    }
+
     @Test void nextRevisionIsApplied() {
         var e=event(1,ReadingProgressChangedEvent.Kind.UPDATED);
         when(checkpoint.lockAndRead(e.bookProgressId())).thenReturn(0L);

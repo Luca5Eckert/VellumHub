@@ -71,6 +71,11 @@
         "string"
       ],
       "default": null
+    },
+    {
+      "name": "targetOnly",
+      "type": "boolean",
+      "default": false
     }
   ]
 }

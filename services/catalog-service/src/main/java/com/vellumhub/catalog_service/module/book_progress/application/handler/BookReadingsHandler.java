@@ -56,25 +56,25 @@ public class BookReadingsHandler {
                             OffsetDateTime readAt) {
         var now = now();
         return change(bookId, userId, readingId, now, reading -> reading.recordProgress(page, percentage,
-                readAt == null ? null : readAt.withOffsetSameInstant(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), now), true);
+                readAt == null ? null : readAt.withOffsetSameInstant(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), now), true, false);
     }
 
     @Transactional
     public Reading transition(UUID bookId, UUID userId, UUID readingId, ReadingStatus status) {
         var now = now();
         return change(bookId, userId, readingId, now, reading -> reading.transitionTo(status, now),
-                status == ReadingStatus.COMPLETED);
+                status == ReadingStatus.COMPLETED, false);
     }
 
     @Transactional
     public Reading target(UUID bookId, UUID userId, UUID readingId, LocalDate target) {
         var now = now();
         return change(bookId, userId, readingId, now, reading -> reading.changeTarget(target, now.toLocalDate()),
-                false);
+                false, true);
     }
 
     private Reading change(UUID bookId, UUID userId, UUID readingId, OffsetDateTime now,
-                           Predicate<BookProgress> update, boolean recordsPages) {
+                           Predicate<BookProgress> update, boolean recordsPages, boolean targetOnly) {
         gate.requireWritable();
         var progress = repository.findOwnedReading(userId, bookId, readingId)
                 .orElseThrow(BookProgressNotFoundException::new);
@@ -85,7 +85,7 @@ public class BookReadingsHandler {
             progressEvents.append(new ReadingProgressChange(
                     UUID.randomUUID(), now.toInstant(), readingId, userId, bookId,
                     persisted.getReadingStatus().name(), oldPage, persisted.getCurrentPage(),
-                    persisted.getVersion(), ReadingProgressChange.Kind.UPDATED, readAt, persisted.getTargetEndDate()));
+                    persisted.getVersion(), ReadingProgressChange.Kind.UPDATED, readAt, persisted.getTargetEndDate(), targetOnly));
         }
         return response(bookId, userId, readingId);
     }

@@ -8,6 +8,7 @@ import com.vellumhub.engagement_service.module.reading_diary.infrastructure.Cata
 import com.vellumhub.engagement_service.module.reading_diary.infrastructure.ReadingDiaryStore;
 import com.vellumhub.security.jwt.JwtAccessToken;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,10 +26,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/readings/{readingId}")
+@RequestMapping("/readings")
 @Tag(name = "Reading Diary")
 public class ReadingDiaryController {
     private final ReadingDiaryStore store;
@@ -39,17 +41,22 @@ public class ReadingDiaryController {
         this.catalog = catalog;
     }
 
-    @GetMapping("/entries")
+    @GetMapping("/{readingId}/entries")
     @SecurityRequirement(name = "oauth2", scopes = {"engagement:read", "catalog:personal:read"})
     @Operation(summary = "List private reading diary entries")
     public Entries listEntries(@PathVariable UUID readingId, @RequestParam(required = false) String cursor,
                                @RequestParam(defaultValue = "20") int limit, @AuthenticationPrincipal Jwt jwt) {
-        if (limit < 1 || limit > 100) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Limit must be between 1 and 100");
-        }
+        validateLimit(limit);
         Cursor position = decode(cursor);
-        catalog.pageCount(readingId, jwt.getTokenValue());
-        var entries = store.entries(JwtAccessToken.userId(jwt), readingId, position, limit + 1);
+        UUID userId = JwtAccessToken.userId(jwt);
+        try {
+            catalog.pageCount(readingId, jwt.getTokenValue());
+        } catch (ResponseStatusException ex) {
+            if (ex.getStatusCode() != HttpStatus.NOT_FOUND || !store.hasEntries(userId, readingId)) {
+                throw ex;
+            }
+        }
+        var entries = store.entries(userId, readingId, position, limit + 1);
         if (entries.size() <= limit) {
             return new Entries(entries, null);
         }
@@ -57,7 +64,23 @@ public class ReadingDiaryController {
         return new Entries(entries.subList(0, limit), encode(new Cursor(last.readAt(), last.id())));
     }
 
-    @PostMapping("/notes")
+    @GetMapping("/with-notes")
+    @SecurityRequirement(name = "oauth2", scopes = {"engagement:read"})
+    @Operation(summary = "List owned reading IDs with private notes")
+    public List<UUID> listReadingsWithNotes(@RequestParam(required = false) UUID after,
+                                           @RequestParam(defaultValue = "20") int limit,
+                                           @AuthenticationPrincipal Jwt jwt) {
+        validateLimit(limit);
+        return store.noteReadingIds(JwtAccessToken.userId(jwt), after, limit);
+    }
+
+    private static void validateLimit(int limit) {
+        if (limit < 1 || limit > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Limit must be between 1 and 100");
+        }
+    }
+
+    @PostMapping("/{readingId}/notes")
     @ResponseStatus(HttpStatus.CREATED)
     @SecurityRequirement(name = "oauth2", scopes = {"engagement:write", "catalog:personal:read"})
     @Operation(summary = "Create a private reading note or quote")
@@ -70,16 +93,19 @@ public class ReadingDiaryController {
         return store.create(JwtAccessToken.userId(jwt), readingId, note);
     }
 
-    @PatchMapping("/notes/{noteId}")
+    @PatchMapping("/{readingId}/notes/{noteId}")
     @SecurityRequirement(name = "oauth2", scopes = {"engagement:write", "catalog:personal:read"})
     @Operation(summary = "Edit a private reading note or quote")
     public Note editNote(@PathVariable UUID readingId, @PathVariable UUID noteId,
-                         @Valid @RequestBody NoteRequest request, @AuthenticationPrincipal Jwt jwt) {
-        return store.update(JwtAccessToken.userId(jwt), readingId, checked(noteId, request, readingId, jwt))
+                         @Valid @RequestBody EditNoteRequest request, @AuthenticationPrincipal Jwt jwt) {
+        if (request.readAt() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A note's reading time cannot be edited");
+        }
+        return store.update(JwtAccessToken.userId(jwt), readingId, checked(noteId, new NoteRequest(request.type(), request.page(), request.text(), null), readingId, jwt))
                 .orElseThrow(ReadingDiaryController::notFound);
     }
 
-    @DeleteMapping("/notes/{noteId}")
+    @DeleteMapping("/{readingId}/notes/{noteId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @SecurityRequirement(name = "oauth2", scopes = {"engagement:write"})
     @Operation(summary = "Delete a private reading note or quote")
@@ -130,6 +156,9 @@ public class ReadingDiaryController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid diary cursor");
         }
     }
+
+    public record EditNoteRequest(@NotNull NoteType type, @PositiveOrZero Integer page,
+                                  @NotBlank @Size(max = 2000) String text, @Schema(hidden = true) Instant readAt) {}
 
     public record NoteRequest(@NotNull NoteType type, @PositiveOrZero Integer page,
                               @NotBlank @Size(max = 2000) String text, Instant readAt) {}
