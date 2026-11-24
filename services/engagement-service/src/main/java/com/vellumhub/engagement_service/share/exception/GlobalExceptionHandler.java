@@ -107,6 +107,13 @@ public class GlobalExceptionHandler {
                 "The required parameter '" + ex.getParameterName() + "' is missing", request);
     }
 
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ApiResponseError> handleResponseStatusException(
+            org.springframework.web.server.ResponseStatusException ex, HttpServletRequest request) {
+        var status = HttpStatus.valueOf(ex.getStatusCode().value());
+        return respond(status, status.getReasonPhrase(), ex.getReason(), status.getReasonPhrase(), request);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponseError> handleGenericException(Exception ex, HttpServletRequest request) {
         logger.error("Unexpected error on path {}: ", request.getRequestURI(), ex);

@@ -1,4 +1,6 @@
 package com.vellumhub.engagement_service.module.reading_progress.application.use_case;
+
+import com.vellumhub.engagement_service.module.reading_diary.infrastructure.ReadingDiaryStore;
 import com.vellumhub.engagement_service.module.reading_progress.application.port.ReadingProgressCheckpoint;
 import com.vellumhub.engagement_service.module.reading_session_entry.application.use_case.CreateReadingSessionEntryUseCase;
 import com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent;
@@ -12,8 +14,10 @@ import static org.mockito.Mockito.*;
 class ProcessOrderedReadingProgressUseCaseTest {
     private final ReadingProgressCheckpoint checkpoint=mock(ReadingProgressCheckpoint.class);
     private final CreateReadingSessionEntryUseCase effect=mock(CreateReadingSessionEntryUseCase.class);
+    private final ReadingDiaryStore diary =
+            mock(ReadingDiaryStore.class);
     private final ProcessOrderedReadingProgressUseCase process=
-        new ProcessOrderedReadingProgressUseCase(checkpoint,effect);
+        new ProcessOrderedReadingProgressUseCase(checkpoint,effect,diary);
     private ReadingProgressChangedEvent event(long revision, ReadingProgressChangedEvent.Kind kind) {
         return new ReadingProgressChangedEvent(UUID.randomUUID(),Instant.now(),UUID.randomUUID(),
             UUID.randomUUID(),UUID.randomUUID(),"READING",10,20,revision,kind);
@@ -38,13 +42,38 @@ class ProcessOrderedReadingProgressUseCaseTest {
         verify(checkpoint).markApplied(e.bookProgressId(),0L,e.eventId());
         verifyNoInteractions(effect);
     }
+    @Test void settingOrRemovingTheTargetAdvancesOnlyTheCheckpoint() {
+        for (var date : java.util.Arrays.asList(java.time.LocalDate.of(2026, 12, 1), null)) {
+            var base = event(1, ReadingProgressChangedEvent.Kind.UPDATED);
+            var e = new ReadingProgressChangedEvent(base.eventId(), base.occurredAt(), base.bookProgressId(),
+                    base.userId(), base.bookId(), "READING", 10, 10, 1, base.kind(), null, date, true);
+            when(checkpoint.lockAndRead(e.bookProgressId())).thenReturn(0L);
+            process.execute(e);
+            verify(checkpoint).markApplied(e.bookProgressId(), 1L, e.eventId());
+        }
+        verifyNoInteractions(effect);
+    }
+
+    @Test void deletionPurgesTheDiaryOnceAndAdvancesTheCheckpoint() {
+        var base = event(1, ReadingProgressChangedEvent.Kind.UPDATED);
+        var deletion = new ReadingProgressChangedEvent(base.eventId(), base.occurredAt(), base.bookProgressId(),
+                base.userId(), base.bookId(), "READING", 10, 10, 1, base.kind(), null, null, false, true);
+        when(checkpoint.lockAndRead(deletion.bookProgressId())).thenReturn(0L, 1L);
+        process.execute(deletion);
+        process.execute(deletion);
+        verify(diary).purge(deletion.userId(), deletion.bookProgressId());
+        verify(checkpoint).markApplied(deletion.bookProgressId(), 1L, deletion.eventId());
+        verifyNoInteractions(effect);
+    }
+
     @Test void nextRevisionIsApplied() {
         var e=event(1,ReadingProgressChangedEvent.Kind.UPDATED);
         when(checkpoint.lockAndRead(e.bookProgressId())).thenReturn(0L);
         
         process.execute(e);
         verify(checkpoint).markApplied(e.bookProgressId(),1L,e.eventId());
-        verify(effect).execute(any());
+        verify(effect).execute(argThat(command -> command.pageDelta() == 10
+                && command.occurredAt().equals(e.occurredAt())));
     }
 }
 

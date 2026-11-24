@@ -1,7 +1,5 @@
 package com.vellumhub.catalog_service.module.book_progress.application.handler;
 
-import com.vellumhub.catalog_service.module.book_progress.domain.command.DeleteBookProgressCommand;
-import com.vellumhub.catalog_service.module.book_progress.domain.use_case.DeleteBookProgressUseCase;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,20 +8,15 @@ import java.util.UUID;
 @Component
 public class DeleteBookProgressHandler {
 
-    private final DeleteBookProgressUseCase deleteBookProgressUseCase;
+    private final BookReadingsHandler readings;
 
-    public DeleteBookProgressHandler(DeleteBookProgressUseCase deleteBookProgressUseCase) {
-        this.deleteBookProgressUseCase = deleteBookProgressUseCase;
+    public DeleteBookProgressHandler(BookReadingsHandler readings) {
+        this.readings = readings;
     }
 
     @Transactional
     public void handle(UUID bookId, UUID userId) {
-        DeleteBookProgressCommand command = new DeleteBookProgressCommand(
-                userId,
-                bookId
-        );
-
-        deleteBookProgressUseCase.execute(command);
+        readings.deleteAll(bookId, userId);
     }
 
 }

@@ -15,12 +15,12 @@ interface Props {
   book: Book
   client: ReturnType<typeof api>
   userId: string
-  onReading: (reading: Reading) => void
+  onReading: (reading: Reading | undefined) => void
   onBack: () => void
 }
 
 export function BookDetail({ book, client, userId, onReading, onBack }: Props) {
-  const [dialog, setDialog] = useState<'rating' | 'progress' | 'lists' | 'target'>()
+  const [dialog, setDialog] = useState<'rating' | 'progress' | 'lists' | 'target' | 'delete'>()
   const [lists, setLists] = useState<BookList[]>([])
   const [stars, setStars] = useState(5)
   const [review, setReview] = useState('')
@@ -30,6 +30,7 @@ export function BookDetail({ book, client, userId, onReading, onBack }: Props) {
   const [error, setError] = useState('')
   const [status, setStatus] = useState('')
   const [history, setHistory] = useState<BookReading[]>()
+  const [toDelete, setToDelete] = useState<BookReading>()
   const [retry, setRetry] = useState(0)
   const [readDate, setReadDate] = useState('')
   const [targetDate, setTargetDate] = useState('')
@@ -149,6 +150,9 @@ export function BookDetail({ book, client, userId, onReading, onBack }: Props) {
               {item.startedAt && <> · <time dateTime={item.startedAt}>
                 {new Date(item.startedAt).toLocaleDateString('pt-BR')}
               </time></>}
+              {' '}<button type="button" className="text-button" disabled={pending}
+                aria-label={`Excluir ${item.readingNumber}ª leitura`}
+                onClick={() => { setToDelete(item); open('delete') }}>Excluir leitura</button>
             </li>)}
           </ol>}
           {!history && error && <Button variant="secondary" onClick={() => { setError(''); setRetry(retry + 1) }}>
@@ -168,8 +172,22 @@ export function BookDetail({ book, client, userId, onReading, onBack }: Props) {
     </div>
 
     {dialog && <Dialog title={dialog === 'rating' ? 'Avaliar livro' : dialog === 'lists' ? 'Salvar em lista' :
-      dialog === 'target' ? 'Meta de término' : active ? 'Atualizar progresso' : history?.length ? 'Iniciar releitura' : 'Iniciar leitura'} onClose={() => { if (!pending) setDialog(undefined) }}>
+      dialog === 'delete' ? 'Excluir leitura' : dialog === 'target' ? 'Meta de término' : active ? 'Atualizar progresso' : history?.length ? 'Iniciar releitura' : 'Iniciar leitura'} onClose={() => { if (!pending) setDialog(undefined) }}>
       <div className="dialog-book"><Cover book={book} /><div><strong>{book.title}</strong><p className="muted">{book.author}</p></div></div>
+      {dialog === 'delete' && toDelete && <>
+        <p>O progresso, as notas e as citações desta leitura serão apagados.</p>
+        <div className="dialog-actions">
+          <button type="button" className="text-button" disabled={pending} onClick={() => setDialog(undefined)}>Cancelar</button>
+          <Button disabled={pending} onClick={() => void run(async () => {
+            await client.deleteReading(book.id, toDelete.id)
+            setHistory(previous => {
+              const remaining = (previous ?? []).filter(item => item.id !== toDelete.id)
+              return remaining.map((item, index) => ({ ...item, readingNumber: remaining.length - index }))
+            })
+            if (current?.id === toDelete.id) onReading(undefined)
+          }, 'Leitura excluída.')}>Excluir leitura</Button>
+        </div>
+      </>}
       {dialog === 'rating' && <form onSubmit={event => {
         event.preventDefault()
         void run(() => client.rate(book.id, stars, review.trim()), 'Avaliação enviada.')

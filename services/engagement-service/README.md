@@ -20,7 +20,7 @@ It turns user behavior into durable engagement records and Kafka signals that re
 - Publish recommendation-relevant interaction events.
 - Maintain local book snapshots from catalog events.
 - Store replicated reading progress history from catalog progress events.
-- Keep engagement workflows independent from synchronous catalog lookups.
+- Use local snapshots for ratings and reactions. The diary checks reading ownership with Catalog.
 
 ## What It Owns
 
@@ -187,3 +187,39 @@ Auth is the only issuer. This service validates RS256 `at+jwt` access tokens loc
 
 - **Ownership:** ratings and reactions are always written as the JWT `sub`. Reading a private rating or a reaction by ID requires the same subject; foreign or missing records answer an identical 404. `GET /rating/books/{bookId}` is the explicit public-review read (`engagement:read`).
 - **Kafka identity:** `engagement_service` reads Book/Progress and produces ratings, reactions and its own retry/DLT topics ([Kafka identities](../../docs/KAFKA_SERVICE_IDENTITIES.md)). Ordered recovery: [sequence](../../docs/architecture/flows/ordered-consumer.md) · [quarantine states](../../docs/architecture/states/kafka-quarantine.md).
+
+## Diário de leitura
+
+1. O Catalog confirma que o usuário autenticado é dono da leitura e informa a quantidade de páginas.
+2. O Engagement armazena notas e citações privadas. O histórico intercala essas entradas com o progresso já projetado.
+3. A coleção Postman é gerada a partir do OpenAPI. Os testes cobrem isolamento, paginação e escrita antes da projeção.
+
+As rotas abaixo usam o prefixo `/api/v1/engagement` no Gateway.
+
+| Método e rota | Comportamento |
+| --- | --- |
+| `GET /readings/{readingId}/entries?cursor=&limit=20` | Ordem decrescente por data e identificador. Use `nextCursor` para pedir a página seguinte. |
+| `POST /readings/{readingId}/notes` | Cria uma nota (`NOTE`) ou citação (`QUOTE`). |
+| `PATCH /readings/{readingId}/notes/{noteId}` | Edita tipo, texto e página. A data de leitura é fixa depois da criação. |
+| `DELETE /readings/{readingId}/notes/{noteId}` | Exclui a própria nota ou citação. |
+
+O texto aceita até 2.000 caracteres e não pode estar em branco. A página é opcional.
+Ao criar, `readAt` assume o horário atual se omitido. Leituras e notas de terceiros
+retornam 404. Entradas legadas podem ter `delta` nulo quando o evento original
+não informou a página anterior ao gravar a projeção. Registros antigos sem data
+de leitura nem de emissão ficam fora da linha do tempo.
+
+A leitura do diário exige `engagement:read` e as escritas exigem `engagement:write`.
+A consulta de propriedade usa o token do usuário e requer também
+`catalog:personal:read`. A URL interna do Catalog pode ser configurada com
+`APP_READING_DIARY_CATALOG_URL`.
+
+Progresso e nota são operações independentes. Se o progresso for aceito e a nota
+falhar, o cliente pode tentar novamente apenas a nota. Se a nota for aceita primeiro,
+ela aparece imediatamente e o progresso aparece depois que a projeção processar
+o evento. Uma falha do Catalog na verificação de propriedade retorna 503 e
+não cria nem altera a nota. Excluir uma nota própria não depende dessa consulta.
+
+Excluir uma leitura no Catalog oculta o diário imediatamente. O Engagement
+apaga as entradas, notas e citações daquela leitura ao consumir o evento ordenado.
+Abandonar uma leitura preserva seu diário.

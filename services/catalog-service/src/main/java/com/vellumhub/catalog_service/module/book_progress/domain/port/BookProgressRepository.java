@@ -15,9 +15,13 @@ public interface BookProgressRepository {
 
     List<BookProgress> findHistory(UUID userId, UUID bookId);
 
+    void delete(BookProgress reading);
+
     BookProgress save(BookProgress bookProgress);
 
     Optional<BookProgress> findById(UUID bookProgressId);
+
+    Optional<BookProgress> findByIdAndUserId(UUID id, UUID userId);
 
     boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
 

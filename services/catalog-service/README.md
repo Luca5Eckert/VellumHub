@@ -133,6 +133,7 @@ DELETE /book-list/membership/{bookListId}/{memberId}
 
 GET    /book-progress/{bookId}/readings
 POST   /book-progress/{bookId}/readings
+DELETE /book-progress/{bookId}/readings/{readingId}
 PATCH  /book-progress/{bookId}/readings/{readingId}/progress
 PATCH  /book-progress/{bookId}/readings/{readingId}/status
 PATCH  /book-progress/{bookId}/readings/{readingId}/target

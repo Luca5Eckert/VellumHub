@@ -110,7 +110,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/book-requests")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "catalog:requests:write", false)))
-                        .requestMatchers(HttpMethod.GET, "/book-progress/reading-list", "/book-progress/*/readings", "/book-list", "/book-list/*", "/book-list/membership", "/book-list/membership/*")
+                        .requestMatchers(HttpMethod.GET, "/book-progress/reading-list", "/book-progress/*/readings", "/book-progress/readings/*/book", "/book-list", "/book-list/*", "/book-list/membership", "/book-list/membership/*")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "catalog:personal:read", false)))
                         .requestMatchers(HttpMethod.POST, "/book-progress/*/status", "/book-progress/*/readings", "/book-list", "/book-list/*/books/*", "/book-list/membership/*")
@@ -123,7 +123,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/book-progress/*/progress", "/book-list/*", "/book-list/membership/*/role")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "catalog:personal:write", false)))
-                        .requestMatchers(HttpMethod.DELETE, "/book-progress/*", "/book-list/*", "/book-list/*/books/*", "/book-list/membership/*/*")
+                        .requestMatchers(HttpMethod.DELETE, "/book-progress/*", "/book-progress/*/readings/*", "/book-list/*", "/book-list/*/books/*", "/book-list/membership/*/*")
                         .access((authentication, context) -> new AuthorizationDecision(
                                 HumanApiAccess.allowed(authentication.get(), "catalog:personal:write", false)))
                         .anyRequest().denyAll()

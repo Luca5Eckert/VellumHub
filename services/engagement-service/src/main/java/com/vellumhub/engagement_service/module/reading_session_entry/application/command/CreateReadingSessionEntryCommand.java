@@ -5,10 +5,10 @@ import java.util.UUID;
 
 public record CreateReadingSessionEntryCommand(
     UUID bookId, UUID bookProgressId, UUID userId, String type, int pageRead,
-    UUID eventId, Instant occurredAt, Instant readAt
+    UUID eventId, Instant occurredAt, Instant readAt, Integer pageDelta
 ) {
     public CreateReadingSessionEntryCommand(UUID bookId, UUID bookProgressId, UUID userId, String type, int pageRead) {
-        this(bookId, bookProgressId, userId, type, pageRead, null, null, null);
+        this(bookId, bookProgressId, userId, type, pageRead, null, null, null, null);
     }
 
     public static CreateReadingSessionEntryCommand create(UUID bookId, UUID bookProgressId, UUID userId, String type, int pageRead) {
@@ -16,6 +16,6 @@ public record CreateReadingSessionEntryCommand(
     }
 
     public static CreateReadingSessionEntryCommand create(UUID bookId, UUID bookProgressId, UUID userId, String type, int pageRead, UUID eventId, Instant occurredAt) {
-        return new CreateReadingSessionEntryCommand(bookId, bookProgressId, userId, type, pageRead, eventId, occurredAt, null);
+        return new CreateReadingSessionEntryCommand(bookId, bookProgressId, userId, type, pageRead, eventId, occurredAt, null, null);
     }
 }

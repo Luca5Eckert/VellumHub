@@ -23,6 +23,11 @@ import java.time.Instant;
 import com.vellumhub.engagement_service.module.reaction.domain.model.Reaction;
 import java.time.OffsetDateTime;
 import java.util.Map;
+import com.vellumhub.engagement_service.module.reading_diary.application.ReadingDiary;
+import com.vellumhub.engagement_service.module.reading_diary.infrastructure.ReadingDiaryStore;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -74,6 +79,54 @@ class FlywayPostgresIntegrationTest {
         assertThat(columnExists(jdbcTemplate, "reactions", "updated_at")).isTrue();
         assertThat(columnIsNullable(jdbcTemplate, "reactions", "created_at")).isFalse();
         assertThat(columnIsNullable(jdbcTemplate, "reactions", "updated_at")).isFalse();
+    }
+
+    @Test
+    @Order(6)
+    void notesCanBeWrittenBeforeProgressProjectionAndPageTogetherWithIt(
+            @Autowired ReadingDiaryStore store,
+            @Autowired JdbcTemplate jdbc) {
+        var owner = UUID.randomUUID();
+        var outsider = UUID.randomUUID();
+        var reading = UUID.randomUUID();
+        var time = Instant.parse("2026-11-20T12:00:00Z");
+        var note = new ReadingDiary.Note(
+                UUID.randomUUID(),
+                ReadingDiary.NoteType.QUOTE,
+                10, "A private quotation", time);
+
+        assertThat(store.create(owner, reading, note)).isEqualTo(note);
+        assertThat(store.entries(outsider, reading, null, 10)).isEmpty();
+        assertThat(store.update(outsider, reading, note)).isEmpty();
+        assertThat(store.delete(outsider, reading, note.id())).isFalse();
+        assertThat(store.entries(owner, reading, null, 10)).hasSize(1);
+
+        jdbc.update("""
+                INSERT INTO reading_session_entries (user_id, reading_session_id, page_read, type,
+                    timestamp, read_at, page_delta) VALUES (?, ?, 10, 'READING', now(), ?, 8)
+                """, owner, reading, time.atOffset(ZoneOffset.UTC));
+        var newest = store.entries(owner, reading, null, 1).getFirst();
+        assertThat(newest.delta()).isEqualTo(8);
+        assertThat(newest.readAt()).isEqualTo(time);
+        var cursor = new ReadingDiary.Cursor(
+                newest.readAt(), newest.id());
+        assertThat(store.entries(owner, reading, cursor, 10)).singleElement()
+                .satisfies(entry -> assertThat(entry.text()).isEqualTo(note.text()));
+        var updated = new ReadingDiary.Note(note.id(), ReadingDiary.NoteType.NOTE, null, "Edited note", null);
+        assertThat(store.update(owner, reading, updated)).get()
+                .satisfies(result -> {
+                    assertThat(result.text()).isEqualTo("Edited note");
+                    assertThat(result.readAt()).isEqualTo(time);
+                    assertThat(result.page()).isNull();
+                });
+        var otherReading = UUID.randomUUID();
+        store.create(owner, otherReading, new ReadingDiary.Note(UUID.randomUUID(), note.type(), note.page(), note.text(), time));
+        store.purge(owner, reading);
+        store.purge(owner, reading);
+        assertThat(store.entries(owner, reading, null, 10)).isEmpty();
+        assertThat(store.entries(owner, otherReading, null, 10)).hasSize(1);
+        assertThatThrownBy(() -> store.create(owner, reading, note))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
     }
 
     @Test

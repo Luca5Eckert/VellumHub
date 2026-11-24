@@ -47,6 +47,9 @@ public class ReadingSessionEntry {
     @Column(name = "read_at")
     private Instant readAt;
 
+    @Column(name = "page_delta")
+    private Integer pageDelta;
+
     public static ReadingSessionEntry create(UUID bookProgressId, BookSnapshot bookSnapshot, UUID userId, String type, int pageRead) {
         return create(bookProgressId, bookSnapshot, userId, type, pageRead, null, null);
     }

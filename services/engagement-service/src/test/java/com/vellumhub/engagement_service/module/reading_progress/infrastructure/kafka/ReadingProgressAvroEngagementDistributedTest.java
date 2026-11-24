@@ -111,6 +111,8 @@ class ReadingProgressAvroEngagementDistributedTest extends KafkaIntegrationTestS
             await().during(Duration.ofMillis(250)).atMost(Duration.ofSeconds(3)).untilAsserted(() ->
                     assertThat(jdbc.queryForObject("SELECT count(*) FROM reading_session_entries WHERE event_id=?",
                             Long.class,updated.eventId())).isEqualTo(1L));
+            assertThat(jdbc.queryForObject("SELECT page_delta FROM reading_session_entries WHERE event_id=?",
+                    Integer.class, updated.eventId())).isEqualTo(1);
             assertThat(jdbc.queryForObject("SELECT read_at < timestamp FROM reading_session_entries WHERE event_id=?",
                     Boolean.class, updated.eventId())).isTrue();
             var paused = new ReadingProgressChangedEvent(UUID.randomUUID(), Instant.now(), aggregate, user, book,
@@ -119,7 +121,19 @@ class ReadingProgressAvroEngagementDistributedTest extends KafkaIntegrationTestS
             checkpoint(aggregate,2);
             assertThat(jdbc.queryForObject("SELECT type FROM reading_session_entries WHERE event_id=?",
                     String.class,paused.eventId())).isEqualTo("PAUSED");
-            var gap=fact(aggregate,book,user,4,ReadingProgressChangedEvent.Kind.UPDATED);
+            jdbc.update("""
+                    INSERT INTO reading_note (id, reading_id, user_id, type, note_text, read_at)
+                    VALUES (?, ?, ?, 'NOTE', 'A private note', now())
+                    """, UUID.randomUUID(), aggregate, user);
+            var deleted = new ReadingProgressChangedEvent(UUID.randomUUID(), Instant.now(), aggregate, user, book,
+                    "PAUSED", 1, 1, 3, ReadingProgressChangedEvent.Kind.UPDATED, null, null, false, true);
+            send(producer,topic,aggregate,deleted);
+            checkpoint(aggregate,3);
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM reading_note WHERE reading_id=?",
+                    Long.class, aggregate)).isZero();
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM reading_session_entries WHERE reading_session_id=?",
+                    Long.class, aggregate)).isZero();
+            var gap=fact(aggregate,book,user,5,ReadingProgressChangedEvent.Kind.UPDATED);
             send(producer,topic,aggregate,gap);
             var dead=dlt.awaitRecord(dltTopic,aggregate.toString(),Duration.ofSeconds(30),Duration.ofMillis(200));
             assertThat(dead.value()[0]).isEqualTo((byte)0);
@@ -127,7 +141,7 @@ class ReadingProgressAvroEngagementDistributedTest extends KafkaIntegrationTestS
             assertThat(KafkaProbe.utf8HeaderValues(dead,"x-vellum-source-topic")).containsExactly(topic);
             assertThat(KafkaProbe.utf8HeaderValues(dead,"x-vellum-consumer-group"))
                     .containsExactly(KafkaConsumerGroups.ENGAGEMENT_READING_PROGRESS_AVRO);
-            checkpoint(aggregate,2);
+            checkpoint(aggregate,3);
             assertThat(jdbc.queryForObject("SELECT count(*) FROM reading_session_entries WHERE event_id=?",
                     Long.class,gap.eventId())).isZero();
         }

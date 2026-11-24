@@ -34,6 +34,12 @@ public class BookProgressRepositoryAdapter implements BookProgressRepository {
     }
 
     @Override
+    public void delete(BookProgress reading) {
+        bookProgressRepositoryJpa.delete(reading);
+        bookProgressRepositoryJpa.flush();
+    }
+
+    @Override
     public BookProgress save(BookProgress bookProgress) {
         return bookProgressRepositoryJpa.saveAndFlush(bookProgress);
     }
@@ -42,6 +48,11 @@ public class BookProgressRepositoryAdapter implements BookProgressRepository {
     @Override
     public Optional<BookProgress> findById(UUID bookProgressId) {
         return bookProgressRepositoryJpa.findById(bookProgressId);
+    }
+
+    @Override
+    public Optional<BookProgress> findByIdAndUserId(UUID id, UUID userId) {
+        return bookProgressRepositoryJpa.findByIdAndUserId(id, userId);
     }
 
     @Override
