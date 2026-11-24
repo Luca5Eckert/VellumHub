@@ -32,7 +32,7 @@ public class CreateReadingSessionEntryUseCase {
                 command.type(),
                 command.pageRead(),
                 command.eventId(),
-                command.occurredAt() == null ? java.time.Instant.now() : command.occurredAt()
+                command.occurredAt()
         );
 
         readingSessionEntry.setReadAt(command.readAt());
