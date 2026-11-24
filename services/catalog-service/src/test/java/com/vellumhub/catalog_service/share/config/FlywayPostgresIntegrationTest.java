@@ -157,6 +157,9 @@ class FlywayPostgresIntegrationTest {
 
         var rereading = readings.start(book, reader);
         UUID rereadingId = rereading.progress().getId();
+        assertThat(readings.pageCount(rereadingId, reader)).isEqualTo(300);
+        assertThatThrownBy(() -> readings.pageCount(rereadingId, otherReader))
+                .isInstanceOf(BookProgressNotFoundException.class);
         assertThat(rereading.readingNumber()).isEqualTo(3);
         assertThat(rereading.progress().getCurrentPage()).isZero();
         assertThat(readings.list(book, reader))

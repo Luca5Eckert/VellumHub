@@ -48,6 +48,10 @@ class OAuthScopeBoundaryTest {
 
     @ParameterizedTest
     @CsvSource({
+            "GET,/readings/123/entries,engagement:read,false",
+            "POST,/readings/123/notes,engagement:write,false",
+            "PATCH,/readings/123/notes/456,engagement:write,false",
+            "DELETE,/readings/123/notes/456,engagement:write,false",
             "POST,/rating,engagement:write,false",
             "PUT,/rating/123,engagement:write,false",
             "DELETE,/rating/123,engagement:write,false",
@@ -94,7 +98,8 @@ class OAuthScopeBoundaryTest {
     @Test
     void everyDomainOperationDocumentsItsRequiredOAuthScope() {
         for (Class<?> controller : List.of(com.vellumhub.engagement_service.module.rating.application.controller.RatingController.class,
-                com.vellumhub.engagement_service.module.reaction.presentation.controller.ReactionController.class)) {
+                com.vellumhub.engagement_service.module.reaction.presentation.controller.ReactionController.class,
+                com.vellumhub.engagement_service.module.reading_diary.application.ReadingDiaryController.class)) {
             for (var method : controller.getDeclaredMethods()) {
                 if (java.util.Arrays.stream(method.getAnnotations()).noneMatch(annotation ->
                         annotation.annotationType().isAnnotationPresent(org.springframework.web.bind.annotation.RequestMapping.class))) {
@@ -103,9 +108,9 @@ class OAuthScopeBoundaryTest {
                 var security = method.getAnnotation(io.swagger.v3.oas.annotations.security.SecurityRequirement.class);
                 org.assertj.core.api.Assertions.assertThat(security).as(method.toString()).isNotNull();
                 org.assertj.core.api.Assertions.assertThat(security.name()).isEqualTo("oauth2");
-                org.assertj.core.api.Assertions.assertThat(security.scopes()).hasSize(1);
+                org.assertj.core.api.Assertions.assertThat(security.scopes()).isNotEmpty();
                 org.assertj.core.api.Assertions.assertThat(com.vellumhub.security.jwt.OAuthScopes.API)
-                        .contains(security.scopes()[0]);
+                        .contains(security.scopes());
             }
         }
     }

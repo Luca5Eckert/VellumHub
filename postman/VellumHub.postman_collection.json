@@ -52,6 +52,11 @@
       "type": "string"
     },
     {
+      "key": "noteId",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "ratingId",
       "value": "",
       "type": "string"
@@ -631,6 +636,36 @@
                   ]
                 },
                 "description": "Retrieves the authenticated user's complete reading list with progress information\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `getReadingList`."
+              },
+              "response": []
+            },
+            {
+              "name": "Get book information for an owned reading",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/book-progress/readings/{{readingId}}/book",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "book-progress",
+                    "readings",
+                    "{{readingId}}",
+                    "book"
+                  ]
+                },
+                "description": "Get book information for an owned reading\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `getReadingBook`."
               },
               "response": []
             },
@@ -2522,6 +2557,171 @@
                     }
                   }
                 }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Reading Diary",
+          "item": [
+            {
+              "name": "List private reading diary entries",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/engagement/readings/{{readingId}}/entries",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "engagement",
+                    "readings",
+                    "{{readingId}}",
+                    "entries"
+                  ],
+                  "query": [
+                    {
+                      "key": "cursor",
+                      "value": "{{cursor}}",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "disabled": true,
+                      "description": ""
+                    }
+                  ]
+                },
+                "description": "List private reading diary entries\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `listEntries`."
+              },
+              "response": []
+            },
+            {
+              "name": "Create a private reading note or quote",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/engagement/readings/{{readingId}}/notes",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "engagement",
+                    "readings",
+                    "{{readingId}}",
+                    "notes"
+                  ]
+                },
+                "description": "Create a private reading note or quote\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `createNote`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"NOTE\",\n  \"page\": 0,\n  \"text\": \"string\",\n  \"readAt\": \"2026-01-01T00:00:00Z\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Edit a private reading note or quote",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/engagement/readings/{{readingId}}/notes/{{noteId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "engagement",
+                    "readings",
+                    "{{readingId}}",
+                    "notes",
+                    "{{noteId}}"
+                  ]
+                },
+                "description": "Edit a private reading note or quote\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `editNote`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"NOTE\",\n  \"page\": 0,\n  \"text\": \"string\",\n  \"readAt\": \"2026-01-01T00:00:00Z\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete a private reading note or quote",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/engagement/readings/{{readingId}}/notes/{{noteId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "engagement",
+                    "readings",
+                    "{{readingId}}",
+                    "notes",
+                    "{{noteId}}"
+                  ]
+                },
+                "description": "Delete a private reading note or quote\n\nGenerated from `/docs/engagement/v3/api-docs`. Operation ID: `deleteNote`."
               },
               "response": []
             }

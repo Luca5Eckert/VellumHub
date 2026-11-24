@@ -111,6 +111,8 @@ class ReadingProgressAvroEngagementDistributedTest extends KafkaIntegrationTestS
             await().during(Duration.ofMillis(250)).atMost(Duration.ofSeconds(3)).untilAsserted(() ->
                     assertThat(jdbc.queryForObject("SELECT count(*) FROM reading_session_entries WHERE event_id=?",
                             Long.class,updated.eventId())).isEqualTo(1L));
+            assertThat(jdbc.queryForObject("SELECT page_delta FROM reading_session_entries WHERE event_id=?",
+                    Integer.class, updated.eventId())).isEqualTo(1);
             assertThat(jdbc.queryForObject("SELECT read_at < timestamp FROM reading_session_entries WHERE event_id=?",
                     Boolean.class, updated.eventId())).isTrue();
             var paused = new ReadingProgressChangedEvent(UUID.randomUUID(), Instant.now(), aggregate, user, book,

@@ -44,7 +44,8 @@ class ProcessOrderedReadingProgressUseCaseTest {
         
         process.execute(e);
         verify(checkpoint).markApplied(e.bookProgressId(),1L,e.eventId());
-        verify(effect).execute(any());
+        verify(effect).execute(argThat(command -> command.pageDelta() == 10
+                && command.occurredAt().equals(e.occurredAt())));
     }
 }
 

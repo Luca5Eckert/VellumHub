@@ -45,6 +45,11 @@ public class BookProgressRepositoryAdapter implements BookProgressRepository {
     }
 
     @Override
+    public Optional<BookProgress> findByIdAndUserId(UUID id, UUID userId) {
+        return bookProgressRepositoryJpa.findByIdAndUserId(id, userId);
+    }
+
+    @Override
     public boolean existsByUserIdAndBookId(UUID userId, UUID bookId) {
         return bookProgressRepositoryJpa.existsByUserIdAndBookId(userId, bookId);
     }

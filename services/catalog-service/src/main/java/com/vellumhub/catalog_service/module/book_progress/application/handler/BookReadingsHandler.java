@@ -102,6 +102,13 @@ public class BookReadingsHandler {
     }
 
     @Transactional(readOnly = true)
+    public int pageCount(UUID readingId, UUID userId) {
+        return repository.findByIdAndUserId(readingId, userId)
+                .orElseThrow(BookProgressNotFoundException::new)
+                .getBook().getPageCount();
+    }
+
+    @Transactional(readOnly = true)
     public List<Reading> list(UUID bookId, UUID userId) {
         var history = repository.findHistory(userId, bookId);
         return IntStream.range(0, history.size())

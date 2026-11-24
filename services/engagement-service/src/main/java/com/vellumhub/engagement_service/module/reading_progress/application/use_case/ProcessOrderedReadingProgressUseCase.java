@@ -30,7 +30,7 @@ public class ProcessOrderedReadingProgressUseCase {
             throw new IllegalArgumentException("Subsequent reading progress event must be UPDATED");
         history.execute(new CreateReadingSessionEntryCommand(
                 event.bookId(), event.bookProgressId(), event.userId(),
-                event.progress(), event.newPage(), event.eventId(), event.occurredAt(), event.readAt()));
+                event.progress(), event.newPage(), event.eventId(), event.occurredAt(), event.readAt(), event.newPage() - event.oldPage()));
         checkpoint.markApplied(event.bookProgressId(), event.revision(), event.eventId());
     }
 }

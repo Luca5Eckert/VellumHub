@@ -74,6 +74,17 @@ public class BookProgressController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toReadingResponse(reading));
     }
 
+    @GetMapping("/readings/{readingId}/book")
+    @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:read"})
+    @Operation(summary = "Get book information for an owned reading")
+    @ApiResponse(responseCode = "404", description = "Reading not found", content = @Content)
+    public ReadingBookResponse getReadingBook(@PathVariable UUID readingId) {
+        return new ReadingBookResponse(bookReadingsHandler.pageCount(readingId,
+                authenticationService.getAuthenticatedUserId()));
+    }
+
+    public record ReadingBookResponse(int pageCount) {}
+
     @GetMapping("/{bookId}/readings")
     @SecurityRequirement(name = "oauth2", scopes = {"catalog:personal:read"})
     @Operation(summary = "List the authenticated user's readings for a book, newest first")

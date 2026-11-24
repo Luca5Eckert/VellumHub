@@ -67,6 +67,7 @@ class OAuthScopeBoundaryTest {
             "PATCH,/book-progress/123/readings/456/progress,catalog:personal:write,false",
             "PATCH,/book-progress/123/readings/456/status,catalog:personal:write,false",
             "PATCH,/book-progress/123/readings/456/target,catalog:personal:write,false",
+            "GET,/book-progress/readings/123/book,catalog:personal:read,false",
             "GET,/book-progress/123/readings,catalog:personal:read,false",
             "POST,/book-progress/123/readings,catalog:personal:write,false",
             "POST,/book-progress/123/status,catalog:personal:write,false",
