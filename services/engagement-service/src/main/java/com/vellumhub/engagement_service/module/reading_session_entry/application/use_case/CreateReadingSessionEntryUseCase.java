@@ -35,6 +35,7 @@ public class CreateReadingSessionEntryUseCase {
                 command.occurredAt()
         );
 
+        readingSessionEntry.setReadAt(command.readAt());
         readingSessionEntryRepository.save(readingSessionEntry);
     }
 

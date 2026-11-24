@@ -25,8 +25,9 @@ public class UpdateBookProgressUseCase {
      }
 
      public ReadingProgressChange execute(UpdateBookProgressCommand command){
-          BookProgress bookProgress = bookProgressRepository.findByUserIdAndBookId(command.userId(), command.bookId())
-                  .orElseThrow(BookProgressNotFoundException::new);
+          BookProgress bookProgress = bookProgressRepository.findActiveByUserIdAndBookId(command.userId(), command.bookId())
+                  .orElseThrow(() -> bookProgressRepository.existsByUserIdAndBookId(command.userId(), command.bookId())
+                          ? new BookIsNotBeingReadException() : new BookProgressNotFoundException());
 
           int currentPage = bookProgress.getCurrentPage();
 

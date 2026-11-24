@@ -45,7 +45,7 @@ class UpdateBookProgressUseCaseTest {
         UUID bookId = UUID.randomUUID();
         int newPage = 120;
 
-        var command = new UpdateBookProgressCommand(bookId, userId, newPage);
+        var command = new UpdateBookProgressCommand(userId, bookId, newPage);
 
         // CORREÇÃO 1: Adicionado pageCount para evitar que o update() marque como COMPLETED (0)
         Book book = Book.builder().id(bookId).pageCount(300).build();
@@ -55,7 +55,7 @@ class UpdateBookProgressUseCaseTest {
                 userId, book, 50, ReadingStatus.READING, OffsetDateTime.now(), null
         );
 
-        when(bookProgressRepository.findByUserIdAndBookId(bookId, userId))
+        when(bookProgressRepository.findActiveByUserIdAndBookId(userId, bookId))
                 .thenReturn(Optional.of(bookProgress));
 
         when(bookProgressRepository.save(any(BookProgress.class))).thenReturn(bookProgress);
@@ -76,9 +76,9 @@ class UpdateBookProgressUseCaseTest {
         // Given
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        var command = new UpdateBookProgressCommand(bookId, userId, 10);
+        var command = new UpdateBookProgressCommand(userId, bookId, 10);
 
-        when(bookProgressRepository.findByUserIdAndBookId(bookId, userId))
+        when(bookProgressRepository.findActiveByUserIdAndBookId(userId, bookId))
                 .thenReturn(Optional.empty());
 
         // When/Then
@@ -92,7 +92,7 @@ class UpdateBookProgressUseCaseTest {
         // Given
         UUID userId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
-        var command = new UpdateBookProgressCommand(bookId, userId, 10);
+        var command = new UpdateBookProgressCommand(userId, bookId, 10);
 
         Book book = Book.builder().id(bookId).pageCount(300).build();
 
@@ -101,7 +101,7 @@ class UpdateBookProgressUseCaseTest {
                 userId, book, 0, ReadingStatus.WANT_TO_READ, null, null
         );
 
-        when(bookProgressRepository.findByUserIdAndBookId(bookId, userId))
+        when(bookProgressRepository.findActiveByUserIdAndBookId(userId, bookId))
                 .thenReturn(Optional.of(bookProgress));
 
         // When/Then

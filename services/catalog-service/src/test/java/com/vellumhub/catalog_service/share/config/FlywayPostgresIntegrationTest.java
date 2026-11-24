@@ -1,10 +1,14 @@
 package com.vellumhub.catalog_service.share.config;
 
+import com.vellumhub.catalog_service.module.book_progress.application.handler.BookReadingsHandler;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressConflictException;
 import com.vellumhub.catalog_service.CatalogServiceApplication;
 import com.vellumhub.catalog_service.module.book.application.query.PageBook;
 import com.vellumhub.catalog_service.module.book.application.service.BookService;
 import com.vellumhub.catalog_service.module.book.domain.exception.BookDomainException;
 import com.vellumhub.catalog_service.module.book.presentation.dto.GetBookResponse;
+import com.vellumhub.catalog_service.module.book_progress.application.handler.UpdateBookProgressHandler;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookIsNotBeingReadException;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -23,7 +27,13 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Map;
+import com.vellumhub.catalog_service.module.book_progress.domain.model.ReadingStatus;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressDomainException;
+import com.vellumhub.catalog_service.module.book_progress.domain.exception.BookProgressNotFoundException;
 import java.util.UUID;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -110,6 +120,91 @@ class FlywayPostgresIntegrationTest {
     }
 
     @Test
+    @Order(4)
+    void updatesOnlyTheActiveReadingAndEmitsItsEvent(
+            @Autowired JdbcTemplate jdbc, @Autowired UpdateBookProgressHandler progress,
+            @Autowired BookReadingsHandler readings) {
+        UUID book = UUID.randomUUID();
+        UUID reader = UUID.randomUUID();
+        UUID completed = UUID.randomUUID();
+        UUID active = UUID.randomUUID();
+        UUID other = UUID.randomUUID();
+        UUID otherReader = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO books(id,title,release_year,author,isbn,page_count,publisher,version,created_at)
+                VALUES(?,'Rereading',2026,'Test Author','rereading-test',300,'Test Publisher',0,now())
+                """, book);
+        jdbc.update("""
+                INSERT INTO book_progress(id,book_id,user_id,reading_status,current_page,is_active,version,created_at)
+                VALUES (?,?,?,'COMPLETED',300,false,0,now() - interval '2 days'),
+                       (?,?,?,'READING',20,true,0,now() - interval '1 day'),
+                       (?,?,?,'READING',15,true,0,now())
+                """, completed, book, reader, active, book, reader, other, book, otherReader);
+
+        progress.handle(42, book, reader);
+
+        assertThat(jdbc.queryForObject("SELECT current_page FROM book_progress WHERE id=?", Integer.class, active)).isEqualTo(42);
+        assertThat(jdbc.queryForObject("SELECT current_page FROM book_progress WHERE id=?", Integer.class, completed)).isEqualTo(300);
+        assertThat(jdbc.queryForObject("SELECT current_page FROM book_progress WHERE id=?", Integer.class, other)).isEqualTo(15);
+        assertThat(jdbc.queryForList("""
+                SELECT aggregate_id FROM outbox_events WHERE aggregate_id IN (?, ?, ?)
+                """, UUID.class, active, completed, other)).containsExactly(active);
+
+        assertThatThrownBy(() -> readings.start(book, reader)).isInstanceOf(BookProgressConflictException.class);
+
+        progress.handle(300, book, reader);
+        assertThatThrownBy(() -> progress.handle(50, book, reader)).isInstanceOf(BookIsNotBeingReadException.class);
+
+        var rereading = readings.start(book, reader);
+        UUID rereadingId = rereading.progress().getId();
+        assertThat(rereading.readingNumber()).isEqualTo(3);
+        assertThat(rereading.progress().getCurrentPage()).isZero();
+        assertThat(readings.list(book, reader))
+                .extracting(reading -> reading.progress().getId())
+                .containsExactly(rereadingId, active, completed);
+        assertThat(readings.list(book, otherReader))
+                .extracting(reading -> reading.progress().getId())
+                .containsExactly(other);
+        assertThat(jdbc.queryForList("SELECT aggregate_version FROM outbox_events WHERE aggregate_id = ?",
+                Long.class, rereadingId)).containsExactly(0L);
+
+        var now = OffsetDateTime.now(ZoneOffset.UTC);
+        assertThatThrownBy(() -> readings.progress(book, otherReader, rereadingId, 20, null, null))
+                .isInstanceOf(BookProgressNotFoundException.class);
+        assertThatThrownBy(() -> readings.progress(book, reader, rereadingId, 301, null, null))
+                .isInstanceOf(BookProgressDomainException.class);
+        assertThatThrownBy(() -> readings.progress(book, reader, rereadingId, 20, null, now.plusDays(1)))
+                .isInstanceOf(BookProgressDomainException.class);
+        assertThatThrownBy(() -> readings.progress(book, reader, rereadingId, 20, null, now.minusDays(1)))
+                .isInstanceOf(BookProgressDomainException.class);
+        assertThatThrownBy(() -> readings.target(book, reader, rereadingId, now.toLocalDate().minusDays(1)))
+                .isInstanceOf(BookProgressDomainException.class);
+
+        readings.transition(book, reader, rereadingId, ReadingStatus.PAUSED);
+        assertThatThrownBy(() -> readings.start(book, reader)).isInstanceOf(BookProgressConflictException.class);
+        readings.transition(book, reader, rereadingId, ReadingStatus.PAUSED);
+        readings.transition(book, reader, rereadingId, ReadingStatus.READING);
+        LocalDate target = now.toLocalDate().plusDays(10);
+        assertThat(readings.target(book, reader, rereadingId, target).progress().getTargetEndDate()).isEqualTo(target);
+        assertThat(readings.target(book, reader, rereadingId, null).progress().getTargetEndDate()).isNull();
+        assertThat(readings.progress(book, reader, rereadingId, null, 50, null).progress().getCurrentPage()).isEqualTo(150);
+        assertThat(readings.transition(book, reader, rereadingId, ReadingStatus.ABANDONED)
+                .progress().getEndAt()).isNotNull();
+        assertThat(jdbc.queryForList("""
+                SELECT aggregate_version FROM outbox_events WHERE aggregate_id = ? ORDER BY aggregate_version
+                """, Long.class, rereadingId)).containsExactly(0L, 1L, 2L, 3L, 4L, 5L, 6L);
+
+        var dated = readings.start(book, reader, now.minusDays(2));
+        var readAt = now.minusDays(1).withNano(0);
+        var finished = readings.progress(book, reader, dated.progress().getId(), null, 100, readAt).progress();
+        assertThat(finished.getEndAt()).isEqualTo(readAt);
+        assertThat(jdbc.queryForObject("""
+                SELECT (payload->>'readAt')::numeric < (payload->>'occurredAt')::numeric
+                FROM outbox_events WHERE aggregate_id = ? AND aggregate_version = 1
+                """, Boolean.class, finished.getId())).isTrue();
+    }
+
+    @Test
     @Order(3)
     void searchesVisibleBooksByRelevanceWithStablePages(
             @Autowired JdbcTemplate jdbc, @Autowired BookService books) {
@@ -142,7 +237,7 @@ class FlywayPostgresIntegrationTest {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     void refusesToStartWhenTheMigratedSchemaBecomesIncompatible(@Autowired JdbcTemplate jdbcTemplate) {
         jdbcTemplate.execute("alter table books drop column title");
 

@@ -50,3 +50,24 @@ Freeze Reading Progress again, then drain **all Avro-stamped** Outbox rows and A
 ### Evidence required
 
 Real PostgreSQL/Kafka/Apicurio tests must show old JSONB rows sent after upgrade, cold Registry failure with no invalid publication, ACK ambiguity, duplicate delivery, gap handling, raw-wire DLT and recovery, both actual consumers, and complete freeze/drain/cutover/rollback. Passing configuration rendering or unit mapper tests is **not** evidence of this operational rehearsal.
+
+## Lifecycle schema rollout
+
+Deploy the updated Engagement and Recommendation consumers before deploying Catalog.
+This order applies to JSON and Avro. The previous Recommendation consumer cannot
+interpret `PAUSED` or `ABANDONED`. Its ordered recovery will quarantine the partition
+and emit the existing `KafkaOrderedRecordQuarantined` alert if retries are exhausted. Recover at
+the original offset after upgrading the consumer.
+
+For Avro, register the compatible writer schema through the controlled workflow before
+rolling Catalog. The optional `readAt` and `targetEndDate` fields default to null.
+Status remains a string, and transitions use `UPDATED` with the next revision and
+the existing reading ID. Engagement stores `readAt` separately from the emission
+timestamp. Recommendation advances the checkpoint for updates without page changes
+without applying another profile adjustment.
+
+Keep the upgraded consumers during a Catalog rollback while any lifecycle facts
+can still be consumed or replayed. Apply the database migrations before starting each
+service that reads the new columns. If Catalog must roll back to a version that cannot
+read the new statuses, freeze reading writes and roll forward with a compatible
+Catalog build.

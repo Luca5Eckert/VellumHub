@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -36,11 +38,20 @@ public class BookProgress {
     @Column(name = "current_page", nullable = false)
     private Integer currentPage;
 
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
     @Column(name = "started_at")
     private OffsetDateTime startedAt;
 
     @Column(name = "end_at")
     private OffsetDateTime endAt;
+
+    @Column(name = "target_end_date")
+    private LocalDate targetEndDate;
+
+    @Column(name = "last_read_at")
+    private OffsetDateTime lastReadAt;
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
@@ -75,6 +86,7 @@ public class BookProgress {
         if (newPage >= book.getPageCount()) {
             this.readingStatus = ReadingStatus.COMPLETED;
             this.currentPage = book.getPageCount();
+            this.endAt = OffsetDateTime.now();
 
             ensureStateOfActive();
 
@@ -86,8 +98,77 @@ public class BookProgress {
         ensureStateOfActive();
     }
 
+    public boolean recordProgress(Integer page, Integer percentage, OffsetDateTime readAt, OffsetDateTime now) {
+        if (readingStatus != ReadingStatus.READING || (page == null) == (percentage == null)) {
+            throw new BookProgressDomainException("An ongoing reading needs either a page or a percentage");
+        }
+        int total = book.getPageCount();
+        if (percentage != null && (percentage < 0 || percentage > 100)) {
+            throw new BookProgressDomainException("Percentage must be between 0 and 100");
+        }
+        int next = page == null ? (int) Math.round(percentage * (double) total / 100) : page;
+        if (next < 0 || next > total) {
+            throw new BookProgressDomainException("Page must be between 0 and the book page count");
+        }
+        var date = readAt == null ? now : readAt;
+        if (date.isAfter(now) || (startedAt != null && date.isBefore(startedAt))) {
+            throw new BookProgressDomainException("Reading time must be between the start and now");
+        }
+        if (next == currentPage && (readAt == null || Objects.equals(lastReadAt, date))) {
+            return false;
+        }
+        currentPage = next;
+        lastReadAt = date;
+        if (next == total) {
+            readingStatus = ReadingStatus.COMPLETED;
+            endAt = date;
+        }
+        ensureStateOfActive();
+        return true;
+    }
+
+    public boolean transitionTo(ReadingStatus next, OffsetDateTime now) {
+        if (readingStatus == next) {
+            return false;
+        }
+        boolean allowed = switch (readingStatus) {
+            case WANT_TO_READ -> next == ReadingStatus.READING;
+            case READING -> next == ReadingStatus.PAUSED || next == ReadingStatus.ABANDONED
+                    || next == ReadingStatus.COMPLETED;
+            case PAUSED -> next == ReadingStatus.READING || next == ReadingStatus.ABANDONED;
+            case COMPLETED, ABANDONED -> false;
+        };
+        if (!allowed) {
+            throw new BookProgressDomainException("Invalid reading status transition");
+        }
+        readingStatus = next;
+        if (next == ReadingStatus.READING && startedAt == null) {
+            startedAt = now;
+        }
+        if (next == ReadingStatus.ABANDONED || next == ReadingStatus.COMPLETED) {
+            endAt = now;
+        }
+        if (next == ReadingStatus.COMPLETED) {
+            currentPage = book.getPageCount();
+            lastReadAt = now;
+        }
+        ensureStateOfActive();
+        return true;
+    }
+
+    public boolean changeTarget(LocalDate target, LocalDate today) {
+        if (target != null && target.isBefore(today)) {
+            throw new BookProgressDomainException("Target date cannot be before today");
+        }
+        if (Objects.equals(targetEndDate, target)) {
+            return false;
+        }
+        targetEndDate = target;
+        return true;
+    }
+
     private void ensureStateOfActive() {
-        this.isActive = readingStatus != ReadingStatus.COMPLETED;
+        this.isActive = readingStatus != ReadingStatus.COMPLETED && readingStatus != ReadingStatus.ABANDONED;
     }
 
 }

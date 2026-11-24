@@ -30,6 +30,9 @@ public class DefineBookStatusUseCase {
     }
 
     public ReadingProgressChange execute(DefineBookStatusCommand command) {
+        if (command.readingStatus() == ReadingStatus.PAUSED || command.readingStatus() == ReadingStatus.ABANDONED) {
+            throw new BookProgressDomainException("Use a reading transition for this status");
+        }
         Book book = bookRepository.findById(command.bookId())
                 .orElseThrow(() -> new BookNotFoundException(
                         "Book with id " + command.bookId() + " not found"

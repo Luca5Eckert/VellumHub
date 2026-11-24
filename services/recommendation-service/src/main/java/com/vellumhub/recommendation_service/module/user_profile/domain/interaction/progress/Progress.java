@@ -3,7 +3,9 @@ package com.vellumhub.recommendation_service.module.user_profile.domain.interact
 public enum Progress {
     WANT_TO_READ(0.5f),
     READING(1.0f),
-    COMPLETED(2.0f);
+    COMPLETED(2.0f),
+    PAUSED(0.0f),
+    ABANDONED(0.0f);
 
     public final float adjusment;
 

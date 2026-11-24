@@ -3,6 +3,7 @@ package com.vellumhub.kafka.avro;
 import com.vellumhub.kafka.avro.readingprogress.ReadingProgressKind;
 import com.vellumhub.kafka.contracts.readingprogress.ReadingProgressChangedEvent;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /** Stable conversion between the integration fact and the approved Avro wire contract. */
@@ -19,6 +20,8 @@ public final class ReadingProgressAvroMapper {
                 .setBookId(event.bookId().toString())
                 .setProgress(event.progress()).setOldPage(event.oldPage())
                 .setNewPage(event.newPage()).setRevision(event.revision())
+                .setReadAt(event.readAt() == null ? null : event.readAt().toString())
+                .setTargetEndDate(event.targetEndDate() == null ? null : event.targetEndDate().toString())
                 .setKind(ReadingProgressKind.valueOf(event.kind().name())).build();
     }
 
@@ -34,6 +37,8 @@ public final class ReadingProgressAvroMapper {
                 UUID.fromString(wire.getEventId()), Instant.parse(wire.getOccurredAt()),
                 progressId, UUID.fromString(wire.getUserId()), UUID.fromString(wire.getBookId()),
                 wire.getProgress(), wire.getOldPage(), wire.getNewPage(), wire.getRevision(),
-                ReadingProgressChangedEvent.Kind.valueOf(wire.getKind().name()));
+                ReadingProgressChangedEvent.Kind.valueOf(wire.getKind().name()),
+                wire.getReadAt() == null ? null : Instant.parse(wire.getReadAt()),
+                wire.getTargetEndDate() == null ? null : LocalDate.parse(wire.getTargetEndDate()));
     }
 }
