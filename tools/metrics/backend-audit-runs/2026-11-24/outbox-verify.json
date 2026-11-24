@@ -1,0 +1,139 @@
+{
+  "commit_sha": "a9a6398373ecbfd5c7688613ad74dc548f74b2a9",
+  "command": "./mvnw -B -ntp -fae -Pdistributed-e2e verify",
+  "suites": {
+    "JdbcOutboxStoreDistributedTest": {
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "5.046",
+      "cases": [
+        "claimEnforcesRevisionOrderingAndRecovery",
+        "leaseExpiryReclaimsEventAndRejectsStaleAck",
+        "stateAndOutboxRollbackTogether"
+      ]
+    },
+    "BookOutboxPostgresDistributedTest": {
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "3.354",
+      "cases": [
+        "bookAndProgressHaveIndependentAggregateSequenceNamespaces",
+        "outboxInsertFailureRollsBackBusinessMutation",
+        "BookFreezeFenceRejectsMutationsAndSupportsSafeReopening",
+        "legacyJsonRowWithoutNewColumnsRemainsEligibleAfterFlyway",
+        "FreezeWaitsForInFlightBookOutboxTransaction",
+        "readingProgressOutboxConstraintFailureRollsBackDomainMutation",
+        "newAvroBookOutboxRowRetainsJsonbAndImmutableDestination",
+        "domainAndOutboxMustCommitTogether"
+      ]
+    },
+    "BookOutboxKafkaDistributedTest": {
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "22.679",
+      "cases": [
+        "brokerTransportFailurePreservesCommittedOutboxUntilRecovery",
+        "publishesBookSnapshotWithStableEventIdAndKafkaTypeHeader",
+        "acknowledgedPublishCanBeSafelyReplayedAfterMarkFailure"
+      ]
+    },
+    "ReadingProgressOutboxKafkaDistributedTest": {
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "19.339",
+      "cases": [
+        "committedOutboxEventReachesKafkaWithOriginalIdKeyAndTypeAlias"
+      ]
+    },
+    "BookAvroOutboxDistributedTest": {
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "27.94",
+      "cases": [
+        "actualCatalogRelayPublishesSchemaIdAndOriginalBookIdentityWithoutAutoRegister"
+      ]
+    },
+    "ReadingProgressAvroOutboxDistributedTest": {
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "23.774",
+      "cases": [
+        "distinctFreezeDoesNotAffectBookGateAndJsonHistoryRemainsJson",
+        "approvedWirePublishesWithoutAutoRegisterAndPreservesJsonbIdentity"
+      ]
+    },
+    "BookAvroCutoverRehearsalDistributedTest": {
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "27.214",
+      "cases": [
+        "frozenWritersDrainHistoricalJsonThenUseAvroAndRollBackWithoutRewritingPendingRows"
+      ]
+    },
+    "ReadingProgressAvroCutoverRehearsalDistributedTest": {
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "53.67",
+      "cases": [
+        "cutoverAndRollbackDrainLegacyRowsWithoutChangingEventIdentity"
+      ]
+    },
+    "BookAvroRegistryFailureDistributedTest": {
+      "tests": "1",
+      "failures": "0",
+      "errors": "1",
+      "skipped": "0",
+      "time": "26.346",
+      "cases": [
+        "coldRegistryFailureRetriesWithoutPublishingOrReleasingTheNextRevision"
+      ]
+    },
+    "EngagementOutboxKafkaDistributedTest": {
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "21.247",
+      "cases": [
+        "publishesPersistedFactWithStableIdentityTypeHeaderAndAck"
+      ]
+    },
+    "EngagementAvroOutboxDistributedTest": {
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "28.441",
+      "cases": [
+        "sameTopicStrategyKeepsTypesDistinctAndNeverAutoRegisters",
+        "aFrozenRatingDoesNotFreezeReactionsAndJsonHistoryRemainsJson"
+      ]
+    },
+    "EngagementAvroCutoverRehearsalDistributedTest": {
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "29.59",
+      "cases": [
+        "eachEngagementStreamDrainsPreV10JsonAndRollsBackWithSameIdentity"
+      ]
+    }
+  }
+}

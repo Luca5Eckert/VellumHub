@@ -79,6 +79,14 @@ O controle HNSW recuperou **6 dos 10** resultados do controle exato nesse único
 
 `ConsumerIdempotencyDistributedTest`: **16/16**, zero falhas, erros ou skips, 102,5 s de suíte (07:45:49–07:48:37 BRT, incluindo preparação Maven e containers). Reproduz a contagem histórica. Os casos cobrem rollback da projeção/checkpoint de Book, ReadingProgress e Rating, redelivery serial e concorrente, lacunas em quatro streams, colisões de identidade e quarentena com DLT mantendo offset pendente. Parte dos casos invoca o consumidor no contexto de teste. Casos de redelivery de Rating e quarentena de Book atravessam o broker e verificam o efeito/offset. O total não é um volume de eventos nem uma contagem de testes de publicação do outbox. [Casos JUnit](ConsumerIdempotencyDistributedTest.json)
 
+### Produtores Outbox e ensaios Avro no reator
+
+A execução local de `./mvnw -B -ntp -fae -Pdistributed-e2e verify` validou **14 casos** em `JdbcOutboxStoreDistributedTest`, `BookOutboxPostgresDistributedTest` e `BookOutboxKafkaDistributedTest`. Outro teste Kafka comprovou ReadingProgress. Os produtores Avro de Book e ReadingProgress passaram três casos no total, e os dois ensaios de cutover passaram um caso cada. As três suítes distribuídas de publicação Kafka, produtor Avro e cutover de Engagement passaram **4/4**. Essas suítes complementam os 16 casos do consumidor.
+
+`BookAvroRegistryFailureDistributedTest` encerrou com erro de ambiente antes da asserção central. O daemon rejeitou `pause` porque o runtime não oferece `cgroup.freeze`. Um container mínimo da mesma máquina reproduziu a falha com `docker pause`. Esta execução local do reator, portanto, tem um erro de infraestrutura. Os gates remotos com Kafka e Registry ficam registrados separadamente por SHA. [JUnit selecionado do reator local](outbox-verify.json) · [Controle de pause](docker-pause-probe.txt)
+
+O smoke `RatingServiceApplicationTests.contextLoads` passou em 41,11 s apesar de retries do KafkaAdmin na inicialização. A asserção do smoke se limita ao carregamento do contexto. Para integração com broker e efeitos observáveis, as suítes distribuídas e os gates de release dão evidência mais direta.
+
 ### Qualidade offline do ranking
 
 Uma execução sem warm-up, 120 embeddings produzidos pela pipeline real. A suíte com startup, migração, inferência, persistência e medições levou **100,7 s**. A instrumentação atual agrega essas etapas. O tempo total fornece duração do ensaio. A latência de inferência e o consumo por estratégia exigem amostragem própria.

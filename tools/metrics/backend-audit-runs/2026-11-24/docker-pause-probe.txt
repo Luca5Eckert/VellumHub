@@ -1,0 +1,2 @@
+docker_pause_exit=1
+Error response from daemon: cannot pause container <container>: OCI runtime pause failed: freezer not supported: openat2 /sys/fs/cgroup/<container>/cgroup.freeze: no such file or directory
