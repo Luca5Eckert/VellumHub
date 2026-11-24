@@ -57,6 +57,11 @@
       "type": "string"
     },
     {
+      "key": "readingId",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "requestId",
       "value": "",
       "type": "string"
@@ -691,6 +696,213 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"newCurrentPage\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List the authenticated user's readings for a book, newest first",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/book-progress/{{bookId}}/readings",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "book-progress",
+                    "{{bookId}}",
+                    "readings"
+                  ]
+                },
+                "description": "List the authenticated user's readings for a book, newest first\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `listReadings`."
+              },
+              "response": []
+            },
+            {
+              "name": "Start a new reading",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/book-progress/{{bookId}}/readings",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "book-progress",
+                    "{{bookId}}",
+                    "readings"
+                  ]
+                },
+                "description": "Start a new reading\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `startReading`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"startedAt\": \"2026-01-01T00:00:00Z\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Record a page or percentage for a reading",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/book-progress/{{bookId}}/readings/{{readingId}}/progress",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "book-progress",
+                    "{{bookId}}",
+                    "readings",
+                    "{{readingId}}",
+                    "progress"
+                  ]
+                },
+                "description": "Record a page or percentage for a reading\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `recordProgress`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"page\": 0,\n  \"percentage\": 0,\n  \"readAt\": \"2026-01-01T00:00:00Z\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Transition the status of a reading",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/book-progress/{{bookId}}/readings/{{readingId}}/status",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "book-progress",
+                    "{{bookId}}",
+                    "readings",
+                    "{{readingId}}",
+                    "status"
+                  ]
+                },
+                "description": "Transition the status of a reading\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `transition`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"READING\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Set the reading target date, or clear it with null",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/book-progress/{{bookId}}/readings/{{readingId}}/target",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "book-progress",
+                    "{{bookId}}",
+                    "readings",
+                    "{{readingId}}",
+                    "target"
+                  ]
+                },
+                "description": "Set the reading target date, or clear it with null\n\nGenerated from `/docs/catalog/v3/api-docs`. Operation ID: `target`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"targetEndDate\": \"2026-01-01\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
