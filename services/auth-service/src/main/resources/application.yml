@@ -42,6 +42,8 @@ vellum:
       private-key-path: ${VELLUM_AUTH_PRIVATE_KEY_PATH:}
       public-key-path: ${VELLUM_AUTH_PUBLIC_KEY_PATH:}
       kid: ${VELLUM_AUTH_ACTIVE_KID:}
+      overlap-public-key-path: ${VELLUM_AUTH_OVERLAP_PUBLIC_KEY_PATH:}
+      overlap-kid: ${VELLUM_AUTH_OVERLAP_KID:}
     password:
       argon2:
         memory-kib: ${VELLUM_AUTH_ARGON2_MEMORY_KIB:19456}
