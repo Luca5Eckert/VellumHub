@@ -23,6 +23,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>com.mrs</groupId>
             <artifactId>user-service</artifactId>
             <version>0.0.1-SNAPSHOT</version>
