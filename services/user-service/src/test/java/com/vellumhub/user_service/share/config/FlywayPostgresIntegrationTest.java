@@ -5,6 +5,10 @@ import com.vellumhub.user_service.module.user_preference.application.command.Cre
 import com.vellumhub.user_service.module.user_preference.application.use_case.CreateUserPreferenceUseCase;
 import com.vellumhub.kafka.contracts.user.CreateUserPreferenceEvent;
 import com.vellumhub.user_service.module.user_preference.infrastructure.KafkaPreferenceOutbox;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanContext;
+import io.opentelemetry.api.trace.TraceFlags;
+import io.opentelemetry.api.trace.TraceState;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -25,6 +29,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -104,12 +109,21 @@ class FlywayPostgresIntegrationTest {
             @Autowired JdbcTemplate jdbc, @Autowired CreateUserPreferenceUseCase preferences,
             @Autowired KafkaPreferenceOutbox outbox, @Autowired TransactionTemplate transactions) {
         UUID userId = UUID.fromString("019a0000-1111-7000-8000-000000000001");
+        var publishedContexts = new ArrayList<SpanContext>();
+        var origin = SpanContext.create("0123456789abcdef0123456789abcdef", "0123456789abcdef",
+                TraceFlags.getSampled(), TraceState.getDefault());
         when(kafkaTemplate.send(any(String.class), any(String.class), any(CreateUserPreferenceEvent.class)))
-                .thenReturn(CompletableFuture.failedFuture(new IllegalStateException("fixture broker offline")))
-                .thenReturn(CompletableFuture.completedFuture(null));
+                .thenAnswer(invocation -> {
+                    publishedContexts.add(Span.current().getSpanContext());
+                    return publishedContexts.size() == 1
+                            ? CompletableFuture.failedFuture(new IllegalStateException("fixture broker offline"))
+                            : CompletableFuture.completedFuture(null);
+                });
 
         assertThat(preferences.findGenres(userId)).isEmpty();
-        preferences.execute(new CreateUserPreferenceCommand(userId, List.of("Fantasy"), "existing bio"));
+        try (var scope = Span.wrap(origin).makeCurrent()) {
+            preferences.execute(new CreateUserPreferenceCommand(userId, List.of("Fantasy"), "existing bio"));
+        }
         preferences.execute(new CreateUserPreferenceCommand(userId, List.of("History", "Adventure"), null));
 
         assertThat(preferences.findGenres(userId)).containsExactlyInAnyOrder("History", "Adventure");
@@ -129,6 +143,11 @@ class FlywayPostgresIntegrationTest {
         outbox.dispatchNext();
         outbox.dispatchNext();
 
+        assertThat(publishedContexts).extracting(SpanContext::getTraceId)
+                .containsExactly(origin.getTraceId(), origin.getTraceId(), SpanContext.getInvalid().getTraceId());
+        assertThat(publishedContexts.subList(0, 2)).extracting(SpanContext::getSpanId)
+                .containsOnly(origin.getSpanId());
+        assertThat(Span.current().getSpanContext().isValid()).isFalse();
         var order = inOrder(kafkaTemplate);
         order.verify(kafkaTemplate, org.mockito.Mockito.times(2)).send("created-user-preference", userId.toString(),
                 new CreateUserPreferenceEvent(userId, List.of("Fantasy"), "existing bio"));

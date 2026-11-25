@@ -20,6 +20,10 @@
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-api</artifactId>
+		</dependency>
         <dependency>
             <groupId>com.vellumhub</groupId>
             <artifactId>kafka-avro-contracts</artifactId>
