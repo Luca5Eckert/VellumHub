@@ -18,7 +18,7 @@ import uuid
 
 ISSUER = os.environ.get("VELLUM_AUTH_ISSUER", "http://127.0.0.1:9000")
 CLIENT = "vellumhub-spa-poc"
-REDIRECT = "http://127.0.0.1:9100/index.html"
+REDIRECT = os.environ.get("VELLUM_POC_REDIRECT_URI", "http://127.0.0.1:9100/index.html")
 LOGIN = os.environ["VELLUM_POC_LOGIN"]
 PASSWORD = os.environ["VELLUM_POC_PASSWORD"]
 

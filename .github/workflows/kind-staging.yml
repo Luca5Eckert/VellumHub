@@ -1,0 +1,49 @@
+name: Kubernetes staging rehearsal
+on:
+  pull_request:
+    paths:
+      - 'deploy/kubernetes/**'
+      - 'infra/scripts/security/verify_auth_poc_flow.py'
+      - 'infra/scripts/security/verify_oidc_lote2_flow.py'
+      - '.github/workflows/kind-staging.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staging-kind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create disposable Kind cluster
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://kind.sigs.k8s.io/dl/v0.30.0/kind-linux-amd64 -o "$RUNNER_TEMP/kind"
+          chmod +x "$RUNNER_TEMP/kind"
+          curl -fsSL https://dl.k8s.io/release/v1.34.1/bin/linux/amd64/kubectl -o "$RUNNER_TEMP/kubectl"
+          curl -fsSL https://dl.k8s.io/release/v1.34.1/bin/linux/amd64/kubectl.sha256 -o "$RUNNER_TEMP/kubectl.sha256"
+          printf '%s  %s\n' "$(cat "$RUNNER_TEMP/kubectl.sha256")" "$RUNNER_TEMP/kubectl" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/kubectl"
+          export PATH="$RUNNER_TEMP:$PATH"
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+          kind create cluster --name vellumhub-staging --image kindest/node:v1.34.0 --wait 120s
+      - name: Install Traefik and resolve staging hosts
+        run: |
+          helm upgrade --install traefik traefik --repo https://traefik.github.io/charts \
+            --version 34.4.1 --namespace ingress-system --create-namespace \
+            --set service.type=ClusterIP --wait --timeout 5m
+          echo '127.0.0.1 auth.vellumhub.test api.vellumhub.test' | sudo tee -a /etc/hosts >/dev/null
+      - name: Check HTTPS, PKCE, Kafka projection and Gateway rollback
+        run: bash deploy/kubernetes/scripts/verify-staging-kind.sh
+      - name: Collect rollout diagnostics
+        if: failure()
+        run: |
+          kubectl -n vellumhub get deployments,statefulsets,pods,pvc,ingress -o wide || true
+          kubectl -n vellumhub logs statefulset/redis-recommendation-cache --previous --tail=30 || true
+          kubectl -n vellumhub get events --sort-by=.lastTimestamp | tail -60 || true
+      - name: Delete disposable cluster
+        if: always()
+        run: kind delete cluster --name vellumhub-staging
