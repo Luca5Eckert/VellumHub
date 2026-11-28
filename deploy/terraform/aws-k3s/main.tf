@@ -15,6 +15,10 @@ data "aws_ami" "ubuntu" {
   }
 }
 
+data "aws_ec2_instance_type" "node" {
+  instance_type = var.instance_type
+}
+
 resource "aws_vpc" "staging" {
   cidr_block           = "10.65.0.0/16"
   enable_dns_support   = true
@@ -91,12 +95,20 @@ resource "aws_iam_instance_profile" "node" {
 resource "aws_instance" "node" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
+  private_ip                  = "10.65.10.10"
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.node.id]
   iam_instance_profile        = aws_iam_instance_profile.node.name
   associate_public_ip_address = false
-  user_data                   = file("${path.module}/bootstrap-k3s.sh")
+  user_data                   = replace(file("${path.module}/bootstrap-k3s.sh"), "__DATA_VOLUME_ID__", aws_ebs_volume.k3s_data.id)
   user_data_replace_on_change = true
+
+  lifecycle {
+    precondition {
+      condition     = contains(data.aws_ec2_instance_type.node.supported_architectures, "x86_64") && data.aws_ec2_instance_type.node.ebs_nvme_support == "required"
+      error_message = "Select an amd64 instance type that presents EBS volumes as NVMe."
+    }
+  }
 
   metadata_options {
     http_tokens                 = "required"
@@ -109,6 +121,23 @@ resource "aws_instance" "node" {
     encrypted             = true
     delete_on_termination = true
   }
+}
+
+resource "aws_ebs_volume" "k3s_data" {
+  availability_zone = aws_subnet.public.availability_zone
+  size              = var.data_volume_gib
+  type              = "gp3"
+  encrypted         = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_volume_attachment" "k3s_data" {
+  device_name = "/dev/sdf"
+  volume_id   = aws_ebs_volume.k3s_data.id
+  instance_id = aws_instance.node.id
 }
 
 resource "aws_eip" "node" {

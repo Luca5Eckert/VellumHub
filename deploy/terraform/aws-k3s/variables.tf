@@ -19,7 +19,7 @@ variable "instance_type" {
 
 variable "root_volume_gib" {
   type        = number
-  description = "Size in GiB for Ubuntu, images, and node-local K3s persistent volumes."
+  description = "Size in GiB for the Ubuntu system disk."
   default     = 80
   validation {
     condition     = var.root_volume_gib >= 40 && floor(var.root_volume_gib) == var.root_volume_gib
@@ -33,5 +33,15 @@ variable "web_ingress_cidr" {
   validation {
     condition     = can(cidrnetmask(var.web_ingress_cidr))
     error_message = "Supply a valid IPv4 CIDR."
+  }
+}
+
+variable "data_volume_gib" {
+  type        = number
+  description = "Size in GiB for K3s state, images and node-local persistent volumes."
+  default     = 80
+  validation {
+    condition     = var.data_volume_gib >= 40 && floor(var.data_volume_gib) == var.data_volume_gib
+    error_message = "Use an integer data volume size of at least 40 GiB."
   }
 }

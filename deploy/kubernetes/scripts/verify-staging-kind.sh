@@ -22,6 +22,17 @@ kubectl -n vellumhub create secret generic vellumhub-secrets \
   --from-literal=KAFKA_CATALOG_JAAS= --from-literal=KAFKA_USER_JAAS= \
   --from-literal=KAFKA_ENGAGEMENT_JAAS= --from-literal=KAFKA_RECOMMENDATION_JAAS=
 
+if python3 deploy/kubernetes/scripts/render-aws-staging.py \
+  --auth-host 127.0.0.1 --api-host api.vellumhub.internal \
+  --callback https://web.vellumhub.internal/oauth/callback >"$work/invalid.yaml"; then
+  echo "AWS renderer accepted an IP address as an Ingress hostname" >&2
+  exit 1
+fi
+python3 deploy/kubernetes/scripts/render-aws-staging.py \
+  --auth-host auth.vellumhub.internal --api-host api.vellumhub.internal \
+  --callback https://web.vellumhub.internal/oauth/callback >"$work/aws-rendered.yaml"
+kubectl apply --dry-run=server -f "$work/aws-rendered.yaml"
+
 kubectl kustomize deploy/kubernetes/overlays/staging >"$work/rendered.yaml"
 kubectl apply --dry-run=server -f "$work/rendered.yaml"
 kubectl apply -f "$work/rendered.yaml"

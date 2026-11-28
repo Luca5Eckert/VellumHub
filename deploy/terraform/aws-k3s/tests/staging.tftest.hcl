@@ -1,4 +1,11 @@
 mock_provider "aws" {
+  mock_data "aws_ec2_instance_type" {
+    defaults = {
+      supported_architectures = ["x86_64"]
+      ebs_nvme_support        = "required"
+    }
+  }
+
   mock_data "aws_ami" {
     defaults = {
       id = "ami-0123456789abcdef0"
@@ -33,6 +40,11 @@ run "staging_plan" {
       aws_instance.node.root_block_device[0].volume_type == "gp3"
     )
     error_message = "Require IMDSv2 and an encrypted gp3 volume."
+  }
+
+  assert {
+    condition     = aws_ebs_volume.k3s_data.encrypted && aws_ebs_volume.k3s_data.type == "gp3"
+    error_message = "K3s state must use a separately managed encrypted gp3 volume."
   }
 
   assert {

@@ -24,4 +24,4 @@ jobs:
       - run: terraform init -backend=false -input=false -lockfile=readonly
       - run: terraform validate
       - run: terraform test
-      - run: bash -n bootstrap-k3s.sh
+      - run: bash -n bootstrap-k3s.sh && bash -n verify-node.sh
