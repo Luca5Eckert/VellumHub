@@ -146,3 +146,5 @@ is intentionally insecure and not a production template; use a managed or
 externally secured Kafka broker in production.
 See [Kafka service identities](../../docs/KAFKA_SERVICE_IDENTITIES.md) for TLS, provisioning,
 rotation, rollback and tests.
+
+For a TLS, PKCE, Kafka and rollback rehearsal using published images, see [Kubernetes staging](overlays/staging/README.md).

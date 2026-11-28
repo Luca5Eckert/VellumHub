@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vellumhub
+resources:
+  - ../local
+  - auth-ingress.yaml
+patches:
+  - path: settings.yaml
+  - path: gateway-ingress.yaml
+# Published and validated together by release run 46158361082, source be5616fa.
+images:
+  - name: ghcr.io/luca5eckert/vellumhub-auth
+    digest: sha256:7380c4fce89d6ad82d3f79574cfcd843cb6f1f5e0926c8d5cbd18a57a30341cf
+  - name: ghcr.io/luca5eckert/vellumhub-catalog
+    digest: sha256:3c653b2c169a7f1791a93e6c4b8e773fd3f4e4a33e6f1eba32ef3f2bbf86b608
+  - name: ghcr.io/luca5eckert/vellumhub-engagement
+    digest: sha256:699ad8cc577cd5ffe95c47e8807275353b63f908dba1d3f520396bab6d14fd42
+  - name: ghcr.io/luca5eckert/vellumhub-gateway
+    digest: sha256:620e5d0e5eb0b2ef0ea4634ae62591c29856cf9c4800556ea7b2d43967684c16
+  - name: ghcr.io/luca5eckert/vellumhub-recommendation
+    digest: sha256:9363ad8091e9f983100479be66f7ae2bfca46d1666a1db6b0d6d267f3a8940ed
+  - name: ghcr.io/luca5eckert/vellumhub-user
+    digest: sha256:2d3d5da8cac914c14a59a85b97b2e57b16dee7f1474adf327a9084ceb7312411

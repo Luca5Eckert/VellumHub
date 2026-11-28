@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: {name: auth-service}
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts: [auth.vellumhub.test]
+      secretName: vellumhub-staging-tls
+  rules:
+    - host: auth.vellumhub.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: {service: {name: auth-service, port: {name: http}}}

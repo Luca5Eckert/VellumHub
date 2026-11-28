@@ -1,0 +1,9 @@
+# Kubernetes staging rehearsal
+
+This overlay reuses the single-node local stack and pins the six application images from the [validated release](https://github.com/Luca5Eckert/VellumHub/actions/runs/46158361082). Auth and Gateway have separate HTTPS hosts served by Traefik. The OAuth issuer is `https://auth.vellumhub.test:8443`. The PKCE client uses a test callback intercepted by the harness. A frontend is outside this rehearsal.
+
+[The staging workflow](../../../../.github/workflows/kind-staging.yml) creates an isolated Kind cluster, installs Traefik and maps the test hosts to loopback. [The validation script](../../scripts/verify-staging-kind.sh) generates disposable database credentials, RSA signing material and a TLS certificate, then runs a server-side dry run, deploys the overlay and tests the public HTTPS entry points. It verifies discovery, OAuth code exchange with PKCE, authenticated reads, persistence of a preference in Recommendation and restoration of the pinned Gateway image after a failed rollout.
+
+For a local rehearsal, use a disposable Kind cluster named `vellumhub-staging`, kubectl 1.34 and the same Traefik setup and host mappings as the workflow. Run the validation script from the repository root. Start with a fresh cluster because the runner creates the namespace and secrets. The script forwards TLS only on loopback and trusts the generated certificate for the duration of the test.
+
+The inherited PostgreSQL, Kafka and Redis have local persistence and a single replica. This overlay uses a development broker and the local network policy settings. Keep it isolated. A cloud deployment needs its own overlay with real DNS and certificates, managed credentials, network policies, and an explicit choice of data infrastructure. Telemetry ingestion and dashboards are outside this rehearsal.
