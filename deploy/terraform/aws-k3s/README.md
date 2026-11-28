@@ -48,3 +48,17 @@ For remote Kubernetes administration, establish an SSM port forwarding session t
 Before deploying VellumHub, prepare an environment overlay with the actual HTTPS domains, issuer, callback, CORS, secrets and six verified image digests. The [Kind staging overlay](../../kubernetes/overlays/staging/README.md) demonstrates the application smoke test with test hosts and certificates. Repeat that test on the AWS environment using its actual endpoints.
 
 This is a single-node rehearsal. The root volume and any node-local K3s data on it are deleted on instance termination, including replacement triggered by a bootstrap change. If the node hosts application databases or persistent volumes, establish and test backup and restore before storing data you need to keep.
+
+## Render the application manifests
+
+From the repository root, substitute the real DNS hosts and the frontend's registered OAuth callback:
+
+```bash
+python3 deploy/kubernetes/scripts/render-aws-staging.py \
+  --auth-host auth.your-domain.com --api-host api.your-domain.com \
+  --callback https://web.your-domain.com/oauth/callback > aws-staging.yaml
+```
+
+Create DNS records for the Auth and API hosts pointing to the environment's Elastic IP. Provide a TLS certificate covering both names in the `vellumhub-aws-tls` Secret. Provision the namespace, `vellumhub-secrets`, `vellumhub-jwt-private` and `vellumhub-jwt-public` using the same keys as the Kubernetes staging contract, with credentials from the environment's secret manager. Point kubectl at the AWS K3s context and run `kubectl apply --dry-run=server -f aws-staging.yaml` before applying anything.
+
+The render reuses the single-node staging stack and the existing image digests. Its eight stateful dependencies are local to the EC2 instance. The inherited network policy settings assume an isolated rehearsal cluster. Use a restricted ingress CIDR and review the rollback, backup and access model before exposing it to public traffic.
