@@ -75,6 +75,18 @@ The Authorization Server and session lifecycle tests cover persistence, logout, 
 
 The private signing key is mounted only into Auth and is never committed. Auth fails startup when required signing material is missing or invalid. Public keys are exposed through the Auth JWKS endpoint.
 
+For a planned rotation, mount the next public PEM in Auth and configure
+`VELLUM_AUTH_OVERLAP_PUBLIC_KEY_PATH` and `VELLUM_AUTH_OVERLAP_KID` before switching the signer.
+Roll out the same two public keys everywhere Auth serves JWKS. Switch the active key pair and
+`VELLUM_AUTH_ACTIVE_KID`, and point the overlap settings at the previous public key.
+Keep that public key until tokens issued by the old signer can no longer be accepted, including
+configured validation clock skew. Remove the overlap settings in a subsequent Auth rollout.
+Auth loads key material at startup. The overlap slot contains public material only.
+
+If a signing key is compromised, remove it from JWKS without overlap, rotate the signer, and
+recycle or invalidate the JWKS caches on all validating instances. Verify rejection on each boundary.
+A warm validator may still accept signatures from a cached key until the cache is refreshed.
+
 Default runtime topology:
 
 - `auth-postgres` stores Auth/OAuth/session state;

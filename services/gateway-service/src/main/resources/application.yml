@@ -23,6 +23,10 @@ spring:
     gateway:
       server:
         webflux:
+          httpclient:
+            pool:
+              # Resolve the upstream alias on each new connection.
+              type: disabled
           default-filters:
             - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
           routes:

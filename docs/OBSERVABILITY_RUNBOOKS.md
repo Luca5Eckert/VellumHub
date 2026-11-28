@@ -163,3 +163,7 @@ curl http://localhost:12345/-/ready
 ## Ordered Kafka Partition Blocked
 
 Check `vellumhub_kafka_recovery_quarantined_total` and `operation=kafka_quarantined`. Identify the source topic, partition, offset and affected service. Do not reset committed offsets or publish a DLT copy at the end of an ordered topic. Follow the [Kafka Recovery Runbook](KAFKA_RECOVERY_RUNBOOK.md): fix the dependency, inspect the quarantine, request audited replay, restart only the affected service, and confirm the original offset was applied before later revisions.
+
+## Loki WAL disk near limit
+
+Check Loki's WAL filesystem usage and ingester logs for write throttling. Check Alloy delivery errors and the free space on the volume that backs the WAL. Restore capacity, then run `python3 infra/scripts/validation/verify-observability.py` against the local Compose stack. Its synthetic log must be accepted and queryable, and application logs must be arriving through Alloy.

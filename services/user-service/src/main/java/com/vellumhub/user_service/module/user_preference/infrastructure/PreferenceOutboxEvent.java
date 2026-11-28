@@ -25,10 +25,11 @@ class PreferenceOutboxEvent {
     @JdbcTypeCode(SqlTypes.ARRAY)
     private String[] genres;
     private String about;
+    private String traceparent;
 
     protected PreferenceOutboxEvent() {}
 
-    PreferenceOutboxEvent(UUID userId, long revision, Long avroRevision, List<String> genres, String about) {
+    PreferenceOutboxEvent(UUID userId, long revision, Long avroRevision, List<String> genres, String about, String traceparent) {
         eventId = UUID.randomUUID();
         occurredAt = Instant.now();
         nextAttemptAt = occurredAt;
@@ -37,6 +38,7 @@ class PreferenceOutboxEvent {
         this.avroRevision = avroRevision;
         this.genres = genres.toArray(String[]::new);
         this.about = about;
+        this.traceparent = traceparent;
     }
 
     CreateUserPreferenceEvent legacyPayload() {
@@ -49,6 +51,10 @@ class PreferenceOutboxEvent {
 
     UserPreferenceChanged avroPayload() {
         return new UserPreferenceChanged(eventId, occurredAt, userId, avroRevision, List.of(genres), about);
+    }
+
+    String traceparent() {
+        return traceparent;
     }
 
     void retryAfter(Instant instant) {

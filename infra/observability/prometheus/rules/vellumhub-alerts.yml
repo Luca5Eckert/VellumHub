@@ -23,6 +23,17 @@ groups:
           description: "Prometheus target {{ $labels.job }} is down."
           runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#prometheus-target-down"
 
+      - alert: LokiWalDiskNearLimit
+        expr: loki_ingester_wal_disk_usage_percent{job="loki"} >= 0.85
+        for: 2m
+        labels:
+          severity: P2
+          service: loki
+        annotations:
+          summary: "Loki WAL disk usage has reached 85%."
+          description: "Check WAL filesystem capacity before the ingester starts throttling writes."
+          runbook: "https://github.com/Luca5Eckert/VellumHub/blob/main/docs/OBSERVABILITY_RUNBOOKS.md#loki-wal-disk-near-limit"
+
       - alert: GatewayHigh5xxRate
         expr: |
           sum(rate(http_server_requests_seconds_count{job="gateway-service",status=~"5.."}[5m]))

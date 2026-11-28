@@ -27,12 +27,12 @@ class CheckFailed(Exception):
     pass
 
 
-def get(port, path, *, query=None, headers=None, expected=200):
+def get(port, path, *, query=None, headers=None, data=None, expected=200):
     url = f"http://127.0.0.1:{port}{path}"
     if query:
         url += "?" + urlencode(query)
     try:
-        with OPENER.open(Request(url, headers=headers or {}), timeout=3) as response:
+        with OPENER.open(Request(url, data=data, headers=headers or {}), timeout=3) as response:
             status, body = response.status, response.read()
     except HTTPError as error:
         with error:
@@ -56,6 +56,29 @@ def verify_metrics(services):
     missing = sorted(set(services) - healthy)
     if missing:
         raise CheckFailed("scrapes not UP: " + ", ".join(missing))
+
+
+class LokiIngestionProbe:
+    def __init__(self):
+        self.marker = "vellumhub-probe-" + secrets.token_hex(16)
+        self.sent_at = None
+
+    def verify(self):
+        if self.sent_at is None:
+            sent_at = time.time_ns()
+            stream = {"stream": {"service": "observability-probe"},
+                      "values": [[str(sent_at), self.marker]]}
+            get(3100, "/loki/api/v1/push", data=json.dumps({"streams": [stream]}).encode(),
+                headers={"Content-Type": "application/json"}, expected=204)
+            self.sent_at = sent_at
+
+        response = read_json(3100, "/loki/api/v1/query_range", query={
+            "query": f'{{service="observability-probe"}} |= "{self.marker}"',
+            "start": self.sent_at - 1, "end": time.time_ns(), "limit": 1,
+        })
+        if not any(line == self.marker for entry in response["data"]["result"]
+                   for _, line in entry["values"]):
+            raise CheckFailed("Loki did not return the synthetic log after accepting the write")
 
 
 def verify_service_logs(services, lookback_minutes):
@@ -128,6 +151,7 @@ def main():
     pending = {
         "Prometheus ready": lambda: get(9090, "/-/ready"),
         "Loki ready": lambda: get(3100, "/ready"),
+        "Loki ingestion and query": LokiIngestionProbe().verify,
         "Tempo ready": lambda: get(3200, "/ready"),
         "Alloy ready": lambda: get(12345, "/-/ready"),
         "Grafana ready": lambda: get(3002, "/api/health"),

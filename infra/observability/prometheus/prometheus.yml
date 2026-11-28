@@ -41,3 +41,8 @@ scrape_configs:
     static_configs:
       - targets:
           - recommendation-service:8080
+
+  - job_name: loki
+    static_configs:
+      - targets:
+          - loki:3100
