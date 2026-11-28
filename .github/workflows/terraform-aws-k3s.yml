@@ -1,0 +1,27 @@
+name: Terraform AWS staging validation
+
+on:
+  pull_request:
+    paths:
+      - 'deploy/terraform/aws-k3s/**'
+      - '.github/workflows/terraform-aws-k3s.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: deploy/terraform/aws-k3s
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.11.4
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false -lockfile=readonly
+      - run: terraform validate
+      - run: terraform test
+      - run: bash -n bootstrap-k3s.sh && bash -n verify-node.sh
