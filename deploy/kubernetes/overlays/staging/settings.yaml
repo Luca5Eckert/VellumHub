@@ -23,3 +23,48 @@ spec:
             - {name: VELLUM_AUTH_CLIENT_REDIRECT_URI, value: "https://app.vellumhub.test/oauth/callback"}
             - {name: VELLUM_AUTH_CLIENT_POST_LOGOUT_URI, value: "https://app.vellumhub.test/"}
             - {name: VELLUM_AUTH_CLIENT_SCOPES, value: "user:read,user:write,catalog:read,engagement:read,recommendation:read"}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: gateway-service}
+spec:
+  template:
+    spec:
+      containers:
+        - name: gateway-service
+          env:
+            - {name: JAVA_TOOL_OPTIONS, value: "-javaagent:/app/opentelemetry-javaagent.jar"}
+            - {name: OTEL_SERVICE_NAME, value: gateway-service}
+            - {name: OTEL_TRACES_EXPORTER, value: logging}
+            - {name: OTEL_METRICS_EXPORTER, value: none}
+            - {name: OTEL_LOGS_EXPORTER, value: none}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: user-service}
+spec:
+  template:
+    spec:
+      containers:
+        - name: user-service
+          env:
+            - {name: JAVA_TOOL_OPTIONS, value: "-javaagent:/app/opentelemetry-javaagent.jar"}
+            - {name: OTEL_SERVICE_NAME, value: user-service}
+            - {name: OTEL_TRACES_EXPORTER, value: logging}
+            - {name: OTEL_METRICS_EXPORTER, value: none}
+            - {name: OTEL_LOGS_EXPORTER, value: none}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: recommendation-service}
+spec:
+  template:
+    spec:
+      containers:
+        - name: recommendation-service
+          env:
+            - {name: JAVA_TOOL_OPTIONS, value: "-javaagent:/app/opentelemetry-javaagent.jar"}
+            - {name: OTEL_SERVICE_NAME, value: recommendation-service}
+            - {name: OTEL_TRACES_EXPORTER, value: logging}
+            - {name: OTEL_METRICS_EXPORTER, value: none}
+            - {name: OTEL_LOGS_EXPORTER, value: none}

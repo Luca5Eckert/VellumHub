@@ -41,7 +41,7 @@ jq -e --arg issuer "$VELLUM_AUTH_ISSUER" \
   '.issuer == $issuer and (.authorization_endpoint | startswith($issuer + "/"))' "$work/discovery.json" >/dev/null
 
 python3 deploy/kubernetes/scripts/verify-staging-preference.py "$work/user-id"
-user_id="$(cat "$work/user-id")"
+read -r user_id trace_id <"$work/user-id"
 for attempt in $(seq 1 60); do
   if kubectl -n vellumhub exec -i statefulset/recommendation-postgres -- sh -ec \
     'psql -At -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v user_id="$1" < /dev/stdin' \
@@ -53,6 +53,23 @@ SQL
     break
   fi
   [[ "$attempt" -lt 60 ]] || exit 1
+  sleep 2
+done
+
+kubectl -n vellumhub get --raw \
+  '/api/v1/namespaces/vellumhub/services/http:recommendation-service:8080/proxy/actuator/prometheus' >"$work/metrics"
+grep -E '^vellumhub_kafka_events_consumed_total\{.*topic="created-user-preference"' "$work/metrics" >/dev/null
+for attempt in $(seq 1 30); do
+  kubectl -n vellumhub logs deployment/user-service >"$work/user.log"
+  kubectl -n vellumhub logs deployment/recommendation-service >"$work/recommendation.log"
+  if grep -E "LoggingSpanExporter.*PUT.*${trace_id}.*SERVER" "$work/user.log" >/dev/null \
+    && grep -E "LoggingSpanExporter.*created-user-preference.*${trace_id}.*PRODUCER" "$work/user.log" >/dev/null \
+    && grep -E "LoggingSpanExporter.*created-user-preference.*${trace_id}.*CONSUMER" "$work/recommendation.log" >/dev/null \
+    && grep -F 'Consumed CreateUserPreferenceEvent' "$work/recommendation.log" | grep -F "$trace_id" >/dev/null; then
+    echo "Preference metric, structured consumer log and propagated spans verified"
+    break
+  fi
+  [[ "$attempt" -lt 30 ]] || exit 1
   sleep 2
 done
 
